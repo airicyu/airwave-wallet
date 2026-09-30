@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 審批</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>審批請求</h1>
+      <p id="origin" class="muted"></p>
+      <p id="kind"></p>
+      <pre id="detail"></pre>
+      <div class="actions">
+        <button id="reject" type="button" class="secondary">拒絕</button>
+        <button id="approve" type="button">批准</button>
+      </div>
+      <p id="error" class="error" hidden></p>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

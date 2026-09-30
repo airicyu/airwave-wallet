@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chrome Extension Message Flow · inject / content / background / popup / popout</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --bg-elev: #1a222c;
+      --line: #2d3a47;
+      --text: #e8eef4;
+      --muted: #8b9aab;
+      --inject: #3d9cf0;
+      --content: #52c4a0;
+      --background: #e6a23c;
+      --popup: #c084fc;
+      --popout: #f472b6;
+      --danger: #f07178;
+      --ok: #7fd99a;
+      --font: "IBM Plex Sans", "Noto Sans TC", "Segoe UI", sans-serif;
+      --mono: "IBM Plex Mono", "Cascadia Code", "Consolas", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #1a2a3a 0%, transparent 55%),
+        radial-gradient(900px 500px at 90% 0%, #2a1f30 0%, transparent 50%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    a { color: var(--inject); }
+
+    header {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 48px 24px 24px;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      margin: 0;
+      max-width: 70ch;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+      display: grid;
+      gap: 40px;
+    }
+
+    section h2 {
+      margin: 0 0 12px;
+      font-size: 1.25rem;
+      font-weight: 650;
+    }
+
+    section > p.lead {
+      margin: 0 0 20px;
+      color: var(--muted);
+      max-width: 75ch;
+    }
+
+    .runtime-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .runtime {
+      border: 1px solid var(--line);
+      background: var(--bg-elev);
+      padding: 14px 16px;
+      border-left: 3px solid;
+    }
+
+    .runtime[data-r="inject"] { border-left-color: var(--inject); }
+    .runtime[data-r="content"] { border-left-color: var(--content); }
+    .runtime[data-r="background"] { border-left-color: var(--background); }
+    .runtime[data-r="popup"] { border-left-color: var(--popup); }
+    .runtime[data-r="popout"] { border-left-color: var(--popout); }
+
+    .runtime h3 {
+      margin: 0 0 6px;
+      font-size: 0.95rem;
+      font-family: var(--mono);
+    }
+
+    .runtime p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .tag {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 0.72rem;
+      font-family: var(--mono);
+      padding: 2px 6px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+
+    /* Topology diagram */
+    .topo {
+      border: 1px solid var(--line);
+      background: #121820;
+      padding: 20px;
+      overflow-x: auto;
+    }
+
+    .topo svg {
+      display: block;
+      width: 100%;
+      min-width: 760px;
+      height: auto;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px 20px;
+      margin-top: 14px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .legend span::before {
+      content: "";
+      display: inline-block;
+      width: 18px;
+      height: 3px;
+      margin-right: 8px;
+      vertical-align: middle;
+      background: currentColor;
+    }
+
+    .legend .pm { color: var(--inject); }
+    .legend .rt { color: var(--background); }
+    .legend .st { color: var(--danger); }
+    .legend .port { color: var(--ok); }
+
+    /* Flow steps */
+    .flow-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .flow-tabs button {
+      font: inherit;
+      font-size: 0.9rem;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid var(--line);
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .flow-tabs button[aria-selected="true"] {
+      color: var(--text);
+      border-color: var(--inject);
+      background: #152030;
+    }
+
+    .flow-panel[hidden] { display: none; }
+
+    .steps {
+      display: grid;
+      gap: 0;
+      border: 1px solid var(--line);
+      background: var(--bg-elev);
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      align-items: start;
+    }
+
+    .step:last-child { border-bottom: none; }
+
+    .step .n {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--muted);
+      padding-top: 2px;
+    }
+
+    .step .body strong {
+      display: block;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .step .body p {
+      margin: 0;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .path {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+    }
+
+    .chip {
+      padding: 2px 8px;
+      border: 1px solid var(--line);
+      background: #121820;
+    }
+
+    .chip.inject { color: var(--inject); border-color: #2a5578; }
+    .chip.content { color: var(--content); border-color: #2a6a55; }
+    .chip.background { color: var(--background); border-color: #7a5a20; }
+    .chip.popup { color: var(--popup); border-color: #5a3a78; }
+    .chip.popout { color: var(--popout); border-color: #7a3a58; }
+
+    .arrow { color: var(--muted); }
+
+    .callout {
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--ok);
+      background: #142018;
+      padding: 14px 16px;
+      margin-top: 16px;
+    }
+
+    .callout.warn {
+      border-left-color: var(--danger);
+      background: #201418;
+    }
+
+    .callout h3 {
+      margin: 0 0 6px;
+      font-size: 0.95rem;
+    }
+
+    .callout p {
+      margin: 0;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #152030;
+      font-weight: 600;
+    }
+
+    td { background: var(--bg-elev); color: var(--muted); }
+    td:first-child { color: var(--text); font-family: var(--mono); font-size: 0.8rem; }
+
+    code, .mono {
+      font-family: var(--mono);
+      font-size: 0.86em;
+    }
+
+    pre {
+      margin: 12px 0 0;
+      padding: 14px 16px;
+      overflow-x: auto;
+      background: #0c1015;
+      border: 1px solid var(--line);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: #c8d4e0;
+    }
+
+    footer {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px 48px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Extension Message Flow</h1>
+    <p>
+      Solana 錢包 Chrome Extension 裡，<code>inject.js</code>、<code>content.js</code>、
+      <code>background.js</code>、<code>popup</code>、<code>popout</code>
+      各自是獨立 runtime。這份筆記說明它們<strong>能用什麼通道通訊</strong>，以及
+      <strong>一次 connect / sign 的正確數據流向</strong>——對照用 storage 當 event bus 的做法。
+    </p>
+  </header>
+
+  <main>
+    <!-- 1. Runtimes -->
+    <section>
+      <h2>1. 五個 Runtime</h2>
+      <p class="lead">
+        不是「同一個程式的不同檔案」，而是五份互不相通的 JS 記憶體。變數、閉包、Zustand store
+        都不能直接共享；只能靠訊息傳遞。
+      </p>
+      <div class="runtime-grid">
+        <article class="runtime" data-r="inject">
+          <h3>inject.js</h3>
+          <p>跑在網頁主世界（page world）。註冊 Wallet Standard，給 dApp 呼叫。</p>
+          <span class="tag">無 chrome.*</span>
+        </article>
+        <article class="runtime" data-r="content">
+          <h3>content.js</h3>
+          <p>同一標籤頁的隔離世界。能看 DOM，看不到網頁的 window 變數。</p>
+          <span class="tag">有 chrome.*</span>
+        </article>
+        <article class="runtime" data-r="background">
+          <h3>background.js</h3>
+          <p>Service Worker。應是唯一持有密鑰、授權與簽名的地方。MV3 會被掛起。</p>
+          <span class="tag">有 chrome.*</span>
+        </article>
+        <article class="runtime" data-r="popup">
+          <h3>popup</h3>
+          <p>點工具列圖示開的擴充頁。管帳戶列表、設定。關掉就銷毀。</p>
+          <span class="tag">有 chrome.*</span>
+        </article>
+        <article class="runtime" data-r="popout">
+          <h3>popout</h3>
+          <p><code>chrome.windows.create</code> 開的批准視窗。只顯示這次請求。</p>
+          <span class="tag">有 chrome.*</span>
+        </article>
+      </div>
+    </section>
+
+    <!-- 2. Topology -->
+    <section>
+      <h2>2. 誰能跟誰說話（通道拓撲）</h2>
+      <p class="lead">
+        真正只有兩道邊界：網頁主世界 ↔ content 只能用 <code>window.postMessage</code>；
+        content / background / popup / popout 之間用 <code>chrome.runtime</code>。
+      </p>
+
+      <div class="topo" aria-label="Message channel topology">
+        <svg viewBox="0 0 900 420" role="img" aria-labelledby="topoTitle">
+          <title id="topoTitle">Extension message channel topology</title>
+          <defs>
+            <marker id="arrowPm" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#3d9cf0" />
+            </marker>
+            <marker id="arrowRt" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#e6a23c" />
+            </marker>
+            <marker id="arrowPort" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#7fd99a" />
+            </marker>
+          </defs>
+
+          <!-- Page world box -->
+          <rect x="40" y="40" width="260" height="340" rx="4" fill="#121820" stroke="#2d3a47" />
+          <text x="56" y="68" fill="#8b9aab" font-size="12" font-family="IBM Plex Mono, monospace">PAGE WORLD</text>
+          <rect x="70" y="100" width="200" height="70" fill="#152535" stroke="#3d9cf0" stroke-width="2" />
+          <text x="170" y="130" text-anchor="middle" fill="#3d9cf0" font-size="14" font-family="IBM Plex Mono, monospace">dApp</text>
+          <text x="170" y="150" text-anchor="middle" fill="#8b9aab" font-size="11">Wallet Standard API</text>
+          <rect x="70" y="220" width="200" height="70" fill="#152535" stroke="#3d9cf0" stroke-width="2" />
+          <text x="170" y="250" text-anchor="middle" fill="#3d9cf0" font-size="14" font-family="IBM Plex Mono, monospace">inject.js</text>
+          <text x="170" y="270" text-anchor="middle" fill="#8b9aab" font-size="11">provider · Promise map</text>
+          <line x1="170" y1="170" x2="170" y2="220" stroke="#3d9cf0" stroke-width="1.5" marker-end="url(#arrowPm)" />
+          <text x="180" y="200" fill="#3d9cf0" font-size="10">function call</text>
+
+          <!-- Isolated world -->
+          <rect x="340" y="40" width="200" height="340" rx="4" fill="#121820" stroke="#2d3a47" />
+          <text x="356" y="68" fill="#8b9aab" font-size="12" font-family="IBM Plex Mono, monospace">ISOLATED WORLD</text>
+          <rect x="360" y="180" width="160" height="80" fill="#142820" stroke="#52c4a0" stroke-width="2" />
+          <text x="440" y="215" text-anchor="middle" fill="#52c4a0" font-size="14" font-family="IBM Plex Mono, monospace">content.js</text>
+          <text x="440" y="235" text-anchor="middle" fill="#8b9aab" font-size="11">relay only</text>
+
+          <!-- Extension pages -->
+          <rect x="580" y="40" width="280" height="340" rx="4" fill="#121820" stroke="#2d3a47" />
+          <text x="596" y="68" fill="#8b9aab" font-size="12" font-family="IBM Plex Mono, monospace">EXTENSION CONTEXT</text>
+          <rect x="610" y="100" width="220" height="60" fill="#2a2010" stroke="#e6a23c" stroke-width="2" />
+          <text x="720" y="128" text-anchor="middle" fill="#e6a23c" font-size="14" font-family="IBM Plex Mono, monospace">background.js</text>
+          <text x="720" y="146" text-anchor="middle" fill="#8b9aab" font-size="11">keys · signing · ports</text>
+          <rect x="610" y="200" width="100" height="60" fill="#241830" stroke="#c084fc" stroke-width="2" />
+          <text x="660" y="235" text-anchor="middle" fill="#c084fc" font-size="13" font-family="IBM Plex Mono, monospace">popup</text>
+          <rect x="730" y="200" width="100" height="60" fill="#2a1520" stroke="#f472b6" stroke-width="2" />
+          <text x="780" y="235" text-anchor="middle" fill="#f472b6" font-size="13" font-family="IBM Plex Mono, monospace">popout</text>
+          <text x="720" y="310" text-anchor="middle" fill="#8b9aab" font-size="11">chrome.storage = durable data only</text>
+          <text x="720" y="328" text-anchor="middle" fill="#8b9aab" font-size="11">(encrypted keys, settings — not in-flight ops)</text>
+
+          <!-- postMessage bridge -->
+          <line x1="270" y1="255" x2="360" y2="220" stroke="#3d9cf0" stroke-width="2" marker-end="url(#arrowPm)" />
+          <line x1="360" y1="220" x2="270" y2="255" stroke="#3d9cf0" stroke-width="2" opacity="0" />
+          <path d="M270,255 C310,240 320,220 360,220" fill="none" stroke="#3d9cf0" stroke-width="2" marker-end="url(#arrowPm)" />
+          <path d="M360,240 C320,260 310,270 270,275" fill="none" stroke="#3d9cf0" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arrowPm)" />
+          <text x="300" y="200" fill="#3d9cf0" font-size="11" font-family="IBM Plex Mono, monospace">postMessage</text>
+
+          <!-- runtime messages -->
+          <path d="M520,210 C560,180 580,150 610,130" fill="none" stroke="#e6a23c" stroke-width="2" marker-end="url(#arrowRt)" />
+          <path d="M610,145 C580,170 560,200 520,230" fill="none" stroke="#e6a23c" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arrowRt)" />
+          <text x="545" y="160" fill="#e6a23c" font-size="11" font-family="IBM Plex Mono, monospace">sendMessage</text>
+
+          <path d="M720,160 L720,200" fill="none" stroke="#7fd99a" stroke-width="2" marker-end="url(#arrowPort)" />
+          <path d="M680,160 L660,200" fill="none" stroke="#7fd99a" stroke-width="2" marker-end="url(#arrowPort)" />
+          <path d="M760,160 L780,200" fill="none" stroke="#7fd99a" stroke-width="2" marker-end="url(#arrowPort)" />
+          <text x="800" y="180" fill="#7fd99a" font-size="11" font-family="IBM Plex Mono, monospace">port /</text>
+          <text x="800" y="194" fill="#7fd99a" font-size="11" font-family="IBM Plex Mono, monospace">sendMessage</text>
+        </svg>
+      </div>
+      <div class="legend">
+        <span class="pm">window.postMessage（跨 page / content 世界）</span>
+        <span class="rt">chrome.runtime.sendMessage（單次請求）</span>
+        <span class="port">chrome.runtime.connect（長連接 / port）</span>
+        <span class="st">勿用 storage 當進行中操作的总线</span>
+      </div>
+    </section>
+
+    <!-- 3. Channel matrix -->
+    <section>
+      <h2>3. 通道對照表</h2>
+      <p class="lead">從 A 到 B，實際該用哪條 API。</p>
+      <table>
+        <thead>
+          <tr>
+            <th>From → To</th>
+            <th>通道</th>
+            <th>備註</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>inject → content</td>
+            <td><code>window.postMessage</code></td>
+            <td>inject 沒有 chrome.*；必須經 content 橋接</td>
+          </tr>
+          <tr>
+            <td>content → inject</td>
+            <td><code>window.postMessage</code></td>
+            <td>回傳結果給網頁裡掛起的 Promise</td>
+          </tr>
+          <tr>
+            <td>content → background</td>
+            <td><code>chrome.runtime.sendMessage</code></td>
+            <td>或 <code>connect</code> 開 port，方便長時間等批准</td>
+          </tr>
+          <tr>
+            <td>background → content</td>
+            <td><code>chrome.tabs.sendMessage(tabId, …)</code></td>
+            <td>要帶 <code>tabId</code>，不要廣播所有分頁</td>
+          </tr>
+          <tr>
+            <td>popup / popout → background</td>
+            <td><code>chrome.runtime.sendMessage</code> / <code>connect</code></td>
+            <td>擴充頁可直接跟 background 說話，不必繞 content</td>
+          </tr>
+          <tr>
+            <td>background → popup / popout</td>
+            <td>port 推送，或對方主動 pull</td>
+            <td>popout 也可在 URL query 帶 <code>requestId</code></td>
+          </tr>
+          <tr>
+            <td>inject ↔ background</td>
+            <td>❌ 不直連</td>
+            <td>必須 inject → content → background</td>
+          </tr>
+          <tr>
+            <td>任意 → chrome.storage</td>
+            <td>持久化資料</td>
+            <td>加密私鑰、帳戶、設定；不是 request/response 通道</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 4. Flows -->
+    <section>
+      <h2>4. 正確流向：一次請求一條線</h2>
+      <p class="lead">
+        呼叫方發出後留下 Promise，等同一條 <code>requestId</code> 的回覆來 resolve。
+        中間不寫 operation store、不輪詢、不 rehydrate。
+      </p>
+
+      <div class="flow-tabs" role="tablist" aria-label="Flows">
+        <button type="button" role="tab" aria-selected="true" data-panel="sign">Sign / Connect</button>
+        <button type="button" role="tab" aria-selected="false" data-panel="account">Account Changed</button>
+        <button type="button" role="tab" aria-selected="false" data-panel="wrong">錯誤：Storage Bus</button>
+      </div>
+
+      <div class="flow-panel" id="panel-sign" role="tabpanel">
+        <div class="steps">
+          <div class="step">
+            <div class="n">01</div>
+            <div class="body">
+              <strong>dApp 呼叫 Wallet Standard</strong>
+              <p>例如 <code>signTransaction</code>。inject 生成 <code>requestId</code>，把 Promise 放進 map。</p>
+              <div class="path">
+                <span class="chip inject">inject</span>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">02</div>
+            <div class="body">
+              <strong>inject → content（postMessage）</strong>
+              <p>送出 command：<code>signTx</code> + payload + <code>requestId</code> + <code>site</code>。</p>
+              <div class="path">
+                <span class="chip inject">inject</span>
+                <span class="arrow">→ postMessage →</span>
+                <span class="chip content">content</span>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">03</div>
+            <div class="body">
+              <strong>content → background（sendMessage / port）</strong>
+              <p>原樣轉發，附上 <code>tabId</code>。content 不做業務邏輯。</p>
+              <div class="path">
+                <span class="chip content">content</span>
+                <span class="arrow">→ runtime →</span>
+                <span class="chip background">background</span>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">04</div>
+            <div class="body">
+              <strong>background 登記 pending，開 popout</strong>
+              <p>用 <code>Map&lt;requestId, { resolve, tabId, port }&gt;</code> 記在記憶體（或 <code>storage.session</code> 防 SW 被殺）。開批准視窗，URL 帶 <code>requestId</code>。</p>
+              <div class="path">
+                <span class="chip background">background</span>
+                <span class="arrow">→ windows.create →</span>
+                <span class="chip popout">popout</span>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">05</div>
+            <div class="body">
+              <strong>用戶在 popout 批准 / 拒絕</strong>
+              <p>popout 只顯示這次請求。Approve 時把「同意」送回 background——不要在 popout 解密私鑰。</p>
+              <div class="path">
+                <span class="chip popout">popout</span>
+                <span class="arrow">→ sendMessage →</span>
+                <span class="chip background">background</span>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">06</div>
+            <div class="body">
+              <strong>background 簽名</strong>
+              <p>唯一持有密鑰的地方：解密 → 簽名 → 用 <code>requestId</code> 找到當初那條連接。</p>
+              <div class="path">
+                <span class="chip background">background</span>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">07</div>
+            <div class="body">
+              <strong>結果沿原路返回</strong>
+              <p><code>tabs.sendMessage(tabId)</code> → content <code>postMessage</code> → inject 的 Promise resolve。不要廣播所有 tab。</p>
+              <div class="path">
+                <span class="chip background">background</span>
+                <span class="arrow">→</span>
+                <span class="chip content">content</span>
+                <span class="arrow">→</span>
+                <span class="chip inject">inject</span>
+                <span class="arrow">→ dApp</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout">
+          <h3>每個 runtime 只留自己需要的狀態</h3>
+          <p>
+            inject：當前公鑰 + pending Promise map。
+            background：密鑰、授權、pending request。
+            popout：這次要給用戶看的那一條。
+            popup：帳戶 UI / 設定——與進行中簽名無關。
+          </p>
+        </div>
+
+        <pre>// inject：請求與回覆用同一個 requestId 對上
+const pending = new Map();
+
+function request(command, payload) {
+  const requestId = crypto.randomUUID();
+  return new Promise((resolve, reject) => {
+    pending.set(requestId, { resolve, reject });
+    window.postMessage({ source: "solibra-inject", requestId, command, payload }, "*");
+    // 可加 timeout → reject + pending.delete
+  });
+}
+
+window.addEventListener("message", (e) => {
+  if (e.source !== window || e.data?.source !== "solibra-content") return;
+  const entry = pending.get(e.data.requestId);
+  if (!entry) return;
+  pending.delete(e.data.requestId);
+  e.data.error ? entry.reject(e.data.error) : entry.resolve(e.data.result);
+});</pre>
+      </div>
+
+      <div class="flow-panel" id="panel-account" role="tabpanel" hidden>
+        <div class="steps">
+          <div class="step">
+            <div class="n">01</div>
+            <div class="body">
+              <strong>用戶在 popup 切換帳戶</strong>
+              <p>popup 告訴 background「當前帳戶變成 X」。私鑰仍只在 background。</p>
+              <div class="path">
+                <span class="chip popup">popup</span>
+                <span class="arrow">→</span>
+                <span class="chip background">background</span>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">02</div>
+            <div class="body">
+              <strong>background 推給已連接的 tab</strong>
+              <p>只通知有連線的 origin / tab，帶上新的 <code>publicKey</code>。</p>
+              <div class="path">
+                <span class="chip background">background</span>
+                <span class="arrow">→ tabs.sendMessage →</span>
+                <span class="chip content">content</span>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">03</div>
+            <div class="body">
+              <strong>content → inject → emit accountChanged</strong>
+              <p>inject 更新公鑰並觸發 Wallet Standard 的 <code>change</code> / <code>accountChanged</code>。不要清成 null 再強制重連。</p>
+              <div class="path">
+                <span class="chip content">content</span>
+                <span class="arrow">→</span>
+                <span class="chip inject">inject</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="callout">
+          <h3>推送，不要拉</h3>
+          <p>
+            帳戶變更是 background → 頁面的單向事件。不需要頁面輪詢 keys store，
+            也不需要「設 null → 再開 connect 彈窗」。
+          </p>
+        </div>
+      </div>
+
+      <div class="flow-panel" id="panel-wrong" role="tabpanel" hidden>
+        <div class="steps">
+          <div class="step">
+            <div class="n">✕</div>
+            <div class="body">
+              <strong>把進行中操作寫進 chrome.storage</strong>
+              <p>background 寫 OperationRecord → 開 popout → 指望 popout rehydrate 同一份 Zustand。這是在模擬共享記憶體。</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">✕</div>
+            <div class="body">
+              <strong>inject 用 sleep 輪詢本地欄位</strong>
+              <p>單一 <code>#operationRequestId</code> 槽位：並行請求會互相覆蓋；timeout 靠 for-loop sleep。</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">✕</div>
+            <div class="body">
+              <strong>結果再廣播到所有 tab</strong>
+              <p>popout 寫 storage + <code>broadcast</code> 到每個分頁。兩條通道，都不是一個 session。</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">✕</div>
+            <div class="body">
+              <strong>每個 bundle 都 import 同一套 store</strong>
+              <p>為了讓狀態「看起來存在」，被迫做 <code>syncStoreAcrossRuntime</code> / rehydrate。指揮中心碎成五份副本。</p>
+            </div>
+          </div>
+        </div>
+        <div class="callout warn">
+          <h3>Event bus 本身沒錯；錯的是用 storage 當 bus</h3>
+          <p>
+            Command + <code>requestId</code> + <code>postMessage</code> / <code>sendMessage</code>
+            就是正確的 event bus。結果應沿著<strong>同一條 requestId 的對話</strong>回來，
+            而不是寫進資料庫再讓對方掃。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. MV3 note -->
+    <section>
+      <h2>5. MV3 特別注意</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>問題</th>
+            <th>做法</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Service Worker 會被掛起</td>
+            <td>進行中請求可用 <code>chrome.storage.session</code> 暫存；恢復後仍用訊息把結果送回，不要讓頁面掃帳本式 storage</td>
+          </tr>
+          <tr>
+            <td>async listener 回傳值</td>
+            <td><code>onMessage</code> 裡若非同步回覆，要 <code>return true</code> 並在結束時呼叫 <code>sendResponse</code>；長等待改用 port</td>
+          </tr>
+          <tr>
+            <td>找錯 tab</td>
+            <td>從 content 進來的訊息帶著 <code>sender.tab.id</code>；回傳時用那個 id，不要 <code>query({ active: true })</code> 猜</td>
+          </tr>
+          <tr>
+            <td>密碼與私鑰</td>
+            <td>session 密碼放記憶體；加密後的私鑰才進 <code>chrome.storage.local</code>；簽名只在 background</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 6. Cheat sheet -->
+    <section>
+      <h2>6. 一句話心智模型</h2>
+      <pre>網頁只見 provider（inject）
+content 只做橋
+background 是唯一真相與簽名處
+popup / popout 是 UI，說話對象是 background
+storage 存「會活過重開」的東西
+進行中的批准 = 帶 requestId 的對話，不是一份要同步的資料庫</pre>
+    </section>
+  </main>
+
+  <footer>
+    airwave-wallet / research · 對照 solibra-wallet 的 runtime 與訊息設計筆記
+  </footer>
+
+  <script>
+    const tabs = document.querySelectorAll(".flow-tabs [role='tab']");
+    const panels = {
+      sign: document.getElementById("panel-sign"),
+      account: document.getElementById("panel-account"),
+      wrong: document.getElementById("panel-wrong"),
+    };
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const id = tab.getAttribute("data-panel");
+        tabs.forEach((t) => t.setAttribute("aria-selected", String(t === tab)));
+        Object.entries(panels).forEach(([key, el]) => {
+          el.hidden = key !== id;
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave test-web</title>
+  </head>
+  <body>
+    <main>
+      <h1>Airwave test-web</h1>
+      <p>請先在 Chrome 載入未封裝擴充 <code>wallet/dist</code>，於 popup 建立並解鎖錢包。</p>
+      <p id="status">正在尋找 Airwave…</p>
+      <button id="connect" type="button">Connect</button>
+      <button id="sign-msg" type="button" disabled>Sign message</button>
+      <button id="sign-tx" type="button" disabled>Sign transaction</button>
+      <pre id="log"></pre>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

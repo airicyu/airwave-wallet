@@ -1,0 +1,39 @@
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  min-width: 320px;
+  background: #0f1419;
+  color: #e8eef4;
+}
+
+main {
+  padding: 16px;
+}
+
+h1 {
+  font-size: 1.1rem;
+  margin: 0 0 12px;
+}
+
+input,
+select,
+button {
+  display: block;
+  width: 100%;
+  margin: 6px 0;
+  box-sizing: border-box;
+}
+
+button {
+  cursor: pointer;
+  padding: 8px;
+  background: #3d9cf0;
+  border: none;
+  color: #fff;
+  border-radius: 6px;
+}
+
+.error {
+  color: #f07178;
+  font-size: 0.85rem;
+}

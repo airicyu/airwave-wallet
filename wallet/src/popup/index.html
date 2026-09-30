@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main id="app">
+      <h1>Airwave</h1>
+      <section id="setup" hidden>
+        <p>建立新錢包（請記住密碼）</p>
+        <input id="setup-password" type="password" placeholder="密碼" autocomplete="new-password" />
+        <input id="setup-label" type="text" placeholder="帳戶名稱（選填）" />
+        <button id="btn-create">建立</button>
+      </section>
+      <section id="locked" hidden>
+        <p>錢包已鎖定</p>
+        <input id="unlock-password" type="password" placeholder="密碼" autocomplete="current-password" />
+        <button id="btn-unlock">解鎖</button>
+      </section>
+      <section id="unlocked" hidden>
+        <p id="status-line"></p>
+        <label>帳戶</label>
+        <select id="account-select"></select>
+        <button id="btn-generate" type="button">新增帳戶</button>
+        <details>
+          <summary>匯入私鑰</summary>
+          <input id="import-secret" type="password" placeholder="base58 私鑰" />
+          <button id="btn-import" type="button">匯入</button>
+        </details>
+        <label>Cluster</label>
+        <select id="cluster-select">
+          <option value="devnet">devnet</option>
+          <option value="mainnet">mainnet</option>
+        </select>
+        <label>RPC URL</label>
+        <input id="rpc-url" type="url" />
+        <button id="btn-save-settings" type="button">儲存設定</button>
+        <button id="btn-lock" type="button">鎖定</button>
+      </section>
+      <p id="error" class="error" hidden></p>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

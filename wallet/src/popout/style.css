@@ -1,0 +1,48 @@
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  background: #0f1419;
+  color: #e8eef4;
+  min-width: 360px;
+}
+
+main {
+  padding: 20px;
+}
+
+.muted {
+  color: #8b9aab;
+  word-break: break-all;
+}
+
+pre {
+  background: #1a222c;
+  padding: 12px;
+  overflow: auto;
+  max-height: 240px;
+  font-size: 0.75rem;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #3d9cf0;
+  color: #fff;
+}
+
+button.secondary {
+  background: #2d3a47;
+}
+
+.error {
+  color: #f07178;
+}
