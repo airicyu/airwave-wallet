@@ -13,23 +13,61 @@
         <p>建立新錢包（請記住密碼）</p>
         <input id="setup-password" type="password" placeholder="密碼" autocomplete="new-password" />
         <input id="setup-label" type="text" placeholder="帳戶名稱（選填）" />
-        <button id="btn-create">建立</button>
+        <button id="btn-create" type="button">建立</button>
+        <hr />
+        <p>或僅新增觀察帳戶（不需密碼）</p>
+        <input id="setup-watch-pk" type="text" placeholder="公鑰 base58" />
+        <input id="setup-watch-label" type="text" placeholder="名稱（選填）" />
+        <button id="btn-add-watch-setup" type="button">新增觀察帳戶</button>
       </section>
       <section id="locked" hidden>
         <p>錢包已鎖定</p>
         <input id="unlock-password" type="password" placeholder="密碼" autocomplete="current-password" />
-        <button id="btn-unlock">解鎖</button>
+        <button id="btn-unlock" type="button">解鎖</button>
       </section>
-      <section id="unlocked" hidden>
-        <p id="status-line"></p>
-        <label>帳戶</label>
+      <section id="create-vault-banner" hidden>
+        <p>尚無簽名錢包，可建立密碼保護的帳戶</p>
+        <input id="late-setup-password" type="password" placeholder="密碼" autocomplete="new-password" />
+        <input id="late-setup-label" type="text" placeholder="帳戶名稱（選填）" />
+        <button id="btn-create-late" type="button">建立簽名錢包</button>
+      </section>
+      <section id="home" hidden>
+        <h2>首頁</h2>
+        <p id="home-active-label"></p>
+        <p id="home-sol" class="muted">載入中…</p>
+        <h3>Token 帳戶</h3>
+        <ul id="home-tokens"></ul>
+        <p id="home-assets-error" class="error" hidden></p>
+        <button id="btn-refresh-assets" type="button">重新整理餘額</button>
+      </section>
+      <section id="accounts-panel" hidden>
+        <h2>帳戶</h2>
+        <label>目前帳戶</label>
         <select id="account-select"></select>
-        <button id="btn-generate" type="button">新增帳戶</button>
+        <label>重新命名</label>
+        <input id="rename-label" type="text" placeholder="新名稱" />
+        <button id="btn-rename" type="button">儲存名稱</button>
+        <button id="btn-delete" type="button" class="danger">刪除帳戶</button>
         <details>
-          <summary>匯入私鑰</summary>
+          <summary>新增簽名帳戶</summary>
+          <button id="btn-generate" type="button">產生新帳戶</button>
           <input id="import-secret" type="password" placeholder="base58 私鑰" />
           <button id="btn-import" type="button">匯入</button>
         </details>
+        <details>
+          <summary>新增觀察帳戶</summary>
+          <input id="watch-pk" type="text" placeholder="公鑰 base58" />
+          <input id="watch-label" type="text" placeholder="名稱（選填）" />
+          <button id="btn-add-watch" type="button">新增</button>
+        </details>
+      </section>
+      <section id="connected-panel" hidden>
+        <h2>已連線站點</h2>
+        <ul id="connected-list"></ul>
+        <button id="btn-disconnect-all" type="button">全部斷開</button>
+      </section>
+      <section id="settings-panel" hidden>
+        <h2>設定</h2>
         <label>Cluster</label>
         <select id="cluster-select">
           <option value="devnet">devnet</option>

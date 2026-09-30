@@ -56,7 +56,7 @@ airwave-wallet/
 
 ## 開發
 
-目前版本契約：[docs/roadmap/0.1.0/INDEX.md](docs/roadmap/0.1.0/INDEX.md)。
+目前版本契約：[docs/roadmap/0.2.0/INDEX.md](docs/roadmap/0.2.0/INDEX.md)（上一版：[0.1.0](docs/roadmap/0.1.0/INDEX.md)）。
 
 ```bash
 cd wallet && npm install && npm run build

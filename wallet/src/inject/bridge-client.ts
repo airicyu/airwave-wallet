@@ -43,12 +43,14 @@ window.addEventListener("message", (e) => {
     if (!entry) return;
     pending.delete(data.requestId as string);
     if (data.ok) entry.resolve(data.result);
-    else
-      entry.reject(
-        new Error(
-          (data.error as { message?: string } | undefined)?.message ?? "Request failed",
-        ),
-      );
+    else {
+      const errBody = data.error as { code?: string; message?: string } | undefined;
+      const err = new Error(errBody?.message ?? "Request failed") as Error & {
+        code?: string;
+      };
+      if (errBody?.code) err.code = errBody.code;
+      entry.reject(err);
+    }
     return;
   }
 
@@ -59,6 +61,14 @@ window.addEventListener("message", (e) => {
           publicKeyBase58: data.publicKeyBase58 as string,
           cluster: data.cluster as string | undefined,
         },
+      }),
+    );
+  }
+
+  if (data.source === "airwave-content" && data.event === "disconnected") {
+    window.dispatchEvent(
+      new CustomEvent("airwave-disconnected", {
+        detail: { origin: data.origin as string },
       }),
     );
   }

@@ -26,3 +26,8 @@ export type AirwaveBridgeAccountChanged = {
   publicKeyBase58: string;
   cluster: "devnet" | "mainnet";
 };
+
+export type AirwaveBridgeDisconnected = {
+  type: "airwave-bridge-disconnected";
+  origin: string;
+};

@@ -37,3 +37,47 @@ button {
   color: #f07178;
   font-size: 0.85rem;
 }
+
+.muted {
+  color: #9aa7b4;
+}
+
+h2 {
+  font-size: 0.95rem;
+  margin: 16px 0 8px;
+}
+
+h3 {
+  font-size: 0.85rem;
+  margin: 12px 0 6px;
+}
+
+ul {
+  padding-left: 18px;
+  margin: 0 0 8px;
+}
+
+button.danger {
+  background: #c75050;
+}
+
+.connected-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.connected-row button {
+  width: auto;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #2a3540;
+  margin: 12px 0;
+}

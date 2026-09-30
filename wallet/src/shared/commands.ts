@@ -1,6 +1,7 @@
 export type AirwaveCommand =
   | "debug.ping"
   | "dapp.connect"
+  | "dapp.disconnect"
   | "dapp.signMessage"
   | "dapp.signTransaction"
   | "ui.getPending"
@@ -12,6 +13,11 @@ export type AirwaveCommand =
   | "wallet.importAccount"
   | "wallet.generateAccount"
   | "wallet.setActiveAccount"
+  | "wallet.renameAccount"
+  | "wallet.deleteAccount"
+  | "wallet.addReadOnlyAccount"
+  | "wallet.disconnectOrigin"
+  | "wallet.disconnectAllOrigins"
   | "storage.patchSettings";
 
 export type ExtensionRequest = {

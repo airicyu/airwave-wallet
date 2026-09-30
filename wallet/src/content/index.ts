@@ -1,4 +1,8 @@
-import type { AirwaveBridgeAccountChanged, AirwaveBridgeResult } from "../shared/bridge";
+import type {
+  AirwaveBridgeAccountChanged,
+  AirwaveBridgeDisconnected,
+  AirwaveBridgeResult,
+} from "../shared/bridge";
 import type { AirwaveContentIn, AirwaveInjectOut } from "../shared/bridge";
 import type { ExtensionRequest, ExtensionResponse } from "../shared/commands";
 
@@ -11,6 +15,7 @@ function forwardToPage(data: AirwaveContentIn): void {
 const PAGE_COMMANDS = new Set([
   "debug.ping",
   "dapp.connect",
+  "dapp.disconnect",
   "dapp.signMessage",
   "dapp.signTransaction",
 ]);
@@ -67,7 +72,7 @@ window.addEventListener("message", (event) => {
 
 chrome.runtime.onMessage.addListener((message) => {
   if (!message || typeof message !== "object") return;
-  const m = message as AirwaveBridgeResult | AirwaveBridgeAccountChanged;
+  const m = message as AirwaveBridgeResult | AirwaveBridgeAccountChanged | AirwaveBridgeDisconnected;
   if (m.type === "airwave-bridge-result") {
     const br = m as AirwaveBridgeResult;
     forwardToPage({
@@ -85,6 +90,16 @@ chrome.runtime.onMessage.addListener((message) => {
         event: "account-changed",
         publicKeyBase58: ac.publicKeyBase58,
         cluster: ac.cluster,
+      },
+      pageOrigin,
+    );
+  } else if (m.type === "airwave-bridge-disconnected") {
+    const dc = m as AirwaveBridgeDisconnected;
+    window.postMessage(
+      {
+        source: "airwave-content",
+        event: "disconnected",
+        origin: dc.origin,
       },
       pageOrigin,
     );

@@ -7,6 +7,8 @@ import {
 import {
   StandardConnect,
   type StandardConnectFeature,
+  StandardDisconnect,
+  type StandardDisconnectFeature,
   StandardEvents,
   type StandardEventsFeature,
 } from "@wallet-standard/features";
@@ -49,6 +51,11 @@ window.addEventListener("airwave-account-changed", ((ev: CustomEvent) => {
   emitChange();
 }) as EventListener);
 
+window.addEventListener("airwave-disconnected", () => {
+  currentPublicKey = null;
+  emitChange();
+});
+
 export const airwaveWallet: Wallet = {
   version: "1.0.0",
   name: "Airwave",
@@ -73,6 +80,14 @@ export const airwaveWallet: Wallet = {
         return { accounts: [accountFromPublicKey(currentPublicKey)] };
       },
     } satisfies StandardConnectFeature[typeof StandardConnect],
+    [StandardDisconnect]: {
+      version: "1.0.0",
+      disconnect: async () => {
+        await bridgeRequest("dapp.disconnect", {});
+        currentPublicKey = null;
+        emitChange();
+      },
+    } satisfies StandardDisconnectFeature[typeof StandardDisconnect],
     [StandardEvents]: {
       version: "1.0.0",
       on: (event, listener) => {

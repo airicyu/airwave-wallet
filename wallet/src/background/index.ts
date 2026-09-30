@@ -1,7 +1,11 @@
-import { Keypair, VersionedTransaction } from "@solana/web3.js";
+import { Keypair, PublicKey, VersionedTransaction } from "@solana/web3.js";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
-import type { AirwaveBridgeAccountChanged, AirwaveBridgeResult } from "../shared/bridge";
+import type {
+  AirwaveBridgeAccountChanged,
+  AirwaveBridgeDisconnected,
+  AirwaveBridgeResult,
+} from "../shared/bridge";
 import type {
   ConnectPayload,
   ExtensionRequest,
@@ -20,6 +24,7 @@ import {
   readVaultBlob,
   writeAccounts,
   writeActiveAccountId,
+  clearActiveAccountId,
   writeConnections,
   writeSettings,
   writeVaultBlob,
@@ -33,7 +38,7 @@ import {
   unbindPopoutWindow,
 } from "./pending";
 import * as session from "./session";
-import type { AccountMeta } from "../shared/storage-keys";
+import { accountKind, type AccountMeta } from "../shared/storage-keys";
 
 function respond(res: ExtensionResponse): ExtensionResponse {
   return res;
@@ -137,6 +142,72 @@ async function rememberConnectedTab(origin: string, tabId: number, accountId: st
   await writeConnections(connections);
 }
 
+async function notifyDisconnected(tabIds: number[], origin: string): Promise<void> {
+  const msg: AirwaveBridgeDisconnected = { type: "airwave-bridge-disconnected", origin };
+  for (const tabId of tabIds) {
+    try {
+      await chrome.tabs.sendMessage(tabId, msg);
+    } catch {
+      /* tab closed */
+    }
+  }
+}
+
+async function removeConnectionAndNotify(
+  origin: string,
+  extraTabId?: number,
+): Promise<void> {
+  const connections = await readConnections();
+  const rec = connections[origin];
+  if (!rec) {
+    if (extraTabId != null) {
+      await notifyDisconnected([extraTabId], origin);
+    }
+    return;
+  }
+  const tabIds = [...rec.tabIds];
+  if (extraTabId != null && !tabIds.includes(extraTabId)) tabIds.push(extraTabId);
+  delete connections[origin];
+  await writeConnections(connections);
+  await notifyDisconnected(tabIds, origin);
+}
+
+async function disconnectAllConnections(): Promise<void> {
+  const connections = await readConnections();
+  const entries = Object.entries(connections);
+  await writeConnections({});
+  for (const [origin, rec] of entries) {
+    await notifyDisconnected(rec.tabIds, origin);
+  }
+}
+
+function pubkeyExists(accounts: AccountMeta[], publicKeyBase58: string): boolean {
+  return accounts.some((a) => a.publicKeyBase58 === publicKeyBase58);
+}
+
+async function getActiveAccountMeta(): Promise<AccountMeta | null> {
+  const accounts = await readAccounts();
+  const activeId = await readActiveAccountId();
+  if (!activeId) return null;
+  return accounts.find((a) => a.id === activeId) ?? null;
+}
+
+type SignGateError = { code: string; message: string };
+
+async function signGateError(): Promise<SignGateError | null> {
+  const active = await getActiveAccountMeta();
+  if (!active) {
+    return { code: "NO_ACCOUNT", message: "No active account" };
+  }
+  if (accountKind(active) === "readOnly") {
+    return { code: "ACCOUNT_READ_ONLY", message: "Read-only account cannot sign" };
+  }
+  if (!session.isUnlocked()) {
+    return { code: "WALLET_LOCKED", message: "Unlock wallet in extension popup" };
+  }
+  return null;
+}
+
 async function finishConnect(
   requestId: string,
   tabId: number,
@@ -197,12 +268,13 @@ async function finishSignMessage(
     return;
   }
 
-  if (!session.isUnlocked()) {
+  const gate = await signGateError();
+  if (gate) {
     await sendBridgeResult(tabId, {
       type: "airwave-bridge-result",
       requestId,
       ok: false,
-      error: { code: "WALLET_LOCKED", message: "Wallet is locked" },
+      error: gate,
     });
     return;
   }
@@ -249,12 +321,13 @@ async function finishSignTransaction(
     return;
   }
 
-  if (!session.isUnlocked()) {
+  const gate = await signGateError();
+  if (gate) {
     await sendBridgeResult(tabId, {
       type: "airwave-bridge-result",
       requestId,
       ok: false,
-      error: { code: "WALLET_LOCKED", message: "Wallet is locked" },
+      error: gate,
     });
     return;
   }
@@ -361,13 +434,24 @@ async function handleDappCommand(
     });
   }
 
+  if (req.command === "dapp.disconnect") {
+    await removeConnectionAndNotify(origin, tabId);
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { disconnected: true },
+    });
+  }
+
   if (req.command === "dapp.signMessage") {
-    if (!session.isUnlocked()) {
+    const gate = await signGateError();
+    if (gate) {
       return respond({
         kind: "airwave-ext-res",
         requestId: req.requestId,
         ok: false,
-        error: { code: "WALLET_LOCKED", message: "Unlock wallet in extension popup" },
+        error: gate,
       });
     }
     const payload = req.payload as SignMessagePayload;
@@ -403,12 +487,13 @@ async function handleDappCommand(
   }
 
   if (req.command === "dapp.signTransaction") {
-    if (!session.isUnlocked()) {
+    const gate = await signGateError();
+    if (gate) {
       return respond({
         kind: "airwave-ext-res",
         requestId: req.requestId,
         ok: false,
-        error: { code: "WALLET_LOCKED", message: "Unlock wallet in extension popup" },
+        error: gate,
       });
     }
     const requestId = req.requestId;
@@ -500,6 +585,12 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
     const activeAccountId = await readActiveAccountId();
     const settings = await readSettings();
     const vaultExists = (await readVaultBlob()) != null;
+    const connections = await readConnections();
+    const connectionsList = Object.entries(connections).map(([origin, rec]) => ({
+      origin,
+      accountId: rec.accountId,
+      connectedAt: rec.connectedAt,
+    }));
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
@@ -510,6 +601,7 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
         accounts,
         activeAccountId,
         settings,
+        connections: connectionsList,
       },
     });
   }
@@ -573,7 +665,17 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
         error: { code: "VAULT_EXISTS", message: "Vault already exists" },
       });
     }
+    const existingAccounts = await readAccounts();
     const kp = Keypair.generate();
+    const publicKeyBase58 = kp.publicKey.toBase58();
+    if (pubkeyExists(existingAccounts, publicKeyBase58)) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "ACCOUNT_EXISTS", message: "Account with this public key already exists" },
+      });
+    }
     const id = newAccountId();
     const secrets = { secrets: { [id]: secretToStored(kp) } };
     const { blob, key } = await encryptVault(password, secrets);
@@ -581,9 +683,10 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
     const meta: AccountMeta = {
       id,
       label: label ?? "Account 1",
-      publicKeyBase58: kp.publicKey.toBase58(),
+      publicKeyBase58,
+      kind: "signing",
     };
-    await writeAccounts([meta]);
+    await writeAccounts([...existingAccounts, meta]);
     await writeActiveAccountId(id);
     await writeSettings(await readSettings());
     session.setVaultCrypto(key, blob.kdfParams.salt);
@@ -606,17 +709,27 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
       });
     }
     const { label } = (req.payload ?? {}) as { label?: string };
+    const accounts = await readAccounts();
     const kp = Keypair.generate();
+    const publicKeyBase58 = kp.publicKey.toBase58();
+    if (pubkeyExists(accounts, publicKeyBase58)) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "ACCOUNT_EXISTS", message: "Account with this public key already exists" },
+      });
+    }
     const id = newAccountId();
     const secrets = session.getVaultSecrets() ?? { secrets: {} };
     secrets.secrets[id] = secretToStored(kp);
     session.setVaultSecrets(secrets);
     await persistVaultFromSession();
-    const accounts = await readAccounts();
     const meta: AccountMeta = {
       id,
       label: label ?? `Account ${accounts.length + 1}`,
-      publicKeyBase58: kp.publicKey.toBase58(),
+      publicKeyBase58,
+      kind: "signing",
     };
     accounts.push(meta);
     await writeAccounts(accounts);
@@ -653,16 +766,26 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
         error: { code: "BAD_SECRET", message: "Invalid private key" },
       });
     }
+    const accounts = await readAccounts();
+    const publicKeyBase58 = kp.publicKey.toBase58();
+    if (pubkeyExists(accounts, publicKeyBase58)) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "ACCOUNT_EXISTS", message: "Account with this public key already exists" },
+      });
+    }
     const id = newAccountId();
     const secrets = session.getVaultSecrets() ?? { secrets: {} };
     secrets.secrets[id] = secretToStored(kp);
     session.setVaultSecrets(secrets);
     await persistVaultFromSession();
-    const accounts = await readAccounts();
     const meta: AccountMeta = {
       id,
       label: label ?? `Imported ${accounts.length + 1}`,
-      publicKeyBase58: kp.publicKey.toBase58(),
+      publicKeyBase58,
+      kind: "signing",
     };
     accounts.push(meta);
     await writeAccounts(accounts);
@@ -693,6 +816,179 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
       requestId: req.requestId,
       ok: true,
       result: { activeAccountId: accountId },
+    });
+  }
+
+  if (req.command === "wallet.renameAccount") {
+    const { accountId, label: rawLabel } = req.payload as { accountId: string; label: string };
+    const label = rawLabel?.trim() ?? "";
+    if (!label) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "INVALID_LABEL", message: "Label cannot be empty" },
+      });
+    }
+    const accounts = await readAccounts();
+    const idx = accounts.findIndex((a) => a.id === accountId);
+    if (idx < 0) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "ACCOUNT_NOT_FOUND", message: "Account not found" },
+      });
+    }
+    accounts[idx] = { ...accounts[idx], label };
+    await writeAccounts(accounts);
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { account: accounts[idx] },
+    });
+  }
+
+  if (req.command === "wallet.addReadOnlyAccount") {
+    const { publicKeyBase58: rawPk, label } = (req.payload ?? {}) as {
+      publicKeyBase58: string;
+      label?: string;
+    };
+    const trimmed = rawPk?.trim() ?? "";
+    let pk: PublicKey;
+    try {
+      pk = new PublicKey(trimmed);
+    } catch {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "INVALID_PUBLIC_KEY", message: "Invalid public key" },
+      });
+    }
+    const publicKeyBase58 = pk.toBase58();
+    const accounts = await readAccounts();
+    if (pubkeyExists(accounts, publicKeyBase58)) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "ACCOUNT_EXISTS", message: "Account with this public key already exists" },
+      });
+    }
+    const id = newAccountId();
+    const meta: AccountMeta = {
+      id,
+      label: label?.trim() || `Watch ${publicKeyBase58.slice(0, 6)}…`,
+      publicKeyBase58,
+      kind: "readOnly",
+    };
+    accounts.push(meta);
+    await writeAccounts(accounts);
+    const activeId = await readActiveAccountId();
+    if (!activeId) {
+      await writeActiveAccountId(id);
+    }
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { account: meta },
+    });
+  }
+
+  if (req.command === "wallet.deleteAccount") {
+    const { accountId } = req.payload as { accountId: string };
+    const accounts = await readAccounts();
+    const target = accounts.find((a) => a.id === accountId);
+    if (!target) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "ACCOUNT_NOT_FOUND", message: "Account not found" },
+      });
+    }
+    if (accountKind(target) === "signing" && !session.isUnlocked()) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "WALLET_LOCKED", message: "Unlock wallet to delete signing account" },
+      });
+    }
+
+    const connections = await readConnections();
+    const disconnectPairs: { origin: string; tabIds: number[] }[] = [];
+    for (const [origin, rec] of Object.entries(connections)) {
+      if (rec.accountId === accountId) {
+        disconnectPairs.push({ origin, tabIds: [...rec.tabIds] });
+        delete connections[origin];
+      }
+    }
+
+    const nextAccounts = accounts.filter((a) => a.id !== accountId);
+    await writeAccounts(nextAccounts);
+    await writeConnections(connections);
+
+    if (accountKind(target) === "signing" && session.isUnlocked()) {
+      const secrets = session.getVaultSecrets();
+      if (secrets) {
+        delete secrets.secrets[accountId];
+        session.setVaultSecrets(secrets);
+        await persistVaultFromSession();
+      }
+    }
+
+    for (const { origin, tabIds } of disconnectPairs) {
+      await notifyDisconnected(tabIds, origin);
+    }
+
+    const activeId = await readActiveAccountId();
+    if (activeId === accountId) {
+      if (nextAccounts.length > 0) {
+        await writeActiveAccountId(nextAccounts[0].id);
+        await notifyAccountChanged(nextAccounts[0].publicKeyBase58);
+      } else {
+        await clearActiveAccountId();
+      }
+    }
+
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { deleted: true },
+    });
+  }
+
+  if (req.command === "wallet.disconnectOrigin") {
+    const { origin } = req.payload as { origin: string };
+    if (!origin) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "BAD_REQUEST", message: "Origin required" },
+      });
+    }
+    await removeConnectionAndNotify(origin);
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { disconnected: true },
+    });
+  }
+
+  if (req.command === "wallet.disconnectAllOrigins") {
+    await disconnectAllConnections();
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { disconnected: true },
     });
   }
 

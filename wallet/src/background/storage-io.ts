@@ -34,6 +34,10 @@ export async function writeActiveAccountId(id: string): Promise<void> {
   await chrome.storage.local.set({ [STORAGE.activeAccountId]: id });
 }
 
+export async function clearActiveAccountId(): Promise<void> {
+  await chrome.storage.local.remove(STORAGE.activeAccountId);
+}
+
 export async function readConnections(): Promise<ConnectionsMap> {
   const r = await chrome.storage.local.get(STORAGE.connections);
   return (r[STORAGE.connections] as ConnectionsMap | undefined) ?? {};

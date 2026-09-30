@@ -13,11 +13,18 @@ export type Settings = {
   rpcUrl: string;
 };
 
+export type AccountKind = "signing" | "readOnly";
+
 export type AccountMeta = {
   id: string;
   label: string;
   publicKeyBase58: string;
+  kind?: AccountKind;
 };
+
+export function accountKind(meta: AccountMeta): AccountKind {
+  return meta.kind ?? "signing";
+}
 
 export type ConnectionRecord = {
   accountId: string;

@@ -1,8 +1,10 @@
 import { getWallets } from "@wallet-standard/app";
 import {
   StandardConnect,
+  StandardDisconnect,
   StandardEvents,
   type StandardConnectFeature,
+  type StandardDisconnectFeature,
   type StandardEventsFeature,
 } from "@wallet-standard/features";
 import {
@@ -24,6 +26,7 @@ import {
 const logEl = document.getElementById("log")!;
 const statusEl = document.getElementById("status")!;
 const btnConnect = document.getElementById("connect") as HTMLButtonElement;
+const btnDisconnect = document.getElementById("disconnect") as HTMLButtonElement;
 const btnSignMsg = document.getElementById("sign-msg") as HTMLButtonElement;
 const btnSignTx = document.getElementById("sign-tx") as HTMLButtonElement;
 
@@ -79,6 +82,25 @@ function waitForAirwave(timeoutMs = 5000): Promise<Wallet> {
   });
 }
 
+btnDisconnect.addEventListener("click", async () => {
+  try {
+    const wallet = await waitForAirwave();
+    const disconnect = wallet.features[StandardDisconnect] as
+      | StandardDisconnectFeature[typeof StandardDisconnect]
+      | undefined;
+    if (!disconnect) {
+      log("wallet 無 disconnect feature");
+      return;
+    }
+    await disconnect.disconnect();
+    log("Disconnected");
+    enableSigning(undefined);
+    setStatus("已斷開連線");
+  } catch (e) {
+    log("Disconnect error:", e instanceof Error ? e.message : e);
+  }
+});
+
 btnConnect.addEventListener("click", async () => {
   try {
     const wallet = await waitForAirwave();
@@ -116,7 +138,8 @@ btnSignMsg.addEventListener("click", async () => {
     const [out] = await signMessage.signMessage({ account, message });
     log("Signature base58:", bs58.encode(out.signature));
   } catch (e) {
-    log("Sign message error:", e instanceof Error ? e.message : e);
+    const err = e as Error & { code?: string };
+    log("Sign message error:", err.code ?? "", err.message ?? e);
   }
 });
 

@@ -11,6 +11,7 @@
 | 版本 | 狀態 | 說明 |
 |------|------|------|
 | [0.1.0](./0.1.0/INDEX.md) | shipped | Minimal wallet MVP + test-web |
+| [0.2.0](./0.2.0/INDEX.md) | in progress | 帳戶生命週期 + 首頁資產 + disconnect |
 
 構想放 `backlog/`，排進某版後與該版 INDEX 雙向連結。
 
