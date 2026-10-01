@@ -42,10 +42,10 @@
 
 ## 完成檢查
 
-- [ ] INDEX 驗收全勾（或 implementation-review 逐條通過）
-- [ ] 手驗指令跑過（含未封裝擴充 UI）
-- [ ] design-review 無未關 HIGH
-- [ ] changelog／package version 於 shipped 時對齊 `0.2.0`
+- [x] INDEX 驗收全勾（或 implementation-review 逐條通過）
+- [x] 手驗指令跑過（含未封裝擴充 UI）
+- [x] design-review 無未關 HIGH
+- [x] changelog／package version 於 shipped 時對齊 `0.2.0`
 - [ ] **Do not commit unless the user asks**
 
 ---

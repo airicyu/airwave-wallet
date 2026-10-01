@@ -11,6 +11,8 @@ export type Cluster = "devnet" | "mainnet";
 export type Settings = {
   cluster: Cluster;
   rpcUrl: string;
+  heliusApiUrl: string;
+  jupiterApiKey: string;
 };
 
 export type AccountKind = "signing" | "readOnly";
@@ -37,4 +39,16 @@ export type ConnectionsMap = Record<string, ConnectionRecord>;
 export const DEFAULT_SETTINGS: Settings = {
   cluster: "devnet",
   rpcUrl: "https://api.devnet.solana.com",
+  heliusApiUrl: "",
+  jupiterApiKey: "",
 };
+
+export const PUBLIC_RPC_BY_CLUSTER: Record<Cluster, string> = {
+  devnet: "https://api.devnet.solana.com",
+  mainnet: "https://api.mainnet-beta.solana.com",
+};
+
+export function isPublicClusterRpc(url: string): boolean {
+  const u = url.trim();
+  return u === PUBLIC_RPC_BY_CLUSTER.devnet || u === PUBLIC_RPC_BY_CLUSTER.mainnet;
+}

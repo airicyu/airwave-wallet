@@ -8,6 +8,12 @@ export default defineManifest({
   action: {
     default_popup: "src/popup/index.html",
     default_title: "Airwave",
+    default_icon: {
+      "16": "public/icon16.png",
+      "32": "public/icon32.png",
+      "48": "public/icon48.png",
+      "128": "public/icon128.png",
+    },
   },
   background: {
     service_worker: "src/background/index.ts",

@@ -26,13 +26,15 @@ async function load(): Promise<void> {
   }
   const p = res.result as PendingRecord;
   originEl.textContent = p.origin;
-  kindEl.textContent =
-    p.kind === "connect"
-      ? "網站要求連線"
-      : p.kind === "signMessage"
-        ? "簽署訊息"
-        : "簽署交易";
-  detailEl.textContent = JSON.stringify(p.payload, null, 2);
+  if (p.kind === "connect") {
+    kindEl.textContent = "這個網站想連線到你的錢包";
+    detailEl.hidden = true;
+    detailEl.textContent = "";
+  } else {
+    kindEl.textContent = p.kind === "signMessage" ? "簽署訊息" : "簽署交易";
+    detailEl.hidden = false;
+    detailEl.textContent = JSON.stringify(p.payload, null, 2);
+  }
 }
 
 async function resolve(decision: "approve" | "reject"): Promise<void> {

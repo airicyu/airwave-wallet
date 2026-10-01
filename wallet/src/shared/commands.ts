@@ -16,8 +16,10 @@ export type AirwaveCommand =
   | "wallet.renameAccount"
   | "wallet.deleteAccount"
   | "wallet.addReadOnlyAccount"
+  | "wallet.exportAccountSecret"
   | "wallet.disconnectOrigin"
   | "wallet.disconnectAllOrigins"
+  | "wallet.getHomeTokens"
   | "storage.patchSettings";
 
 export type ExtensionRequest = {

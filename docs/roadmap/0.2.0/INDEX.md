@@ -1,8 +1,8 @@
 # 0.2.0 — 帳戶生命週期 + 首頁資產 + disconnect
 
-- **狀態：** `in progress`
+- **狀態：** `shipped`
 - **上游版本：** [0.1.0](../0.1.0/INDEX.md)（`shipped`）
-- **Changelog：** [`changelog.md`](../../../changelog.md)（本版 shipped 時追加）
+- **Changelog：** [`changelog.md`](../../../changelog.md#020--2026-10-01)
 - **Backlog：** （無獨立檔；scope 來自規劃對話）
 
 ## 產品句
@@ -90,14 +90,14 @@
 
 - [x] `cd wallet && npm run build` 成功
 - [x] `cd test-web && npm run build` 或 `npm run dev` 可開（與 0.1.0 相同本機埠）
-- [ ] Popup：重新命名帳戶後列表與 storage meta 一致
-- [ ] Popup：新增 read-only（公鑰）→ 可切換 → Sign message／Sign transaction 被拒（`ACCOUNT_READ_ONLY`）
-- [ ] Popup：刪除非唯一帳戶 → 該帳戶消失；若刪 active 則自動切到另一帳戶並 dApp 見 change（若曾連線）
-- [ ] Popup 首頁：在**鎖定或已解鎖**下，只要有 active 公鑰即可顯示 SOL 與「token 帳戶列」區域（空列表可接受）；RPC 錯誤可見
-- [ ] test-web：Disconnect → 簽名失敗或需重連；再 Connect 成功
-- [ ] Popup：已連線站點可斷開單一 origin
-- [ ] Wallet Standard 宣告含 `standard:disconnect`；**無** signIn／signAll／signAndSend 空廣告
-- [ ] 無 hardcode 密碼；pending 仍不進 storage；結果不廣播全 tab（靜態複核）
+- [x] Popup：重新命名帳戶後列表與 storage meta 一致
+- [x] Popup：新增 read-only（公鑰）→ 可切換 → Sign message／Sign transaction 被拒（`ACCOUNT_READ_ONLY`）
+- [x] Popup：刪除非唯一帳戶 → 該帳戶消失；若刪 active 則自動切到另一帳戶並 dApp 見 change（若曾連線）
+- [x] Popup 首頁：在**鎖定或已解鎖**下，只要有 active 公鑰即可顯示 Tokens 列表（**SOL 第一列**＋legacy SPL；空 SPL 可接受）；RPC 錯誤可見
+- [x] test-web：Disconnect → 簽名失敗或需重連；再 Connect 成功
+- [x] Popup：已連線站點可斷開單一 origin
+- [x] Wallet Standard 宣告含 `standard:disconnect`；**無** signIn／signAll／signAndSend 空廣告
+- [x] 無 hardcode 密碼；pending 仍不進 storage；結果不廣播全 tab（靜態複核）
 
 ## 手驗指令（整包）
 

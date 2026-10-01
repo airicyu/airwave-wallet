@@ -9,7 +9,21 @@ import type { VaultBlob } from "../shared/crypto-vault";
 
 export async function readSettings(): Promise<Settings> {
   const r = await chrome.storage.local.get(STORAGE.settings);
-  return (r[STORAGE.settings] as Settings | undefined) ?? { ...DEFAULT_SETTINGS };
+  const raw = r[STORAGE.settings] as Partial<Settings> | undefined;
+  return normalizeSettings(raw);
+}
+
+export function normalizeSettings(raw: Partial<Settings> | undefined): Settings {
+  const merged = { ...DEFAULT_SETTINGS, ...raw };
+  return {
+    cluster: merged.cluster === "mainnet" ? "mainnet" : "devnet",
+    rpcUrl:
+      typeof merged.rpcUrl === "string" && merged.rpcUrl.trim()
+        ? merged.rpcUrl.trim()
+        : DEFAULT_SETTINGS.rpcUrl,
+    heliusApiUrl: typeof merged.heliusApiUrl === "string" ? merged.heliusApiUrl : "",
+    jupiterApiKey: typeof merged.jupiterApiKey === "string" ? merged.jupiterApiKey : "",
+  };
 }
 
 export async function writeSettings(settings: Settings): Promise<void> {

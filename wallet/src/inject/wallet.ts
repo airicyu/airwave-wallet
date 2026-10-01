@@ -74,9 +74,12 @@ export const airwaveWallet: Wallet = {
           publicKey: string;
           cluster?: "devnet" | "mainnet";
         };
+        const prevPk = currentPublicKey?.toBase58() ?? null;
+        const prevCluster = currentCluster;
         applyCluster(result.cluster);
         currentPublicKey = new PublicKey(result.publicKey);
-        emitChange();
+        const nextPk = currentPublicKey.toBase58();
+        if (prevPk !== nextPk || prevCluster !== currentCluster) emitChange();
         return { accounts: [accountFromPublicKey(currentPublicKey)] };
       },
     } satisfies StandardConnectFeature[typeof StandardConnect],

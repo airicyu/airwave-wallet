@@ -51,7 +51,10 @@ function enableSigning(address: string | undefined): void {
   if (address) setStatus(`已連線：${address}`);
 }
 
+let changeSubscribed = false;
+
 function subscribeChange(wallet: Wallet): void {
+  if (changeSubscribed) return;
   const events = wallet.features[StandardEvents] as
     | StandardEventsFeature[typeof StandardEvents]
     | undefined;
@@ -60,6 +63,7 @@ function subscribeChange(wallet: Wallet): void {
     log("account change:", address ?? "(empty)");
     enableSigning(address);
   });
+  changeSubscribed = true;
 }
 
 function waitForAirwave(timeoutMs = 5000): Promise<Wallet> {

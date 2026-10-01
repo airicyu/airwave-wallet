@@ -87,5 +87,6 @@
 | [README.md](README.md) | 給人看的專案說明 |
 | [brainstorm/full-picture.md](brainstorm/full-picture.md) | 整盤構想 |
 | [docs/roadmap/README.md](docs/roadmap/README.md) | Roadmap 入口 |
+| [docs/roadmap/DOMAIN.md](docs/roadmap/DOMAIN.md) | 領域用語（帳戶／地址／聚合） |
 | [docs/roadmap/GUIDELINES.md](docs/roadmap/GUIDELINES.md) | 怎麼寫自足版本契約 |
 | [docs/roadmap/agent-workflow.md](docs/roadmap/agent-workflow.md) | 審查閘門與 Track 流程 |

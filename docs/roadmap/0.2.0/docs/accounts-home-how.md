@@ -107,7 +107,7 @@ const tokenAccounts = await conn.getParsedTokenAccountsByOwner(pk, {
 });
 ```
 
-顯示：SOL（`lamports / 1e9`）；每筆 token：mint 縮寫、uiAmount／amount+decimals。零餘額仍列出。不呼叫 Jupiter。
+顯示：同一 **Tokens** 列表；**第一列固定為 SOL**（`lamports / 1e9`，視同 native token）；其後為 legacy SPL token 帳戶（mint 縮寫、uiAmount／amount+decimals）。零餘額仍列出。不呼叫 Jupiter。
 
 RPC 失敗：主區錯誤字串；不白屏。Active／rpcUrl 變更或「重新整理」→ 重抓。
 

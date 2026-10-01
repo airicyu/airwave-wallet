@@ -28,6 +28,7 @@ import {
   writeConnections,
   writeSettings,
   writeVaultBlob,
+  normalizeSettings,
 } from "./storage-io";
 import {
   addPending,
@@ -39,6 +40,7 @@ import {
 } from "./pending";
 import * as session from "./session";
 import { accountKind, type AccountMeta } from "../shared/storage-keys";
+import { getHomeTokensForOwner } from "./home-tokens-service";
 
 function respond(res: ExtensionResponse): ExtensionResponse {
   return res;
@@ -642,7 +644,7 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
         kind: "airwave-ext-res",
         requestId: req.requestId,
         ok: false,
-        error: { code: "BAD_PASSWORD", message: "Wrong password" },
+        error: { code: "INVALID_PASSWORD", message: "Wrong password" },
       });
     }
   }
@@ -654,7 +656,7 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
         kind: "airwave-ext-res",
         requestId: req.requestId,
         ok: false,
-        error: { code: "BAD_PASSWORD", message: "Password required" },
+        error: { code: "INVALID_PASSWORD", message: "Password required" },
       });
     }
     if ((await readVaultBlob()) != null) {
@@ -850,6 +852,71 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
     });
   }
 
+  if (req.command === "wallet.exportAccountSecret") {
+    if (!session.isUnlocked()) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "WALLET_LOCKED", message: "Unlock wallet first" },
+      });
+    }
+    const { accountId, password } = req.payload as { accountId: string; password: string };
+    const blob = await readVaultBlob();
+    if (!blob) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "NO_VAULT", message: "Create a wallet first" },
+      });
+    }
+    let decrypted: Awaited<ReturnType<typeof decryptVault>>;
+    try {
+      decrypted = await decryptVault(password, blob);
+    } catch {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "INVALID_PASSWORD", message: "Wrong password" },
+      });
+    }
+    const accounts = await readAccounts();
+    const target = accounts.find((a) => a.id === accountId);
+    if (!target) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "ACCOUNT_NOT_FOUND", message: "Account not found" },
+      });
+    }
+    if (accountKind(target) !== "signing") {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "ACCOUNT_READ_ONLY", message: "Read-only account has no secret" },
+      });
+    }
+    const secretBase58 = decrypted.secrets.secrets[accountId];
+    if (!secretBase58) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "ACCOUNT_NOT_FOUND", message: "Secret not found for account" },
+      });
+    }
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { secretBase58 },
+    });
+  }
+
   if (req.command === "wallet.addReadOnlyAccount") {
     const { publicKeyBase58: rawPk, label } = (req.payload ?? {}) as {
       publicKeyBase58: string;
@@ -992,10 +1059,25 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
     });
   }
 
+  if (req.command === "wallet.getHomeTokens") {
+    const payload = (req.payload ?? {}) as { force?: boolean };
+    const settings = await readSettings();
+    const owner = await getActivePublicKey();
+    const result = await getHomeTokensForOwner(owner, settings, {
+      force: payload.force === true,
+    });
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result,
+    });
+  }
+
   if (req.command === "storage.patchSettings") {
     const patch = req.payload as Partial<import("../shared/storage-keys").Settings>;
     const settings = await readSettings();
-    const next = { ...settings, ...patch };
+    const next = normalizeSettings({ ...settings, ...patch });
     await writeSettings(next);
     const pubkey = await getActivePublicKey();
     if (pubkey) await notifyAccountChanged(pubkey);
