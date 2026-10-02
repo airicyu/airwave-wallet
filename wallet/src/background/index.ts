@@ -1,4 +1,4 @@
-import { Keypair, PublicKey, VersionedTransaction } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, VersionedTransaction } from "@solana/web3.js";
 import bs58 from "bs58";
 import nacl from "tweetnacl";
 import type {
@@ -14,6 +14,19 @@ import type {
   SignMessagePayload,
   SignTransactionPayload,
 } from "../shared/commands";
+import {
+  dedupePreserveOrder,
+  findCombinedById,
+  getExposedPublicKey,
+  getHomeTokenOwners,
+  isCombinedAccount,
+  isCombinedAccountId,
+  isSigningOrWatch,
+  normalizeSubPubkeysInput,
+  parsePublicKeyBase58,
+  resolvePubkey,
+  signingWatchPubkeyExists,
+} from "../shared/accounts";
 import { decryptVault, encryptVault, encryptVaultWithKey } from "../shared/crypto-vault";
 import {
   getActivePublicKey,
@@ -39,8 +52,16 @@ import {
   unbindPopoutWindow,
 } from "./pending";
 import * as session from "./session";
-import { accountKind, type AccountMeta } from "../shared/storage-keys";
-import { getHomeTokensForOwner } from "./home-tokens-service";
+import { accountKind, type AccountMeta, type CombinedAccountMeta } from "../shared/storage-keys";
+import { getHomeTokensForOwners } from "./home-tokens-service";
+import {
+  createEnglishMnemonic12,
+  keypairFromMnemonic,
+  parseMnemonic,
+  pathTemplate,
+  SEED_PREVIEW_COUNT,
+  type SeedPathKind,
+} from "../shared/seed-derive";
 
 function respond(res: ExtensionResponse): ExtensionResponse {
   return res;
@@ -52,6 +73,7 @@ async function persistVaultFromSession(): Promise<void> {
   if (!cryptoState || !secrets) throw new Error("NOT_UNLOCKED");
   const blob = await encryptVaultWithKey(cryptoState.key, cryptoState.saltB64, secrets);
   await writeVaultBlob(blob);
+  await session.persistUnlockedSession();
 }
 
 function newAccountId(): string {
@@ -82,6 +104,29 @@ async function notifyAccountChanged(publicKeyBase58: string): Promise<void> {
     cluster: settings.cluster,
   };
   for (const rec of Object.values(connections)) {
+    for (const tabId of rec.tabIds) {
+      try {
+        await chrome.tabs.sendMessage(tabId, msg);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+}
+
+async function notifyAccountChangedForConnectionAccount(
+  boundAccountId: string,
+  publicKeyBase58: string,
+): Promise<void> {
+  const connections = await readConnections();
+  const settings = await readSettings();
+  const msg: AirwaveBridgeAccountChanged = {
+    type: "airwave-bridge-account-changed",
+    publicKeyBase58,
+    cluster: settings.cluster,
+  };
+  for (const rec of Object.values(connections)) {
+    if (rec.accountId !== boundAccountId) continue;
     for (const tabId of rec.tabIds) {
       try {
         await chrome.tabs.sendMessage(tabId, msg);
@@ -184,7 +229,7 @@ async function disconnectAllConnections(): Promise<void> {
 }
 
 function pubkeyExists(accounts: AccountMeta[], publicKeyBase58: string): boolean {
-  return accounts.some((a) => a.publicKeyBase58 === publicKeyBase58);
+  return signingWatchPubkeyExists(accounts, publicKeyBase58);
 }
 
 async function getActiveAccountMeta(): Promise<AccountMeta | null> {
@@ -201,13 +246,30 @@ async function signGateError(): Promise<SignGateError | null> {
   if (!active) {
     return { code: "NO_ACCOUNT", message: "No active account" };
   }
-  if (accountKind(active) === "readOnly") {
+
+  const gatePubkey = getExposedPublicKey(active);
+  const accounts = await readAccounts();
+  const secrets = session.isUnlocked() ? session.getVaultSecrets()?.secrets : undefined;
+  const resolved = resolvePubkey(accounts, secrets, gatePubkey);
+
+  if (resolved.role === "readOnly") {
     return { code: "ACCOUNT_READ_ONLY", message: "Read-only account cannot sign" };
   }
   if (!session.isUnlocked()) {
     return { code: "WALLET_LOCKED", message: "Unlock wallet in extension popup" };
   }
   return null;
+}
+
+async function keypairForActiveSigning(): Promise<Keypair | null> {
+  const active = await getActiveAccountMeta();
+  if (!active || !session.isUnlocked()) return null;
+  const accounts = await readAccounts();
+  const secrets = session.getVaultSecrets()?.secrets;
+  const gatePubkey = getExposedPublicKey(active);
+  const resolved = resolvePubkey(accounts, secrets, gatePubkey);
+  if (resolved.role !== "signing") return null;
+  return session.getKeypair(resolved.accountId) ?? null;
 }
 
 async function finishConnect(
@@ -281,8 +343,7 @@ async function finishSignMessage(
     return;
   }
 
-  const activeId = await readActiveAccountId();
-  const kp = activeId ? session.getKeypair(activeId) : undefined;
+  const kp = await keypairForActiveSigning();
   if (!kp) {
     await sendBridgeResult(tabId, {
       type: "airwave-bridge-result",
@@ -334,8 +395,7 @@ async function finishSignTransaction(
     return;
   }
 
-  const activeId = await readActiveAccountId();
-  const kp = activeId ? session.getKeypair(activeId) : undefined;
+  const kp = await keypairForActiveSigning();
   if (!kp) {
     await sendBridgeResult(tabId, {
       type: "airwave-bridge-result",
@@ -609,7 +669,7 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
   }
 
   if (req.command === "wallet.lock") {
-    session.lock();
+    await session.lock();
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
@@ -633,6 +693,7 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
       const { secrets, key } = await decryptVault(password, blob);
       session.setVaultCrypto(key, blob.kdfParams.salt);
       session.loadSecrets(secrets);
+      await session.persistUnlockedSession();
       return respond({
         kind: "airwave-ext-res",
         requestId: req.requestId,
@@ -644,13 +705,18 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
         kind: "airwave-ext-res",
         requestId: req.requestId,
         ok: false,
-        error: { code: "INVALID_PASSWORD", message: "Wrong password" },
+        error: { code: "INVALID_PASSWORD", message: "密碼錯誤" },
       });
     }
   }
 
   if (req.command === "wallet.createVault") {
-    const { password, label } = req.payload as { password: string; label?: string };
+    const { password, label, secretBase58, empty } = req.payload as {
+      password: string;
+      label?: string;
+      secretBase58?: string;
+      empty?: boolean;
+    };
     if (!password) {
       return respond({
         kind: "airwave-ext-res",
@@ -668,7 +734,36 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
       });
     }
     const existingAccounts = await readAccounts();
-    const kp = Keypair.generate();
+    if (empty && !secretBase58?.trim()) {
+      const secrets = { secrets: {} };
+      const { blob, key } = await encryptVault(password, secrets);
+      await writeVaultBlob(blob);
+      await writeSettings(await readSettings());
+      session.setVaultCrypto(key, blob.kdfParams.salt);
+      session.loadSecrets(secrets);
+      await session.persistUnlockedSession();
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: true,
+        result: { account: null },
+      });
+    }
+    let kp: Keypair;
+    if (secretBase58?.trim()) {
+      try {
+        kp = Keypair.fromSecretKey(bs58.decode(secretBase58.trim()));
+      } catch {
+        return respond({
+          kind: "airwave-ext-res",
+          requestId: req.requestId,
+          ok: false,
+          error: { code: "BAD_SECRET", message: "Invalid private key" },
+        });
+      }
+    } else {
+      kp = Keypair.generate();
+    }
     const publicKeyBase58 = kp.publicKey.toBase58();
     if (pubkeyExists(existingAccounts, publicKeyBase58)) {
       return respond({
@@ -693,11 +788,55 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
     await writeSettings(await readSettings());
     session.setVaultCrypto(key, blob.kdfParams.salt);
     session.loadSecrets(secrets);
+    await session.persistUnlockedSession();
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
       ok: true,
       result: { account: meta },
+    });
+  }
+
+  if (req.command === "wallet.generateSeedAccount") {
+    if (!session.isUnlocked()) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "WALLET_LOCKED", message: "請先解鎖錢包" },
+      });
+    }
+    const { label } = (req.payload ?? {}) as { label?: string };
+    const accounts = await readAccounts();
+    const mnemonic = createEnglishMnemonic12();
+    const kp = keypairFromMnemonic(mnemonic, "phantom", 0);
+    const publicKeyBase58 = kp.publicKey.toBase58();
+    if (pubkeyExists(accounts, publicKeyBase58)) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "ACCOUNT_EXISTS", message: "Account with this public key already exists" },
+      });
+    }
+    const id = newAccountId();
+    const secrets = session.getVaultSecrets() ?? { secrets: {} };
+    secrets.secrets[id] = secretToStored(kp);
+    session.setVaultSecrets(secrets);
+    await persistVaultFromSession();
+    const meta: AccountMeta = {
+      id,
+      label: label ?? `Account ${accounts.length + 1}`,
+      publicKeyBase58,
+      kind: "signing",
+    };
+    accounts.push(meta);
+    await writeAccounts(accounts);
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { account: meta, mnemonic },
     });
   }
 
@@ -707,7 +846,7 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
         kind: "airwave-ext-res",
         requestId: req.requestId,
         ok: false,
-        error: { code: "WALLET_LOCKED", message: "Unlock first" },
+        error: { code: "WALLET_LOCKED", message: "請先解鎖錢包" },
       });
     }
     const { label } = (req.payload ?? {}) as { label?: string };
@@ -749,23 +888,161 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
         kind: "airwave-ext-res",
         requestId: req.requestId,
         ok: false,
-        error: { code: "WALLET_LOCKED", message: "Unlock first" },
+        error: { code: "WALLET_LOCKED", message: "請先解鎖錢包" },
       });
     }
-    const { secretBase58, label } = req.payload as {
-      secretBase58: string;
+    const { secret, secretBase58, label } = req.payload as {
+      secret?: string;
+      secretBase58?: string;
       label?: string;
     };
+    const secretRaw = (secret ?? secretBase58 ?? "").trim();
     let kp: Keypair;
     try {
-      const raw = bs58.decode(secretBase58.trim());
-      kp = Keypair.fromSecretKey(raw);
+      let bytes: Uint8Array;
+      if (secretRaw.startsWith("[")) {
+        const arr = JSON.parse(secretRaw) as unknown;
+        if (
+          !Array.isArray(arr) ||
+          arr.length < 32 ||
+          !arr.every((n) => Number.isInteger(n) && (n as number) >= 0 && (n as number) <= 255)
+        ) {
+          throw new Error("bad bytes");
+        }
+        bytes = Uint8Array.from(arr as number[]);
+      } else {
+        bytes = bs58.decode(secretRaw);
+      }
+      kp = Keypair.fromSecretKey(bytes);
     } catch {
       return respond({
         kind: "airwave-ext-res",
         requestId: req.requestId,
         ok: false,
         error: { code: "BAD_SECRET", message: "Invalid private key" },
+      });
+    }
+    const accounts = await readAccounts();
+    const publicKeyBase58 = kp.publicKey.toBase58();
+    if (pubkeyExists(accounts, publicKeyBase58)) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "ACCOUNT_EXISTS", message: "Account with this public key already exists" },
+      });
+    }
+    const id = newAccountId();
+    const secrets = session.getVaultSecrets() ?? { secrets: {} };
+    secrets.secrets[id] = secretToStored(kp);
+    session.setVaultSecrets(secrets);
+    await persistVaultFromSession();
+    const meta: AccountMeta = {
+      id,
+      label: label ?? `Imported ${accounts.length + 1}`,
+      publicKeyBase58,
+      kind: "signing",
+    };
+    accounts.push(meta);
+    await writeAccounts(accounts);
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { account: meta },
+    });
+  }
+
+  if (req.command === "wallet.previewSeedAccounts") {
+    if (!session.isUnlocked()) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "WALLET_LOCKED", message: "請先解鎖錢包" },
+      });
+    }
+    const { mnemonic, pathKind, customPath } = (req.payload ?? {}) as {
+      mnemonic?: string;
+      pathKind?: SeedPathKind;
+      customPath?: string;
+    };
+    let phrase: string;
+    let kind: SeedPathKind;
+    try {
+      phrase = parseMnemonic(mnemonic ?? "");
+      kind = pathKind ?? "phantom";
+      if (kind !== "phantom" && kind !== "cli" && kind !== "change" && kind !== "custom") {
+        throw new Error("INVALID_PATH");
+      }
+      pathTemplate(kind, customPath);
+    } catch (e) {
+      const code = e instanceof Error && (e.message === "INVALID_MNEMONIC" || e.message === "INVALID_PATH")
+        ? e.message
+        : "INVALID_MNEMONIC";
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: {
+          code,
+          message: code === "INVALID_PATH" ? "路徑無效" : "助記詞無效",
+        },
+      });
+    }
+    const accounts = Array.from({ length: SEED_PREVIEW_COUNT }, (_, index) => {
+      const kp = keypairFromMnemonic(phrase, kind, index, customPath);
+      return { index, publicKeyBase58: kp.publicKey.toBase58() };
+    });
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { pathPreview: pathTemplate(kind, customPath), accounts },
+    });
+  }
+
+  if (req.command === "wallet.importSeedAccount") {
+    if (!session.isUnlocked()) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "WALLET_LOCKED", message: "請先解鎖錢包" },
+      });
+    }
+    const { mnemonic, pathKind, customPath, index, label } = (req.payload ?? {}) as {
+      mnemonic?: string;
+      pathKind?: SeedPathKind;
+      customPath?: string;
+      index?: number;
+      label?: string;
+    };
+    if (!Number.isInteger(index) || (index as number) < 0 || (index as number) >= SEED_PREVIEW_COUNT) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "BAD_INDEX", message: "請選帳戶" },
+      });
+    }
+    let kp: Keypair;
+    try {
+      const phrase = parseMnemonic(mnemonic ?? "");
+      const kind = pathKind ?? "phantom";
+      kp = keypairFromMnemonic(phrase, kind, index as number, customPath);
+    } catch (e) {
+      const code = e instanceof Error && (e.message === "INVALID_MNEMONIC" || e.message === "INVALID_PATH")
+        ? e.message
+        : "INVALID_MNEMONIC";
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: {
+          code,
+          message: code === "INVALID_PATH" ? "路徑無效" : "助記詞無效",
+        },
       });
     }
     const accounts = await readAccounts();
@@ -812,7 +1089,7 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
     }
     await writeActiveAccountId(accountId);
     const acc = accounts.find((a) => a.id === accountId)!;
-    await notifyAccountChanged(acc.publicKeyBase58);
+    await notifyAccountChanged(getExposedPublicKey(acc));
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
@@ -879,7 +1156,7 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
         kind: "airwave-ext-res",
         requestId: req.requestId,
         ok: false,
-        error: { code: "INVALID_PASSWORD", message: "Wrong password" },
+        error: { code: "INVALID_PASSWORD", message: "密碼錯誤" },
       });
     }
     const accounts = await readAccounts();
@@ -890,6 +1167,14 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
         requestId: req.requestId,
         ok: false,
         error: { code: "ACCOUNT_NOT_FOUND", message: "Account not found" },
+      });
+    }
+    if (accountKind(target) === "combined") {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "ACCOUNT_READ_ONLY", message: "Read-only account has no secret" },
       });
     }
     if (accountKind(target) !== "signing") {
@@ -965,6 +1250,197 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
     });
   }
 
+  if (req.command === "wallet.createCombinedAccount") {
+    const { label, subPubkeys: rawSubs, mainPubkey: rawMain } = (req.payload ?? {}) as {
+      label?: string;
+      subPubkeys?: string[];
+      mainPubkey?: string;
+    };
+    const accounts = await readAccounts();
+    const normalized = normalizeSubPubkeysInput(rawSubs ?? [], accounts);
+    if (!normalized.ok) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "INVALID_PUBLIC_KEY", message: "Invalid public key or empty list" },
+      });
+    }
+    const { subPubkeys } = normalized;
+    let mainPubkey = subPubkeys[0];
+    if (rawMain != null && String(rawMain).trim()) {
+      const parsedMain = parsePublicKeyBase58(String(rawMain));
+      if (!parsedMain || !subPubkeys.includes(parsedMain)) {
+        return respond({
+          kind: "airwave-ext-res",
+          requestId: req.requestId,
+          ok: false,
+          error: { code: "INVALID_PUBLIC_KEY", message: "mainPubkey must be in subPubkeys" },
+        });
+      }
+      mainPubkey = parsedMain;
+    }
+    const id = newAccountId();
+    const meta: CombinedAccountMeta = {
+      id,
+      label: label?.trim() || `Combined ${accounts.length + 1}`,
+      kind: "combined",
+      subPubkeys,
+      mainPubkey,
+    };
+    accounts.push(meta);
+    await writeAccounts(accounts);
+    const activeId = await readActiveAccountId();
+    if (!activeId) {
+      await writeActiveAccountId(id);
+    }
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { account: meta },
+    });
+  }
+
+  if (req.command === "wallet.addCombinedSub") {
+    const { combinedId, publicKeyBase58: rawPk } = req.payload as {
+      combinedId: string;
+      publicKeyBase58: string;
+    };
+    const accounts = await readAccounts();
+    const combined = findCombinedById(accounts, combinedId);
+    if (!combined) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "ACCOUNT_NOT_FOUND", message: "Combined account not found" },
+      });
+    }
+    if (isCombinedAccountId(accounts, rawPk?.trim() ?? "")) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "INVALID_PUBLIC_KEY", message: "Invalid public key" },
+      });
+    }
+    const pk = parsePublicKeyBase58(rawPk ?? "");
+    if (!pk) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "INVALID_PUBLIC_KEY", message: "Invalid public key" },
+      });
+    }
+    if (combined.subPubkeys.includes(pk)) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: true,
+        result: { account: combined },
+      });
+    }
+    combined.subPubkeys = [...combined.subPubkeys, pk];
+    await writeAccounts(accounts);
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { account: combined },
+    });
+  }
+
+  if (req.command === "wallet.removeCombinedSub") {
+    const { combinedId, publicKeyBase58: rawPk } = req.payload as {
+      combinedId: string;
+      publicKeyBase58: string;
+    };
+    const pk = parsePublicKeyBase58(rawPk ?? "");
+    const accounts = await readAccounts();
+    const combined = findCombinedById(accounts, combinedId);
+    if (!combined) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "ACCOUNT_NOT_FOUND", message: "Combined account not found" },
+      });
+    }
+    if (!pk || !combined.subPubkeys.includes(pk)) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "ACCOUNT_NOT_FOUND", message: "Member not in combined account" },
+      });
+    }
+    if (combined.subPubkeys.length === 1) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "LAST_SUB_ACCOUNT", message: "Cannot remove the last member" },
+      });
+    }
+    const nextSubs = combined.subPubkeys.filter((s) => s !== pk);
+    const wasMain = combined.mainPubkey === pk;
+    combined.subPubkeys = nextSubs;
+    if (wasMain) {
+      combined.mainPubkey = nextSubs[0];
+    }
+    await writeAccounts(accounts);
+    const activeId = await readActiveAccountId();
+    if (activeId === combinedId && wasMain) {
+      await notifyAccountChangedForConnectionAccount(combinedId, combined.mainPubkey);
+    }
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { account: combined },
+    });
+  }
+
+  if (req.command === "wallet.setCombinedMain") {
+    const { combinedId, mainPubkey: rawMain } = req.payload as {
+      combinedId: string;
+      mainPubkey: string;
+    };
+    const mainPubkey = parsePublicKeyBase58(rawMain ?? "");
+    const accounts = await readAccounts();
+    const combined = findCombinedById(accounts, combinedId);
+    if (!combined) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "ACCOUNT_NOT_FOUND", message: "Combined account not found" },
+      });
+    }
+    if (!mainPubkey || !combined.subPubkeys.includes(mainPubkey)) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "INVALID_PUBLIC_KEY", message: "mainPubkey must be a member" },
+      });
+    }
+    combined.mainPubkey = mainPubkey;
+    await writeAccounts(accounts);
+    const activeId = await readActiveAccountId();
+    if (activeId === combinedId) {
+      await notifyAccountChangedForConnectionAccount(combinedId, mainPubkey);
+    }
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { account: combined },
+    });
+  }
+
   if (req.command === "wallet.deleteAccount") {
     const { accountId } = req.payload as { accountId: string };
     const accounts = await readAccounts();
@@ -1016,7 +1492,7 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
     if (activeId === accountId) {
       if (nextAccounts.length > 0) {
         await writeActiveAccountId(nextAccounts[0].id);
-        await notifyAccountChanged(nextAccounts[0].publicKeyBase58);
+        await notifyAccountChanged(getExposedPublicKey(nextAccounts[0]));
       } else {
         await clearActiveAccountId();
       }
@@ -1062,9 +1538,20 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
   if (req.command === "wallet.getHomeTokens") {
     const payload = (req.payload ?? {}) as { force?: boolean };
     const settings = await readSettings();
-    const owner = await getActivePublicKey();
-    const result = await getHomeTokensForOwner(owner, settings, {
+    const active = await getActiveAccountMeta();
+    if (!active) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: true,
+        result: { rows: [] },
+      });
+    }
+    const owners = getHomeTokenOwners(active);
+    const withMembers = isCombinedAccount(active);
+    const result = await getHomeTokensForOwners(owners, settings, {
       force: payload.force === true,
+      withMembers,
     });
     return respond({
       kind: "airwave-ext-res",
@@ -1118,6 +1605,7 @@ async function dispatch(
       error: { code: "FORBIDDEN", message: "Command not allowed from this sender" },
     });
   }
+  await session.ensureHydrated();
   if (req.command.startsWith("dapp.") || req.command === "debug.ping") {
     return handleDappCommand(req);
   }

@@ -43,7 +43,23 @@ async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey>
     },
     baseKey,
     { name: "AES-GCM", length: 256 },
-    false,
+    true,
+    ["encrypt", "decrypt"],
+  );
+}
+
+export async function exportVaultKeyRaw(key: CryptoKey): Promise<string> {
+  const raw = new Uint8Array(await crypto.subtle.exportKey("raw", key));
+  return b64encode(raw);
+}
+
+export async function importVaultKeyRaw(rawB64: string): Promise<CryptoKey> {
+  const raw = b64decode(rawB64);
+  return crypto.subtle.importKey(
+    "raw",
+    raw as BufferSource,
+    { name: "AES-GCM", length: 256 },
+    true,
     ["encrypt", "decrypt"],
   );
 }

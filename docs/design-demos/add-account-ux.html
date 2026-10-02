@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 新增帳戶（概念稿）</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --accent-dim: #2a6ea8;
+        --danger: #c75050;
+        --ok: #4ecb8d;
+        --popup-w: 384px;
+        --popup-h: 640px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1120px; margin: 0 auto; padding: 28px 20px 56px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 18px; max-width: 54rem; font-size: 0.92rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+      .chip {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 7px 13px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      .chip:hover { border-color: var(--text-dim); }
+      .chip.active { border-color: var(--accent); background: #1a2838; }
+      .layout {
+        display: grid;
+        grid-template-columns: var(--popup-w) 1fr;
+        gap: 28px;
+        align-items: start;
+      }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+      .phone-wrap { display: flex; flex-direction: column; gap: 8px; }
+      .phone-cap { font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.02em; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+      .top h2 {
+        font-size: 0.95rem;
+        margin: 0;
+        font-weight: 600;
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .icon-btn {
+        flex-shrink: 0;
+        width: 34px; height: 34px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-sm);
+        background: var(--fill);
+        color: var(--text);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .icon-btn:hover { border-color: var(--text-dim); }
+      .icon-btn.ghost {
+        border-color: transparent;
+        background: transparent;
+        color: var(--text-muted);
+      }
+      .icon-btn.ghost:hover { background: var(--fill); border-color: var(--stroke); color: var(--text); }
+      .icon-btn.sm { width: 28px; height: 28px; }
+      .icon-btn:disabled { opacity: 0.28; cursor: not-allowed; }
+      .icon-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+      .icon-btn.sm svg { width: 14px; height: 14px; }
+      .icon-btn.danger:hover { color: var(--danger); border-color: #5a3030; background: #241818; }
+
+      .body {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 12px 12px 16px;
+      }
+      .body::-webkit-scrollbar { width: 6px; }
+      .body::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 4px; }
+      .dock {
+        flex-shrink: 0;
+        padding: 10px 12px 12px;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+      }
+      .dock[hidden] { display: none; }
+
+      .kind {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-align: left;
+        padding: 12px 12px;
+        margin: 0 0 8px;
+        border: 1px solid var(--stroke);
+        border-radius: 10px;
+        background: var(--fill);
+        color: var(--text);
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.88rem;
+      }
+      .kind:hover { border-color: var(--accent-dim); }
+      .kind .chev { margin-left: auto; color: var(--text-dim); font-size: 0.9rem; }
+
+      .field { margin: 0 0 12px; }
+      .field > label {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        margin-bottom: 5px;
+      }
+      .field input[type="text"],
+      .field input[type="password"],
+      .field textarea {
+        width: 100%;
+        background: var(--bg-elevated);
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        color: var(--text);
+        font: inherit;
+        font-size: 0.82rem;
+        padding: 8px 10px;
+      }
+      .field textarea {
+        min-height: 72px;
+        resize: vertical;
+        font-family: var(--mono);
+        font-size: 0.75rem;
+      }
+      .pw-wrap { position: relative; }
+      .pw-wrap input { padding-right: 36px; }
+      .pw-wrap .icon-btn {
+        position: absolute;
+        right: 4px; top: 4px;
+      }
+
+      .seg {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+        background: var(--bg);
+        border: 1px solid var(--stroke-soft);
+        border-radius: 10px;
+        padding: 3px;
+        margin-bottom: 12px;
+      }
+      .seg button {
+        border: 0;
+        background: transparent;
+        color: var(--text-muted);
+        border-radius: 8px;
+        padding: 7px 8px;
+        font: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .seg button.on {
+        background: #1a2838;
+        color: var(--text);
+        box-shadow: inset 0 0 0 1px var(--accent);
+      }
+
+      .word-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .count-pill {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--text);
+        background: #1a2838;
+        border: 1px solid var(--stroke);
+        border-radius: 999px;
+        padding: 3px 9px;
+        font-variant-numeric: tabular-nums;
+      }
+      .count-pill.ok { border-color: #2a5a44; color: var(--ok); }
+      .count-pill.bad { border-color: #5a3030; color: #e8a0a0; }
+      .word-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+      .slot {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: var(--bg-elevated);
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        padding: 0 6px 0 8px;
+        min-width: 0;
+      }
+      .slot n {
+        font-size: 0.62rem;
+        color: var(--text-dim);
+        font-variant-numeric: tabular-nums;
+        flex-shrink: 0;
+        width: 1.2em;
+      }
+      .slot input {
+        min-width: 0;
+        flex: 1;
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        font: inherit;
+        font-size: 0.72rem;
+        padding: 7px 0;
+      }
+      .slot input:focus { outline: none; }
+      .slot:focus-within { border-color: var(--accent-dim); }
+
+      .scheme-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+      .scheme-btn {
+        border: 1px solid var(--stroke);
+        background: var(--fill);
+        color: var(--text-muted);
+        border-radius: 8px;
+        padding: 7px 8px;
+        font: inherit;
+        font-size: 0.76rem;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .scheme-btn.on {
+        background: #1a2838;
+        color: var(--text);
+        border-color: var(--accent);
+      }
+      .path-line {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        color: var(--text-dim);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin: 0 0 10px;
+        min-width: 0;
+      }
+      .acct {
+        display: grid;
+        grid-template-columns: 16px auto minmax(0, 1fr) auto;
+        align-items: center;
+        column-gap: 8px;
+        width: 100%;
+        margin: 0 0 6px;
+        padding: 8px 10px;
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        background: var(--fill);
+        cursor: pointer;
+        font: inherit;
+        color: var(--text);
+        text-align: left;
+      }
+      .acct.on {
+        border-color: var(--accent);
+        background: #1a2838;
+      }
+      .acct input {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        flex-shrink: 0;
+        accent-color: var(--accent);
+      }
+      .acct .idx {
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      .acct .pk {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+      .acct .sol {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .fmt {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.7rem;
+        color: var(--text-dim);
+        margin: 6px 0 0;
+        min-height: 1.2em;
+      }
+      .fmt .dot {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: var(--text-dim);
+        flex-shrink: 0;
+      }
+      .fmt.ok { color: var(--ok); }
+      .fmt.ok .dot { background: var(--ok); }
+      .fmt.bad { color: #e8a0a0; }
+      .fmt.bad .dot { background: var(--danger); }
+
+      .chip-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 8px;
+        min-height: 28px;
+      }
+      .addr-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        max-width: 100%;
+        background: #1a2838;
+        border: 1px solid var(--stroke);
+        border-radius: 999px;
+        padding: 2px 4px 2px 10px;
+        font-family: var(--mono);
+        font-size: 0.7rem;
+      }
+      .addr-chip.main { border-color: var(--accent); }
+      .addr-chip button.pick {
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+        padding: 2px 4px;
+        max-width: 9.5em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .add-line {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .add-line input { flex: 1; min-width: 0; }
+
+      .pick {
+        display: grid;
+        grid-template-columns: 18px minmax(0, 1fr) auto;
+        align-items: center;
+        column-gap: 10px;
+        width: 100%;
+        margin: 0 0 8px;
+        padding: 8px 10px;
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        background: var(--fill);
+        cursor: pointer;
+      }
+      .pick input {
+        width: 16px; height: 16px; margin: 0;
+        accent-color: var(--accent);
+      }
+      .pick .nm {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.84rem;
+      }
+      .pick .addr {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        white-space: nowrap;
+      }
+      .sec-head {
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        margin: 4px 0 8px;
+      }
+      .tag {
+        font-size: 0.62rem;
+        padding: 1px 6px;
+        border-radius: 999px;
+        background: #1a2838;
+        color: var(--accent);
+        white-space: nowrap;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 10px;
+        border: 1px solid var(--stroke-soft);
+        border-radius: 8px;
+        margin-top: 6px;
+        font-size: 0.8rem;
+      }
+      .mono { font-family: var(--mono); color: var(--text-muted); }
+
+      .foot { display: none; }
+      .primary {
+        width: 100%;
+        border: 0;
+        background: var(--accent);
+        color: #061018;
+        font-weight: 700;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .primary:disabled { opacity: 0.45; cursor: default; }
+      .err { color: #e8a0a0; font-size: 0.78rem; margin: 6px 0 0; min-height: 1.1em; }
+
+      .success {
+        text-align: center;
+        padding: 28px 8px 8px;
+      }
+      .success .pk {
+        font-family: var(--mono);
+        font-size: 0.95rem;
+        color: var(--text);
+        margin: 8px 0 18px;
+      }
+      .success .ok-mark {
+        width: 40px; height: 40px;
+        margin: 0 auto 10px;
+        border-radius: 50%;
+        background: #163024;
+        color: var(--ok);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .legend { font-size: 0.86rem; color: var(--text-muted); }
+      .legend h3 { margin: 0 0 10px; font-size: 0.95rem; color: var(--text); }
+      .legend ul { margin: 0 0 16px; padding-left: 1.15em; }
+      .legend li { margin: 0 0 8px; }
+      .legend code {
+        font-family: var(--mono);
+        font-size: 0.78em;
+        color: var(--text);
+        background: var(--fill);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>新增帳戶</h1>
+      <p class="lede">
+        Popup（384×640）第一層只列四種方式；各自進入操作頁。外層晶片切保險庫狀態與畫面，手機內 Back 走同一套導航。
+      </p>
+      <div class="controls" id="chips">
+        <button class="chip active" type="button" data-jump="add">選項列表</button>
+        <button class="chip" type="button" data-jump="generate">產生</button>
+        <button class="chip" type="button" data-jump="import">匯入</button>
+        <button class="chip" type="button" data-jump="watch">觀察</button>
+        <button class="chip" type="button" data-jump="combined">Combined</button>
+      </div>
+      <div class="layout">
+        <div class="phone-wrap">
+          <span class="phone-cap">互動 popup</span>
+          <div class="phone" id="phone">
+            <div class="top">
+              <button class="icon-btn" type="button" id="back" title="返回" aria-label="返回">
+                <svg viewBox="0 0 24 24"><path d="M15 6 9 12l6 6"/></svg>
+              </button>
+              <h2 id="title">新增帳戶</h2>
+              <button class="icon-btn ghost" type="button" title="選單" aria-label="選單">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="6" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="18" r="1.4"/></svg>
+              </button>
+            </div>
+            <div class="body" id="body"></div>
+            <div class="dock" id="dock" hidden></div>
+          </div>
+        </div>
+        <div class="legend">
+          <h3>實作備註</h3>
+          <ul>
+            <li>安裝後先設密碼並建立保險庫。產生／匯入／觀察<strong>不再</strong>出現密碼欄，也不把「尚無保險庫」當成路徑。</li>
+            <li>助記詞匯入是<strong>概念，尚未實作</strong>。產品今日僅有密鑰匯入。不要在 popup 內放紅條說明，除非該能力上線後的空狀態。</li>
+            <li>助記詞分兩屏：先填 12／24 詞（殼底「下一步」）；再選路徑方案並從衍生列挑一戶（殼底「匯入」）。不要在同一屏混填 path + 單一 index。</li>
+            <li>方案短標：標準＝<code>m/44'/501'/{n}'/0'</code>（Phantom／Solflare）；CLI／Ledger＝<code>m/44'/501'/{n}'</code>；Change＝<code>m/44'/501'/0'/{n}'</code>；自訂須含 <code>{n}</code> 或 <code>n'</code> 佔位。列出 index 0–19，列上只顯示 <code>#n</code>＋公鑰前4…後4＋SOL（nowrap）；完整 path 單行 ellipsis 放方案下方。</li>
+            <li>密鑰欄一次貼上即可：偵測 <code>[193, 240, …]</code> JSON／位元組陣列，或 base58 secret。狀態列只顯示「base58／位元組／無法辨識」。</li>
+            <li>Combined：可貼多行、或單列＋加號圖示。第一個有效地址＝目前錢包，使用者可點 chip 改選。勾選既有帳戶立刻加入成員。頁級主按鈕在殼底 <code>flex-shrink:0</code> 停靠列。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <script>
+      const ICO_PLUS = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
+      const ICO_X = '<svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7 7 17"/></svg>';
+      const ICO_EYE = '<svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+      const ICO_CHEV = '<svg viewBox="0 0 24 24"><path d="M8 10l4 4 4-4"/></svg>';
+      const ICO_OK = '<svg viewBox="0 0 24 24" width="22" height="22"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M6 12.5 10 16.5 18 8"/></svg>';
+
+      const EXISTING = [
+        { label: "Trading", pk: "buwa6jXuR8w8pca7RVMw5LcacD8sQDfbrdWEu429XsS" },
+        { label: "Watch-only", pk: "So11111111111111111111111111111111111111112" },
+      ];
+
+      const MOCK_PK = [
+        "7nYqDemoAaa11111111111111111111111111111Aa",
+        "4kLmDemoBbb22222222222222222222222222222Bb",
+        "9pQrDemoCcc33333333333333333333333333333Cc",
+        "2sTuDemoDdd44444444444444444444444444444Dd",
+        "8vWxDemoEee55555555555555555555555555555Ee",
+        "3yZaDemoFff66666666666666666666666666666Ff",
+        "5bCdDemoGgg77777777777777777777777777777Gg",
+        "6eFgDemoHhh88888888888888888888888888888Hh",
+        "1hIjDemoIii99999999999999999999999999999Ii",
+        "HwKDemoJjj00000000000000000000000000000Jj",
+        "BnMDemoKkk11111111111111111111111111111Kk",
+        "PqRDemoLll22222222222222222222222222222Ll",
+        "StUDemoMmm33333333333333333333333333333Mm",
+        "VwXDemoNnn44444444444444444444444444444Nn",
+        "YzADemoOoo55555555555555555555555555555Oo",
+        "CdEDemoPpp66666666666666666666666666666Pp",
+        "FgHDemoQqq77777777777777777777777777777Qq",
+        "IjKDemoRrr88888888888888888888888888888Rr",
+        "LmNDemoSss99999999999999999999999999999Ss",
+        "OpQDemoTtt00000000000000000000000000000Tt",
+      ];
+      const MOCK_SOL = [
+        "0", "0.12", "12.4", "—", "0.03", "1.8", "—", "0",
+        "44.1", "0.12", "—", "0.4", "2.01", "—", "0", "7.7",
+        "0.12", "—", "0.01", "3",
+      ];
+      const SCHEMES = [
+        { id: "phantom", label: "標準", path: "m/44'/501'/{n}'/0'" },
+        { id: "cli", label: "CLI／Ledger", path: "m/44'/501'/{n}'" },
+        { id: "change", label: "Change", path: "m/44'/501'/0'/{n}'" },
+        { id: "custom", label: "自訂", path: "" },
+      ];
+
+      const state = {
+        screen: "add",
+        hasVault: true,
+        gen: { label: "", pw: "", pw2: "", showPw: false, done: false, pk: "" },
+        importMode: "pick",
+        seed: {
+          words: Array(12).fill(""),
+          target: 12,
+          step: "words",
+          scheme: "phantom",
+          customPath: "m/44'/501'/{n}'/0'",
+          selected: null,
+        },
+        secret: { raw: "", label: "", pw: "", pw2: "", showPw: false, done: false },
+        watch: { addr: "", name: "", err: "" },
+        comb: { name: "", draft: "", chips: [], picked: new Set(), current: "", err: "" },
+      };
+
+      function shortPk(pk) {
+        if (!pk || pk.length < 8) return pk || "—";
+        return pk.slice(0, 4) + "…" + pk.slice(-4);
+      }
+      function looksPk(s) {
+        return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s);
+      }
+      function esc(s) {
+        return String(s).replace(/[&<>"']/g, (c) => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        }[c]));
+      }
+
+      function detectSecret(raw) {
+        const t = raw.trim();
+        if (!t) return { kind: "empty", ok: false };
+        if (t.startsWith("[")) {
+          try {
+            const arr = JSON.parse(t);
+            const ok = Array.isArray(arr) && arr.length >= 32 && arr.every((n) => Number.isInteger(n) && n >= 0 && n <= 255);
+            return { kind: "bytes", ok };
+          } catch {
+            return { kind: "bytes", ok: false };
+          }
+        }
+        const b58 = /^[1-9A-HJ-NP-Za-km-z]+$/.test(t) && t.length >= 64 && t.length <= 128;
+        return { kind: "base58", ok: b58 };
+      }
+
+      function filledWords() {
+        return state.seed.words.filter((w) => w.trim()).length;
+      }
+
+      function schemePath() {
+        const s = SCHEMES.find((x) => x.id === state.seed.scheme);
+        if (state.seed.scheme === "custom") return state.seed.customPath.trim();
+        return s ? s.path : "";
+      }
+
+      function customPathOk(raw) {
+        const t = String(raw || "").trim();
+        if (!t.startsWith("m/")) return false;
+        if (!/^m\/[0-9n'\/{}]+$/.test(t)) return false;
+        return t.includes("{n}") || /(^|\/)n'(?=\/|$)/.test(t) || /(^|\/)'(?=\/|$)/.test(t);
+      }
+
+      function pathOk() {
+        if (state.seed.scheme !== "custom") return true;
+        return customPathOk(state.seed.customPath);
+      }
+
+      function mockRow(i) {
+        const rot = state.seed.scheme === "cli" ? 3 : state.seed.scheme === "change" ? 7 : state.seed.scheme === "custom" ? 11 : 0;
+        const pk = MOCK_PK[(i + rot) % MOCK_PK.length];
+        const sol = MOCK_SOL[(i + rot) % MOCK_SOL.length];
+        return { i, pk, sol };
+      }
+
+      function syncChips() {
+        document.querySelectorAll("#chips [data-jump]").forEach((b) => {
+          b.classList.toggle("active", b.dataset.jump === jumpKey());
+        });
+      }
+      function jumpKey() {
+        if (state.screen === "generate") return "generate";
+        if (state.screen.startsWith("import")) return "import";
+        if (state.screen === "watch") return "watch";
+        if (state.screen === "combined") return "combined";
+        return "add";
+      }
+
+      function pwFields() {
+        return "";
+      }
+
+      function vaultOk() {
+        return true;
+      }
+
+      function renderAdd() {
+        document.getElementById("title").textContent = "新增帳戶";
+        document.getElementById("body").innerHTML = `
+          <button type="button" class="kind" data-go="generate">產生新錢包<span class="chev">›</span></button>
+          <button type="button" class="kind" data-go="import">匯入錢包<span class="chev">›</span></button>
+          <button type="button" class="kind" data-go="watch">建立觀察帳戶<span class="chev">›</span></button>
+          <button type="button" class="kind" data-go="combined">建立 Combined<span class="chev">›</span></button>
+        `;
+        document.querySelectorAll("[data-go]").forEach((b) => {
+          b.onclick = () => {
+            const g = b.dataset.go;
+            if (g === "import") { state.screen = "import"; state.importMode = "pick"; }
+            else state.screen = g;
+            render();
+          };
+        });
+      }
+
+      function renderGenerate() {
+        document.getElementById("title").textContent = "產生新錢包";
+        if (state.gen.done) {
+          document.getElementById("body").innerHTML = `
+            <div class="success">
+              <div class="ok-mark">${ICO_OK}</div>
+              <div class="pk">${esc(shortPk(state.gen.pk))}</div>
+            </div>
+          `;
+          setDock(`<button type="button" class="primary" id="done">完成</button>`);
+          document.getElementById("done").onclick = () => { state.screen = "add"; state.gen.done = false; render(); };
+          return;
+        }
+        const can = vaultOk(state.gen);
+        document.getElementById("body").innerHTML = `
+          <div class="field">
+            <label>名稱</label>
+            <input id="g-label" type="text" placeholder="選填" value="${esc(state.gen.label)}" />
+          </div>
+          ${pwFields("g", state.gen)}
+          <p class="err" id="g-err"></p>
+        `;
+        setDock(`<button type="button" class="primary" id="g-go" ${can ? "" : "disabled"}>產生</button>`);
+        document.getElementById("g-label").oninput = (e) => { state.gen.label = e.target.value; };
+        document.getElementById("g-go").onclick = () => {
+          if (!vaultOk(state.gen)) {
+            document.getElementById("g-err").textContent = state.gen.pw !== state.gen.pw2 ? "密碼不一致" : "需要密碼";
+            return;
+          }
+          state.gen.pk = "7nYqDemoPubxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxKey1";
+          state.gen.done = true;
+          render();
+        };
+      }
+
+      function renderImport() {
+        if (state.importMode === "seed") {
+          return state.seed.step === "pick" ? renderSeedPick() : renderSeed();
+        }
+        if (state.importMode === "secret") return renderSecret();
+        document.getElementById("title").textContent = "匯入錢包";
+        document.getElementById("body").innerHTML = `
+          <button type="button" class="kind" data-m="seed">助記詞<span class="chev">›</span></button>
+          <button type="button" class="kind" data-m="secret">密鑰<span class="chev">›</span></button>
+        `;
+        document.querySelectorAll("[data-m]").forEach((b) => {
+          b.onclick = () => {
+            state.importMode = b.dataset.m;
+            if (b.dataset.m === "seed") {
+              state.seed.step = "words";
+              state.seed.selected = null;
+            }
+            render();
+          };
+        });
+      }
+
+      function renderSeed() {
+        document.getElementById("title").textContent = "助記詞";
+        const n = filledWords();
+        const target = n > 12 ? 24 : 12;
+        state.seed.target = target;
+        if (state.seed.words.length !== target) {
+          const next = Array(target).fill("");
+          state.seed.words.forEach((w, i) => { if (i < target) next[i] = w; });
+          state.seed.words = next;
+        }
+        const complete = n === 12 || n === 24;
+        const pillCls = complete ? "ok" : n === 0 ? "" : "bad";
+        const slots = state.seed.words.map((w, i) => `
+          <label class="slot">
+            <n>${i + 1}</n>
+            <input data-i="${i}" type="text" autocomplete="off" spellcheck="false" placeholder="word" value="${esc(w)}" />
+          </label>
+        `).join("");
+        const can = complete;
+        document.getElementById("body").innerHTML = `
+          <div class="word-toolbar">
+            <span class="count-pill ${pillCls}">${n}／${target === 24 || n > 12 ? 24 : 12}</span>
+            <button type="button" class="icon-btn sm ghost" id="paste-hint" title="貼上填入格子" aria-label="貼上填入格子">
+              ${ICO_PLUS}
+            </button>
+          </div>
+          <div class="word-grid">${slots}</div>
+          <p class="err" id="s-err"></p>
+        `;
+        setDock(`<button type="button" class="primary" id="s-go" ${can ? "" : "disabled"}>下一步</button>`);
+        document.querySelectorAll(".slot input").forEach((inp) => {
+          inp.oninput = () => {
+            const i = Number(inp.dataset.i);
+            state.seed.words[i] = inp.value.replace(/\s+/g, "");
+            const n2 = filledWords();
+            const complete = n2 === 12 || n2 === 24;
+            const go = document.getElementById("s-go");
+            if (go) go.disabled = !complete;
+            const pill = document.querySelector(".count-pill");
+            if (pill) {
+              const tgt = n2 > 12 ? 24 : 12;
+              pill.textContent = n2 + "／" + tgt;
+              pill.classList.toggle("ok", complete);
+              pill.classList.toggle("bad", n2 > 0 && !complete);
+            }
+          };
+          inp.onpaste = (e) => {
+            const text = (e.clipboardData || window.clipboardData).getData("text");
+            const parts = text.trim().split(/\s+/).filter(Boolean);
+            if (parts.length >= 12) {
+              e.preventDefault();
+              const t = parts.length >= 24 ? 24 : 12;
+              state.seed.words = Array(t).fill("").map((_, i) => parts[i] || "");
+              renderSeed();
+            }
+          };
+          inp.onkeydown = (e) => {
+            if (e.key === " " || e.key === "Enter") {
+              e.preventDefault();
+              const i = Number(inp.dataset.i);
+              const next = document.querySelector(`.slot input[data-i="${i + 1}"]`);
+              if (next) next.focus();
+              else if (i === 11 && filledWords() >= 12) {
+                state.seed.words = [...state.seed.words, ...Array(12).fill("")];
+                renderSeed();
+              }
+            }
+          };
+        });
+        document.getElementById("paste-hint").onclick = async () => {
+          try {
+            const text = await navigator.clipboard.readText();
+            const parts = text.trim().split(/\s+/).filter(Boolean);
+            const t = parts.length >= 24 ? 24 : 12;
+            state.seed.words = Array(t).fill("").map((_, i) => parts[i] || "");
+            renderSeed();
+          } catch { /* 使用者可直接貼進格子 */ }
+        };
+        document.getElementById("s-go").onclick = () => {
+          if (!(n === 12 || n === 24)) {
+            document.getElementById("s-err").textContent = "須為 12 或 24 個詞";
+            return;
+          }
+          state.seed.step = "pick";
+          state.seed.selected = null;
+          render();
+        };
+      }
+
+      function renderSeedPick() {
+        document.getElementById("title").textContent = "選帳戶";
+        const okPath = pathOk();
+        const path = schemePath();
+        const schemes = SCHEMES.map((s) => `
+          <button type="button" class="scheme-btn ${state.seed.scheme === s.id ? "on" : ""}" data-scheme="${s.id}">${esc(s.label)}</button>
+        `).join("");
+        const customField = state.seed.scheme === "custom" ? `
+          <div class="field">
+            <input id="c-path" type="text" spellcheck="false" autocomplete="off" value="${esc(state.seed.customPath)}" placeholder="m/44'/501'/{n}'/0'" />
+          </div>
+        ` : "";
+        const rows = okPath
+          ? Array.from({ length: 20 }, (_, i) => mockRow(i)).map((r) => `
+              <label class="acct ${state.seed.selected === r.i ? "on" : ""}">
+                <input type="radio" name="acct" value="${r.i}" ${state.seed.selected === r.i ? "checked" : ""} />
+                <span class="idx">#${r.i}</span>
+                <span class="pk">${esc(shortPk(r.pk))}</span>
+                <span class="sol">${esc(r.sol === "—" ? "—" : r.sol + " SOL")}</span>
+              </label>
+            `).join("")
+          : "";
+        const can = okPath && state.seed.selected !== null;
+        document.getElementById("body").innerHTML = `
+          <div class="scheme-grid">${schemes}</div>
+          ${customField}
+          <p class="path-line" title="${esc(path)}">${esc(okPath ? path : "")}</p>
+          ${rows}
+          <p class="err">${okPath ? "" : "路徑無效"}</p>
+        `;
+        setDock(`<button type="button" class="primary" id="p-go" ${can ? "" : "disabled"}>匯入</button>`);
+        document.querySelectorAll("[data-scheme]").forEach((b) => {
+          b.onclick = () => {
+            state.seed.scheme = b.dataset.scheme;
+            state.seed.selected = null;
+            renderSeedPick();
+          };
+        });
+        const cp = document.getElementById("c-path");
+        if (cp) {
+          cp.oninput = () => {
+            const sel = cp.selectionStart;
+            state.seed.customPath = cp.value;
+            state.seed.selected = null;
+            renderSeedPick();
+            const again = document.getElementById("c-path");
+            if (again) {
+              again.focus();
+              const n = Math.min(sel, again.value.length);
+              again.setSelectionRange(n, n);
+            }
+          };
+        }
+        document.querySelectorAll(".acct").forEach((row) => {
+          row.onclick = () => {
+            const inp = row.querySelector("input");
+            state.seed.selected = Number(inp.value);
+            renderSeedPick();
+          };
+        });
+        document.getElementById("p-go").onclick = () => {
+          if (state.seed.selected === null || !pathOk()) return;
+          state.screen = "add";
+          state.importMode = "pick";
+          state.seed.step = "words";
+          state.seed.selected = null;
+          render();
+        };
+      }
+
+      function renderSecret() {
+        document.getElementById("title").textContent = "密鑰";
+        const d = detectSecret(state.secret.raw);
+        const fmt = d.kind === "empty"
+          ? `<div class="fmt"><span class="dot"></span>base58 或 [bytes]</div>`
+          : d.ok
+            ? `<div class="fmt ok"><span class="dot"></span>${d.kind === "bytes" ? "位元組陣列" : "base58"}</div>`
+            : `<div class="fmt bad"><span class="dot"></span>無法辨識</div>`;
+        const can = d.ok && vaultOk(state.secret);
+        document.getElementById("body").innerHTML = `
+          <div class="field">
+            <label>名稱</label>
+            <input id="k-label" type="text" placeholder="選填" value="${esc(state.secret.label)}" />
+          </div>
+          <div class="field">
+            <label>密鑰</label>
+            <textarea id="k-raw" placeholder="base58 或 [193, 240, …]" spellcheck="false">${esc(state.secret.raw)}</textarea>
+            ${fmt}
+          </div>
+          ${pwFields("k", state.secret)}
+          <p class="err" id="k-err"></p>
+        `;
+        setDock(`<button type="button" class="primary" id="k-go" ${can ? "" : "disabled"}>匯入</button>`);
+        document.getElementById("k-label").oninput = (e) => { state.secret.label = e.target.value; };
+        const raw = document.getElementById("k-raw");
+        raw.oninput = () => {
+          state.secret.raw = raw.value;
+          renderSecret();
+        };
+        document.getElementById("k-go").onclick = () => {
+          if (!detectSecret(state.secret.raw).ok) {
+            document.getElementById("k-err").textContent = "無法辨識";
+            return;
+          }
+          state.screen = "add";
+          state.importMode = "pick";
+          render();
+        };
+      }
+
+      function renderWatch() {
+        document.getElementById("title").textContent = "觀察帳戶";
+        const ok = looksPk(state.watch.addr.trim());
+        document.getElementById("body").innerHTML = `
+          <div class="field">
+            <label>名稱</label>
+            <input id="w-name" type="text" placeholder="選填" value="${esc(state.watch.name)}" />
+          </div>
+          <div class="field">
+            <label>地址</label>
+            <input id="w-addr" type="text" spellcheck="false" placeholder="Solana 公鑰" value="${esc(state.watch.addr)}" />
+          </div>
+          <p class="err">${esc(state.watch.err)}</p>
+        `;
+        setDock(`<button type="button" class="primary" id="w-go" ${ok ? "" : "disabled"}>建立</button>`);
+        document.getElementById("w-name").oninput = (e) => { state.watch.name = e.target.value; };
+        const addr = document.getElementById("w-addr");
+        addr.oninput = () => {
+          state.watch.addr = addr.value;
+          state.watch.err = "";
+          renderWatch();
+        };
+        document.getElementById("w-go").onclick = () => {
+          if (!looksPk(state.watch.addr.trim())) {
+            state.watch.err = "地址無效";
+            renderWatch();
+            return;
+          }
+          state.screen = "add";
+          render();
+        };
+      }
+
+      function combMembers() {
+        const fromPick = EXISTING.filter((e) => state.comb.picked.has(e.pk)).map((e) => e.pk);
+        const ordered = [];
+        for (const x of [...state.comb.chips, ...fromPick]) {
+          if (!ordered.includes(x)) ordered.push(x);
+        }
+        return ordered;
+      }
+
+      function renderCombined() {
+        document.getElementById("title").textContent = "New combined";
+        const mem = combMembers();
+        const valid = mem.filter(looksPk);
+        if (!state.comb.current || !valid.includes(state.comb.current)) {
+          state.comb.current = valid[0] || "";
+        }
+        const can = valid.length >= 1;
+        const chips = state.comb.chips.map((pk, i) => `
+          <span class="addr-chip ${pk === state.comb.current ? "main" : ""}">
+            <button type="button" class="pick" data-cur="${esc(pk)}" title="${esc(pk)}">${esc(shortPk(pk))}</button>
+            ${pk === state.comb.current ? '<span class="tag">目前</span>' : ""}
+            <button type="button" class="icon-btn sm ghost danger" data-del="${i}" title="刪除" aria-label="刪除">${ICO_X}</button>
+          </span>
+        `).join("");
+        document.getElementById("body").innerHTML = `
+          <div class="field">
+            <label>名稱</label>
+            <input id="c-name" type="text" placeholder="選填" value="${esc(state.comb.name)}" />
+          </div>
+          <div class="field">
+            <label>成員</label>
+            <div class="chip-list">${chips || ""}</div>
+            <div class="add-line">
+              <input id="c-draft" type="text" spellcheck="false" placeholder="地址，或貼上多行" value="${esc(state.comb.draft)}" />
+              <button type="button" class="icon-btn sm" id="c-add" title="加入" aria-label="加入">${ICO_PLUS}</button>
+            </div>
+          </div>
+          <p class="sec-head">本機帳戶</p>
+          ${EXISTING.map((e) => `
+            <label class="pick">
+              <input type="checkbox" data-pk="${e.pk}" ${state.comb.picked.has(e.pk) ? "checked" : ""} />
+              <span class="nm">${esc(e.label)}</span>
+              <span class="addr">${esc(shortPk(e.pk))}</span>
+            </label>
+          `).join("")}
+          ${valid.length ? valid.map((pk) => `
+            <div class="row">
+              <span class="mono">${esc(shortPk(pk))}</span>
+              ${pk === state.comb.current ? '<span class="tag">目前錢包</span>' : ""}
+            </div>
+          `).join("") : ""}
+          <p class="err">${esc(state.comb.err)}</p>
+        `;
+        setDock(`<button type="button" class="primary" id="c-go" ${can ? "" : "disabled"}>建立 Combined</button>`);
+        document.getElementById("c-name").oninput = (e) => { state.comb.name = e.target.value; };
+        const draft = document.getElementById("c-draft");
+        const addParts = (text) => {
+          const parts = text.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
+          for (const p of parts) {
+            if (!state.comb.chips.includes(p)) state.comb.chips.push(p);
+          }
+          state.comb.draft = "";
+          state.comb.err = "";
+          renderCombined();
+        };
+        draft.onkeydown = (e) => {
+          if (e.key === "Enter") { e.preventDefault(); addParts(draft.value); }
+        };
+        draft.onpaste = (e) => {
+          const text = (e.clipboardData || window.clipboardData).getData("text");
+          if (/[\n,]/.test(text)) {
+            e.preventDefault();
+            addParts(text);
+          }
+        };
+        draft.oninput = () => { state.comb.draft = draft.value; };
+        document.getElementById("c-add").onclick = () => addParts(draft.value);
+        document.querySelectorAll("[data-del]").forEach((b) => {
+          b.onclick = () => {
+            state.comb.chips.splice(Number(b.dataset.del), 1);
+            renderCombined();
+          };
+        });
+        document.querySelectorAll("[data-cur]").forEach((b) => {
+          b.onclick = () => {
+            if (looksPk(b.dataset.cur)) state.comb.current = b.dataset.cur;
+            renderCombined();
+          };
+        });
+        document.querySelectorAll("[data-pk]").forEach((c) => {
+          c.onchange = () => {
+            if (c.checked) state.comb.picked.add(c.dataset.pk);
+            else state.comb.picked.delete(c.dataset.pk);
+            renderCombined();
+          };
+        });
+        document.getElementById("c-go").onclick = () => {
+          if (!can) {
+            state.comb.err = "至少一個有效地址";
+            renderCombined();
+            return;
+          }
+          state.screen = "add";
+          render();
+        };
+      }
+
+      function setDock(html) {
+        const dock = document.getElementById("dock");
+        if (!html) {
+          dock.hidden = true;
+          dock.innerHTML = "";
+          return;
+        }
+        dock.hidden = false;
+        dock.innerHTML = html;
+      }
+
+      function render() {
+        setDock("");
+        syncChips();
+        if (state.screen === "generate") renderGenerate();
+        else if (state.screen === "import") renderImport();
+        else if (state.screen === "watch") renderWatch();
+        else if (state.screen === "combined") renderCombined();
+        else renderAdd();
+      }
+
+      document.getElementById("back").onclick = () => {
+        if (state.screen === "add") return;
+        if (state.screen === "import" && state.importMode === "seed" && state.seed.step === "pick") {
+          state.seed.step = "words";
+          render();
+          return;
+        }
+        if (state.screen === "import" && state.importMode !== "pick") {
+          state.importMode = "pick";
+          state.seed.step = "words";
+          render();
+          return;
+        }
+        state.screen = "add";
+        state.importMode = "pick";
+        state.seed.step = "words";
+        state.gen.done = false;
+        render();
+      };
+
+      document.getElementById("chips").addEventListener("click", (e) => {
+        const b = e.target.closest("button");
+        if (!b) return;
+        if (b.dataset.jump) {
+          const j = b.dataset.jump;
+          if (j === "import") { state.screen = "import"; state.importMode = "pick"; state.seed.step = "words"; }
+          else state.screen = j;
+          state.gen.done = false;
+          render();
+        }
+      });
+
+      render();
+    </script>
+  </body>
+</html>

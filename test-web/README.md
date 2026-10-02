@@ -22,7 +22,8 @@ npm run dev
 1. **Connect** → popout 批准 → log 顯示地址
 2. **Sign message** → 批准 → log 顯示 `Signature base58:`
 3. **Sign transaction** → 批准 → log 顯示 `Signed tx base58:`
-4. **Disconnect** → log 顯示 `Disconnected`、狀態為未連線 → **Sign message** 應失敗或需重連 → 再 **Connect** 成功
-5. 任一路徑 **拒絕** 或關閉 popout → log 顯示錯誤、可重試
-6. popup **切換帳戶** → 本頁 log 出現 `account change` 與新地址（不必重按 Connect）
-7. （選）popup 將 active 換成 **觀察帳戶** → Sign message／Sign transaction 應失敗（read-only）
+4. **Devnet airdrop (1 SOL)** → 無需 popout 簽名；log 顯示 signature 與餘額變化（僅 devnet RPC； faucet 有速率限制）
+5. **Disconnect** → log 顯示 `Disconnected`、狀態為未連線 → **Sign message** 應失敗或需重連 → 再 **Connect** 成功
+6. 任一路徑 **拒絕** 或關閉 popout → log 顯示錯誤、可重試
+7. popup **切換帳戶** → 本頁 log 出現 `account change` 與新地址（不必重按 Connect）
+8. （選）popup 將 active 換成 **觀察帳戶** → Sign message／Sign transaction 應失敗（read-only）；airdrop 仍可對該地址領 devnet SOL

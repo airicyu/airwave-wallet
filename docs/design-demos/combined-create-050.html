@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave 0.5.0 — Create combined（概念稿）</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --danger: #c75050;
+        --popup-w: 422px;
+        --popup-h: 600px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 980px; margin: 0 auto; padding: 28px 20px 48px; }
+      h1 { font-size: 1.2rem; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 20px; max-width: 46rem; font-size: 0.9rem; }
+      .layout { display: grid; grid-template-columns: var(--popup-w) 1fr; gap: 28px; align-items: start; }
+      @media (max-width: 880px) { .layout { grid-template-columns: 1fr; } }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+      }
+      .back {
+        width: 34px; height: 34px; border: 1px solid var(--stroke);
+        border-radius: var(--radius-sm); background: var(--fill); color: var(--text); cursor: pointer;
+      }
+      .top h2 { font-size: 0.95rem; margin: 0; font-weight: 600; }
+      .body { flex: 1; min-height: 0; overflow: auto; padding: 14px 14px 18px; }
+      .muted { color: var(--text-muted); font-size: 0.82rem; margin: 0 0 10px; }
+      .kind {
+        width: 100%; text-align: left; padding: 10px 12px; margin: 0 0 8px;
+        border: 1px solid var(--stroke); border-radius: 10px; background: var(--fill);
+        color: var(--text); cursor: pointer; font-size: 0.88rem;
+      }
+      .field { margin: 0 0 14px; }
+      .field > span {
+        display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 6px;
+      }
+      input[type="text"], textarea {
+        width: 100%; background: var(--bg-elevated); border: 1px solid var(--stroke);
+        border-radius: 8px; color: var(--text); padding: 8px 10px; font: inherit;
+      }
+      textarea { min-height: 88px; resize: vertical; font-family: ui-monospace, monospace; font-size: 0.78rem; }
+      .hint { font-size: 0.75rem; color: var(--text-dim); margin: 6px 0 0; }
+      .row {
+        display: flex; align-items: center; justify-content: space-between; gap: 8px;
+        padding: 8px 10px; border: 1px solid var(--stroke-soft); border-radius: 8px;
+        margin-top: 6px; font-size: 0.8rem;
+      }
+      .row.bad { border-color: var(--danger); color: #e8a0a0; }
+      .tag {
+        font-size: 0.68rem; padding: 2px 6px; border-radius: 999px;
+        background: #1a2838; color: var(--accent); white-space: nowrap;
+      }
+      .mono { font-family: ui-monospace, monospace; color: var(--text-muted); }
+      .pick {
+        display: grid;
+        grid-template-columns: 18px minmax(0, 1fr) auto;
+        align-items: center;
+        column-gap: 10px;
+        width: 100%;
+        margin: 0 0 8px;
+        padding: 8px 10px;
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        background: var(--fill);
+        cursor: pointer;
+      }
+      .pick input {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        accent-color: var(--accent);
+      }
+      .pick .nm {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.84rem;
+      }
+      .pick .addr {
+        font-size: 0.75rem;
+        white-space: nowrap;
+      }
+      .primary {
+        width: 100%; margin-top: 8px; padding: 10px 12px; border: 0; border-radius: 10px;
+        background: var(--accent); color: #fff; font-weight: 600; cursor: pointer;
+      }
+      .primary:disabled { opacity: 0.4; cursor: not-allowed; }
+      .err { color: #e8a0a0; font-size: 0.8rem; margin: 8px 0 0; }
+      .card {
+        border: 1px solid var(--stroke); background: var(--fill); border-radius: 10px;
+        padding: 10px 12px; margin-bottom: 8px;
+      }
+      .card strong { display: block; font-size: 0.88rem; }
+      .notes { font-size: 0.85rem; color: var(--text-muted); }
+      .notes ol { padding-left: 1.2rem; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>Create combined — 預想流程</h1>
+      <p class="lede">
+        Combined 獨立填表頁。建立後從 Manage 仍可勾本機尚未加入的 wallet account（與建立頁同一列式），不必只貼公鑰。
+      </p>
+      <div class="layout">
+        <div class="phone">
+          <div class="top">
+            <button type="button" class="back" id="back" aria-label="Back">←</button>
+            <h2 id="title">Add account</h2>
+          </div>
+          <div class="body" id="body"></div>
+        </div>
+        <div class="notes">
+          <p><strong>步驟</strong></p>
+          <ol>
+            <li>Accounts → Add</li>
+            <li>點 Combined → <strong>新頁</strong>填表</li>
+            <li>名稱選填；貼公鑰；可勾本機帳戶</li>
+            <li>≥1 有效公鑰才能建立</li>
+            <li>Accounts → Combined kebab → Manage：勾未加入的本機帳戶，立刻成為成員</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+    <script>
+      const EXISTING = [
+        { label: "Trading", pk: "buwa6jXuR8w8pca7RVMw5LcacD8sQDfbrdWEu429XsS" },
+        { label: "Watch-only", pk: "So11111111111111111111111111111111111111112" },
+        { label: "Savings", pk: "11111111111111111111111111111111" },
+      ];
+      const state = {
+        screen: "add",
+        name: "",
+        raw: "",
+        picked: new Set(),
+        created: false,
+        members: [],
+        managePick: new Set(),
+      };
+
+      function shortPk(pk) {
+        return pk.slice(0, 4) + "…" + pk.slice(-4);
+      }
+      function looksPk(s) {
+        return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s);
+      }
+      function parseRaw(raw) {
+        return raw.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
+      }
+      function members() {
+        const fromPaste = parseRaw(state.raw);
+        const fromPick = EXISTING.filter((e) => state.picked.has(e.pk)).map((e) => e.pk);
+        const ordered = [];
+        for (const x of [...fromPaste, ...fromPick]) {
+          if (!ordered.includes(x)) ordered.push(x);
+        }
+        return ordered;
+      }
+
+      function renderAccounts() {
+        document.getElementById("title").textContent = "Accounts";
+        const extra = state.created
+          ? `<div class="card" id="go-manage"><strong>${state.name.trim() || "Combined"}</strong><span class="tag">Combined</span><div class="mono">${shortPk(state.members[0] || "—")}</div></div>`
+          : "";
+        document.getElementById("body").innerHTML = `
+          ${EXISTING.map((e) => `<div class="card"><strong>${e.label}</strong><div class="mono">${shortPk(e.pk)}</div></div>`).join("")}
+          ${extra}
+          <button type="button" class="primary" id="go-add">Add account</button>
+        `;
+        document.getElementById("go-add").onclick = () => { state.screen = "add"; render(); };
+        const gm = document.getElementById("go-manage");
+        if (gm) gm.onclick = () => { state.screen = "manage"; render(); };
+      }
+
+      function renderAdd() {
+        document.getElementById("title").textContent = "Add account";
+        document.getElementById("body").innerHTML = `
+          <p class="muted">選擇新增方式</p>
+          <button type="button" class="kind" data-go="generate">產生簽名帳戶</button>
+          <button type="button" class="kind" data-go="import">匯入 base58 私鑰</button>
+          <button type="button" class="kind" data-go="watch">觀察帳戶公鑰</button>
+          <button type="button" class="kind" data-go="combined">Combined（地址集合）</button>
+          <p class="hint">點 Combined 會進入填表頁，不在本頁展開。</p>
+        `;
+        document.querySelector("[data-go=combined]").onclick = () => {
+          state.screen = "combined";
+          render();
+        };
+      }
+
+      function renderCombined(keepSel) {
+        document.getElementById("title").textContent = "New combined";
+        const mem = members();
+        const valid = mem.filter(looksPk);
+        const invalid = mem.filter((x) => !looksPk(x));
+        const canCreate = valid.length >= 1;
+        document.getElementById("body").innerHTML = `
+          <div class="field">
+            <span>名稱（選填）</span>
+            <input id="nm" type="text" placeholder="例如 DeFi bundle" value="${state.name.replace(/"/g, "&quot;")}" />
+          </div>
+          <div class="field">
+            <span>成員地址（至少 1 個）</span>
+            <textarea id="raw" placeholder="一行一個，或逗號分隔">${state.raw}</textarea>
+            <p class="hint">目前錢包＝第一個有效地址。</p>
+          </div>
+          <p class="muted">從現有 wallet account 加入</p>
+          ${EXISTING.map((e) => `
+            <label class="pick">
+              <input type="checkbox" data-pk="${e.pk}" ${state.picked.has(e.pk) ? "checked" : ""} />
+              <span class="nm">${e.label}</span>
+              <span class="mono addr">${shortPk(e.pk)}</span>
+            </label>
+          `).join("")}
+          <p class="muted" style="margin-top:14px">將建立的成員</p>
+          ${valid.map((pk, i) => `
+            <div class="row">
+              <span class="mono">${shortPk(pk)}</span>
+              ${i === 0 ? '<span class="tag">目前錢包</span>' : ""}
+            </div>
+          `).join("")}
+          ${invalid.map((x) => `<div class="row bad">無法解析：${x.slice(0, 18)}</div>`).join("")}
+          ${valid.length === 0 ? '<p class="err">至少要有一個有效公鑰才能建立。</p>' : ""}
+          <button type="button" class="primary" id="create" ${canCreate ? "" : "disabled"}>建立 Combined</button>
+        `;
+        const nm = document.getElementById("nm");
+        const raw = document.getElementById("raw");
+        nm.oninput = () => { state.name = nm.value; };
+        raw.oninput = () => {
+          state.raw = raw.value;
+          renderCombined(raw.selectionStart);
+        };
+        if (typeof keepSel === "number") {
+          raw.focus();
+          raw.setSelectionRange(keepSel, keepSel);
+        }
+        document.querySelectorAll("[data-pk]").forEach((c) => {
+          c.onchange = () => {
+            if (c.checked) state.picked.add(c.dataset.pk);
+            else state.picked.delete(c.dataset.pk);
+            renderCombined();
+          };
+        });
+        document.getElementById("create").onclick = () => {
+          if (!canCreate) return;
+          state.created = true;
+          state.members = valid.slice();
+          state.screen = "accounts";
+          render();
+        };
+      }
+
+      function renderManage() {
+        document.getElementById("title").textContent = "Manage";
+        document.getElementById("body").innerHTML = `
+          <p class="muted">目前錢包 ${shortPk(state.members[0] || "—")}</p>
+          ${state.members.map((pk, i) => `
+            <div class="row">
+              <span class="mono">${shortPk(pk)}</span>
+              ${i === 0 ? '<span class="tag">目前錢包</span>' : ""}
+            </div>
+          `).join("")}
+          <p class="muted" style="margin-top:14px">本機帳戶</p>
+          ${EXISTING.map((e) => {
+            const on = state.members.includes(e.pk);
+            const last = on && state.members.length <= 1;
+            return `
+            <label class="pick">
+              <input type="checkbox" data-pk="${e.pk}" ${on ? "checked" : ""} ${last ? "disabled" : ""} />
+              <span class="nm">${e.label}</span>
+              <span class="mono addr">${shortPk(e.pk)}</span>
+            </label>`;
+          }).join("")}
+        `;
+        document.querySelectorAll("[data-pk]").forEach((c) => {
+          c.onchange = () => {
+            const pk = c.dataset.pk;
+            if (c.checked) {
+              if (!state.members.includes(pk)) state.members.push(pk);
+            } else if (state.members.length > 1) {
+              state.members = state.members.filter((x) => x !== pk);
+            }
+            renderManage();
+          };
+        });
+      }
+
+      function render() {
+        if (state.screen === "accounts") renderAccounts();
+        else if (state.screen === "combined") renderCombined();
+        else if (state.screen === "manage") renderManage();
+        else renderAdd();
+      }
+      document.getElementById("back").onclick = () => {
+        if (state.screen === "combined") state.screen = "add";
+        else if (state.screen === "manage") state.screen = "accounts";
+        else if (state.screen === "add") state.screen = "accounts";
+        render();
+      };
+      render();
+    </script>
+  </body>
+</html>

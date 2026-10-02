@@ -32,12 +32,13 @@
 
 | 情境 | 必讀 |
 |------|------|
-| 實作某個已排程版本 | 該版 `docs/roadmap/X.Y.Z/INDEX.md` 及其連結；遵守 [`docs/roadmap/GUIDELINES.md`](docs/roadmap/GUIDELINES.md)、[`docs/roadmap/agent-workflow.md`](docs/roadmap/agent-workflow.md) |
+| 實作某個已排程版本 | 該版 `docs/roadmap/X.Y.Z/INDEX.md` 及其連結；遵守 [`docs/roadmap/GUIDELINES.md`](docs/roadmap/GUIDELINES.md)、[`docs/roadmap/agent-workflow.md`](docs/roadmap/agent-workflow.md)；畫面互動另守 [`docs/design-principles.md`](docs/design-principles.md)（INDEX 有明文則以 INDEX 為準） |
 | 使用者點名版本／`/roadmap-version` | 技能 [`.agents/skills/roadmap-version/SKILL.md`](.agents/skills/roadmap-version/SKILL.md) |
+| Popup 怎麼操作才一致 | [`docs/design-principles.md`](docs/design-principles.md) |
 | 方向／為何這樣設計 | `brainstorm/full-picture.md`、`lessons-from-solibra-wallet.md` |
 | 舊產品做過什麼 | `brainstorm/solibra-feature-summary.md` |
 
-**優先級：** 某版 INDEX 已定案 ＞ GUIDELINES 架構禁區 ＞ brainstorm。  
+**優先級：** 某版 INDEX 已定案 ＞ GUIDELINES 架構禁區 ＞ [`docs/design-principles.md`](docs/design-principles.md)（僅畫面）＞ brainstorm。  
 `brainstorm/` 與 INDEX 衝突時，以 **INDEX** 為準。
 
 ---

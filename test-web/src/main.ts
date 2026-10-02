@@ -17,11 +17,14 @@ import type { Wallet } from "@wallet-standard/base";
 import bs58 from "bs58";
 import {
   Connection,
+  LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
   TransactionMessage,
   VersionedTransaction,
 } from "@solana/web3.js";
+
+const DEVNET_RPC = "https://api.devnet.solana.com";
 
 const logEl = document.getElementById("log")!;
 const statusEl = document.getElementById("status")!;
@@ -29,6 +32,7 @@ const btnConnect = document.getElementById("connect") as HTMLButtonElement;
 const btnDisconnect = document.getElementById("disconnect") as HTMLButtonElement;
 const btnSignMsg = document.getElementById("sign-msg") as HTMLButtonElement;
 const btnSignTx = document.getElementById("sign-tx") as HTMLButtonElement;
+const btnAirdrop = document.getElementById("airdrop") as HTMLButtonElement;
 
 function log(...args: unknown[]): void {
   logEl.textContent += `${args.map(String).join(" ")}\n`;
@@ -48,6 +52,7 @@ function enableSigning(address: string | undefined): void {
   const ok = Boolean(address);
   btnSignMsg.disabled = !ok;
   btnSignTx.disabled = !ok;
+  btnAirdrop.disabled = !ok;
   if (address) setStatus(`已連線：${address}`);
 }
 
@@ -147,6 +152,47 @@ btnSignMsg.addEventListener("click", async () => {
   }
 });
 
+btnAirdrop.addEventListener("click", async () => {
+  let connectedAddress: string | undefined;
+  btnAirdrop.disabled = true;
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as
+      | StandardConnectFeature[typeof StandardConnect]
+      | undefined;
+    if (!connect) return;
+    const { accounts } = await connect.connect({ silent: true });
+    const account = accounts[0];
+    if (!account) throw new Error("no account");
+    connectedAddress = account.address;
+
+    const connection = new Connection(DEVNET_RPC);
+    const pubkey = new PublicKey(account.address);
+    const before = await connection.getBalance(pubkey);
+    log("Requesting devnet airdrop (1 SOL) to", account.address);
+    const signature = await connection.requestAirdrop(pubkey, LAMPORTS_PER_SOL);
+    log("Airdrop signature:", signature);
+    const latest = await connection.getLatestBlockhash();
+    await connection.confirmTransaction(
+      { signature, ...latest },
+      "confirmed",
+    );
+    const after = await connection.getBalance(pubkey);
+    log(
+      "Balance:",
+      `${before / LAMPORTS_PER_SOL} → ${after / LAMPORTS_PER_SOL} SOL`,
+    );
+  } catch (e) {
+    log(
+      "Airdrop error:",
+      e instanceof Error ? e.message : e,
+      "(devnet 有速率限制，稍後再試)",
+    );
+  } finally {
+    enableSigning(connectedAddress);
+  }
+});
+
 btnSignTx.addEventListener("click", async () => {
   try {
     const wallet = await waitForAirwave();
@@ -162,7 +208,7 @@ btnSignTx.addEventListener("click", async () => {
     const account = accounts[0];
     if (!account) throw new Error("no account");
 
-    const connection = new Connection("https://api.devnet.solana.com");
+    const connection = new Connection(DEVNET_RPC);
     const from = new PublicKey(account.address);
     const { blockhash } = await connection.getLatestBlockhash();
     const msg = new TransactionMessage({

@@ -149,6 +149,7 @@ Detail briefing 之後，若定案對後續判斷有影響，**應寫 reasoning*
 ## Backlog
 
 - `backlog/`＝**尚未出貨**的構想，不是承諾範圍
+- 清單只維護 [backlog/INDEX.md](./backlog/INDEX.md)；新增項目時加一列並寫對應 `.md`
 - 排進某版後：INDEX ↔ backlog **雙向連結**
 - **已經出貨的不該再佔 backlog**：該版 `shipped` 後立刻刪 backlog 列與對應 `.md`；真相只留在 `docs/roadmap/X.Y.Z/`
 

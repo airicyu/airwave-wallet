@@ -12,9 +12,22 @@
 
 **禁止**把 pending 請求、解鎖密碼明文、未加密私鑰寫入上述 keys。
 
+## 解鎖 session（`chrome.storage.session`）
+
+| Key | 內容 | 誰寫 |
+|-----|------|------|
+| `airwave.unlocked.session.v1` | 工作 AES 金鑰（raw base64）＋ salt ＋已解密 `secrets` map | **僅 SW** |
+
+- **不**存密碼。密碼只在 `unlock`／`createVault`／Reveal 當下進入 SW，用完即丟。
+- 僅 `chrome.storage.session`：關瀏覽器／結束瀏覽器工作階段即清。**禁止**寫入 `local`。
+- inject／content script **禁止**讀此 key。
+- SW 被回收後，下一個 command 先從此 hydrate 記憶體；`unlocked` 維持到 `wallet.lock` 或瀏覽器工作階段結束。
+- Reveal／`exportAccountSecret` 仍須再送密碼，對 `airwave.vault.v1` 驗一次；不靠 session 當匯出授權。
+
 ## Vault（password-boxed）
 
-- 使用者設定／輸入 **密碼**（本版 onboarding：建立錢包時設定密碼；無 hardcode 預設密碼）。
+- 安裝後 **第一次** 設密碼即 `createVault`（可為空 secrets）。之後產生／匯入／觀察 **假設 vault 已存在**，不再中途建保險庫。
+- 使用者設定／輸入 **密碼**（無 hardcode 預設密碼）。
 - 私鑰以 **PBKDF2**（或 Web Crypto 同等 KDF）+ **AES-GCM** 加密後存入 `airwave.vault.v1`。
 - 結構示意：
 
@@ -31,7 +44,7 @@ type VaultBlob = {
 
 帳戶 **公鑰／label** 存在 `airwave.accounts.v1`（明文 meta）；**私钥** 僅在 `ciphertext` 內。新增／匯入帳戶時 SW 讀取解密 → 更新 secrets map → 重新加密寫回 `airwave.vault.v1`。
 
-- **解鎖後**：解密後的 `Keypair` 或 secret bytes 只存在 **SW 記憶體**（例如 `Map<accountId, Keypair>`），直到 `wallet.lock` 或 SW 被回收（回收後須重新解鎖）。
+- **解鎖後**：解密後的 `Keypair` 存在 SW 記憶體；工作金鑰另鏡到 `chrome.storage.session`（見上）。`wallet.lock` 同時清記憶體與 session。SW 回收**不必**重新打密碼（與舊句「回收後須重新解鎖」不同）。
 - **簽名**：僅 SW 在 unlock 狀態下呼叫；popout／popup／inject 不接 secret bytes。
 
 ## UI 鏡像（popup）

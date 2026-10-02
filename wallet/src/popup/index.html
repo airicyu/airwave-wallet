@@ -10,15 +10,9 @@
     <div id="app">
       <section id="setup" class="flow-screen" hidden>
         <h1>Airwave</h1>
-        <p>建立新錢包（請記住密碼）</p>
         <input id="setup-password" type="password" placeholder="密碼" autocomplete="new-password" />
-        <input id="setup-label" type="text" placeholder="帳戶名稱（選填）" />
-        <button id="btn-create" type="button">建立</button>
-        <hr />
-        <p>或僅新增觀察帳戶（不需密碼）</p>
-        <input id="setup-watch-pk" type="text" placeholder="公鑰 base58" />
-        <input id="setup-watch-label" type="text" placeholder="名稱（選填）" />
-        <button id="btn-add-watch-setup" type="button">新增觀察帳戶</button>
+        <input id="setup-password-2" type="password" placeholder="再次輸入" autocomplete="new-password" />
+        <button id="btn-create" type="button">開始</button>
       </section>
 
       <section id="locked" class="flow-screen" hidden>
@@ -26,14 +20,6 @@
         <p>錢包已鎖定</p>
         <input id="unlock-password" type="password" placeholder="密碼" autocomplete="current-password" />
         <button id="btn-unlock" type="button">解鎖</button>
-      </section>
-
-      <section id="create-vault-banner" class="flow-screen" hidden>
-        <h1>Airwave</h1>
-        <p>尚無簽名錢包，可建立密碼保護的帳戶</p>
-        <input id="late-setup-password" type="password" placeholder="密碼" autocomplete="new-password" />
-        <input id="late-setup-label" type="text" placeholder="帳戶名稱（選填）" />
-        <button id="btn-create-late" type="button">建立簽名錢包</button>
       </section>
 
       <div id="shell" class="shell" hidden>
@@ -118,19 +104,97 @@
           </section>
 
           <section id="screen-add-account" class="screen" hidden>
-            <p class="muted">選擇新增方式</p>
-            <button type="button" class="block-btn" id="btn-generate">產生簽名帳戶</button>
+            <button type="button" class="kind-btn" data-nav-add="add-generate-seed">建立助記詞錢包<span class="kind-chev" aria-hidden="true">›</span></button>
+            <button type="button" class="kind-btn" data-nav-add="add-generate">建立 Burner 錢包<span class="kind-chev" aria-hidden="true">›</span></button>
+            <button type="button" class="kind-btn" data-nav-add="add-import">匯入錢包<span class="kind-chev" aria-hidden="true">›</span></button>
+            <button type="button" class="kind-btn" data-nav-add="add-watch">建立觀察帳戶<span class="kind-chev" aria-hidden="true">›</span></button>
+            <button type="button" class="kind-btn" data-nav-add="add-combined">建立 Combined<span class="kind-chev" aria-hidden="true">›</span></button>
+          </section>
+
+          <section id="screen-add-import" class="screen" hidden>
+            <button type="button" class="kind-btn" data-nav-add="add-import-seed">助記詞<span class="kind-chev" aria-hidden="true">›</span></button>
+            <button type="button" class="kind-btn" data-nav-add="add-import-secret">密鑰<span class="kind-chev" aria-hidden="true">›</span></button>
+          </section>
+
+          <section id="screen-add-import-secret" class="screen" hidden>
             <div class="field">
-              <label for="import-secret">匯入 base58 私鑰</label>
-              <input id="import-secret" type="password" placeholder="base58 私鑰" autocomplete="off" />
-              <button type="button" class="block-btn" id="btn-import">匯入</button>
+              <label for="import-label">名稱</label>
+              <input id="import-label" type="text" placeholder="選填" autocomplete="off" />
             </div>
             <div class="field">
-              <label for="watch-pk">觀察帳戶公鑰</label>
-              <input id="watch-pk" type="text" placeholder="公鑰 base58" />
-              <input id="watch-label" type="text" placeholder="名稱（選填）" />
-              <button type="button" class="block-btn" id="btn-add-watch">新增觀察帳戶</button>
+              <label for="import-secret">密鑰</label>
+              <textarea id="import-secret" class="mono-input" rows="4" placeholder="base58 或 [193, 240, …]" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" aria-autocomplete="none" data-lpignore="true" data-1p-ignore data-form-type="other"></textarea>
+              <div id="import-secret-fmt" class="fmt"><span class="fmt-dot" aria-hidden="true"></span><span id="import-secret-fmt-text">base58 或 [bytes]</span></div>
             </div>
+            <p id="import-secret-err" class="inline-err" aria-live="polite"></p>
+          </section>
+
+          <section id="screen-add-import-seed" class="screen" hidden>
+            <div id="import-seed-root"></div>
+          </section>
+
+          <section id="screen-add-generate-seed" class="screen" hidden>
+            <div class="field">
+              <label for="generate-seed-label">名稱</label>
+              <input id="generate-seed-label" type="text" placeholder="選填" autocomplete="off" />
+            </div>
+            <p class="seed-backup-warn">離開後無法再顯示助記詞</p>
+            <div class="seed-backup-toolbar">
+              <button type="button" class="icon-btn sm-inline" id="btn-copy-seed-words" title="複製" aria-label="複製"></button>
+            </div>
+            <div id="generate-seed-grid" class="word-grid word-grid-ro"></div>
+            <div class="addr-row">
+              <span id="generate-seed-pk" class="addr-row-pk"></span>
+              <button type="button" class="icon-btn sm-inline" id="btn-copy-seed-pk" title="複製" aria-label="複製"></button>
+            </div>
+            <p id="generate-seed-err" class="inline-err" aria-live="polite"></p>
+          </section>
+
+          <section id="screen-add-generate" class="screen" hidden>
+            <div id="generate-form">
+              <div class="field">
+                <label for="generate-label">名稱</label>
+                <input id="generate-label" type="text" placeholder="選填" autocomplete="off" />
+              </div>
+              <p id="generate-err" class="inline-err" aria-live="polite"></p>
+            </div>
+            <div id="generate-success" class="add-success" hidden>
+              <div class="add-success-mark" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 12.5 10 16.5 18 8"/></svg>
+              </div>
+              <p id="generate-success-pk" class="add-success-pk"></p>
+            </div>
+          </section>
+
+          <section id="screen-add-watch" class="screen" hidden>
+            <div class="field">
+              <label for="watch-label">名稱</label>
+              <input id="watch-label" type="text" placeholder="選填" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label for="watch-pk">地址</label>
+              <input id="watch-pk" type="text" spellcheck="false" placeholder="Solana 公鑰" autocomplete="off" />
+            </div>
+            <p id="watch-err" class="inline-err" aria-live="polite"></p>
+          </section>
+
+          <section id="screen-add-combined" class="screen" hidden>
+            <div class="field">
+              <label for="combined-label">名稱</label>
+              <input id="combined-label" type="text" placeholder="選填" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label class="field-label">成員</label>
+              <div id="combined-chip-list" class="chip-list"></div>
+              <div class="add-line">
+                <input id="combined-draft" type="text" spellcheck="false" placeholder="地址，或貼上多行" autocomplete="off" />
+                <button type="button" class="icon-btn sm-inline" id="btn-combined-add-chip" title="加入" aria-label="加入"></button>
+              </div>
+            </div>
+            <p class="sec-head">本機帳戶</p>
+            <div id="combined-pick-list" class="combined-pick-list"></div>
+            <div id="combined-member-rows"></div>
+            <p id="combined-err" class="inline-err" aria-live="polite"></p>
           </section>
 
           <section id="screen-account-rename" class="screen" hidden>
@@ -146,6 +210,21 @@
             <p id="manage-name" class="manage-name"></p>
             <p id="manage-addr" class="manage-addr"></p>
             <p id="manage-readonly-badge" class="badge" hidden>Read-only</p>
+            <p id="manage-combined-badge" class="badge" hidden>Combined</p>
+            <div id="manage-combined-panel" hidden>
+              <p class="muted small">目前錢包地址</p>
+              <p id="manage-combined-main" class="manage-addr"></p>
+              <p class="sec-head">本機帳戶</p>
+              <div id="manage-combined-pick-list" class="combined-pick-list"></div>
+              <div class="field">
+                <label for="manage-add-sub-pk">地址</label>
+                <div class="add-line">
+                  <input id="manage-add-sub-pk" type="text" spellcheck="false" placeholder="地址，或貼上" autocomplete="off" />
+                  <button type="button" class="icon-btn sm-inline" id="btn-combined-add-sub" title="加入" aria-label="加入"></button>
+                </div>
+              </div>
+              <ul id="manage-combined-subs" class="combined-subs-list"></ul>
+            </div>
             <div class="manage-actions">
               <button type="button" class="manage-action-row neutral" id="btn-go-reveal" hidden>
                 <span>Reveal private key</span>
@@ -182,26 +261,45 @@
           </section>
 
           <section id="screen-settings" class="screen" hidden>
-            <div class="field">
-              <label for="cluster-select">Cluster</label>
-              <select id="cluster-select">
-                <option value="devnet">devnet</option>
-                <option value="mainnet">mainnet</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="rpc-url">RPC URL</label>
-              <input id="rpc-url" type="url" />
-            </div>
-            <div class="field">
-              <label for="helius-api-url">Helius API URL</label>
-              <input id="helius-api-url" type="text" autocomplete="off" placeholder="選填；留空則用 RPC 查持倉" />
-            </div>
-            <div class="field">
-              <label for="jupiter-api-key">Jupiter API key</label>
-              <input id="jupiter-api-key" type="password" autocomplete="off" placeholder="選填；不填＝keyless 0.5 rps，有 key＝至少 Free 1 rps" />
-            </div>
-            <button type="button" class="block-btn primary" id="btn-save-settings">儲存設定</button>
+            <section class="settings-now">
+              <p class="now-kicker">目前使用</p>
+              <div class="seg" role="group" aria-label="作用中網路">
+                <button type="button" class="seg-btn" data-cluster="devnet">Devnet</button>
+                <button type="button" class="seg-btn" data-cluster="mainnet">Mainnet</button>
+              </div>
+              <div class="now-rpc">
+                <span class="now-dot" aria-hidden="true"></span>
+                <div class="now-rpc-text">
+                  <span class="url" id="settings-now-rpc"></span>
+                </div>
+              </div>
+            </section>
+            <section class="sec">
+              <div class="sec-head">
+                <h3>RPC</h3>
+              </div>
+              <div class="settings-card">
+                <div class="rpc-tabs" role="tablist">
+                  <button type="button" class="rpc-tab" data-rpc-tab="devnet">Devnet</button>
+                  <button type="button" class="rpc-tab" data-rpc-tab="mainnet">Mainnet</button>
+                </div>
+                <p id="rpc-tab-hint" class="tab-hint"></p>
+                <div id="rpc-by-cluster" class="rpc-list"></div>
+                <div class="rpc-add-bar">
+                  <button type="button" class="icon-btn ghost-inline rpc-icon-btn" id="btn-rpc-add" title="加入" aria-label="加入"></button>
+                </div>
+              </div>
+            </section>
+            <section class="sec">
+              <div class="field">
+                <label for="helius-api-url">Helius API URL</label>
+                <input id="helius-api-url" type="text" autocomplete="off" placeholder="選填" />
+              </div>
+              <div class="field">
+                <label for="jupiter-api-key">Jupiter API key</label>
+                <input id="jupiter-api-key" type="password" autocomplete="off" placeholder="選填" />
+              </div>
+            </section>
           </section>
 
           <section id="screen-connected-sites" class="screen" hidden>
@@ -209,6 +307,10 @@
             <button type="button" class="block-btn" id="btn-disconnect-all">全部斷開</button>
           </section>
         </main>
+
+        <footer id="shell-dock" class="shell-dock" hidden>
+          <button type="button" class="primary-btn" id="dock-primary" disabled></button>
+        </footer>
 
         <nav id="home-tab-bar" class="tab-bar" hidden>
           <button type="button" class="tab-btn active" data-home-tab="home-token">Token</button>

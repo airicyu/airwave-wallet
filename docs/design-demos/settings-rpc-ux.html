@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 設定與 RPC（概念稿）</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --accent-dim: #2a6ea8;
+        --danger: #c75050;
+        --popup-w: 384px;
+        --popup-h: 640px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1120px; margin: 0 auto; padding: 28px 20px 56px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 18px; max-width: 54rem; font-size: 0.92rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+      .chip {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 7px 13px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      .chip:hover { border-color: var(--text-dim); }
+      .chip.active { border-color: var(--accent); background: #1a2838; }
+      .layout {
+        display: grid;
+        grid-template-columns: var(--popup-w) 1fr;
+        gap: 28px;
+        align-items: start;
+      }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+      .phones { display: flex; flex-wrap: wrap; gap: 16px; }
+      .phone-wrap { display: flex; flex-direction: column; gap: 8px; }
+      .phone-cap { font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.02em; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+      .back {
+        width: 34px; height: 34px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-sm);
+        background: var(--fill);
+        color: var(--text);
+        cursor: pointer;
+        font-size: 1rem;
+      }
+      .top h2 { font-size: 0.95rem; margin: 0; font-weight: 600; }
+      .body {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 12px 12px 20px;
+      }
+      .body::-webkit-scrollbar { width: 6px; }
+      .body::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 4px; }
+
+      .now {
+        border: 1px solid var(--stroke);
+        background: linear-gradient(180deg, #1a2430 0%, var(--bg-elevated) 100%);
+        border-radius: var(--radius);
+        padding: 10px 10px 11px;
+        margin-bottom: 12px;
+      }
+      .now-kicker {
+        font-size: 0.68rem;
+        color: var(--text-dim);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin: 0 0 8px;
+      }
+      .seg {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+        background: var(--bg);
+        border: 1px solid var(--stroke-soft);
+        border-radius: 10px;
+        padding: 3px;
+        margin-bottom: 8px;
+      }
+      .seg button {
+        border: 0;
+        background: transparent;
+        color: var(--text-muted);
+        border-radius: 8px;
+        padding: 7px 8px;
+        font: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .seg button.on {
+        background: #1a2838;
+        color: var(--text);
+        box-shadow: inset 0 0 0 1px var(--accent);
+      }
+      .now-rpc {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+      .now-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: #4ecb8d;
+        flex-shrink: 0;
+      }
+      .now-rpc-text {
+        min-width: 0;
+        flex: 1;
+      }
+      .now-rpc-text .lbl {
+        display: block;
+        font-size: 0.68rem;
+        color: var(--text-dim);
+      }
+      .now-rpc-text .url {
+        display: block;
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .sec { margin-bottom: 14px; }
+      .sec-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+      .sec-head h3 {
+        margin: 0;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--text-muted);
+      }
+      .sec-note { font-size: 0.7rem; color: var(--text-dim); }
+
+      .card {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+      .tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        border-bottom: 1px solid var(--stroke-soft);
+      }
+      .tabs button {
+        border: 0;
+        background: transparent;
+        color: var(--text-dim);
+        padding: 8px 6px;
+        font: inherit;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        position: relative;
+      }
+      .tabs button.on { color: var(--text); }
+      .tabs button.on::after {
+        content: "";
+        position: absolute;
+        left: 16px; right: 16px; bottom: 0;
+        height: 2px;
+        background: var(--accent);
+        border-radius: 2px 2px 0 0;
+      }
+      .tab-hint {
+        padding: 6px 10px 0;
+        font-size: 0.68rem;
+        color: var(--text-dim);
+      }
+      .tab-hint.warn { color: #d4a24c; }
+
+      .rpc-list { padding: 6px 6px 8px; }
+      .rpc-row {
+        border-radius: 8px;
+        padding: 4px 4px 4px 6px;
+      }
+      .rpc-row:hover { background: rgba(255,255,255,0.03); }
+      .rpc-row.selected { background: #15202c; }
+      .rpc-main {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+      }
+      .rpc-main input[type="radio"] {
+        flex-shrink: 0;
+        margin: 0;
+        accent-color: var(--accent);
+      }
+      .rpc-url-btn {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        text-align: left;
+        padding: 6px 2px;
+        cursor: pointer;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .badge {
+        flex-shrink: 0;
+        font-size: 0.62rem;
+        color: var(--text-dim);
+        border: 1px solid var(--stroke);
+        border-radius: 999px;
+        padding: 1px 6px;
+      }
+      .icon-btn {
+        flex-shrink: 0;
+        width: 28px; height: 28px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--text-muted);
+        border-radius: 7px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .icon-btn:hover { background: var(--fill); border-color: var(--stroke); color: var(--text); }
+      .icon-btn.danger:hover { color: var(--danger); border-color: #5a3030; background: #241818; }
+      .icon-btn:disabled { opacity: 0.28; cursor: not-allowed; }
+      .icon-btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+
+      .rpc-edit {
+        display: none;
+        padding: 0 4px 8px 26px;
+      }
+      .rpc-row.open .rpc-edit { display: block; }
+      .rpc-edit-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .rpc-edit input {
+        flex: 1;
+        min-width: 0;
+        background: var(--bg);
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        padding: 7px 8px;
+      }
+      .rpc-edit input[readonly] { color: var(--text-muted); }
+      .rpc-edit .hint {
+        font-size: 0.68rem;
+        color: var(--text-dim);
+        margin: 4px 0 0;
+      }
+
+      .add-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 2px 8px 8px;
+      }
+      .add-row span { font-size: 0.72rem; color: var(--text-dim); }
+
+      .field { margin-bottom: 10px; }
+      .field > label {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        margin-bottom: 5px;
+      }
+      .field input[type="text"],
+      .field input[type="password"] {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        color: var(--text);
+        font: inherit;
+        font-size: 0.82rem;
+        padding: 8px 10px;
+      }
+      .field .hint { font-size: 0.68rem; color: var(--text-dim); margin: 4px 0 0; }
+      .pw-wrap { position: relative; }
+      .pw-wrap input { padding-right: 36px; }
+      .pw-wrap .icon-btn {
+        position: absolute;
+        right: 4px; top: 4px;
+      }
+
+      .save-bar {
+        position: sticky;
+        bottom: 0;
+        margin: 8px -12px -20px;
+        padding: 10px 12px 12px;
+        background: linear-gradient(180deg, transparent, var(--bg) 28%);
+      }
+      .save {
+        width: 100%;
+        border: 0;
+        background: var(--accent);
+        color: #061018;
+        font-weight: 700;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .save:disabled { opacity: 0.45; cursor: default; }
+      .toast {
+        position: absolute;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%) translateY(8px);
+        background: #1a2838;
+        border: 1px solid var(--accent);
+        color: var(--text);
+        font-size: 0.78rem;
+        padding: 6px 12px;
+        border-radius: 999px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s, transform 0.2s;
+        white-space: nowrap;
+      }
+      .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+      .legend {
+        font-size: 0.86rem;
+        color: var(--text-muted);
+      }
+      .legend h3 {
+        margin: 0 0 10px;
+        font-size: 0.95rem;
+        color: var(--text);
+      }
+      .legend ul { margin: 0; padding-left: 1.15em; }
+      .legend li { margin: 0 0 8px; }
+      .legend code {
+        font-family: var(--mono);
+        font-size: 0.78em;
+        color: var(--text);
+        background: var(--fill);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>設定：網路與 RPC</h1>
+      <p class="lede">
+        Chrome 擴充 popup（384×640）設定頁概念稿。錢包同一時間只在 <strong>Devnet</strong> 或 <strong>Mainnet</strong> 其一；
+        兩條鏈的 RPC 清單完全分開。頂部摘要顯示「此刻在用哪條鏈、哪個 RPC」；下方分頁只負責編輯該鏈清單。
+      </p>
+      <div class="controls" role="tablist">
+        <button class="chip active" type="button" data-preset="empty">空自訂（僅內建）</button>
+        <button class="chip" type="button" data-preset="filled">多組長 URL</button>
+        <button class="chip" type="button" data-preset="expand">展開編輯自訂</button>
+      </div>
+      <div class="layout">
+        <div class="phones">
+          <div class="phone-wrap">
+            <span class="phone-cap">互動 popup</span>
+            <div class="phone" id="phone">
+              <div class="top">
+                <button class="back" type="button" aria-label="返回">←</button>
+                <h2>設定</h2>
+              </div>
+              <div class="body">
+                <section class="now">
+                  <p class="now-kicker">目前使用</p>
+                  <div class="seg" role="group" aria-label="作用中網路">
+                    <button type="button" id="live-devnet" class="on">Devnet</button>
+                    <button type="button" id="live-mainnet">Mainnet</button>
+                  </div>
+                  <div class="now-rpc">
+                    <span class="now-dot" aria-hidden="true"></span>
+                    <div class="now-rpc-text">
+                      <span class="lbl" id="now-lbl">此網路的作用中 RPC</span>
+                      <span class="url" id="now-url"></span>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="sec">
+                  <div class="sec-head">
+                    <h3>各網路 RPC</h3>
+                    <span class="sec-note">清單互不共用</span>
+                  </div>
+                  <div class="card">
+                    <div class="tabs" role="tablist">
+                      <button type="button" id="tab-devnet" class="on">Devnet 清單</button>
+                      <button type="button" id="tab-mainnet">Mainnet 清單</button>
+                    </div>
+                    <p class="tab-hint" id="tab-hint"></p>
+                    <div class="rpc-list" id="rpc-list"></div>
+                    <div class="add-row">
+                      <span>新增自訂 HTTPS RPC</span>
+                      <button class="icon-btn" type="button" id="add-rpc" title="新增 RPC" aria-label="新增 RPC">
+                        <svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="sec">
+                  <div class="sec-head"><h3>資料來源（選填）</h3></div>
+                  <div class="field">
+                    <label for="helius">Helius API URL</label>
+                    <input id="helius" type="text" placeholder="https://…?api-key=…" autocomplete="off" />
+                    <p class="hint">留空＝不使用 Helius。可含 query 中的 api-key。</p>
+                  </div>
+                  <div class="field">
+                    <label for="jupiter">Jupiter API key</label>
+                    <div class="pw-wrap">
+                      <input id="jupiter" type="password" placeholder="留空＝免金鑰" autocomplete="off" />
+                      <button class="icon-btn" type="button" id="toggle-jup" title="顯示／隱藏" aria-label="顯示或隱藏 Jupiter 金鑰">
+                        <svg viewBox="0 0 16 16"><path d="M2 8s2.5-4 6-4 6 4 6 4-2.5 4-6 4-6-4-6-4z"/><circle cx="8" cy="8" r="1.6"/></svg>
+                      </button>
+                    </div>
+                    <p class="hint">以密碼欄顯示，避免 round-trip 時被旁觀。</p>
+                  </div>
+                </section>
+
+                <div class="save-bar">
+                  <button class="save" type="button" id="save">儲存網路與資料來源</button>
+                </div>
+              </div>
+              <div class="toast" id="toast">已儲存（概念稿）</div>
+            </div>
+          </div>
+        </div>
+        <aside class="legend">
+          <h3>旁邊說明</h3>
+          <ul>
+            <li><strong>頂部分段控制</strong>才是切換錢包作用中網路（Devnet 或 Mainnet，一次一條）。切換後，下方分頁會跟著對齊到該鏈清單，讓你立刻看到「此刻在用」的 RPC。</li>
+            <li><strong>Devnet 清單 | Mainnet 清單</strong>分頁用來編輯對應鏈的端點。點另一個分頁<strong>不會</strong>改作用中網路，僅能編輯離線清單；黃字提示會寫明「正在編輯非目前網路」。</li>
+            <li>每條鏈永遠有一筆<strong>內建公開 RPC</strong>（不可刪、不可當自訂編輯）。自訂端點用 <strong>+</strong> 加入、垃圾桶刪除；圖示帶 <code>title</code> tooltip，不用文字按鈕。</li>
+            <li>列高固定一行：radio + 單行省略 URL。點 URL 列才展開完整輸入。內建項展開為唯讀全文。</li>
+            <li>選取 RPC（radio）、新增、刪除在 demo 裡即時生效；Helius／Jupiter／作用中網路需按底部「儲存」才標記為已提交。</li>
+            <li>假資料僅用 <code>https://example-rpc.test/…</code>，不含真實金鑰。</li>
+          </ul>
+        </aside>
+      </div>
+    </div>
+    <script>
+      const PUBLIC = {
+        devnet: { id: "pub-dev", url: "https://api.devnet.solana.com", builtin: true },
+        mainnet: { id: "pub-main", url: "https://api.mainnet-beta.solana.com", builtin: true },
+      };
+
+      const PRESETS = {
+        empty: {
+          live: "devnet",
+          edit: "devnet",
+          helius: "",
+          jupiter: "",
+          lists: {
+            devnet: [{ ...PUBLIC.devnet }],
+            mainnet: [{ ...PUBLIC.mainnet }],
+          },
+          active: { devnet: "pub-dev", mainnet: "pub-main" },
+          openId: null,
+        },
+        filled: {
+          live: "mainnet",
+          edit: "mainnet",
+          helius: "https://example-helius.test/v0/?api-key=demo-not-a-secret",
+          jupiter: "demo-jup-key-xxxx",
+          lists: {
+            devnet: [
+              { ...PUBLIC.devnet },
+              { id: "c1", url: "https://example-rpc.test/devnet/very/long/path/v1/abcdef0123456789" },
+            ],
+            mainnet: [
+              { ...PUBLIC.mainnet },
+              { id: "c2", url: "https://example-rpc.test/mainnet/west/us-central-1/v2/solana/rpc?cluster=mainnet-beta" },
+              { id: "c3", url: "https://example-rpc.test/mainnet/backup-endpoint-with-an-even-longer-hostname.internal/rpc" },
+            ],
+          },
+          active: { devnet: "c1", mainnet: "c2" },
+          openId: null,
+        },
+        expand: {
+          live: "devnet",
+          edit: "devnet",
+          helius: "",
+          jupiter: "",
+          lists: {
+            devnet: [
+              { ...PUBLIC.devnet },
+              { id: "c4", url: "https://example-rpc.test/devnet/custom-primary/rpc" },
+            ],
+            mainnet: [{ ...PUBLIC.mainnet }],
+          },
+          active: { devnet: "c4", mainnet: "pub-main" },
+          openId: "c4",
+        },
+      };
+
+      let state = structuredClone(PRESETS.empty);
+      let uid = 10;
+
+      const $ = (id) => document.getElementById(id);
+
+      function clonePreset(name) {
+        const p = structuredClone(PRESETS[name]);
+        state = p;
+        $("helius").value = p.helius;
+        $("jupiter").value = p.jupiter;
+        $("jupiter").type = "password";
+        render();
+      }
+
+      function liveLabel(c) {
+        return c === "mainnet" ? "Mainnet" : "Devnet";
+      }
+
+      function activeRpc(cluster) {
+        const id = state.active[cluster];
+        return state.lists[cluster].find((r) => r.id === id) || state.lists[cluster][0];
+      }
+
+      function render() {
+        const live = state.live;
+        const edit = state.edit;
+        $("live-devnet").classList.toggle("on", live === "devnet");
+        $("live-mainnet").classList.toggle("on", live === "mainnet");
+        $("tab-devnet").classList.toggle("on", edit === "devnet");
+        $("tab-mainnet").classList.toggle("on", edit === "mainnet");
+
+        const rpc = activeRpc(live);
+        $("now-lbl").textContent = liveLabel(live) + " · 作用中 RPC";
+        $("now-url").textContent = rpc.url;
+        $("now-url").title = rpc.url;
+
+        const hint = $("tab-hint");
+        if (edit === live) {
+          hint.className = "tab-hint";
+          hint.textContent = "正在編輯目前網路的清單。選取會立刻套用到上方「目前使用」。";
+        } else {
+          hint.className = "tab-hint warn";
+          hint.textContent = "僅編輯 " + liveLabel(edit) + " 清單，尚未切換作用中網路。";
+        }
+
+        const list = $("rpc-list");
+        list.replaceChildren();
+        for (const item of state.lists[edit]) {
+          list.appendChild(rowEl(item, edit));
+        }
+      }
+
+      function rowEl(item, cluster) {
+        const row = document.createElement("div");
+        const selected = state.active[cluster] === item.id;
+        const open = state.openId === item.id;
+        row.className = "rpc-row" + (selected ? " selected" : "") + (open ? " open" : "");
+
+        const main = document.createElement("div");
+        main.className = "rpc-main";
+
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "rpc-" + cluster;
+        radio.checked = selected;
+        radio.title = "設為作用中 RPC";
+        radio.addEventListener("click", (e) => e.stopPropagation());
+        radio.addEventListener("change", () => {
+          state.active[cluster] = item.id;
+          render();
+        });
+
+        const urlBtn = document.createElement("button");
+        urlBtn.type = "button";
+        urlBtn.className = "rpc-url-btn";
+        urlBtn.textContent = item.url;
+        urlBtn.title = item.url + "（點擊展開）";
+        urlBtn.addEventListener("click", () => {
+          state.openId = state.openId === item.id ? null : item.id;
+          render();
+        });
+
+        main.appendChild(radio);
+        main.appendChild(urlBtn);
+
+        if (item.builtin) {
+          const badge = document.createElement("span");
+          badge.className = "badge";
+          badge.textContent = "內建";
+          main.appendChild(badge);
+        } else {
+          const del = document.createElement("button");
+          del.type = "button";
+          del.className = "icon-btn danger";
+          del.title = "刪除自訂 RPC";
+          del.setAttribute("aria-label", "刪除自訂 RPC");
+          del.innerHTML = '<svg viewBox="0 0 16 16"><path d="M3 4h10M6 4V3h4v1M5 7v5M8 7v5M11 7v5M4 4l1 9h6l1-9"/></svg>';
+          del.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const arr = state.lists[cluster].filter((r) => r.id !== item.id);
+            state.lists[cluster] = arr;
+            if (state.active[cluster] === item.id) {
+              state.active[cluster] = arr[0].id;
+            }
+            if (state.openId === item.id) state.openId = null;
+            render();
+          });
+          main.appendChild(del);
+        }
+
+        const editBox = document.createElement("div");
+        editBox.className = "rpc-edit";
+        const er = document.createElement("div");
+        er.className = "rpc-edit-row";
+        const inp = document.createElement("input");
+        inp.type = "text";
+        inp.value = item.url;
+        inp.readOnly = !!item.builtin;
+        inp.spellcheck = false;
+        const saveIco = document.createElement("button");
+        saveIco.type = "button";
+        saveIco.className = "icon-btn";
+        saveIco.title = item.builtin ? "內建端點不可改" : "儲存 URL";
+        saveIco.disabled = !!item.builtin;
+        saveIco.innerHTML = '<svg viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7"/></svg>';
+        if (!item.builtin) {
+          saveIco.addEventListener("click", () => {
+            const v = inp.value.trim();
+            if (!v) return;
+            item.url = v;
+            state.openId = null;
+            render();
+          });
+        }
+        er.appendChild(inp);
+        er.appendChild(saveIco);
+        editBox.appendChild(er);
+        const h = document.createElement("p");
+        h.className = "hint";
+        h.textContent = item.builtin ? "公開預設，僅供檢視。" : "單行省略；此處可改完整 URL。";
+        editBox.appendChild(h);
+
+        row.appendChild(main);
+        row.appendChild(editBox);
+        return row;
+      }
+
+      $("live-devnet").addEventListener("click", () => {
+        state.live = "devnet";
+        state.edit = "devnet";
+        state.openId = null;
+        render();
+      });
+      $("live-mainnet").addEventListener("click", () => {
+        state.live = "mainnet";
+        state.edit = "mainnet";
+        state.openId = null;
+        render();
+      });
+      $("tab-devnet").addEventListener("click", () => {
+        state.edit = "devnet";
+        state.openId = null;
+        render();
+      });
+      $("tab-mainnet").addEventListener("click", () => {
+        state.edit = "mainnet";
+        state.openId = null;
+        render();
+      });
+      $("add-rpc").addEventListener("click", () => {
+        const cluster = state.edit;
+        const id = "c" + ++uid;
+        const url =
+          cluster === "mainnet"
+            ? "https://example-rpc.test/mainnet/custom-" + uid
+            : "https://example-rpc.test/devnet/custom-" + uid;
+        state.lists[cluster].push({ id, url });
+        state.openId = id;
+        render();
+      });
+      $("toggle-jup").addEventListener("click", () => {
+        const el = $("jupiter");
+        el.type = el.type === "password" ? "text" : "password";
+      });
+      $("save").addEventListener("click", () => {
+        const t = $("toast");
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 1400);
+      });
+      document.querySelectorAll("[data-preset]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll("[data-preset]").forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          clonePreset(btn.dataset.preset);
+        });
+      });
+
+      clonePreset("empty");
+    </script>
+  </body>
+</html>

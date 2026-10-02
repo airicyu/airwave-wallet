@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 產生錢包（概念稿）</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --accent-dim: #2a6ea8;
+        --danger: #c75050;
+        --popup-w: 384px;
+        --popup-h: 640px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1120px; margin: 0 auto; padding: 28px 20px 56px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 18px; max-width: 54rem; font-size: 0.92rem; }
+      .layout {
+        display: grid;
+        grid-template-columns: var(--popup-w) 1fr;
+        gap: 28px;
+        align-items: start;
+      }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+      .phone-cap { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+      .top h2 {
+        font-size: 0.95rem;
+        margin: 0;
+        font-weight: 600;
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .icon-btn {
+        flex-shrink: 0;
+        width: 34px; height: 34px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-sm);
+        background: var(--fill);
+        color: var(--text);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .icon-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+      .icon-btn.sm { width: 28px; height: 28px; }
+      .icon-btn.sm svg { width: 14px; height: 14px; }
+      .body { flex: 1; min-height: 0; overflow: auto; padding: 12px 12px 16px; }
+      .dock {
+        flex-shrink: 0;
+        padding: 10px 12px 12px;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+      }
+      .dock[hidden] { display: none; }
+      .kind {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        text-align: left;
+        padding: 12px;
+        margin: 0 0 8px;
+        border: 1px solid var(--stroke);
+        border-radius: 10px;
+        background: var(--fill);
+        color: var(--text);
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.88rem;
+      }
+      .kind .chev { margin-left: auto; color: var(--text-dim); }
+      .field { margin: 0 0 12px; }
+      .field > label {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        margin-bottom: 5px;
+      }
+      .field input {
+        width: 100%;
+        background: var(--bg-elevated);
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        color: var(--text);
+        font: inherit;
+        font-size: 0.82rem;
+        padding: 8px 10px;
+      }
+      .primary {
+        width: 100%;
+        border: 0;
+        background: var(--accent);
+        color: #061018;
+        font-weight: 700;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .warn {
+        margin: 0 0 12px;
+        font-size: 0.8rem;
+        color: #e8a0a0;
+      }
+      .word-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin: 0 0 14px;
+      }
+      .word-cell {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+        padding: 7px 8px;
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        background: var(--fill);
+        min-width: 0;
+      }
+      .word-cell .n {
+        font-size: 0.62rem;
+        color: var(--text-dim);
+        font-variant-numeric: tabular-nums;
+        flex-shrink: 0;
+      }
+      .word-cell .w {
+        font-size: 0.78rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+      .addr-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        background: var(--fill);
+      }
+      .addr-row .pk {
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .success {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 28px 8px 8px;
+      }
+      .ok-mark {
+        width: 40px; height: 40px;
+        border-radius: 999px;
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .notes { font-size: 0.86rem; color: var(--text-muted); }
+      .notes h2 { font-size: 0.95rem; color: var(--text); margin: 0 0 10px; }
+      .notes h3 { font-size: 0.82rem; color: var(--text); margin: 18px 0 8px; }
+      .notes ul, .notes ol { padding-left: 1.2rem; margin: 0 0 8px; }
+      .notes li { margin: 0 0 6px; }
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        margin: 0 0 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>產生錢包 — 兩條路徑</h1>
+      <p class="lede">
+        非正式契約。現行「產生新錢包」只有 Burner（隨機密鑰、成功只見短地址）。本稿把 Add 拆成<strong>新錢包</strong>（一次看 12 詞）與 <strong>Burner</strong>（不看助記詞，之後仍可 Reveal 密鑰）。示範詞為虛構，不是 BIP39。
+      </p>
+      <div class="layout">
+        <div>
+          <p class="phone-cap">Popup 384×640</p>
+          <div class="phone">
+            <div class="top">
+              <button type="button" class="icon-btn" id="back" aria-label="返回" title="返回">
+                <svg viewBox="0 0 24 24"><path d="M15 6 9 12l6 6"/></svg>
+              </button>
+              <h2 id="title">新增帳戶</h2>
+            </div>
+            <div class="body" id="body"></div>
+            <div class="dock" id="dock" hidden></div>
+          </div>
+        </div>
+        <div class="notes">
+          <h2>設計審查</h2>
+          <p>對照現況：Add 一項「產生新錢包」→ 名稱 → 產生 → 短地址。使用者若要可恢復錢包，會以為已經有助記詞，其實沒有。</p>
+          <h3>拆成兩項，不要藏在第二層</h3>
+          <p>一屏一件事。Add 列表直接兩條，對齊「建立觀察帳戶」句式：<strong>建立助記詞錢包</strong>、<strong>建立 Burner 錢包</strong>。不要在按鈕下寫教學句。</p>
+          <h3>助記詞錢包</h3>
+          <ol>
+            <li>單屏：名稱選填＋12 詞（每列 3）＋地址。</li>
+            <li>進入頁即產生詞（尚未寫 vault）。殼底「建立」才寫入 phantom index 0。</li>
+            <li>Back 放棄、不建檔。關 popup 清詞。</li>
+          </ol>
+          <p>不考三個詞、不存助記詞、不 log。之後 Reveal 只出私鑰，不再出這 12 詞。</p>
+          <h3>Burner</h3>
+          <p>維持現況：隨機 Keypair、不衍生 HD、不顯示助記詞。成功只見地址。Manage 仍可 Reveal。適合丟棄用。</p>
+          <h3>不做</h3>
+          <ul>
+            <li>產生 24 詞、passphrase、備份 quiz</li>
+            <li>把助記詞寫進 storage</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <script>
+      const FAKE_WORDS = [
+        "alpha", "bravo", "charlie", "delta", "echo", "foxtrot",
+        "golf", "hotel", "india", "juliet", "kilo", "lima",
+      ];
+      const FAKE_PK = "7nYqDemoPubxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxKey1";
+      const ICO_COPY = '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+      const ICO_OK = '<svg width="22" height="22" viewBox="0 0 24 24"><path d="M6 12.5 10 16.5 18 8"/></svg>';
+
+      const state = { screen: "add", seedStep: "form", burnerDone: false, label: "" };
+
+      function shortPk(pk) {
+        return pk.slice(0, 4) + "…" + pk.slice(-4);
+      }
+      function setDock(html) {
+        const d = document.getElementById("dock");
+        if (!html) { d.hidden = true; d.innerHTML = ""; return; }
+        d.hidden = false;
+        d.innerHTML = html;
+      }
+
+      function renderAdd() {
+        document.getElementById("title").textContent = "新增帳戶";
+        document.getElementById("body").innerHTML = `
+          <button type="button" class="kind" data-go="seed">建立助記詞錢包<span class="chev">›</span></button>
+          <button type="button" class="kind" data-go="burner">建立 Burner 錢包<span class="chev">›</span></button>
+          <button type="button" class="kind" data-go="import">匯入錢包<span class="chev">›</span></button>
+          <button type="button" class="kind" data-go="watch">建立觀察帳戶<span class="chev">›</span></button>
+          <button type="button" class="kind" data-go="combined">建立 Combined<span class="chev">›</span></button>
+        `;
+        setDock("");
+        document.querySelectorAll("[data-go]").forEach((b) => {
+          b.onclick = () => {
+            const g = b.dataset.go;
+            if (g === "seed") { state.screen = "seed"; state.seedStep = "form"; state.label = ""; }
+            else if (g === "burner") { state.screen = "burner"; state.burnerDone = false; state.label = ""; }
+            else { state.screen = "other"; }
+            render();
+          };
+        });
+      }
+
+      function renderSeed() {
+        document.getElementById("title").textContent = "助記詞錢包";
+        const cells = FAKE_WORDS.map((w, i) => `
+          <div class="word-cell"><span class="n">${i + 1}</span><span class="w">${w}</span></div>
+        `).join("");
+        document.getElementById("body").innerHTML = `
+          <div class="field">
+            <label>名稱</label>
+            <input id="nm" type="text" placeholder="選填" value="${state.label.replace(/"/g, "&quot;")}" />
+          </div>
+          <p class="warn">離開後無法再顯示助記詞</p>
+          <div class="toolbar">
+            <button type="button" class="icon-btn sm" id="copy-words" title="複製" aria-label="複製">${ICO_COPY}</button>
+          </div>
+          <div class="word-grid">${cells}</div>
+          <div class="addr-row">
+            <span class="pk" title="${FAKE_PK}">${shortPk(FAKE_PK)}</span>
+            <button type="button" class="icon-btn sm" id="copy-pk" title="複製" aria-label="複製">${ICO_COPY}</button>
+          </div>
+        `;
+        setDock(`<button type="button" class="primary" id="go">建立</button>`);
+        document.getElementById("nm").oninput = (e) => { state.label = e.target.value; };
+        document.getElementById("go").onclick = () => {
+          state.screen = "add";
+          render();
+        };
+      }
+
+      function renderBurner() {
+        document.getElementById("title").textContent = "Burner 錢包";
+        if (state.burnerDone) {
+          document.getElementById("body").innerHTML = `
+            <div class="success">
+              <div class="ok-mark">${ICO_OK}</div>
+              <div class="addr-row" style="width:100%">
+                <span class="pk">${shortPk(FAKE_PK)}</span>
+                <button type="button" class="icon-btn sm" title="複製" aria-label="複製">${ICO_COPY}</button>
+              </div>
+            </div>
+          `;
+          setDock(`<button type="button" class="primary" id="done">完成</button>`);
+          document.getElementById("done").onclick = () => { state.screen = "add"; render(); };
+          return;
+        }
+        document.getElementById("body").innerHTML = `
+          <div class="field">
+            <label>名稱</label>
+            <input id="nm" type="text" placeholder="選填" value="${state.label.replace(/"/g, "&quot;")}" />
+          </div>
+        `;
+        setDock(`<button type="button" class="primary" id="go">產生</button>`);
+        document.getElementById("nm").oninput = (e) => { state.label = e.target.value; };
+        document.getElementById("go").onclick = () => { state.burnerDone = true; render(); };
+      }
+
+      function renderOther() {
+        document.getElementById("title").textContent = "新增帳戶";
+        document.getElementById("body").innerHTML = `<p class="warn">此稿只示範產生兩條路徑。</p>`;
+        setDock("");
+      }
+
+      function render() {
+        if (state.screen === "add") renderAdd();
+        else if (state.screen === "seed") renderSeed();
+        else if (state.screen === "burner") renderBurner();
+        else renderOther();
+      }
+
+      document.getElementById("back").onclick = () => {
+        if (state.screen === "seed" || state.screen === "burner" || state.screen === "other") {
+          if (state.screen === "burner" && state.burnerDone) return;
+          state.screen = "add";
+          render();
+        }
+      };
+      render();
+    </script>
+  </body>
+</html>

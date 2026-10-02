@@ -7,9 +7,20 @@ const TOKEN_PROGRAM_ID = new PublicKey(
   "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
 );
 
+const TOKEN_2022_PROGRAM_ID = new PublicKey(
+  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+);
+
+export type HomeTokenMemberShare = {
+  pubkey: string;
+  uiAmount: number;
+  uiAmountLabel: string;
+  percent: number;
+};
+
 export type HomeTokenRow = {
   id: string;
-  /** 展示用全名（Helius `content.metadata.name`；沒有則退回 symbol／mint 縮寫） */
+  /** 展示用全名（Wallet API／Jupiter；沒有則退回 symbol／mint 縮寫） */
   name: string;
   symbol: string;
   /** 數值持倉量（供 Jupiter 等計價；勿從 uiAmountLabel 反推） */
@@ -23,6 +34,8 @@ export type HomeTokenRow = {
   isVerified?: boolean;
   organicScore?: number;
   organicScoreLabel?: string;
+  /** combined 展開列；單一帳戶路徑不附 */
+  members?: HomeTokenMemberShare[];
 };
 
 export function shortMint(mint: string): string {
@@ -99,6 +112,7 @@ export function buildHomeTokenRows(
     const raw = BigInt(tokenAmount.amount);
     if (raw === 0n) continue;
     if (tokenAmount.uiAmount === 0) continue;
+    if (tokenAmount.decimals === 0) continue;
 
     const prev = byMint.get(mint);
     if (prev) {
@@ -167,11 +181,17 @@ export async function fetchRpcHomeTokenRows(
   throwIfAborted(signal);
   const lamports = await withAbort(conn.getBalance(pk), signal);
   throwIfAborted(signal);
-  const tokenAccounts = await withAbort(
-    conn.getParsedTokenAccountsByOwner(pk, {
-      programId: TOKEN_PROGRAM_ID,
-    }),
-    signal,
+  const [legacy, token2022] = await Promise.all([
+    withAbort(
+      conn.getParsedTokenAccountsByOwner(pk, { programId: TOKEN_PROGRAM_ID }),
+      signal,
+    ),
+    withAbort(
+      conn.getParsedTokenAccountsByOwner(pk, { programId: TOKEN_2022_PROGRAM_ID }),
+      signal,
+    ),
+  ]);
+  return sortHomeTokenRows(
+    buildHomeTokenRows(lamports, [...legacy.value, ...token2022.value]),
   );
-  return sortHomeTokenRows(buildHomeTokenRows(lamports, tokenAccounts.value));
 }

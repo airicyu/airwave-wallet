@@ -7,6 +7,7 @@ import {
   iconLetterForSymbol,
   shortMint,
   sortHomeTokenRows,
+  type HomeTokenMemberShare,
   type HomeTokenRow,
 } from "../shared/home-tokens";
 
@@ -17,8 +18,9 @@ export type GetHomeTokensResult = {
 };
 
 const TTL_MS = 45_000;
-const PAGE_LIMIT = 1000;
+const WALLET_BALANCES_LIMIT = 100;
 const PAGE_DELAY_MS = 500;
+const WALLET_API_ORIGIN = "https://api.helius.xyz";
 const JUPITER_BATCH_SIZE = 100;
 const JUPITER_DELAY_NO_KEY_MS = 2000;
 const JUPITER_DELAY_WITH_KEY_MS = 1000;
@@ -42,14 +44,15 @@ let inFlight: InFlight | null = null;
 let backgroundRefreshFingerprint: string | null = null;
 
 function scheduleBackgroundRefresh(
-  owner: string,
+  owners: string[],
   settings: Settings,
   fingerprint: string,
+  withMembers: boolean,
 ): void {
   if (inFlight || backgroundRefreshFingerprint === fingerprint) return;
   backgroundRefreshFingerprint = fingerprint;
   const abort = new AbortController();
-  void runRefresh(owner, settings, abort.signal, fingerprint)
+  void runRefresh(owners, settings, abort.signal, fingerprint, withMembers)
     .catch(() => {
       /* 背景刷新失敗保留舊快取 */
     })
@@ -60,8 +63,10 @@ function scheduleBackgroundRefresh(
     });
 }
 
-function cacheFingerprint(owner: string, settings: Settings): string {
-  return `${owner}|${settings.cluster}|${settings.heliusApiUrl}|${settings.rpcUrl}|${settings.jupiterApiKey}`;
+function cacheFingerprint(owners: string[], settings: Settings): string {
+  const ownersJoin = owners.join("\u001f");
+  const rpc = `${settings.rpcByCluster.devnet.active}:${settings.rpcByCluster.devnet.urls.join(",")}|${settings.rpcByCluster.mainnet.active}:${settings.rpcByCluster.mainnet.urls.join(",")}`;
+  return `${ownersJoin}|${settings.cluster}|${rpc}|${settings.heliusApiUrl}|${settings.rpcUrl}|${settings.jupiterApiKey}`;
 }
 
 function sleep(ms: number, signal?: AbortSignal): Promise<void> {
@@ -124,90 +129,87 @@ function trimMeta(v: unknown): string | undefined {
   return t || undefined;
 }
 
-function dasNameAndSymbol(
-  item: Record<string, unknown>,
-  tokenInfo: Record<string, unknown>,
-  mint: string,
-): { name: string; symbol: string } {
-  const content = item.content as Record<string, unknown> | undefined;
-  const meta = content?.metadata as Record<string, unknown> | undefined;
-  const symbol =
-    trimMeta(tokenInfo.symbol) ??
-    trimMeta(meta?.symbol) ??
-    shortMint(mint);
-  const name =
-    trimMeta(meta?.name) ?? trimMeta(tokenInfo.name) ?? symbol;
-  return { name, symbol };
-}
-
 function httpsIconUrl(raw: unknown): string | undefined {
   if (typeof raw !== "string") return undefined;
   if (!raw.startsWith("https:")) return undefined;
   return raw;
 }
 
-function heliusUsd(
-  priceInfo: Record<string, unknown> | undefined,
-  uiAmount: number,
-): { usdLabel: string; usdTotal?: number } {
-  if (!priceInfo) return { usdLabel: "—" };
-  const total = priceInfo.total_price;
-  if (typeof total === "number" && Number.isFinite(total)) {
-    return { usdLabel: formatUsdLabel(total), usdTotal: total };
+export function extractHeliusApiKey(heliusApiUrl: string): string | null {
+  const t = heliusApiUrl.trim();
+  if (!t) return null;
+  try {
+    const u = new URL(t);
+    const k = u.searchParams.get("api-key") ?? u.searchParams.get("apiKey");
+    const trimmed = k?.trim();
+    return trimmed || null;
+  } catch {
+    return null;
   }
-  const ppt = priceInfo.price_per_token;
-  if (typeof ppt === "number" && Number.isFinite(ppt)) {
-    const t = ppt * uiAmount;
-    if (!Number.isFinite(t)) return { usdLabel: "—" };
-    return { usdLabel: formatUsdLabel(t), usdTotal: t };
-  }
-  return { usdLabel: "—" };
 }
 
-function isFungibleItem(item: Record<string, unknown>): boolean {
-  const iface = String(item.interface ?? "");
-  if (iface.includes("NFT") || iface.includes("Nft")) return false;
-  if (iface.includes("COMPRESSED")) return false;
-  if (iface === "V1_NFT" || iface === "ProgrammableNFT") return false;
-  if (item.compressed === true) return false;
-  if (item.token_info != null) return true;
-  return iface.includes("Fungible") || iface.includes("fungible");
-}
-
-type DasPage = {
-  items: Record<string, unknown>[];
-  nativeLamports: number;
-  nativePriceInfo?: Record<string, unknown>;
+type WalletTokenBalance = {
+  mint: string;
+  symbol?: string | null;
+  name?: string | null;
+  balance: number;
+  decimals: number;
+  pricePerToken?: number | null;
+  usdValue?: number | null;
+  logoUri?: string | null;
 };
 
-async function fetchDasPage(
-  heliusApiUrl: string,
+type WalletBalancesPage = {
+  balances: WalletTokenBalance[];
+  hasMore: boolean;
+};
+
+function asFiniteNumber(v: unknown): number | undefined {
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  if (typeof v === "string" && v.trim()) {
+    const n = Number(v);
+    if (Number.isFinite(n)) return n;
+  }
+  return undefined;
+}
+
+function parseWalletTokenBalance(raw: unknown): WalletTokenBalance | null {
+  if (!raw || typeof raw !== "object") return null;
+  const rec = raw as Record<string, unknown>;
+  const mint = trimMeta(rec.mint);
+  if (!mint) return null;
+  const balance = asFiniteNumber(rec.balance);
+  const decimals = asFiniteNumber(rec.decimals);
+  if (balance == null || decimals == null) return null;
+  return {
+    mint,
+    symbol: trimMeta(rec.symbol) ?? null,
+    name: trimMeta(rec.name) ?? null,
+    balance,
+    decimals,
+    pricePerToken: asFiniteNumber(rec.pricePerToken) ?? null,
+    usdValue: asFiniteNumber(rec.usdValue) ?? null,
+    logoUri: trimMeta(rec.logoUri) ?? null,
+  };
+}
+
+async function fetchWalletBalancesPage(
+  apiKey: string,
   owner: string,
   page: number,
   signal: AbortSignal,
-): Promise<DasPage> {
-  const body = {
-    jsonrpc: "2.0",
-    id: "airwave-das",
-    method: "getAssetsByOwner",
-    params: {
-      ownerAddress: owner,
-      page,
-      limit: PAGE_LIMIT,
-      displayOptions: {
-        showFungible: true,
-        showNativeBalance: true,
-      },
-    },
-  };
+): Promise<WalletBalancesPage> {
+  const url = new URL(`${WALLET_API_ORIGIN}/v1/wallet/${owner}/balances`);
+  url.searchParams.set("api-key", apiKey);
+  url.searchParams.set("page", String(page));
+  url.searchParams.set("limit", String(WALLET_BALANCES_LIMIT));
+  url.searchParams.set("showNfts", "false");
+  url.searchParams.set("showZeroBalance", "false");
+  url.searchParams.set("showNative", "true");
 
   const res = await fetchWith429Retry(
-    heliusApiUrl,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    },
+    url,
+    { method: "GET", headers: { "X-Api-Key": apiKey } },
     signal,
   );
 
@@ -215,115 +217,98 @@ async function fetchDasPage(
     if (res.status === 429) {
       throw new Error("Helius 速率限制（429），請稍後再試");
     }
-    if (res.status >= 400 && res.status < 500) {
-      throw new Error(`Helius 請求失敗（HTTP ${res.status}）`);
-    }
-    throw new Error(`Helius 請求失敗（HTTP ${res.status}）`);
+    throw new Error(`Helius Wallet API 失敗（HTTP ${res.status}）`);
   }
 
   let json: unknown;
   try {
     json = await res.json();
   } catch {
-    throw new Error("Helius 回應無法解析");
+    throw new Error("Helius Wallet API 回應無法解析");
   }
-
-  const result = (json as { result?: Record<string, unknown> }).result;
-  if (!result || typeof result !== "object") {
-    throw new Error("Helius 回應格式錯誤");
+  if (!json || typeof json !== "object") {
+    throw new Error("Helius Wallet API 回應格式錯誤");
   }
-
-  const items = Array.isArray(result.items)
-    ? (result.items as Record<string, unknown>[])
-    : [];
-
-  const nativeBalance = result.nativeBalance as Record<string, unknown> | undefined;
-  const lamports =
-    typeof nativeBalance?.lamports === "number"
-      ? nativeBalance.lamports
-      : typeof nativeBalance?.lamports === "string"
-        ? Number(nativeBalance.lamports)
-        : 0;
-  const nativeLamports = Number.isFinite(lamports) ? lamports : 0;
-
-  let nativePriceInfo: Record<string, unknown> | undefined;
-  if (nativeBalance) {
-    const pi = nativeBalance.price_info;
-    if (pi && typeof pi === "object") {
-      nativePriceInfo = pi as Record<string, unknown>;
-    } else if (typeof nativeBalance.price_per_sol === "number") {
-      nativePriceInfo = { price_per_token: nativeBalance.price_per_sol };
-    }
+  const rec = json as Record<string, unknown>;
+  const balancesRaw = Array.isArray(rec.balances) ? rec.balances : [];
+  const balances: WalletTokenBalance[] = [];
+  for (const item of balancesRaw) {
+    const parsed = parseWalletTokenBalance(item);
+    if (parsed) balances.push(parsed);
   }
-
-  return { items, nativeLamports, nativePriceInfo };
+  const pagination = rec.pagination as Record<string, unknown> | undefined;
+  const hasMore = pagination?.hasMore === true;
+  return { balances, hasMore };
 }
 
-function mergeDasItems(pages: DasPage[]): HomeTokenRow[] {
-  let totalLamports = 0;
-  let nativePriceInfo: Record<string, unknown> | undefined;
+function mergeWalletBalances(pages: WalletTokenBalance[][]): HomeTokenRow[] {
+  let solAmount = 0;
+  let solUsd: { usdLabel: string; usdTotal?: number } = { usdLabel: "—" };
   const byMint = new Map<
     string,
     {
-      raw: bigint;
+      ui: number;
       decimals: number;
       name: string;
       symbol: string;
       iconUrl?: string;
-      priceInfo?: Record<string, unknown>;
+      usdLabel: string;
+      usdTotal?: number;
     }
   >();
 
   for (const page of pages) {
-    totalLamports = Math.max(totalLamports, page.nativeLamports);
-    if (page.nativePriceInfo) nativePriceInfo = page.nativePriceInfo;
+    for (const item of page) {
+      if (item.balance === 0) continue;
+      const isSol = item.mint === WRAPPED_SOL_MINT;
+      if (!isSol && item.decimals === 0) continue;
 
-    for (const item of page.items) {
-      if (!isFungibleItem(item)) continue;
-      const tokenInfo = item.token_info as Record<string, unknown> | undefined;
-      if (!tokenInfo) continue;
-
-      const mint =
-        (tokenInfo.mint as string | undefined) ??
-        (item.id as string | undefined) ??
-        "";
-      if (!mint) continue;
-
-      const balance = tokenInfo.balance as number | string | undefined;
-      const decimals =
-        typeof tokenInfo.decimals === "number" ? tokenInfo.decimals : 0;
-      let raw: bigint;
-      if (typeof balance === "string") raw = BigInt(balance);
-      else if (typeof balance === "number") raw = BigInt(Math.trunc(balance));
-      else continue;
-
-      if (raw === 0n) continue;
-
-      const { name, symbol } = dasNameAndSymbol(item, tokenInfo, mint);
-      const iconUrl =
-        httpsIconUrl(
-          (item.content as Record<string, unknown> | undefined)?.links &&
-            ((item.content as { links?: { image?: string } }).links?.image),
-        ) ?? httpsIconUrl(tokenInfo.image as string | undefined);
-
-      const priceInfo = tokenInfo.price_info as Record<string, unknown> | undefined;
-      const prev = byMint.get(mint);
-      if (prev) {
-        prev.raw += raw;
-        if (priceInfo) prev.priceInfo = priceInfo;
-        if (iconUrl && !prev.iconUrl) prev.iconUrl = iconUrl;
-        if (name !== symbol && prev.name === prev.symbol) prev.name = name;
-        if (symbol !== shortMint(mint) && prev.symbol === shortMint(mint)) {
-          prev.symbol = symbol;
+      let usdLabel = "—";
+      let usdTotal: number | undefined;
+      if (item.usdValue != null && Number.isFinite(item.usdValue)) {
+        usdLabel = formatUsdLabel(item.usdValue);
+        usdTotal = item.usdValue;
+      } else if (item.pricePerToken != null) {
+        const t = item.pricePerToken * item.balance;
+        if (Number.isFinite(t)) {
+          usdLabel = formatUsdLabel(t);
+          usdTotal = t;
         }
+      }
+
+      if (isSol) {
+        solAmount += item.balance;
+        if (usdTotal != null) solUsd = { usdLabel, usdTotal };
+        continue;
+      }
+
+      const symbol = item.symbol || shortMint(item.mint);
+      const name = item.name || symbol;
+      const iconUrl = httpsIconUrl(item.logoUri);
+      const prev = byMint.get(item.mint);
+      if (prev) {
+        prev.ui += item.balance;
+        if (usdTotal != null) {
+          prev.usdLabel = usdLabel;
+          prev.usdTotal = (prev.usdTotal ?? 0) + usdTotal;
+          if (prev.usdTotal != null) prev.usdLabel = formatUsdLabel(prev.usdTotal);
+        }
+        if (iconUrl && !prev.iconUrl) prev.iconUrl = iconUrl;
+        if (item.name) prev.name = item.name;
+        if (item.symbol) prev.symbol = item.symbol;
       } else {
-        byMint.set(mint, { raw, decimals, name, symbol, iconUrl, priceInfo });
+        byMint.set(item.mint, {
+          ui: item.balance,
+          decimals: item.decimals,
+          name,
+          symbol,
+          iconUrl,
+          usdLabel,
+          usdTotal,
+        });
       }
     }
   }
-
-  const solAmount = totalLamports / 1e9;
-  const solUsd = nativePriceInfo ? heliusUsd(nativePriceInfo, solAmount) : { usdLabel: "—" };
 
   const rows: HomeTokenRow[] = [
     {
@@ -338,50 +323,39 @@ function mergeDasItems(pages: DasPage[]): HomeTokenRow[] {
     },
   ];
 
-  for (const [mint, { raw, decimals, name, symbol, iconUrl, priceInfo }] of byMint) {
-    if (raw === 0n) continue;
-    const ui = decimals > 0 ? Number(raw) / 10 ** decimals : Number(raw);
-    if (ui === 0) continue;
-    const usd = priceInfo ? heliusUsd(priceInfo, ui) : { usdLabel: "—" };
+  for (const [mint, row] of byMint) {
+    if (row.ui === 0) continue;
     rows.push({
       id: mint,
-      name,
-      symbol,
-      uiAmount: ui,
-      uiAmountLabel: ui.toLocaleString(undefined, {
-        maximumFractionDigits: Math.min(decimals, 9),
+      name: row.name,
+      symbol: row.symbol,
+      uiAmount: row.ui,
+      uiAmountLabel: row.ui.toLocaleString(undefined, {
+        maximumFractionDigits: Math.min(row.decimals, 9),
       }),
-      usdLabel: usd.usdLabel,
-      usdTotal: usd.usdTotal,
-      iconLetter: iconLetterForSymbol(symbol),
-      iconUrl,
+      usdLabel: row.usdLabel,
+      usdTotal: row.usdTotal,
+      iconLetter: iconLetterForSymbol(row.symbol),
+      iconUrl: row.iconUrl,
     });
   }
 
   return rows;
 }
 
-async function fetchDasHomeTokenRows(
-  heliusApiUrl: string,
+async function fetchWalletApiHomeTokenRows(
+  apiKey: string,
   owner: string,
   signal: AbortSignal,
-): Promise<{ rows: HomeTokenRow[]; pageError?: string }> {
-  const pages: DasPage[] = [];
+): Promise<HomeTokenRow[]> {
+  const pages: WalletTokenBalance[][] = [];
   let page = 1;
   for (;;) {
-    try {
-      const p = await fetchDasPage(heliusApiUrl, owner, page, signal);
-      pages.push(p);
-      if (p.items.length < PAGE_LIMIT) {
-        return { rows: mergeDasItems(pages) };
-      }
-      page += 1;
-      await sleep(PAGE_DELAY_MS, signal);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Helius 請求失敗";
-      if (pages.length === 0) throw e;
-      return { rows: mergeDasItems(pages), pageError: msg };
-    }
+    const p = await fetchWalletBalancesPage(apiKey, owner, page, signal);
+    pages.push(p.balances);
+    if (!p.hasMore) return mergeWalletBalances(pages);
+    page += 1;
+    await sleep(PAGE_DELAY_MS, signal);
   }
 }
 
@@ -390,6 +364,9 @@ type JupiterTokenHit = {
   isVerified?: boolean;
   organicScore?: number;
   organicScoreLabel?: string;
+  name?: string;
+  symbol?: string;
+  icon?: string;
 };
 
 function parseJupiterSearchArray(json: unknown): Map<string, JupiterTokenHit> {
@@ -411,6 +388,9 @@ function parseJupiterSearchArray(json: unknown): Map<string, JupiterTokenHit> {
           ? organicScore
           : undefined,
       organicScoreLabel: trimMeta(rec.organicScoreLabel),
+      name: trimMeta(rec.name),
+      symbol: trimMeta(rec.symbol),
+      icon: httpsIconUrl(rec.icon),
     });
   }
   return map;
@@ -471,44 +451,130 @@ async function applyJupiterTokensV2(
     if (hit.isVerified) patched.isVerified = true;
     if (hit.organicScore != null) patched.organicScore = hit.organicScore;
     if (hit.organicScoreLabel) patched.organicScoreLabel = hit.organicScoreLabel;
+    if (row.id !== NATIVE_SOL_ID) {
+      if (hit.name) patched.name = hit.name;
+      if (hit.symbol) {
+        patched.symbol = hit.symbol;
+        patched.iconLetter = iconLetterForSymbol(hit.symbol);
+      }
+      if (hit.icon) patched.iconUrl = hit.icon;
+    }
     return patched;
   });
 
   return { rows: next };
 }
 
-async function runRefresh(
+function mergeMultiOwnerRows(
+  perOwner: { owner: string; rows: HomeTokenRow[] }[],
+  ownerOrder: string[],
+): HomeTokenRow[] {
+  const orderIndex = new Map(ownerOrder.map((o, i) => [o, i]));
+  const byId = new Map<
+    string,
+    {
+      template: HomeTokenRow;
+      totalUi: number;
+      perOwner: Map<string, HomeTokenRow>;
+    }
+  >();
+
+  for (const { owner, rows } of perOwner) {
+    for (const row of rows) {
+      let bucket = byId.get(row.id);
+      if (!bucket) {
+        bucket = { template: { ...row, members: undefined }, totalUi: 0, perOwner: new Map() };
+        byId.set(row.id, bucket);
+      }
+      bucket.totalUi += row.uiAmount;
+      bucket.perOwner.set(owner, row);
+      if (row.iconUrl && !bucket.template.iconUrl) bucket.template.iconUrl = row.iconUrl;
+      if (row.name && bucket.template.name === bucket.template.symbol) {
+        bucket.template.name = row.name;
+      }
+    }
+  }
+
+  const merged: HomeTokenRow[] = [];
+  for (const [id, bucket] of byId) {
+    const total = bucket.totalUi;
+    const template = bucket.template;
+    const decimalsHint =
+      id === NATIVE_SOL_ID ? 9 : Math.min(9, (template.uiAmountLabel.split(".")[1]?.length ?? 0) || 0);
+
+    const members: HomeTokenMemberShare[] = [];
+    const sortedOwners = [...bucket.perOwner.keys()].sort(
+      (a, b) => (orderIndex.get(a) ?? 0) - (orderIndex.get(b) ?? 0),
+    );
+    for (const owner of sortedOwners) {
+      const row = bucket.perOwner.get(owner)!;
+      if (row.uiAmount <= 0) continue;
+      members.push({
+        pubkey: owner,
+        uiAmount: row.uiAmount,
+        uiAmountLabel: row.uiAmountLabel,
+        percent: total > 0 ? (100 * row.uiAmount) / total : 0,
+      });
+    }
+
+    const mergedRow: HomeTokenRow = {
+      ...template,
+      id,
+      uiAmount: total,
+      uiAmountLabel: total.toLocaleString(undefined, {
+        maximumFractionDigits: id === NATIVE_SOL_ID ? 9 : decimalsHint,
+      }),
+      members: members.length > 0 ? members : undefined,
+    };
+    if (id !== NATIVE_SOL_ID && total === 0) continue;
+    merged.push(mergedRow);
+  }
+
+  return sortHomeTokenRows(merged);
+}
+
+async function fetchSingleOwnerRows(
   owner: string,
   settings: Settings,
   signal: AbortSignal,
+): Promise<HomeTokenRow[]> {
+  const apiKey = extractHeliusApiKey(settings.heliusApiUrl);
+  if (apiKey && settings.cluster === "mainnet") {
+    return fetchWalletApiHomeTokenRows(apiKey, owner, signal);
+  }
+  return fetchRpcHomeTokenRows(settings.rpcUrl, owner, signal);
+}
+
+async function runRefresh(
+  owners: string[],
+  settings: Settings,
+  signal: AbortSignal,
   fingerprint: string,
+  withMembers: boolean,
 ): Promise<GetHomeTokensResult> {
   const cached =
     memoryCache?.fingerprint === fingerprint ? memoryCache.rows : undefined;
 
+  if (owners.length === 0) return { rows: [] };
+
   try {
-    let rows: HomeTokenRow[];
-    let dasPageError: string | undefined;
-    const helius = settings.heliusApiUrl.trim();
-    if (helius) {
-      const das = await fetchDasHomeTokenRows(helius, owner, signal);
-      rows = das.rows;
-      dasPageError = das.pageError;
-    } else {
-      rows = await fetchRpcHomeTokenRows(settings.rpcUrl, owner, signal);
+    const perOwner: { owner: string; rows: HomeTokenRow[] }[] = [];
+    for (const owner of owners) {
+      const rows = await fetchSingleOwnerRows(owner, settings, signal);
+      perOwner.push({ owner, rows });
     }
+
+    let rows = withMembers
+        ? mergeMultiOwnerRows(perOwner, owners)
+        : sortHomeTokenRows(perOwner[0]?.rows ?? []);
 
     if (settings.cluster === "mainnet") {
       try {
-        const jup = await applyJupiterTokensV2(
-          rows,
-          settings.jupiterApiKey,
-          signal,
-        );
+        const jup = await applyJupiterTokensV2(rows, settings.jupiterApiKey, signal);
         rows = sortHomeTokenRows(jup.rows);
         if (jup.error) {
           memoryCache = { fingerprint, rows, fetchedAt: Date.now() };
-          return { rows, error: dasPageError ? `${dasPageError}；${jup.error}` : jup.error };
+          return { rows, error: jup.error };
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Jupiter 資料更新失敗";
@@ -519,11 +585,7 @@ async function runRefresh(
     }
 
     rows = sortHomeTokenRows(rows);
-
     memoryCache = { fingerprint, rows, fetchedAt: Date.now() };
-    if (dasPageError) {
-      return { rows, error: dasPageError };
-    }
     return { rows };
   } catch (e) {
     if (signal.aborted) {
@@ -538,15 +600,16 @@ async function runRefresh(
   }
 }
 
-export async function getHomeTokensForOwner(
-  owner: string | null,
+export async function getHomeTokensForOwners(
+  owners: string[],
   settings: Settings,
-  options?: { force?: boolean },
+  options?: { force?: boolean; withMembers?: boolean },
 ): Promise<GetHomeTokensResult> {
-  if (!owner) return { rows: [] };
+  if (owners.length === 0) return { rows: [] };
 
-  const fingerprint = cacheFingerprint(owner, settings);
+  const fingerprint = cacheFingerprint(owners, settings);
   const force = options?.force === true;
+  const withMembers = options?.withMembers === true;
 
   if (
     !force &&
@@ -554,7 +617,7 @@ export async function getHomeTokensForOwner(
     memoryCache.fingerprint === fingerprint &&
     Date.now() - memoryCache.fetchedAt < TTL_MS
   ) {
-    scheduleBackgroundRefresh(owner, settings, fingerprint);
+    scheduleBackgroundRefresh(owners, settings, fingerprint, withMembers);
     return { rows: memoryCache.rows, fromCache: true };
   }
 
@@ -567,11 +630,21 @@ export async function getHomeTokensForOwner(
   }
 
   const abort = new AbortController();
-  const promise = runRefresh(owner, settings, abort.signal, fingerprint);
+  const promise = runRefresh(owners, settings, abort.signal, fingerprint, withMembers);
   inFlight = { fingerprint, abort, promise };
   try {
     return await promise;
   } finally {
     if (inFlight?.promise === promise) inFlight = null;
   }
+}
+
+/** @deprecated 單 owner 路徑；popup 應走 getHomeTokensForOwners */
+export async function getHomeTokensForOwner(
+  owner: string | null,
+  settings: Settings,
+  options?: { force?: boolean },
+): Promise<GetHomeTokensResult> {
+  if (!owner) return { rows: [] };
+  return getHomeTokensForOwners([owner], settings, options);
 }

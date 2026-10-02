@@ -1,6 +1,6 @@
 # 0.5.0 — Combined wallet account
 
-- **狀態：** `planned`
+- **狀態：** `in progress`
 - **上游版本：** [0.4.0](../0.4.0/INDEX.md)（實作本版前，**0.3.0 與 0.4.0 均須 `shipped`**）
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
 - **Backlog：** [combined-wallet-account.md](../backlog/combined-wallet-account.md)（來源；**以本 INDEX 為準**）
@@ -33,7 +33,7 @@
 | 簽名 | 閘門對 **目前錢包公鑰**，取鑰用 **signing 列 `accountId`**，禁止 `getKeypair(combined.id)`。優先序：無帳戶 → 目前錢包為觀察／無列 → `ACCOUNT_READ_ONLY`（先於鎖定）→ 可簽但鎖定 → `WALLET_LOCKED` → 其餘對齊 0.2.0。inject features 不因 combined 剝除 |
 | Home | SOL／token **依 mint（及 native-sol）加總**；顯示規則沿用 0.3.0（0 SPL 不畫、SOL 加總為 0 仍第一列、沒價「—」）。**僅 combined：** 每列右側（或列尾）有展開控制；預設收合。展開後**只**列出 **持有該 token 且數量 > 0** 的成員地址：數量與 **佔該列加總的 %**（分母＝該列加總，不是全錢包 USD）。地址顯示 **前 4 後 4**。沒有該 mint／native SOL、或 `uiAmount`／最小單位為 0 的成員 **整行不畫**（不是畫 0%）。點展開／明細 **不** 改 main、不發 `account-changed`。單一簽名／觀察帳戶 **不** 畫展開控制。**不用** hover tooltip 當主路徑 |
 | 查詢 | 沿用 0.4.0 **單一 pipe**：**廢除**「owners 長度必須為 1 才打網」。combined 時 `owners = subPubkeys`（≥1）**串行**（含 RPC fallback）。任一 owner 最終失敗 → 整輪失敗、保留快取＋error，不交部分加總。少打、排隊、可重試。禁止平行打 DAS |
-| UI | 方案 A：Add 第四項建 combined；Accounts／Manage 可加刪成員、切目前錢包、rename；刪 combined 比照觀察（鎖定可刪）。Reveal **只**對 storage signing；對 combined 本體 → `ACCOUNT_READ_ONLY`。Widget 複製目前錢包公鑰。細節見 HOW |
+| UI | 方案 A：Add 第一層四選一（產生／匯入／觀察／Combined），各自 **另開操作頁**（不在類型列表展開欄位）。Combined 表單：label 選填、可貼 ≥1 公鑰、可勾本機既有帳戶；目前錢包＝第一個有效地址。Accounts／Manage 可加刪成員、切目前錢包、rename；Manage 加成員與建立頁相同：可貼公鑰；本機 signing／watch 一律列出，已加入者勾選，勾選／取消立刻 `addCombinedSub`／`removeCombinedSub`；刪 combined 比照觀察（鎖定可刪）。Reveal **只**對 storage signing；對 combined 本體 → `ACCOUNT_READ_ONLY`。Widget 複製目前錢包公鑰。細節見 HOW |
 | 依賴／測試 | 不為本版加 SDK；手驗 + build |
 
 ## 非目標
@@ -74,22 +74,22 @@
 
 ### Track 4 — Popup UI 與拋光
 
-- **做：** 建立／編輯 combined、切 main、標記觀察；combined Home **展開列**畫成員明細；version `0.5.0`。
+- **做：** 建立：Add → Combined **新頁**填表（見 HOW）；編輯／切 main；combined Home 展開列；version `0.5.0`。
 - **驗收：** 方案 A 可完成上列手勢；combined 下列可展開見數量與 %，再點收合；單一帳戶無展開鈕；build 通過。
 
 ## 驗收（出貨 checklist）
 
-- [ ] `cd wallet && npm run build` 成功
-- [ ] 可建 combined（≥1 地址，含已是 signing 列的地址、以及從未入隊的地址）；不能把成員刪到 0
-- [ ] `setActiveAccount` 切到另一 combined／切回單一：dApp 見新暴露公鑰，既有 `connections.accountId` 不變
-- [ ] 刪 storage 中原為 main 的 signing 帳戶後：combined 仍在、main 地址仍在、簽名 `ACCOUNT_READ_ONLY`
-- [ ] 切目前錢包：僅 `connections.accountId` 等於該 combined 的 origin 收到 `account-changed`；該欄仍為 combined id
-- [ ] 鎖定＋combined＋目前錢包對應可簽列：簽名 `WALLET_LOCKED`（不是 `ACCOUNT_READ_ONLY`）
-- [ ] Home 為加總；查詢走單一 pipe
-- [ ] Combined：展開 Token 列只見持有該 token 且餘額 > 0 的成員（數量與該列 %）；沒有該 token 或餘額 0 不畫該地址；展開不改 main
-- [ ] 非 combined：Token 列無展開控制
-- [ ] 無巢狀 combined
-- [ ] pending／custody 禁區未破
+- [x] `cd wallet && npm run build` 成功
+- [x] 可建 combined（≥1 地址，含已是 signing 列的地址、以及從未入隊的地址）；不能把成員刪到 0
+- [x] `setActiveAccount` 切到另一 combined／切回單一：dApp 見新暴露公鑰，既有 `connections.accountId` 不變
+- [x] 刪 storage 中原為 main 的 signing 帳戶後：combined 仍在、main 地址仍在、簽名 `ACCOUNT_READ_ONLY`
+- [x] 切目前錢包：僅 `connections.accountId` 等於該 combined 的 origin 收到 `account-changed`；該欄仍為 combined id
+- [x] 鎖定＋combined＋目前錢包對應可簽列：簽名 `WALLET_LOCKED`（不是 `ACCOUNT_READ_ONLY`）
+- [x] Home 為加總；查詢走單一 pipe
+- [x] Combined：展開 Token 列只見持有該 token 且餘額 > 0 的成員（數量與該列 %）；沒有該 token 或餘額 0 不畫該地址；展開不改 main
+- [x] 非 combined：Token 列無展開控制
+- [x] 無巢狀 combined
+- [x] pending／custody 禁區未破
 
 ## 手驗指令
 

@@ -1,7 +1,12 @@
+import { getExposedPublicKey } from "../shared/accounts";
 import {
-  DEFAULT_SETTINGS,
+  customRpcForCluster,
+  effectiveRpcUrl,
+  normalizeClusterRpc,
   STORAGE,
   type AccountMeta,
+  type Cluster,
+  type ClusterRpcConfig,
   type ConnectionsMap,
   type Settings,
 } from "../shared/storage-keys";
@@ -13,16 +18,42 @@ export async function readSettings(): Promise<Settings> {
   return normalizeSettings(raw);
 }
 
+function trimSetting(v: unknown): string {
+  return typeof v === "string" ? v.trim() : "";
+}
+
+function normalizeRpcByCluster(
+  raw: Partial<Settings> | undefined,
+  cluster: Cluster,
+): Record<Cluster, ClusterRpcConfig> {
+  const rawBy = raw?.rpcByCluster as unknown;
+  if (rawBy && typeof rawBy === "object") {
+    const rec = rawBy as Record<string, unknown>;
+    return {
+      devnet: normalizeClusterRpc(rec.devnet, "devnet"),
+      mainnet: normalizeClusterRpc(rec.mainnet, "mainnet"),
+    };
+  }
+  const old = customRpcForCluster(trimSetting(raw?.rpcUrl), cluster);
+  const by: Record<Cluster, ClusterRpcConfig> = {
+    devnet: { urls: [], active: "" },
+    mainnet: { urls: [], active: "" },
+  };
+  if (old) {
+    by[cluster] = { urls: [old], active: old };
+  }
+  return by;
+}
+
 export function normalizeSettings(raw: Partial<Settings> | undefined): Settings {
-  const merged = { ...DEFAULT_SETTINGS, ...raw };
+  const cluster = raw?.cluster === "mainnet" ? "mainnet" : "devnet";
+  const rpcByCluster = normalizeRpcByCluster(raw, cluster);
   return {
-    cluster: merged.cluster === "mainnet" ? "mainnet" : "devnet",
-    rpcUrl:
-      typeof merged.rpcUrl === "string" && merged.rpcUrl.trim()
-        ? merged.rpcUrl.trim()
-        : DEFAULT_SETTINGS.rpcUrl,
-    heliusApiUrl: typeof merged.heliusApiUrl === "string" ? merged.heliusApiUrl : "",
-    jupiterApiKey: typeof merged.jupiterApiKey === "string" ? merged.jupiterApiKey : "",
+    cluster,
+    rpcByCluster,
+    rpcUrl: effectiveRpcUrl(cluster, rpcByCluster[cluster]),
+    heliusApiUrl: typeof raw?.heliusApiUrl === "string" ? raw.heliusApiUrl : "",
+    jupiterApiKey: typeof raw?.jupiterApiKey === "string" ? raw.jupiterApiKey : "",
   };
 }
 
@@ -74,5 +105,6 @@ export async function getActivePublicKey(): Promise<string | null> {
   const accounts = await readAccounts();
   const activeId = await readActiveAccountId();
   const acc = accounts.find((a) => a.id === activeId);
-  return acc?.publicKeyBase58 ?? null;
+  if (!acc) return null;
+  return getExposedPublicKey(acc);
 }
