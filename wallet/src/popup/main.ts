@@ -52,6 +52,10 @@ type View =
   | "account-manage"
   | "account-reveal-key"
   | "settings"
+  | "settings-network"
+  | "settings-rpc"
+  | "settings-keys"
+  | "settings-password"
   | "connected-sites";
 
 const SUBPAGE_TITLES: Record<Exclude<View, "home-token" | "home-activity">, string> = {
@@ -68,6 +72,10 @@ const SUBPAGE_TITLES: Record<Exclude<View, "home-token" | "home-activity">, stri
   "account-manage": "Manage",
   "account-reveal-key": "Reveal key",
   settings: "Settings",
+  "settings-network": "網路",
+  "settings-rpc": "RPC",
+  "settings-keys": "API keys",
+  "settings-password": "錢包密碼",
   "connected-sites": "Connected sites",
 };
 
@@ -148,11 +156,15 @@ const el = {
   revealPassword: document.getElementById("reveal-password") as HTMLInputElement,
   revealSecretText: document.getElementById("reveal-secret-text")!,
   connectedList: document.getElementById("connected-list")!,
-  settingsNowRpc: document.getElementById("settings-now-rpc")!,
-  rpcTabHint: document.getElementById("rpc-tab-hint")!,
-  rpcByCluster: document.getElementById("rpc-by-cluster")!,
+  hubSummaryNetwork: document.getElementById("hub-summary-network")!,
+  hubSummaryRpc: document.getElementById("hub-summary-rpc")!,
+  hubSummaryKeys: document.getElementById("hub-summary-keys")!,
   heliusApiUrl: document.getElementById("helius-api-url") as HTMLInputElement,
   jupiterApiKey: document.getElementById("jupiter-api-key") as HTMLInputElement,
+  changePwdCurrent: document.getElementById("change-pwd-current") as HTMLInputElement,
+  changePwdNew: document.getElementById("change-pwd-new") as HTMLInputElement,
+  changePwdConfirm: document.getElementById("change-pwd-confirm") as HTMLInputElement,
+  changePwdErr: document.getElementById("change-pwd-err")!,
   error: document.getElementById("error")!,
 };
 
@@ -172,6 +184,10 @@ const screens: Record<View, HTMLElement> = {
   "account-manage": document.getElementById("screen-account-manage")!,
   "account-reveal-key": document.getElementById("screen-account-reveal-key")!,
   settings: document.getElementById("screen-settings")!,
+  "settings-network": document.getElementById("screen-settings-network")!,
+  "settings-rpc": document.getElementById("screen-settings-rpc")!,
+  "settings-keys": document.getElementById("screen-settings-keys")!,
+  "settings-password": document.getElementById("screen-settings-password")!,
   "connected-sites": document.getElementById("screen-connected-sites")!,
 };
 
@@ -201,6 +217,14 @@ function clearError(): void {
 function shortAddr(pk: string): string {
   if (pk.length <= 8) return pk;
   return `${pk.slice(0, 4)}…${pk.slice(-4)}`;
+}
+
+/** 錢包密碼欄：類 B 遮罩 text，不進密碼管理器。 */
+function hardenWalletPasswordInput(inp: HTMLInputElement): void {
+  inp.type = "text";
+  inp.classList.add("wallet-pwd-masked");
+  inp.removeAttribute("name");
+  hardenSensitiveTextInput(inp);
 }
 
 /** 降低瀏覽器／密碼管理器把助記詞或私鑰當成可儲存表單欄位的機率（無法 100% 保證）。 */
@@ -345,7 +369,35 @@ function syncShellDock(): void {
     elDock.hidden = false;
     elDockPrimary.textContent = "建立 Combined";
     elDockPrimary.disabled = validCombinedMembers().length < 1;
+    return;
   }
+
+  if (currentView === "settings-password") {
+    elDock.hidden = false;
+    elDockPrimary.textContent = "變更密碼";
+    elDockPrimary.disabled = !changePasswordCanSubmit();
+    return;
+  }
+}
+
+function clearChangePasswordFieldValues(): void {
+  el.changePwdCurrent.value = "";
+  el.changePwdNew.value = "";
+  el.changePwdConfirm.value = "";
+}
+
+function clearChangePasswordFields(): void {
+  clearChangePasswordFieldValues();
+  el.changePwdErr.textContent = "";
+}
+
+function changePasswordCanSubmit(): boolean {
+  const newPwd = el.changePwdNew.value;
+  const confirm = el.changePwdConfirm.value;
+  if (newPwd.length < 8) return false;
+  if (newPwd !== confirm) return false;
+  if (!el.changePwdCurrent.value) return false;
+  return true;
 }
 
 function renderGenerateChrome(): void {
@@ -778,8 +830,17 @@ function navigateTo(view: View, accountId?: string): void {
   if (currentView === "account-reveal-key" && view !== "account-reveal-key") {
     clearRevealSecret();
   }
-  if (view === "settings" && currentView !== "settings") {
-    rpcListTab = lastState?.settings.cluster ?? "devnet";
+  if (view === "settings-password" && currentView !== "settings-password") {
+    clearChangePasswordFields();
+  }
+  if (view.startsWith("settings") && currentView.startsWith("settings") && view !== currentView) {
+    if (currentView === "settings-password") clearChangePasswordFields();
+    if (currentView === "settings-keys") {
+      keysHeliusRevealed = false;
+      keysJupiterRevealed = false;
+    }
+  }
+  if (view === "settings" || view.startsWith("settings-")) {
     rpcEditKey = null;
   }
   if (accountId !== undefined) focusAccountId = accountId;
@@ -1026,42 +1087,80 @@ const SVG_TRASH =
 const SVG_CHECK = '<path d="M5 12.5l4.2 4.2L19 7"/>';
 
 let rpcEditKey: string | null = null;
-let rpcListTab: Cluster = "devnet";
+let keysHeliusRevealed = false;
+let keysJupiterRevealed = false;
+
+const MASKED_SECRET_DISPLAY = "••••••";
 
 function rpcOptionKey(cluster: Cluster, isPublic: boolean, url: string): string {
   return isPublic ? `${cluster}:public` : `${cluster}:${url}`;
 }
 
-function renderSettingsPanel(settings: Settings): void {
-  document.querySelectorAll(".seg-btn").forEach((btn) => {
-    const cluster = (btn as HTMLElement).dataset.cluster;
-    btn.classList.toggle("on", cluster === settings.cluster);
+function apiKeysHubSummary(settings: Settings): string {
+  const h = settings.heliusApiUrl.trim().length > 0;
+  const j = settings.jupiterApiKey.trim().length > 0;
+  if (h && j) return "已設定";
+  if (h || j) return "部分設定";
+  return "未設定";
+}
+
+function renderSettingsHub(settings: Settings): void {
+  el.hubSummaryNetwork.textContent = settings.cluster === "mainnet" ? "Mainnet" : "Devnet";
+  el.hubSummaryRpc.textContent = settings.rpcUrl;
+  el.hubSummaryKeys.textContent = apiKeysHubSummary(settings);
+}
+
+function syncNetworkRadios(settings: Settings): void {
+  document.querySelectorAll<HTMLInputElement>('input[name="settings-cluster"]').forEach((radio) => {
+    radio.checked = radio.value === settings.cluster;
   });
-  document.querySelectorAll(".rpc-tab").forEach((btn) => {
-    const tab = (btn as HTMLElement).dataset.rpcTab;
-    btn.classList.toggle("on", tab === rpcListTab);
-  });
-  el.settingsNowRpc.textContent = settings.rpcUrl;
-  if (rpcListTab !== settings.cluster) {
-    el.rpcTabHint.textContent = `正在編輯 ${rpcListTab} 清單，目前使用的是 ${settings.cluster}`;
-    el.rpcTabHint.classList.add("warn");
-  } else {
-    el.rpcTabHint.textContent = "";
-    el.rpcTabHint.classList.remove("warn");
+}
+
+function renderSettingsKeysFields(settings: Settings): void {
+  const heliusFocused = document.activeElement === el.heliusApiUrl;
+  const jupiterFocused = document.activeElement === el.jupiterApiKey;
+  if (!heliusFocused) {
+    if (!keysHeliusRevealed && settings.heliusApiUrl) {
+      el.heliusApiUrl.value = MASKED_SECRET_DISPLAY;
+      el.heliusApiUrl.readOnly = true;
+    } else if (keysHeliusRevealed) {
+      el.heliusApiUrl.readOnly = false;
+      el.heliusApiUrl.value = settings.heliusApiUrl;
+    } else {
+      el.heliusApiUrl.readOnly = false;
+      el.heliusApiUrl.value = "";
+    }
   }
-  renderRpcByCluster(settings);
-  if (document.activeElement !== el.heliusApiUrl) {
-    el.heliusApiUrl.value = settings.heliusApiUrl;
-  }
-  if (document.activeElement !== el.jupiterApiKey) {
-    el.jupiterApiKey.value = settings.jupiterApiKey;
+  if (!jupiterFocused) {
+    if (!keysJupiterRevealed && settings.jupiterApiKey) {
+      el.jupiterApiKey.value = MASKED_SECRET_DISPLAY;
+      el.jupiterApiKey.readOnly = true;
+    } else if (keysJupiterRevealed) {
+      el.jupiterApiKey.readOnly = false;
+      el.jupiterApiKey.value = settings.jupiterApiKey;
+    } else {
+      el.jupiterApiKey.readOnly = false;
+      el.jupiterApiKey.value = "";
+    }
   }
 }
 
-function renderRpcByCluster(settings: Settings): void {
-  const host = el.rpcByCluster;
+function renderSettingsPanel(settings: Settings): void {
+  renderSettingsHub(settings);
+  syncNetworkRadios(settings);
+  const badgeDev = document.getElementById("rpc-badge-devnet");
+  const badgeMain = document.getElementById("rpc-badge-mainnet");
+  if (badgeDev) badgeDev.hidden = settings.cluster !== "devnet";
+  if (badgeMain) badgeMain.hidden = settings.cluster !== "mainnet";
+  renderRpcByCluster(settings, "devnet");
+  renderRpcByCluster(settings, "mainnet");
+  renderSettingsKeysFields(settings);
+}
+
+function renderRpcByCluster(settings: Settings, cluster: Cluster): void {
+  const host = document.querySelector<HTMLElement>(`[data-rpc-list="${cluster}"]`);
+  if (!host) return;
   host.replaceChildren();
-  const cluster = rpcListTab;
   const cfg = settings.rpcByCluster[cluster];
 
   const addRow = (url: string, isPublic: boolean): void => {
@@ -1086,7 +1185,7 @@ function renderRpcByCluster(settings: Settings): void {
     text.textContent = url;
     text.addEventListener("click", () => {
       rpcEditKey = rpcEditKey === key ? null : key;
-      renderRpcByCluster(settings);
+      renderRpcByCluster(settings, cluster);
     });
     row.append(radio, text);
     if (isPublic) {
@@ -1170,7 +1269,7 @@ function buildRpcEditor(
       }
       if (ev.key === "Escape") {
         rpcEditKey = null;
-        renderRpcByCluster(settings);
+        renderRpcByCluster(settings, cluster);
       }
     });
   }
@@ -1659,6 +1758,19 @@ function handleBack(): void {
     navigateTo("add-account");
     return;
   }
+  if (
+    currentView === "settings-network" ||
+    currentView === "settings-rpc" ||
+    currentView === "settings-keys" ||
+    currentView === "settings-password"
+  ) {
+    navigateTo("settings");
+    return;
+  }
+  if (currentView === "settings" || currentView === "connected-sites") {
+    navigateTo("home-token");
+    return;
+  }
   navigateTo("home-token");
 }
 
@@ -1810,7 +1922,59 @@ async function handleDockPrimary(): Promise<void> {
     resetCombinedCreate();
     await refresh();
     navigateTo("accounts");
+    return;
   }
+
+  if (currentView === "settings-password") {
+    await submitChangePassword();
+  }
+}
+
+async function submitChangePassword(): Promise<void> {
+  clearError();
+  el.changePwdErr.textContent = "";
+  const currentPassword = el.changePwdCurrent.value;
+  const newPassword = el.changePwdNew.value;
+  const confirm = el.changePwdConfirm.value;
+  if (newPassword.length < 8) {
+    clearChangePasswordFieldValues();
+    el.changePwdErr.textContent = "新密碼過短";
+    syncShellDock();
+    return;
+  }
+  if (newPassword !== confirm) {
+    clearChangePasswordFieldValues();
+    el.changePwdErr.textContent = "新密碼不一致";
+    syncShellDock();
+    return;
+  }
+  const res = await sendExtensionRequest("wallet.changeVaultPassword", {
+    currentPassword,
+    newPassword,
+  });
+  clearChangePasswordFieldValues();
+  syncShellDock();
+  if (!res.ok) {
+    const code = res.error?.code;
+    if (code === "INVALID_PASSWORD") el.changePwdErr.textContent = "密碼錯誤";
+    else if (code === "WEAK_PASSWORD") el.changePwdErr.textContent = "新密碼過短";
+    else showError(res.error?.message ?? "變更失敗");
+    return;
+  }
+  await refresh();
+  navigateTo("settings");
+}
+
+function hardenApiKeyInput(inp: HTMLInputElement): void {
+  inp.type = "text";
+  inp.autocomplete = "off";
+  inp.setAttribute("autocapitalize", "off");
+  inp.setAttribute("autocorrect", "off");
+  inp.setAttribute("spellcheck", "false");
+  inp.setAttribute("aria-autocomplete", "none");
+  inp.setAttribute("data-lpignore", "true");
+  inp.setAttribute("data-1p-ignore", "");
+  inp.setAttribute("data-form-type", "other");
 }
 
 document.getElementById("btn-create")!.addEventListener("click", async () => {
@@ -1862,6 +2026,13 @@ document.querySelectorAll(".menu-item").forEach((item) => {
     if (nav === "accounts" || nav === "settings" || nav === "connected-sites") {
       navigateTo(nav);
     }
+  });
+});
+
+document.querySelectorAll("[data-settings-nav]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const target = (btn as HTMLElement).dataset.settingsNav as View;
+    if (target) navigateTo(target);
   });
 });
 
@@ -2031,60 +2202,92 @@ document.getElementById("btn-copy-secret")!.addEventListener("click", async () =
   }
 });
 
-document.querySelectorAll(".seg-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const cluster = (btn as HTMLElement).dataset.cluster as Cluster | undefined;
-    if (!cluster || cluster === lastState?.settings.cluster) return;
-    rpcListTab = cluster;
-    rpcEditKey = null;
+document.querySelectorAll<HTMLInputElement>('input[name="settings-cluster"]').forEach((radio) => {
+  radio.addEventListener("change", () => {
+    if (!radio.checked || !lastState) return;
+    const cluster = radio.value as Cluster;
+    if (cluster === lastState.settings.cluster) return;
     void patchSettingsPartial({ cluster });
   });
 });
 
-document.querySelectorAll(".rpc-tab").forEach((btn) => {
+const SVG_EYE =
+  '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>';
+
+document.querySelectorAll(".btn-rpc-add").forEach((btn) => {
+  btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">${SVG_PLUS}</svg>`;
   btn.addEventListener("click", () => {
-    const tab = (btn as HTMLElement).dataset.rpcTab as Cluster | undefined;
-    if (!tab || !lastState) return;
-    rpcListTab = tab;
-    rpcEditKey = null;
-    renderSettingsPanel(lastState.settings);
+    const cluster = (btn as HTMLElement).dataset.rpcCluster as Cluster;
+    if (!lastState || !cluster) return;
+    rpcEditKey = `${cluster}:new`;
+    renderRpcByCluster(lastState.settings, cluster);
   });
 });
 
-const btnRpcAdd = document.getElementById("btn-rpc-add")!;
-btnRpcAdd.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">${SVG_PLUS}</svg>`;
-btnRpcAdd.addEventListener("click", () => {
+async function persistHeliusField(): Promise<void> {
   if (!lastState) return;
-  rpcEditKey = `${rpcListTab}:new`;
-  renderRpcByCluster(lastState.settings);
+  if (!keysHeliusRevealed && lastState.settings.heliusApiUrl) return;
+  let heliusApiUrl = el.heliusApiUrl.value.trim();
+  if (heliusApiUrl === MASKED_SECRET_DISPLAY) heliusApiUrl = lastState.settings.heliusApiUrl;
+  if (heliusApiUrl === lastState.settings.heliusApiUrl) return;
+  keysHeliusRevealed = false;
+  await patchSettingsPartial({ heliusApiUrl });
+}
+
+async function persistJupiterField(): Promise<void> {
+  if (!lastState) return;
+  if (!keysJupiterRevealed && lastState.settings.jupiterApiKey) return;
+  let jupiterApiKey = el.jupiterApiKey.value.trim();
+  if (jupiterApiKey === MASKED_SECRET_DISPLAY) jupiterApiKey = lastState.settings.jupiterApiKey;
+  if (jupiterApiKey === lastState.settings.jupiterApiKey) return;
+  keysJupiterRevealed = false;
+  await patchSettingsPartial({ jupiterApiKey });
+}
+
+const btnHeliusReveal = document.getElementById("btn-helius-reveal")!;
+const btnHeliusConfirm = document.getElementById("btn-helius-confirm")!;
+const btnJupiterReveal = document.getElementById("btn-jupiter-reveal")!;
+const btnJupiterConfirm = document.getElementById("btn-jupiter-confirm")!;
+btnHeliusReveal.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">${SVG_EYE}</svg>`;
+btnJupiterReveal.innerHTML = btnHeliusReveal.innerHTML;
+btnHeliusConfirm.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">${SVG_CHECK}</svg>`;
+btnJupiterConfirm.innerHTML = btnHeliusConfirm.innerHTML;
+
+btnHeliusReveal.addEventListener("click", () => {
+  if (!lastState) return;
+  keysHeliusRevealed = !keysHeliusRevealed;
+  renderSettingsKeysFields(lastState.settings);
+  if (keysHeliusRevealed) {
+    el.heliusApiUrl.readOnly = false;
+    el.heliusApiUrl.focus();
+  }
+});
+btnJupiterReveal.addEventListener("click", () => {
+  if (!lastState) return;
+  keysJupiterRevealed = !keysJupiterRevealed;
+  renderSettingsKeysFields(lastState.settings);
+  if (keysJupiterRevealed) {
+    el.jupiterApiKey.readOnly = false;
+    el.jupiterApiKey.focus();
+  }
+});
+btnHeliusConfirm.addEventListener("click", () => void persistHeliusField());
+btnJupiterConfirm.addEventListener("click", () => void persistJupiterField());
+el.heliusApiUrl.addEventListener("blur", () => void persistHeliusField());
+el.jupiterApiKey.addEventListener("blur", () => void persistJupiterField());
+el.heliusApiUrl.addEventListener("input", () => {
+  if (el.heliusApiUrl.value === "") void persistHeliusField();
+});
+el.jupiterApiKey.addEventListener("input", () => {
+  if (el.jupiterApiKey.value === "") void persistJupiterField();
 });
 
-let settingsTextTimer: ReturnType<typeof setTimeout> | null = null;
-function scheduleSettingsTextSave(): void {
-  if (settingsTextTimer) clearTimeout(settingsTextTimer);
-  settingsTextTimer = setTimeout(() => {
-    settingsTextTimer = null;
-    void persistHeliusJupiter();
-  }, 600);
+for (const inp of [el.changePwdCurrent, el.changePwdNew, el.changePwdConfirm]) {
+  inp.addEventListener("input", () => {
+    el.changePwdErr.textContent = "";
+    syncShellDock();
+  });
 }
-
-async function persistHeliusJupiter(): Promise<void> {
-  if (!lastState) return;
-  const heliusApiUrl = el.heliusApiUrl.value.trim();
-  const jupiterApiKey = el.jupiterApiKey.value.trim();
-  if (
-    heliusApiUrl === lastState.settings.heliusApiUrl &&
-    jupiterApiKey === lastState.settings.jupiterApiKey
-  ) {
-    return;
-  }
-  await patchSettingsPartial({ heliusApiUrl, jupiterApiKey });
-}
-
-el.heliusApiUrl.addEventListener("blur", () => void persistHeliusJupiter());
-el.jupiterApiKey.addEventListener("blur", () => void persistHeliusJupiter());
-el.heliusApiUrl.addEventListener("input", scheduleSettingsTextSave);
-el.jupiterApiKey.addEventListener("input", scheduleSettingsTextSave);
 
 document.getElementById("btn-refresh-assets")!.addEventListener("click", async () => {
   const state = await refresh();
@@ -2112,11 +2315,27 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 window.addEventListener("pagehide", () => {
   clearRevealSecret();
+  clearChangePasswordFields();
   if (currentView === "add-import-seed") {
     resetImportSeedFlow();
     elImportSeedRoot.innerHTML = "";
   }
 });
+
+for (const id of [
+  "setup-password",
+  "setup-password-2",
+  "unlock-password",
+  "reveal-password",
+  "change-pwd-current",
+  "change-pwd-new",
+  "change-pwd-confirm",
+]) {
+  const node = document.getElementById(id);
+  if (node instanceof HTMLInputElement) hardenWalletPasswordInput(node);
+}
+hardenApiKeyInput(el.heliusApiUrl);
+hardenApiKeyInput(el.jupiterApiKey);
 
 el.error.addEventListener("click", () => {
   clearError();

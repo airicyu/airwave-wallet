@@ -1,6 +1,6 @@
 # 秘密欄位與瀏覽器自動填入
 
-給改 popup／popout **匯入助記詞、匯入私鑰、Reveal、錢包密碼、API key 遮罩欄** 的人。這不是某版契約。錢包密碼產品意向見 backlog [變更錢包密碼](../roadmap/backlog/change-wallet-password.md)；概念稿 [`docs/design-demos/change-wallet-password-ux.html`](../design-demos/change-wallet-password-ux.html)。
+給改 popup／popout **匯入助記詞、匯入私鑰、Reveal、錢包密碼、API key 遮罩欄** 的人。這不是某版契約。錢包密碼已出貨見 [0.8.0](../roadmap/0.8.0/INDEX.md)；概念稿 [`docs/design-demos/change-wallet-password-ux.html`](../design-demos/change-wallet-password-ux.html)。
 
 **禁止**在本檔、roadmap、commit、截圖或 log 寫入真實助記詞、私鑰、密碼、keystore 密文、生產 API key。
 

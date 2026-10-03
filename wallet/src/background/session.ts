@@ -6,6 +6,7 @@ import {
   type VaultSecrets,
 } from "../shared/crypto-vault";
 import { SESSION_UNLOCKED } from "../shared/storage-keys";
+import { readVaultBlob } from "./storage-io";
 
 type UnlockedSessionBlob = {
   version: 1;
@@ -83,6 +84,11 @@ async function hydrateFromSessionStore(): Promise<void> {
   const r = await chrome.storage.session.get(SESSION_UNLOCKED);
   const raw = r[SESSION_UNLOCKED] as UnlockedSessionBlob | undefined;
   if (!raw || raw.version !== 1 || !raw.saltB64 || !raw.keyRawB64 || !raw.secrets?.secrets) {
+    return;
+  }
+  const vaultBlob = await readVaultBlob();
+  if (vaultBlob && vaultBlob.kdfParams.salt !== raw.saltB64) {
+    await chrome.storage.session.remove(SESSION_UNLOCKED);
     return;
   }
   try {

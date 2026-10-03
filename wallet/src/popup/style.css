@@ -982,6 +982,163 @@ body {
   margin-bottom: 4px;
 }
 
+input.wallet-pwd-masked {
+  -webkit-text-security: disc;
+}
+
+.settings-hub-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-elevated);
+}
+
+.settings-hub-list li {
+  border-bottom: 1px solid var(--stroke-soft);
+}
+
+.settings-hub-list li:last-child {
+  border-bottom: 0;
+}
+
+.settings-hub-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.settings-hub-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.hub-label {
+  font-weight: 600;
+}
+
+.hub-summary {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.hub-summary-ellipsis {
+  min-width: 0;
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.network-pick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.network-pick-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  background: var(--fill);
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+
+.network-pick-row:has(input:checked) {
+  border-color: var(--accent);
+  background: #1a2838;
+}
+
+.network-pick-row input[type="radio"] {
+  display: inline-block;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: var(--accent);
+}
+
+.network-pick-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.network-pick-title {
+  display: block;
+  font-weight: 600;
+}
+
+.network-pick-sum {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rpc-cluster-card {
+  margin-bottom: 14px;
+}
+
+.rpc-cluster-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.rpc-cluster-head h3 {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.rpc-cluster-badge {
+  font-size: 0.68rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.keys-input-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.keys-input-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.keys-reveal-btn,
+.keys-confirm-btn {
+  flex-shrink: 0;
+}
+
 .settings-now {
   border: 1px solid var(--stroke);
   background: var(--bg-elevated);

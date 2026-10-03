@@ -10,15 +10,15 @@
     <div id="app">
       <section id="setup" class="flow-screen" hidden>
         <h1>Airwave</h1>
-        <input id="setup-password" type="password" placeholder="密碼" autocomplete="new-password" />
-        <input id="setup-password-2" type="password" placeholder="再次輸入" autocomplete="new-password" />
+        <input id="setup-password" type="text" class="wallet-pwd-masked" placeholder="密碼" autocomplete="off" />
+        <input id="setup-password-2" type="text" class="wallet-pwd-masked" placeholder="再次輸入" autocomplete="off" />
         <button id="btn-create" type="button">開始</button>
       </section>
 
       <section id="locked" class="flow-screen" hidden>
         <h1>Airwave</h1>
         <p>錢包已鎖定</p>
-        <input id="unlock-password" type="password" placeholder="密碼" autocomplete="current-password" />
+        <input id="unlock-password" type="text" class="wallet-pwd-masked" placeholder="密碼" autocomplete="off" />
         <button id="btn-unlock" type="button">解鎖</button>
       </section>
 
@@ -241,7 +241,7 @@
               </div>
               <div class="field">
                 <label for="reveal-password">錢包密碼</label>
-                <input id="reveal-password" type="password" autocomplete="current-password" />
+                <input id="reveal-password" type="text" class="wallet-pwd-masked" autocomplete="off" />
               </div>
               <button type="button" class="icon-btn primary" id="btn-reveal-submit" title="Reveal private key" aria-label="Reveal private key">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -261,45 +261,113 @@
           </section>
 
           <section id="screen-settings" class="screen" hidden>
-            <section class="settings-now">
-              <p class="now-kicker">目前使用</p>
-              <div class="seg" role="group" aria-label="作用中網路">
-                <button type="button" class="seg-btn" data-cluster="devnet">Devnet</button>
-                <button type="button" class="seg-btn" data-cluster="mainnet">Mainnet</button>
-              </div>
-              <div class="now-rpc">
-                <span class="now-dot" aria-hidden="true"></span>
-                <div class="now-rpc-text">
-                  <span class="url" id="settings-now-rpc"></span>
-                </div>
-              </div>
-            </section>
-            <section class="sec">
-              <div class="sec-head">
-                <h3>RPC</h3>
+            <ul class="settings-hub-list" id="settings-hub-list">
+              <li>
+                <button type="button" class="settings-hub-row" data-settings-nav="settings-network">
+                  <span class="hub-label">網路</span>
+                  <span class="hub-summary" id="hub-summary-network"></span>
+                </button>
+              </li>
+              <li>
+                <button type="button" class="settings-hub-row" data-settings-nav="settings-rpc">
+                  <span class="hub-label">RPC</span>
+                  <span class="hub-summary hub-summary-ellipsis" id="hub-summary-rpc"></span>
+                </button>
+              </li>
+              <li>
+                <button type="button" class="settings-hub-row" data-settings-nav="settings-keys">
+                  <span class="hub-label">API keys</span>
+                  <span class="hub-summary" id="hub-summary-keys"></span>
+                </button>
+              </li>
+              <li>
+                <button type="button" class="settings-hub-row" data-settings-nav="settings-password">
+                  <span class="hub-label">錢包密碼</span>
+                  <span class="hub-summary">變更</span>
+                </button>
+              </li>
+            </ul>
+          </section>
+
+          <section id="screen-settings-network" class="screen" hidden>
+            <div class="network-pick-list" role="radiogroup" aria-label="目前網路">
+              <label class="network-pick-row">
+                <input type="radio" name="settings-cluster" value="devnet" />
+                <span class="network-pick-meta">
+                  <span class="network-pick-title">Devnet</span>
+                  <span class="network-pick-sum">https://api.devnet.solana.com</span>
+                </span>
+              </label>
+              <label class="network-pick-row">
+                <input type="radio" name="settings-cluster" value="mainnet" />
+                <span class="network-pick-meta">
+                  <span class="network-pick-title">Mainnet</span>
+                  <span class="network-pick-sum">https://api.mainnet-beta.solana.com</span>
+                </span>
+              </label>
+            </div>
+          </section>
+
+          <section id="screen-settings-rpc" class="screen" hidden>
+            <div class="rpc-cluster-card" data-rpc-cluster-card="devnet">
+              <div class="rpc-cluster-head">
+                <h3>Devnet</h3>
+                <span class="rpc-cluster-badge" id="rpc-badge-devnet" hidden>目前</span>
               </div>
               <div class="settings-card">
-                <div class="rpc-tabs" role="tablist">
-                  <button type="button" class="rpc-tab" data-rpc-tab="devnet">Devnet</button>
-                  <button type="button" class="rpc-tab" data-rpc-tab="mainnet">Mainnet</button>
-                </div>
-                <p id="rpc-tab-hint" class="tab-hint"></p>
-                <div id="rpc-by-cluster" class="rpc-list"></div>
+                <div class="rpc-list" data-rpc-list="devnet"></div>
                 <div class="rpc-add-bar">
-                  <button type="button" class="icon-btn ghost-inline rpc-icon-btn" id="btn-rpc-add" title="加入" aria-label="加入"></button>
+                  <button type="button" class="icon-btn ghost-inline rpc-icon-btn btn-rpc-add" data-rpc-cluster="devnet" title="加入" aria-label="加入"></button>
                 </div>
               </div>
-            </section>
-            <section class="sec">
-              <div class="field">
-                <label for="helius-api-url">Helius API URL</label>
+            </div>
+            <div class="rpc-cluster-card" data-rpc-cluster-card="mainnet">
+              <div class="rpc-cluster-head">
+                <h3>Mainnet</h3>
+                <span class="rpc-cluster-badge" id="rpc-badge-mainnet" hidden>目前</span>
+              </div>
+              <div class="settings-card">
+                <div class="rpc-list" data-rpc-list="mainnet"></div>
+                <div class="rpc-add-bar">
+                  <button type="button" class="icon-btn ghost-inline rpc-icon-btn btn-rpc-add" data-rpc-cluster="mainnet" title="加入" aria-label="加入"></button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="screen-settings-keys" class="screen" hidden>
+            <div class="field keys-field">
+              <label for="helius-api-url">Helius API URL</label>
+              <div class="keys-input-row">
                 <input id="helius-api-url" type="text" autocomplete="off" placeholder="選填" />
+                <button type="button" class="icon-btn ghost-inline keys-reveal-btn" id="btn-helius-reveal" title="顯示" aria-label="顯示"></button>
+                <button type="button" class="icon-btn ghost-inline keys-confirm-btn" id="btn-helius-confirm" title="確認" aria-label="確認"></button>
               </div>
-              <div class="field">
-                <label for="jupiter-api-key">Jupiter API key</label>
-                <input id="jupiter-api-key" type="password" autocomplete="off" placeholder="選填" />
+            </div>
+            <div class="field keys-field">
+              <label for="jupiter-api-key">Jupiter API key</label>
+              <div class="keys-input-row">
+                <input id="jupiter-api-key" type="text" autocomplete="off" placeholder="選填" />
+                <button type="button" class="icon-btn ghost-inline keys-reveal-btn" id="btn-jupiter-reveal" title="顯示" aria-label="顯示"></button>
+                <button type="button" class="icon-btn ghost-inline keys-confirm-btn" id="btn-jupiter-confirm" title="確認" aria-label="確認"></button>
               </div>
-            </section>
+            </div>
+          </section>
+
+          <section id="screen-settings-password" class="screen" hidden>
+            <div class="field">
+              <label for="change-pwd-current">目前密碼</label>
+              <input id="change-pwd-current" type="text" class="wallet-pwd-masked" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label for="change-pwd-new">新密碼</label>
+              <input id="change-pwd-new" type="text" class="wallet-pwd-masked" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label for="change-pwd-confirm">再次輸入新密碼</label>
+              <input id="change-pwd-confirm" type="text" class="wallet-pwd-masked" autocomplete="off" />
+            </div>
+            <p id="change-pwd-err" class="inline-err"></p>
           </section>
 
           <section id="screen-connected-sites" class="screen" hidden>

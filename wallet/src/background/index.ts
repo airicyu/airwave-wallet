@@ -52,7 +52,13 @@ import {
   unbindPopoutWindow,
 } from "./pending";
 import * as session from "./session";
-import { accountKind, type AccountMeta, type CombinedAccountMeta } from "../shared/storage-keys";
+import { runVaultWrite } from "./vault-write-queue";
+import {
+  SESSION_UNLOCKED,
+  accountKind,
+  type AccountMeta,
+  type CombinedAccountMeta,
+} from "../shared/storage-keys";
 import { getHomeTokensForOwners } from "./home-tokens-service";
 import {
   createEnglishMnemonic12,
@@ -68,12 +74,19 @@ function respond(res: ExtensionResponse): ExtensionResponse {
 }
 
 async function persistVaultFromSession(): Promise<void> {
-  const cryptoState = session.getVaultCrypto();
-  const secrets = session.getVaultSecrets();
-  if (!cryptoState || !secrets) throw new Error("NOT_UNLOCKED");
-  const blob = await encryptVaultWithKey(cryptoState.key, cryptoState.saltB64, secrets);
-  await writeVaultBlob(blob);
-  await session.persistUnlockedSession();
+  return runVaultWrite(async () => {
+    const cryptoState = session.getVaultCrypto();
+    const secrets = session.getVaultSecrets();
+    if (!cryptoState || !secrets) throw new Error("NOT_UNLOCKED");
+    const existing = await readVaultBlob();
+    if (existing && existing.kdfParams.salt !== cryptoState.saltB64) {
+      await session.lock();
+      throw new Error("SESSION_SALT_MISMATCH");
+    }
+    const blob = await encryptVaultWithKey(cryptoState.key, cryptoState.saltB64, secrets);
+    await writeVaultBlob(blob);
+    await session.persistUnlockedSession();
+  });
 }
 
 function newAccountId(): string {
@@ -710,6 +723,76 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
     }
   }
 
+  if (req.command === "wallet.changeVaultPassword") {
+    return runVaultWrite(async () => {
+      if (!session.isUnlocked()) {
+        return respond({
+          kind: "airwave-ext-res",
+          requestId: req.requestId,
+          ok: false,
+          error: { code: "WALLET_LOCKED", message: "請先解鎖錢包" },
+        });
+      }
+      const { currentPassword, newPassword } = req.payload as {
+        currentPassword: string;
+        newPassword: string;
+      };
+      if (typeof newPassword !== "string" || newPassword.length < 8) {
+        return respond({
+          kind: "airwave-ext-res",
+          requestId: req.requestId,
+          ok: false,
+          error: { code: "WEAK_PASSWORD", message: "新密碼過短" },
+        });
+      }
+      const blob = await readVaultBlob();
+      if (!blob) {
+        return respond({
+          kind: "airwave-ext-res",
+          requestId: req.requestId,
+          ok: false,
+          error: { code: "VAULT_MISSING", message: "尚未建立錢包" },
+        });
+      }
+      let secrets;
+      try {
+        const decrypted = await decryptVault(
+          typeof currentPassword === "string" ? currentPassword : "",
+          blob,
+        );
+        secrets = decrypted.secrets;
+      } catch {
+        return respond({
+          kind: "airwave-ext-res",
+          requestId: req.requestId,
+          ok: false,
+          error: { code: "INVALID_PASSWORD", message: "密碼錯誤" },
+        });
+      }
+      try {
+        const { blob: newBlob, key: newKey } = await encryptVault(newPassword, secrets);
+        await chrome.storage.session.remove(SESSION_UNLOCKED);
+        await writeVaultBlob(newBlob);
+        session.setVaultCrypto(newKey, newBlob.kdfParams.salt);
+        session.loadSecrets(secrets);
+        await session.persistUnlockedSession();
+        return respond({
+          kind: "airwave-ext-res",
+          requestId: req.requestId,
+          ok: true,
+          result: { ok: true },
+        });
+      } catch {
+        return respond({
+          kind: "airwave-ext-res",
+          requestId: req.requestId,
+          ok: false,
+          error: { code: "UNKNOWN", message: "變更密碼失敗" },
+        });
+      }
+    });
+  }
+
   if (req.command === "wallet.createVault") {
     const { password, label, secretBase58, empty } = req.payload as {
       password: string;
@@ -737,11 +820,13 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
     if (empty && !secretBase58?.trim()) {
       const secrets = { secrets: {} };
       const { blob, key } = await encryptVault(password, secrets);
-      await writeVaultBlob(blob);
+      await runVaultWrite(async () => {
+        await writeVaultBlob(blob);
+        session.setVaultCrypto(key, blob.kdfParams.salt);
+        session.loadSecrets(secrets);
+        await session.persistUnlockedSession();
+      });
       await writeSettings(await readSettings());
-      session.setVaultCrypto(key, blob.kdfParams.salt);
-      session.loadSecrets(secrets);
-      await session.persistUnlockedSession();
       return respond({
         kind: "airwave-ext-res",
         requestId: req.requestId,
@@ -776,19 +861,21 @@ async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResp
     const id = newAccountId();
     const secrets = { secrets: { [id]: secretToStored(kp) } };
     const { blob, key } = await encryptVault(password, secrets);
-    await writeVaultBlob(blob);
     const meta: AccountMeta = {
       id,
       label: label ?? "Account 1",
       publicKeyBase58,
       kind: "signing",
     };
+    await runVaultWrite(async () => {
+      await writeVaultBlob(blob);
+      session.setVaultCrypto(key, blob.kdfParams.salt);
+      session.loadSecrets(secrets);
+      await session.persistUnlockedSession();
+    });
     await writeAccounts([...existingAccounts, meta]);
     await writeActiveAccountId(id);
     await writeSettings(await readSettings());
-    session.setVaultCrypto(key, blob.kdfParams.salt);
-    session.loadSecrets(secrets);
-    await session.persistUnlockedSession();
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,

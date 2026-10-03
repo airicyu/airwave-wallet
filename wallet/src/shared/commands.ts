@@ -27,6 +27,7 @@ export type AirwaveCommand =
   | "wallet.disconnectOrigin"
   | "wallet.disconnectAllOrigins"
   | "wallet.getHomeTokens"
+  | "wallet.changeVaultPassword"
   | "storage.patchSettings";
 
 export type ExtensionRequest = {
