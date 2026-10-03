@@ -4,7 +4,7 @@ export default defineManifest({
   manifest_version: 3,
   name: "Airwave Wallet",
   version: "0.1.0",
-  description: "Minimal Solana wallet (dev preview)",
+  description: "Airwave Solana wallet (dev preview)",
   action: {
     default_popup: "src/popup/index.html",
     default_title: "Airwave",

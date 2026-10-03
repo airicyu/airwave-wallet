@@ -1,9 +1,9 @@
 # 0.5.0 — Combined wallet account
 
-- **狀態：** `in progress`
+- **狀態：** `shipped`
 - **上游版本：** [0.4.0](../0.4.0/INDEX.md)（實作本版前，**0.3.0 與 0.4.0 均須 `shipped`**）
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
-- **Backlog：** [combined-wallet-account.md](../backlog/combined-wallet-account.md)（來源；**以本 INDEX 為準**）
+- **Backlog：** 原構想已出貨；無獨立 backlog 檔
 
 ## 產品句
 

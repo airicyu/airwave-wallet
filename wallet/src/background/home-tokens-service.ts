@@ -2,6 +2,7 @@ import type { Settings } from "../shared/storage-keys";
 import {
   NATIVE_SOL_ID,
   WRAPPED_SOL_MINT,
+  fetchNativeAndWrappedSolRows,
   fetchRpcHomeTokenRows,
   formatUsdLabel,
   iconLetterForSymbol,
@@ -140,9 +141,10 @@ export function extractHeliusApiKey(heliusApiUrl: string): string | null {
   if (!t) return null;
   try {
     const u = new URL(t);
-    const k = u.searchParams.get("api-key") ?? u.searchParams.get("apiKey");
-    const trimmed = k?.trim();
-    return trimmed || null;
+    const fromApiKey = u.searchParams.get("api-key")?.trim();
+    if (fromApiKey) return fromApiKey;
+    const fromApiKeyAlt = u.searchParams.get("apiKey")?.trim();
+    return fromApiKeyAlt || null;
   } catch {
     return null;
   }
@@ -230,7 +232,10 @@ async function fetchWalletBalancesPage(
     throw new Error("Helius Wallet API 回應格式錯誤");
   }
   const rec = json as Record<string, unknown>;
-  const balancesRaw = Array.isArray(rec.balances) ? rec.balances : [];
+  if (!Array.isArray(rec.balances)) {
+    throw new Error("Helius Wallet API 回應缺少 balances");
+  }
+  const balancesRaw = rec.balances;
   const balances: WalletTokenBalance[] = [];
   for (const item of balancesRaw) {
     const parsed = parseWalletTokenBalance(item);
@@ -242,8 +247,6 @@ async function fetchWalletBalancesPage(
 }
 
 function mergeWalletBalances(pages: WalletTokenBalance[][]): HomeTokenRow[] {
-  let solAmount = 0;
-  let solUsd: { usdLabel: string; usdTotal?: number } = { usdLabel: "—" };
   const byMint = new Map<
     string,
     {
@@ -260,8 +263,8 @@ function mergeWalletBalances(pages: WalletTokenBalance[][]): HomeTokenRow[] {
   for (const page of pages) {
     for (const item of page) {
       if (item.balance === 0) continue;
-      const isSol = item.mint === WRAPPED_SOL_MINT;
-      if (!isSol && item.decimals === 0) continue;
+      if (item.mint === WRAPPED_SOL_MINT) continue;
+      if (item.decimals === 0) continue;
 
       let usdLabel = "—";
       let usdTotal: number | undefined;
@@ -274,12 +277,6 @@ function mergeWalletBalances(pages: WalletTokenBalance[][]): HomeTokenRow[] {
           usdLabel = formatUsdLabel(t);
           usdTotal = t;
         }
-      }
-
-      if (isSol) {
-        solAmount += item.balance;
-        if (usdTotal != null) solUsd = { usdLabel, usdTotal };
-        continue;
       }
 
       const symbol = item.symbol || shortMint(item.mint);
@@ -310,18 +307,7 @@ function mergeWalletBalances(pages: WalletTokenBalance[][]): HomeTokenRow[] {
     }
   }
 
-  const rows: HomeTokenRow[] = [
-    {
-      id: NATIVE_SOL_ID,
-      name: "Solana",
-      symbol: "SOL",
-      uiAmount: solAmount,
-      uiAmountLabel: solAmount.toLocaleString(undefined, { maximumFractionDigits: 9 }),
-      usdLabel: solUsd.usdLabel,
-      usdTotal: solUsd.usdTotal,
-      iconLetter: "SO",
-    },
-  ];
+  const rows: HomeTokenRow[] = [];
 
   for (const [mint, row] of byMint) {
     if (row.ui === 0) continue;
@@ -402,9 +388,12 @@ async function applyJupiterTokensV2(
   signal: AbortSignal,
 ): Promise<{ rows: HomeTokenRow[]; error?: string }> {
   const mints: string[] = [];
+  const seenMint = new Set<string>();
   for (const row of rows) {
-    if (row.id === NATIVE_SOL_ID) mints.push(WRAPPED_SOL_MINT);
-    else mints.push(row.id);
+    const mint = row.id === NATIVE_SOL_ID ? WRAPPED_SOL_MINT : row.id;
+    if (seenMint.has(mint)) continue;
+    seenMint.add(mint);
+    mints.push(mint);
   }
   if (mints.length === 0) return { rows };
 
@@ -451,18 +440,54 @@ async function applyJupiterTokensV2(
     if (hit.isVerified) patched.isVerified = true;
     if (hit.organicScore != null) patched.organicScore = hit.organicScore;
     if (hit.organicScoreLabel) patched.organicScoreLabel = hit.organicScoreLabel;
-    if (row.id !== NATIVE_SOL_ID) {
+    if (hit.icon) patched.iconUrl = hit.icon;
+    const lockName =
+      row.id === NATIVE_SOL_ID || row.id === WRAPPED_SOL_MINT;
+    if (!lockName) {
       if (hit.name) patched.name = hit.name;
       if (hit.symbol) {
         patched.symbol = hit.symbol;
         patched.iconLetter = iconLetterForSymbol(hit.symbol);
       }
-      if (hit.icon) patched.iconUrl = hit.icon;
     }
     return patched;
   });
 
   return { rows: next };
+}
+
+function finiteUnitPriceFromRow(row: HomeTokenRow): number | undefined {
+  if (row.usdTotal == null || !Number.isFinite(row.usdTotal)) return undefined;
+  if (row.uiAmount <= 0 || !Number.isFinite(row.uiAmount)) return undefined;
+  const unit = row.usdTotal / row.uiAmount;
+  return Number.isFinite(unit) ? unit : undefined;
+}
+
+function mergedUsdFields(
+  perOwner: Map<string, HomeTokenRow>,
+  totalUi: number,
+): { usdLabel: string; usdTotal?: number } {
+  let sum = 0;
+  let hasSum = false;
+  for (const row of perOwner.values()) {
+    if (row.usdTotal != null && Number.isFinite(row.usdTotal)) {
+      sum += row.usdTotal;
+      hasSum = true;
+    }
+  }
+  if (hasSum) {
+    return { usdLabel: formatUsdLabel(sum), usdTotal: sum };
+  }
+  for (const row of perOwner.values()) {
+    const unit = finiteUnitPriceFromRow(row);
+    if (unit != null) {
+      const total = totalUi * unit;
+      if (Number.isFinite(total)) {
+        return { usdLabel: formatUsdLabel(total), usdTotal: total };
+      }
+    }
+  }
+  return { usdLabel: "—" };
 }
 
 function mergeMultiOwnerRows(
@@ -517,6 +542,7 @@ function mergeMultiOwnerRows(
       });
     }
 
+    const usd = mergedUsdFields(bucket.perOwner, total);
     const mergedRow: HomeTokenRow = {
       ...template,
       id,
@@ -524,6 +550,8 @@ function mergeMultiOwnerRows(
       uiAmountLabel: total.toLocaleString(undefined, {
         maximumFractionDigits: id === NATIVE_SOL_ID ? 9 : decimalsHint,
       }),
+      usdLabel: usd.usdLabel,
+      usdTotal: usd.usdTotal,
       members: members.length > 0 ? members : undefined,
     };
     if (id !== NATIVE_SOL_ID && total === 0) continue;
@@ -540,7 +568,14 @@ async function fetchSingleOwnerRows(
 ): Promise<HomeTokenRow[]> {
   const apiKey = extractHeliusApiKey(settings.heliusApiUrl);
   if (apiKey && settings.cluster === "mainnet") {
-    return fetchWalletApiHomeTokenRows(apiKey, owner, signal);
+    const [walletRows, solRows] = await Promise.all([
+      fetchWalletApiHomeTokenRows(apiKey, owner, signal),
+      fetchNativeAndWrappedSolRows(settings.rpcUrl, owner, signal),
+    ]);
+    const rest = walletRows.filter(
+      (r) => r.id !== NATIVE_SOL_ID && r.id !== WRAPPED_SOL_MINT,
+    );
+    return sortHomeTokenRows([...solRows, ...rest]);
   }
   return fetchRpcHomeTokenRows(settings.rpcUrl, owner, signal);
 }

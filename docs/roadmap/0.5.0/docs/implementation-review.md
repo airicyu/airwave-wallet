@@ -27,7 +27,7 @@ Combined 四 Track 主路徑對齊 INDEX／HOW，**R2 已關 H1／H2**；**`cd w
 
 | ID | 標題 | 狀態 | 說明 | 建議 |
 |----|------|------|------|------|
-| M1 | changelog／version 早於 INDEX 出貨 | **開啟** | [`version.md`](../../../version.md)、[`wallet/package.json`](../../../wallet/package.json) 已 `0.5.0`，[`changelog.md`](../../../changelog.md) 已寫 0.5.0；INDEX 仍 `in progress`、驗收未勾、backlog 未清。 | 出貨前再勾驗收、改 INDEX `shipped`、刪 backlog（HANDOFF）。 |
+| M1 | changelog／version 早於 INDEX 出貨 | **關閉** | 2026-10-03：INDEX `shipped`、驗收已勾、backlog 已清；倉庫版本現跟隨後續 0.7.0。 | — |
 
 ### LOW
 
@@ -122,7 +122,7 @@ Combined 四 Track 主路徑對齊 INDEX／HOW，**R2 已關 H1／H2**；**`cd w
 |----|----|------|----------|
 | H1 | HIGH | **關閉** | R2：`resolvePubkey` 鎖定時仍視 storage signing 為 signing；`signGateError` → `WALLET_LOCKED` |
 | H2 | HIGH | **關閉** | R2：`scheduleBackgroundRefresh` 傳入 `withMembers` |
-| M1 | MEDIUM | **仍開** | 待 INDEX shipped／backlog 清 |
+| M1 | MEDIUM | **關閉** | shipped 2026-10-03 |
 | L1 | LOW | **關閉** | R2：移除展開鈕 `title` |
 
 ---

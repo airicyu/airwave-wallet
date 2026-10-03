@@ -23,8 +23,9 @@ GUIDELINES；勿改 `../solibra-wallet`；勿巢狀 combined；真實密鑰不�
 
 ## 完成檢查
 
-- [ ] 驗收全勾；version 0.5.0
-- [ ] shipped 後刪 [backlog/combined-wallet-account.md](../backlog/combined-wallet-account.md)
+- [x] 驗收全勾；INDEX `shipped`（2026-10-03）
+- [x] changelog 0.5.0 條目（見 [`changelog.md`](../../../changelog.md)）
+- [x] backlog `combined-wallet-account.md` 已刪
 - [ ] Do not commit unless asked
 
 ---

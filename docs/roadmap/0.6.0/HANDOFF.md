@@ -25,7 +25,10 @@ GUIDELINES custody／pending／廣播。本版非目標：產生 24 詞、quiz�
 
 ## 完成檢查
 
-INDEX 驗收 checklist；`cd wallet && npm run build`。
+- [x] INDEX 驗收 checklist 已勾；狀態 `shipped`（2026-10-03）
+- [x] changelog 0.6.0 條目（見 [`changelog.md`](../../../changelog.md)）
+- [x] backlog `generate-seed-vs-burner.md` 已刪
+- [x] `cd wallet && npm run build` 通過
 
 ## Paste-ready starter prompt
 

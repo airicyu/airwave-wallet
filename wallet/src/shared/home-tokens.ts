@@ -44,6 +44,7 @@ export function shortMint(mint: string): string {
 
 export function iconLetterForSymbol(symbol: string): string {
   if (symbol === "SOL") return "SO";
+  if (symbol === "wSOL" || symbol === "WSOL") return "WS";
   const letters = symbol.replace(/[^a-zA-Z0-9]/g, "");
   if (letters.length >= 2) return letters.slice(0, 2).toUpperCase();
   return symbol.slice(0, 2).toUpperCase() || "?";
@@ -55,10 +56,12 @@ export function formatUsdLabel(price: number): string {
 }
 
 export function sortHomeTokenRows(rows: HomeTokenRow[]): HomeTokenRow[] {
-  const sol: HomeTokenRow[] = [];
+  const native: HomeTokenRow[] = [];
+  const wrapped: HomeTokenRow[] = [];
   const rest: HomeTokenRow[] = [];
   for (const row of rows) {
-    if (row.id === NATIVE_SOL_ID) sol.push(row);
+    if (row.id === NATIVE_SOL_ID) native.push(row);
+    else if (row.id === WRAPPED_SOL_MINT) wrapped.push(row);
     else rest.push(row);
   }
   rest.sort((a, b) => {
@@ -71,7 +74,7 @@ export function sortHomeTokenRows(rows: HomeTokenRow[]): HomeTokenRow[] {
     if (aOk && bOk && ua !== ub) return ub - ua;
     return a.symbol.localeCompare(b.symbol, "en", { sensitivity: "base" });
   });
-  return [...sol, ...rest];
+  return [...native, ...wrapped, ...rest];
 }
 
 type ParsedTokenAmount = {
@@ -126,11 +129,13 @@ export function buildHomeTokenRows(
     if (raw === 0n) continue;
     const ui =
       decimals > 0 ? Number(raw) / 10 ** decimals : Number(raw);
-    const symbol = sym ?? shortMint(mint);
+    const isWrappedSol = mint === WRAPPED_SOL_MINT;
+    const symbol = isWrappedSol ? "wSOL" : (sym ?? shortMint(mint));
+    const name = isWrappedSol ? "Wrapped SOL" : symbol;
     const mintUsd = usdByMint?.get(mint);
     rows.push({
       id: mint,
-      name: symbol,
+      name,
       symbol,
       uiAmount: ui,
       uiAmountLabel: ui.toLocaleString(undefined, {
@@ -194,4 +199,23 @@ export async function fetchRpcHomeTokenRows(
   return sortHomeTokenRows(
     buildHomeTokenRows(lamports, [...legacy.value, ...token2022.value]),
   );
+}
+
+/** Wallet API 路徑用來拆 native／wSOL。wSOL 在 legacy Token program，用 mint 過濾即可。 */
+export async function fetchNativeAndWrappedSolRows(
+  rpcUrl: string,
+  ownerPublicKeyBase58: string,
+  signal?: AbortSignal,
+): Promise<HomeTokenRow[]> {
+  const conn = new Connection(rpcUrl, "confirmed");
+  const pk = new PublicKey(ownerPublicKeyBase58);
+  const wrappedMint = new PublicKey(WRAPPED_SOL_MINT);
+  throwIfAborted(signal);
+  const lamports = await withAbort(conn.getBalance(pk), signal);
+  throwIfAborted(signal);
+  const wrapped = await withAbort(
+    conn.getParsedTokenAccountsByOwner(pk, { mint: wrappedMint }),
+    signal,
+  );
+  return sortHomeTokenRows(buildHomeTokenRows(lamports, wrapped.value));
 }

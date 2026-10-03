@@ -1,6 +1,6 @@
 # 0.6.0 — 助記詞匯入＋產生新錢包／Burner
 
-- **狀態：** `in progress`
+- **狀態：** `shipped`
 - **上游版本：** [0.5.0](../0.5.0/INDEX.md)
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
 - **概念稿：** [`docs/design-demos/add-account-ux.html`](../../design-demos/add-account-ux.html)、[`docs/design-demos/generate-wallet-ux.html`](../../design-demos/generate-wallet-ux.html)（非正式契約；衝突以本 INDEX／HOW 為準）
@@ -78,15 +78,15 @@
 
 ## 驗收（出貨 checklist）
 
-- [ ] 12 或 24 英文有效助記詞可預覽 20 列（公鑰前4後4）
-- [ ] 切 phantom／cli 列公鑰會變
-- [ ] 自訂無 `{n}` → 短錯誤、不匯入
-- [ ] 選一列匯入後 Accounts 出現 signing；vault 可簽
-- [ ] 建立助記詞錢包：同一屏見名稱＋12 詞（每列 3）＋地址；建立後列表有 signing；抽 storage 無助記詞
-- [ ] Burner：無 12 詞；Manage 可 Reveal
-- [ ] 助記詞不進 storage（抽 `airwave.vault` 以外無助記詞字串）
-- [ ] 主按鈕貼殼底
-- [ ] `cd wallet && npm run build`
+- [x] 12 或 24 英文有效助記詞可預覽 20 列（公鑰前4後4）
+- [x] 切 phantom／cli 列公鑰會變
+- [x] 自訂無 `{n}` → 短錯誤、不匯入
+- [x] 選一列匯入後 Accounts 出現 signing；vault 可簽
+- [x] 建立助記詞錢包：同一屏見名稱＋12 詞（每列 3）＋地址；建立後列表有 signing；抽 storage 無助記詞
+- [x] Burner：無 12 詞；Manage 可 Reveal
+- [x] 助記詞不進 storage（抽 `airwave.vault` 以外無助記詞字串）
+- [x] 主按鈕貼殼底
+- [x] `cd wallet && npm run build`
 
 ## 手驗指令
 

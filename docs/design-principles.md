@@ -64,7 +64,7 @@ Icon 用現有 stroke SVG 風格（約 16–18px、2px stroke），按鈕熱區�
 
 ## 5. 選擇與狀態
 
-- **互斥選擇**用 radio 或分段控制（Devnet｜Mainnet），同一時間一眼能看出選中項。
+- **互斥選擇**用 radio 或整列可點的單選列（例如 Settings「網路」兩列）。**不要**用分段 tab 來表示「目前是 Devnet 還是 Mainnet」——那看起來像在切另一份清單，不是在選作用中網路。
 - **作用中狀態**（目前網路、目前 RPC、目前帳戶）放在區塊最上方，用短標籤 + 單行值，不要只靠列表裡哪顆 radio 被勾。
 - 編輯「另一個情境的清單」（例如活網路是 mainnet、卻在編 devnet RPC 列表）必須有 **一句狀態提示**，避免改錯對象。
 - 切換活情境時，可見清單應對齊活情境，或清楚標成「僅編輯、非目前使用」。
@@ -91,14 +91,16 @@ Icon 用現有 stroke SVG 風格（約 16–18px、2px stroke），按鈕熱區�
 
 ## 8. 對照例子（Settings）
 
-這是本原則落地的參考，不是唯一版面：
+Settings **第一層是選項列表**，再進子頁。不要一打開就把 Helius URL／Jupiter key 攤在主頁（錄影／demo 會露出秘密）。概念稿：[`design-demos/settings-hub-ux.html`](design-demos/settings-hub-ux.html)。
 
-- 頂部：分段切 **目前網路**（立刻寫入）+ 該網作用中 RPC 單行摘要。
-- RPC：Devnet／Mainnet **分頁清單**（資料分離）。列＝ radio + ellipsis URL +（自訂）刪除圖示。點 URL 展開編輯。加號加入。選／加／刪立刻寫入。
-- Helius、Jupiter：失焦寫入。
-- **沒有**整頁「儲存設定」。
+列表意向（繁中短標）：網路、RPC、API keys、錢包密碼。列上可寫狀態摘要（Mainnet、已設定／未設定），**不**寫出 key 或含 `api-key` 的 URL。
 
-概念互動稿：[`design-demos/settings-rpc-ux.html`](design-demos/settings-rpc-ux.html)（須把「混用 Save」改成與第 2 節一致後才可當視覺參考）。
+- **網路：** 兩列單選（Devnet、Mainnet），圓點表示目前；立刻寫入。**不要**用分段 tab／seg 來選 cluster。
+- **RPC：** 同一頁兩張卡（Devnet、Mainnet）各自編清單；radio + ellipsis URL。目前 cluster 的卡標「目前」。選／加／刪立刻寫入。
+- **API keys：** 標籤寫 **Helius API URL**、**Jupiter API key**。皆 `type="text"`，**不要** `type="password"`。有值時兩欄都顯示 `••••••`（不要「已設定」、不要露出後 4 或 `?api-key=`）。Reveal 才給全文（單行 ellipsis），**不要**再要錢包密碼。空值＝可貼上後確認圖示提交該列；清除圖示立刻寫成空。失焦或確認才寫入，禁止整頁 Save。
+- **錢包密碼：** 獨立子頁，殼底主按鈕；遮罩規則見 [`research/secret-field-autofill.md`](research/secret-field-autofill.md) 類 B 與 [`design-demos/change-wallet-password-ux.html`](design-demos/change-wallet-password-ux.html)。
+
+舊稿 [`design-demos/settings-rpc-ux.html`](design-demos/settings-rpc-ux.html) 只保留 RPC 列互動細節；樞紐結構以 hub 稿為準。
 
 Add account：第一層四個選項；各自進操作頁。Back 回選項列表。這與第 1 節相同。
 

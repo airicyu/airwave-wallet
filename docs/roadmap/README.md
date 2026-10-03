@@ -16,9 +16,9 @@
 | [0.2.0](./0.2.0/INDEX.md) | shipped | 帳戶生命週期 + 首頁資產 + disconnect |
 | [0.3.0](./0.3.0/INDEX.md) | shipped | Popup 方案 A（UI）；持倉仍 RPC；USD「—」 |
 | [0.4.0](./0.4.0/INDEX.md) | shipped | Helius DAS 持倉（名稱／icon／底價）+ Tokens v2 勾／score／覆寫 USD |
-| [0.5.0](./0.5.0/INDEX.md) | in progress | Combined wallet account |
-| [0.6.0](./0.6.0/INDEX.md) | in progress | 助記詞匯入；產生 12 詞新錢包／Burner |
-| [0.7.0](./0.7.0/INDEX.md) | planned | Home：Wallet Balances／RPC+Token-2022；Jupiter 覆寫名稱 |
+| [0.5.0](./0.5.0/INDEX.md) | shipped | Combined wallet account |
+| [0.6.0](./0.6.0/INDEX.md) | shipped | 助記詞匯入；產生 12 詞新錢包／Burner |
+| [0.7.0](./0.7.0/INDEX.md) | shipped | Home：Wallet Balances／RPC+Token-2022；Jupiter 覆寫名稱 |
 
 **版本號：** `x.y.z` 的 **patch**（例如 **0.3.1**）留給該 minor 的 **bugfix**，不排新功能。新功能走下一個 **minor**（0.3.0 → 0.4.0 → 0.5.0）。
 

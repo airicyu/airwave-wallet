@@ -26,7 +26,7 @@
 
 | ID | 標題 | 狀態 | 說明 | 建議 |
 |----|------|------|------|------|
-| M1 | 版本號早於 0.6.0 出貨 | **開啟** | [`version.md`](../../../../version.md)、[`wallet/package.json`](../../../../wallet/package.json) 仍 `0.5.0`；[`docs/roadmap/0.6.0/INDEX.md`](../INDEX.md) 為 `in progress`、驗收未勾。 | 出貨前勾驗收、升版 changelog／version、INDEX → `shipped`。 |
+| M1 | 版本號早於 0.6.0 出貨 | **關閉** | 2026-10-03：INDEX `shipped`、驗收已勾；changelog 已有 0.6.0；`version`／`package.json` 跟隨 0.7.0 出貨。 | — |
 | M2 | Working tree 混入非 0.6.0 契約之大改 | **開啟** | 同批 diff 含 [`wallet/src/background/home-tokens-service.ts`](../../../../wallet/src/background/home-tokens-service.ts)、[`wallet/src/shared/home-tokens.ts`](../../../../wallet/src/shared/home-tokens.ts)、[`storage-keys.ts`](../../../../wallet/src/shared/storage-keys.ts) 等（對應未出貨 [`docs/roadmap/0.7.0/`](../../0.7.0/)），非 INDEX 0.6.0 scope。 | 出貨 0.6.0 前釐清是否拆 commit／PR；手驗時一併回歸 Home／持倉以免誤判本版。 |
 
 ### LOW

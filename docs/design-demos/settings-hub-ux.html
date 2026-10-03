@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — Settings 樞紐（概念稿）</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --accent-dim: #2a6ea8;
+        --danger: #c75050;
+        --popup-w: 384px;
+        --popup-h: 640px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1120px; margin: 0 auto; padding: 28px 20px 56px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 18px; max-width: 54rem; font-size: 0.92rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+      .chip {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 7px 13px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      .chip:hover { border-color: var(--text-dim); }
+      .chip.active { border-color: var(--accent); background: #1a2838; }
+      .layout {
+        display: grid;
+        grid-template-columns: var(--popup-w) 1fr;
+        gap: 28px;
+        align-items: start;
+      }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+      .phone-cap { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+      .top h2 {
+        font-size: 0.95rem;
+        margin: 0;
+        font-weight: 600;
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .icon-btn {
+        flex-shrink: 0;
+        width: 34px; height: 34px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-sm);
+        background: var(--fill);
+        color: var(--text);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .icon-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+      .icon-btn.ghost {
+        border-color: transparent;
+        background: transparent;
+        color: var(--text-muted);
+      }
+      .icon-btn.ghost:hover { background: var(--fill); border-color: var(--stroke); color: var(--text); }
+      .icon-btn.danger { color: #e8a0a0; }
+      .icon-btn.danger:hover { border-color: var(--danger); }
+      .icon-btn.on {
+        border-color: var(--accent);
+        background: #1a2838;
+        color: var(--text);
+      }
+      .body { flex: 1; min-height: 0; overflow: auto; padding: 12px 12px 16px; }
+      .body::-webkit-scrollbar { width: 6px; }
+      .body::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 4px; }
+      .dock {
+        flex-shrink: 0;
+        padding: 10px 12px 12px;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+      }
+      .dock[hidden] { display: none; }
+      .primary {
+        width: 100%;
+        border: 0;
+        background: var(--accent);
+        color: #061018;
+        font-weight: 700;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .primary:disabled { opacity: 0.4; cursor: default; }
+
+      .hub-list { display: flex; flex-direction: column; gap: 8px; }
+      .nav-row {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-align: left;
+        padding: 12px;
+        margin: 0;
+        border: 1px solid var(--stroke);
+        border-radius: 10px;
+        background: var(--fill);
+        color: var(--text);
+        cursor: pointer;
+        font: inherit;
+      }
+      .nav-row .meta {
+        flex: 1;
+        min-width: 0;
+      }
+      .nav-row .title {
+        display: block;
+        font-size: 0.88rem;
+        font-weight: 600;
+      }
+      .nav-row .sum {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-family: var(--mono);
+      }
+      .nav-row .sum.plain { font-family: inherit; }
+      .nav-row .chev { color: var(--text-dim); flex-shrink: 0; }
+
+      .pick-list { display: flex; flex-direction: column; gap: 8px; }
+      .pick-row {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-align: left;
+        padding: 12px;
+        margin: 0;
+        border: 1px solid var(--stroke);
+        border-radius: 10px;
+        background: var(--fill);
+        color: var(--text);
+        cursor: pointer;
+        font: inherit;
+      }
+      .pick-row.on {
+        border-color: var(--accent);
+        background: #1a2838;
+      }
+      .pick-dot {
+        flex-shrink: 0;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid var(--text-dim);
+        box-sizing: border-box;
+      }
+      .pick-row.on .pick-dot {
+        border-color: var(--accent);
+        box-shadow: inset 0 0 0 3px var(--bg);
+        background: var(--accent);
+      }
+      .pick-row .meta { flex: 1; min-width: 0; }
+      .pick-row .title { display: block; font-size: 0.88rem; font-weight: 600; }
+      .pick-row .sum {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-family: var(--mono);
+      }
+
+      .card {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        overflow: hidden;
+        margin-bottom: 12px;
+      }
+      .card-hd {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px 8px;
+      }
+      .card-hd h3 {
+        margin: 0;
+        font-size: 0.82rem;
+        font-weight: 600;
+        flex: 1;
+      }
+      .rpc-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        font-size: 0.78rem;
+        border-bottom: 1px solid var(--stroke-soft);
+      }
+      .rpc-row:last-child { border-bottom: 0; }
+      .rpc-row input[type="radio"] { flex-shrink: 0; width: 16px; margin: 0; }
+      .rpc-row .u {
+        flex: 1;
+        min-width: 0;
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .badge {
+        flex-shrink: 0;
+        font-size: 0.62rem;
+        color: var(--text-dim);
+        border: 1px solid var(--stroke);
+        border-radius: 999px;
+        padding: 1px 6px;
+      }
+      .rpc-add {
+        display: flex;
+        justify-content: flex-end;
+        padding: 6px 8px 8px;
+      }
+
+      .sec { margin-bottom: 14px; }
+      .sec-head h3 {
+        margin: 0 0 6px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--text-muted);
+      }
+      .empty {
+        color: var(--text-muted);
+        font-size: 0.82rem;
+        margin: 0 0 12px;
+      }
+      .field { margin-bottom: 12px; }
+      .field > label {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        margin-bottom: 5px;
+      }
+      .secret-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+      }
+      .secret-row input[type="text"] {
+        flex: 1;
+        min-width: 0;
+        background: var(--bg);
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        color: var(--text);
+        font: inherit;
+        font-size: 0.82rem;
+        font-family: var(--mono);
+        padding: 8px 10px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .mask-pill {
+        flex: 1;
+        min-width: 0;
+        background: var(--bg);
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--text-muted);
+      }
+      .mask-pill.revealed {
+        color: var(--text);
+      }
+      .field input.pw-mask {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        color: var(--text);
+        font: inherit;
+        font-size: 0.82rem;
+        padding: 8px 10px;
+        -webkit-text-security: disc;
+      }
+      .err {
+        margin: 0 0 4px;
+        font-size: 0.8rem;
+        color: #e8a0a0;
+        min-height: 1.2em;
+      }
+
+      .notes { font-size: 0.86rem; color: var(--text-muted); }
+      .notes h2 { font-size: 0.95rem; color: var(--text); margin: 0 0 10px; }
+      .notes h3 { font-size: 0.82rem; color: var(--text); margin: 18px 0 8px; }
+      .notes ul, .notes ol { padding-left: 1.2rem; margin: 0 0 8px; }
+      .notes li { margin: 0 0 6px; }
+      .tag {
+        display: inline-block;
+        font-size: 0.68rem;
+        letter-spacing: 0.04em;
+        border: 1px solid var(--accent-dim);
+        color: var(--accent);
+        border-radius: 999px;
+        padding: 1px 8px;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>Settings 樞紐</h1>
+      <p class="lede">
+        非正式契約。Settings 第一層只列入口，秘密不進列表。衝突時以以後版 INDEX 為準。
+        示範用虛構字 <code>https://example.test/?api-key=demo</code>、<code>demo-not-a-real-key</code>；預設遮罩帽不把全文放進可見 DOM。
+      </p>
+      <div class="controls" role="tablist" aria-label="畫面狀態">
+        <button class="chip active" type="button" data-preset="hub-unset">樞紐 · API 未設定</button>
+        <button class="chip" type="button" data-preset="hub-set">樞紐 · API 已設定</button>
+        <button class="chip" type="button" data-preset="network">網路</button>
+        <button class="chip" type="button" data-preset="rpc">RPC</button>
+        <button class="chip" type="button" data-preset="keys-empty">API keys 皆空</button>
+        <button class="chip" type="button" data-preset="keys-set">API keys 皆已設定</button>
+        <button class="chip" type="button" data-preset="keys-reveal">Reveal 開啟</button>
+        <button class="chip" type="button" data-preset="keys-partial">只設了其中一個</button>
+        <button class="chip" type="button" data-preset="password">錢包密碼</button>
+      </div>
+      <div class="layout">
+        <div>
+          <p class="phone-cap">Popup 384×640</p>
+          <div class="phone" id="phone">
+            <div class="top" id="top"></div>
+            <div class="body" id="body"></div>
+            <div class="dock" id="dock" hidden></div>
+          </div>
+        </div>
+        <aside class="notes">
+          <h2>畫面意圖</h2>
+          <p>四列 submenu。網路是兩列單選（現在用哪個 cluster）；RPC 是兩張卡分別編 Devnet／Mainnet 清單。不要用分段 tab 來選網路。</p>
+          <ul>
+            <li><strong>網路</strong> — 兩列：Devnet、Mainnet；圓點表示目前選中；點了立刻切換</li>
+            <li><strong>RPC</strong> — 上卡 Devnet、下卡 Mainnet；各有 radio 清單。目前 cluster 的那張卡標「目前」</li>
+            <li><strong>API keys</strong> — Helius URL ＋ Jupiter key</li>
+            <li><strong>錢包密碼</strong> — vault。子頁見 <code>change-wallet-password-ux.html</code></li>
+          </ul>
+
+          <h3><span class="tag">建議</span>寫入時機（不是 INDEX）</h3>
+          <ul>
+            <li>cluster、RPC 選／加／刪：立刻。</li>
+            <li>Helius、Jupiter：失焦或列內確認圖示。正在打字不算。畫面不教這句。</li>
+            <li>清除：點刪除圖示，立刻寫成空字串。</li>
+            <li>變更錢包密碼：殼底「變更密碼」，非 auto-save。</li>
+            <li>沒有整頁「儲存設定」。</li>
+          </ul>
+
+          <h3><span class="tag">建議</span>API keys（不是 INDEX）</h3>
+          <ul>
+            <li>空：空狀態＋可貼上的 <code>type="text"</code>。確認圖示提交該列。</li>
+            <li>有值：遮罩列＋<strong>Reveal</strong> 圖示（click toggle，不要錢包密碼）＋編輯／清除圖示。不要第二顆眼睛。</li>
+            <li>標籤：<strong>Helius API URL</strong>、<strong>Jupiter API key</strong>（不要只寫 Helius，以免只貼 key）。</li>
+            <li>已設定：兩欄都顯示 <code>••••••</code>。Reveal 才給全文（單行 ellipsis）。不要「已設定」、不要露出後 4 或 <code>?api-key=</code>。</li>
+            <li>不要 <code>type="password"</code>（類 C）。錢包密碼列才用遮罩 text（類 B）。</li>
+          </ul>
+        </aside>
+      </div>
+    </div>
+    <script>
+      const FAKE_HELIUS = "https://example.test/?api-key=demo";
+      const FAKE_JUP = "demo-not-a-real-key";
+      const RPC_MAIN = "https://api.mainnet-beta.solana.com";
+      const RPC_DEV = "https://api.devnet.solana.com";
+
+      const ICO_BACK = '<svg viewBox="0 0 24 24"><path d="M15 6 9 12l6 6"/></svg>';
+      const ICO_MENU = '<svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h14"/></svg>';
+      const ICO_CHEV = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg>';
+      const ICO_EYE = '<svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+      const ICO_EYE_OFF = '<svg viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 10.6A3 3 0 0 0 12 15a3 3 0 0 0 2.4-4.4M9.9 5.2A11 11 0 0 1 12 5c6.5 0 10 7 10 7a16 16 0 0 1-3.2 4.1M6.1 6.1A16 16 0 0 0 2 12s3.5 7 10 7c1.5 0 2.9-.3 4.1-.8"/></svg>';
+      const ICO_EDIT = '<svg viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16v4Z"/><path d="M13 7l4 4"/></svg>';
+      const ICO_CHECK = '<svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>';
+      const ICO_TRASH = '<svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M8 7v12h8V7"/></svg>';
+      const ICO_PLUS = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
+
+      const $ = (id) => document.getElementById(id);
+
+      let preset = "hub-unset";
+      let screen = "hub";
+      let cluster = "mainnet";
+      let helius = "";
+      let jup = "";
+      let revealH = false;
+      let revealJ = false;
+      let editH = false;
+      let editJ = false;
+      let draftH = "";
+      let draftJ = "";
+      let pw1 = "";
+      let pw2 = "";
+      let pw3 = "";
+
+      function esc(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function apiSummary() {
+        const h = !!helius;
+        const j = !!jup;
+        if (h && j) return "已設定";
+        if (h || j) return "部分設定";
+        return "未設定";
+      }
+
+      function setActiveChip(name) {
+        document.querySelectorAll("[data-preset]").forEach((b) => {
+          b.classList.toggle("active", b.dataset.preset === name);
+        });
+      }
+
+      function applyPreset(name) {
+        preset = name;
+        setActiveChip(name);
+        revealH = revealJ = false;
+        editH = editJ = false;
+        draftH = "";
+        draftJ = "";
+        pw1 = pw2 = pw3 = "";
+        cluster = "mainnet";
+        if (name === "hub-unset") {
+          screen = "hub";
+          helius = "";
+          jup = "";
+        } else if (name === "hub-set") {
+          screen = "hub";
+          helius = FAKE_HELIUS;
+          jup = FAKE_JUP;
+        } else if (name === "network") {
+          screen = "network";
+          helius = "";
+          jup = "";
+        } else if (name === "rpc") {
+          screen = "rpc";
+          helius = "";
+          jup = "";
+        } else if (name === "keys-empty") {
+          screen = "keys";
+          helius = "";
+          jup = "";
+        } else if (name === "keys-set") {
+          screen = "keys";
+          helius = FAKE_HELIUS;
+          jup = FAKE_JUP;
+        } else if (name === "keys-reveal") {
+          screen = "keys";
+          helius = FAKE_HELIUS;
+          jup = FAKE_JUP;
+          revealH = true;
+          revealJ = true;
+        } else if (name === "keys-partial") {
+          screen = "keys";
+          helius = FAKE_HELIUS;
+          jup = "";
+        } else if (name === "password") {
+          screen = "password";
+          helius = "";
+          jup = "";
+        }
+        render();
+      }
+
+      function bar(title, back) {
+        const left = back
+          ? `<button type="button" class="icon-btn ghost" id="btn-back" title="返回" aria-label="返回">${ICO_BACK}</button>`
+          : `<span style="width:34px"></span>`;
+        return `${left}<h2>${esc(title)}</h2>
+          <button type="button" class="icon-btn ghost" title="選單" aria-label="選單">${ICO_MENU}</button>`;
+      }
+
+      function hubHtml() {
+        const net = cluster === "mainnet" ? "Mainnet" : "Devnet";
+        const rpcSum = cluster === "mainnet" ? RPC_MAIN : RPC_DEV;
+        return `<div class="hub-list">
+          <button type="button" class="nav-row" data-go="network">
+            <span class="meta"><span class="title">網路</span><span class="sum plain">${net}</span></span>
+            <span class="chev">${ICO_CHEV}</span>
+          </button>
+          <button type="button" class="nav-row" data-go="rpc">
+            <span class="meta"><span class="title">RPC</span><span class="sum">${esc(rpcSum)}</span></span>
+            <span class="chev">${ICO_CHEV}</span>
+          </button>
+          <button type="button" class="nav-row" data-go="keys">
+            <span class="meta"><span class="title">API keys</span><span class="sum plain">${apiSummary()}</span></span>
+            <span class="chev">${ICO_CHEV}</span>
+          </button>
+          <button type="button" class="nav-row" data-go="password">
+            <span class="meta"><span class="title">錢包密碼</span><span class="sum plain">變更</span></span>
+            <span class="chev">${ICO_CHEV}</span>
+          </button>
+        </div>`;
+      }
+
+      function networkHtml() {
+        const rows = [
+          { id: "devnet", title: "Devnet", url: RPC_DEV },
+          { id: "mainnet", title: "Mainnet", url: RPC_MAIN },
+        ];
+        return `<div class="pick-list" role="radiogroup" aria-label="目前網路">${rows
+          .map(
+            (r) => `<button type="button" class="pick-row${cluster === r.id ? " on" : ""}" data-cluster="${r.id}" role="radio" aria-checked="${cluster === r.id ? "true" : "false"}">
+            <span class="pick-dot" aria-hidden="true"></span>
+            <span class="meta"><span class="title">${r.title}</span><span class="sum">${esc(r.url)}</span></span>
+          </button>`,
+          )
+          .join("")}</div>`;
+      }
+
+      function rpcCard(net, title, urls, active) {
+        const name = "rpc-" + net;
+        const rows = urls
+          .map(
+            (u, i) => `<div class="rpc-row">
+              <input type="radio" name="${name}" ${i === 0 ? "checked" : ""} />
+              <span class="u">${esc(u.url)}</span>
+              ${u.custom ? `<button type="button" class="icon-btn ghost danger" title="刪除" aria-label="刪除">${ICO_TRASH}</button>` : `<span class="badge">內建</span>`}
+            </div>`,
+          )
+          .join("");
+        return `<div class="card">
+          <div class="card-hd">
+            <h3>${title}</h3>
+            ${active ? `<span class="badge">目前</span>` : ""}
+          </div>
+          ${rows}
+          <div class="rpc-add">
+            <button type="button" class="icon-btn ghost" title="加入" aria-label="加入">${ICO_PLUS}</button>
+          </div>
+        </div>`;
+      }
+
+      function rpcHtml() {
+        return (
+          rpcCard(
+            "devnet",
+            "Devnet",
+            [
+              { url: RPC_DEV },
+              { url: "https://example.test/devnet-rpc", custom: true },
+            ],
+            cluster === "devnet",
+          ) +
+          rpcCard(
+            "mainnet",
+            "Mainnet",
+            [
+              { url: RPC_MAIN },
+              { url: "https://example.test/solana-rpc", custom: true },
+            ],
+            cluster === "mainnet",
+          )
+        );
+      }
+
+      function secretBlock(kind, has, revealed, editing, draft) {
+        const label = kind === "h" ? "Helius API URL" : "Jupiter API key";
+        const ph = kind === "h" ? "https://…?api-key=…" : "API key";
+        const revealOn = revealed ? "on" : "";
+        const revealIco = revealed ? ICO_EYE_OFF : ICO_EYE;
+        const revealTitle = revealed ? "遮罩" : "顯示";
+
+        if (editing || !has) {
+          const val = editing ? draft : "";
+          return `<div class="field">
+            <label>${label}</label>
+            <div class="secret-row">
+              <input type="text" data-draft="${kind}" value="${esc(val)}" placeholder="${ph}" autocomplete="off" spellcheck="false" />
+              <button type="button" class="icon-btn" data-confirm="${kind}" title="確認" aria-label="確認">${ICO_CHECK}</button>
+            </div>
+          </div>`;
+        }
+
+        const display = revealed ? (kind === "h" ? helius : jup) : "••••••";
+
+        return `<div class="field">
+          <label>${label}</label>
+          <div class="secret-row">
+            <div class="mask-pill${revealed ? " revealed" : ""}">${esc(display)}</div>
+            <button type="button" class="icon-btn ${revealOn}" data-reveal="${kind}" title="${revealTitle}" aria-label="${revealTitle}">${revealIco}</button>
+            <button type="button" class="icon-btn ghost" data-edit="${kind}" title="編輯" aria-label="編輯">${ICO_EDIT}</button>
+            <button type="button" class="icon-btn ghost danger" data-clear="${kind}" title="清除" aria-label="清除">${ICO_TRASH}</button>
+          </div>
+        </div>`;
+      }
+
+      function keysHtml() {
+        const emptyBoth = !helius && !jup;
+        const emptyNote = emptyBoth ? `<p class="empty">尚未設定</p>` : "";
+        return `${emptyNote}
+          ${secretBlock("h", !!helius, revealH, editH, draftH)}
+          ${secretBlock("j", !!jup, revealJ, editJ, draftJ)}`;
+      }
+
+      function passwordHtml() {
+        return `<div class="field">
+          <label>目前密碼</label>
+          <input class="pw-mask" type="text" id="pw1" autocomplete="off" value="${esc(pw1)}" />
+        </div>
+        <div class="field">
+          <label>新密碼</label>
+          <input class="pw-mask" type="text" id="pw2" autocomplete="off" value="${esc(pw2)}" />
+        </div>
+        <div class="field">
+          <label>再次輸入</label>
+          <input class="pw-mask" type="text" id="pw3" autocomplete="off" value="${esc(pw3)}" />
+        </div>
+        <p class="err"></p>`;
+      }
+
+      function render() {
+        const titles = {
+          hub: "Settings",
+          network: "網路",
+          rpc: "RPC",
+          keys: "API keys",
+          password: "錢包密碼",
+        };
+        $("top").innerHTML = bar(titles[screen], screen !== "hub");
+        if (screen === "hub") $("body").innerHTML = hubHtml();
+        else if (screen === "network") $("body").innerHTML = networkHtml();
+        else if (screen === "rpc") $("body").innerHTML = rpcHtml();
+        else if (screen === "keys") $("body").innerHTML = keysHtml();
+        else $("body").innerHTML = passwordHtml();
+
+        const showDock = screen === "password";
+        $("dock").hidden = !showDock;
+        if (showDock) {
+          const ready = pw1.length >= 8 && pw2.length >= 8 && pw2 === pw3;
+          $("dock").innerHTML = `<button type="button" class="primary" id="btn-change" ${ready ? "" : "disabled"}>變更密碼</button>`;
+        }
+
+        bind();
+      }
+
+      function bind() {
+        const back = $("btn-back");
+        if (back) back.onclick = () => { screen = "hub"; render(); };
+
+        $("body").querySelectorAll("[data-go]").forEach((el) => {
+          el.onclick = () => { screen = el.dataset.go; render(); };
+        });
+        $("body").querySelectorAll("[data-cluster]").forEach((el) => {
+          el.onclick = () => { cluster = el.dataset.cluster; render(); };
+        });
+        $("body").querySelectorAll("[data-reveal]").forEach((el) => {
+          el.onclick = () => {
+            if (el.dataset.reveal === "h") revealH = !revealH;
+            else revealJ = !revealJ;
+            render();
+          };
+        });
+        $("body").querySelectorAll("[data-edit]").forEach((el) => {
+          el.onclick = () => {
+            if (el.dataset.edit === "h") {
+              editH = true;
+              draftH = helius;
+              revealH = false;
+            } else {
+              editJ = true;
+              draftJ = jup;
+              revealJ = false;
+            }
+            render();
+          };
+        });
+        $("body").querySelectorAll("[data-clear]").forEach((el) => {
+          el.onclick = () => {
+            if (el.dataset.clear === "h") {
+              helius = "";
+              revealH = false;
+              editH = false;
+            } else {
+              jup = "";
+              revealJ = false;
+              editJ = false;
+            }
+            render();
+          };
+        });
+        $("body").querySelectorAll("[data-confirm]").forEach((el) => {
+          el.onclick = () => {
+            const inp = $("body").querySelector(`[data-draft="${el.dataset.confirm}"]`);
+            const v = (inp && inp.value.trim()) || "";
+            if (el.dataset.confirm === "h") {
+              helius = v;
+              editH = false;
+              draftH = "";
+            } else {
+              jup = v;
+              editJ = false;
+              draftJ = "";
+            }
+            render();
+          };
+        });
+        $("body").querySelectorAll("[data-draft]").forEach((el) => {
+          el.oninput = () => {
+            if (el.dataset.draft === "h") draftH = el.value;
+            else draftJ = el.value;
+          };
+        });
+        ["pw1", "pw2", "pw3"].forEach((id) => {
+          const el = $(id);
+          if (!el) return;
+          el.oninput = () => {
+            if (id === "pw1") pw1 = el.value;
+            if (id === "pw2") pw2 = el.value;
+            if (id === "pw3") pw3 = el.value;
+            const ready = pw1.length >= 8 && pw2.length >= 8 && pw2 === pw3;
+            const btn = $("btn-change");
+            if (btn) btn.disabled = !ready;
+          };
+        });
+      }
+
+      document.querySelectorAll("[data-preset]").forEach((b) => {
+        b.onclick = () => applyPreset(b.dataset.preset);
+      });
+
+      applyPreset("hub-unset");
+    </script>
+  </body>
+</html>

@@ -1,6 +1,6 @@
 # 變更錢包密碼 — backlog
 
-構想尚未排進某版 INDEX，**不是契約**。排程後以該版 INDEX 為準。
+概念互動稿（非正式契約）：[`docs/design-demos/change-wallet-password-ux.html`](../../design-demos/change-wallet-password-ux.html)。排進 INDEX 後以 INDEX 為準。
 
 ## 產品意向
 
@@ -15,13 +15,13 @@
 
 沒有「忘記密碼」恢復。不知道目前密碼就不能改。
 
-欄位是錢包密碼，用 `type="password"`（目前密碼／新密碼）。這和助記詞、私鑰欄位不同：後者禁止被當成可記住的登入資料，見 [`docs/research/secret-field-autofill.md`](../../research/secret-field-autofill.md)。不要把那套 ignore 屬性套到「要不要讓密碼管理器記住錢包密碼」上。
+欄位是錢包密碼：畫面打碼，但 **不要** `type="password"` 或 `autocomplete="current-password"`／`new-password`（Chrome 會把錢包密碼送進 Google 密碼管理器）。作法見 [`docs/research/secret-field-autofill.md`](../../research/secret-field-autofill.md) 類 B。助記詞／私鑰仍走另一套 harden，不要改成 password 型別。
 
 ## 開工前仍須拍板（排進 INDEX 時）
 
 - 新密碼最短長度是否沿用建立金庫的 8 字元。
 - 鎖定時能否只靠「目前密碼」改密，或必須先解鎖。
-- 密碼管理器可否記住錢包密碼（`autocomplete="current-password"`／`new-password`），或改密頁也要擋自動填入。
+- 密碼管理器：**已拍** 錢包密碼不得進 Google。改密與建庫／解鎖同一套遮罩 text，禁止 `current-password`／`new-password`。
 
 ## 非目標（構想層）
 
