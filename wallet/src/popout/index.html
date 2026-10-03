@@ -7,17 +7,72 @@
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
-    <main>
-      <h1>審批請求</h1>
-      <p id="origin" class="muted"></p>
-      <p id="kind"></p>
-      <pre id="detail"></pre>
-      <div class="actions">
-        <button id="reject" type="button" class="secondary">拒絕</button>
-        <button id="approve" type="button">批准</button>
+    <div id="root" class="root">
+      <section id="view-unlock" class="unlock-screen" hidden>
+        <h1>Airwave</h1>
+        <p>錢包已鎖定</p>
+        <input
+          id="unlock-password"
+          type="text"
+          class="wallet-pwd-masked"
+          placeholder="密碼"
+          autocomplete="off"
+        />
+        <p id="unlock-error" class="inline-error" hidden></p>
+        <button id="btn-unlock" type="button" class="primary-btn">解鎖</button>
+      </section>
+
+      <section id="view-gone" class="flow-screen" hidden>
+        <h1 id="gone-title">審批</h1>
+        <p class="lead">請求已不在</p>
+        <div class="approval-dock">
+          <button type="button" class="ghost-btn" disabled>拒絕</button>
+          <button type="button" class="primary-btn" disabled>批准</button>
+        </div>
+      </section>
+
+      <section id="view-legacy" class="flow-screen" hidden>
+        <h1>審批請求</h1>
+        <p id="legacy-origin" class="muted"></p>
+        <p id="legacy-kind"></p>
+        <pre id="legacy-detail"></pre>
+        <div class="approval-dock">
+          <button id="legacy-reject" type="button" class="ghost-btn">拒絕</button>
+          <button id="legacy-approve" type="button" class="primary-btn">批准</button>
+        </div>
+        <p id="legacy-error" class="inline-error" hidden></p>
+      </section>
+
+      <div id="view-sign" class="shell" hidden>
+        <header class="top-bar">
+          <div class="bar-wallet-group">
+            <div class="bar-wallet static-wallet" id="sign-wallet">
+              <span class="avatar" id="sign-avatar" aria-hidden="true">A</span>
+              <span class="bar-wallet-text">
+                <span class="bar-wallet-name" id="sign-label">Account</span>
+                <span class="bar-wallet-addr" id="sign-addr"></span>
+              </span>
+            </div>
+            <button type="button" class="icon-btn ghost-inline" id="btn-copy-pk" title="Copy public key" aria-label="Copy public key">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+        </header>
+        <main class="screen-body">
+          <h2 class="page-title">簽署訊息</h2>
+          <div class="site-row">
+            <span class="site-label">站點</span>
+            <span class="site-chip" id="sign-origin"></span>
+          </div>
+          <div id="sign-body"></div>
+          <p id="sign-error" class="inline-error" hidden></p>
+        </main>
+        <footer class="approval-dock" id="sign-dock">
+          <button id="sign-reject" type="button" class="ghost-btn">拒絕</button>
+          <button id="sign-approve" type="button" class="primary-btn">批准</button>
+        </footer>
       </div>
-      <p id="error" class="error" hidden></p>
-    </main>
+    </div>
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

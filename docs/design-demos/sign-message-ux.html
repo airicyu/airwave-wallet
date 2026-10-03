@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 簽署訊息（概念稿）</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --accent-dim: #2a6ea8;
+        --danger: #c75050;
+        --popup-w: 384px;
+        --popup-h: 600px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --card-lines: 6;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1120px; margin: 0 auto; padding: 28px 20px 56px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 18px; max-width: 54rem; font-size: 0.92rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+      .chip {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 7px 13px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      .chip:hover { border-color: var(--text-dim); }
+      .chip.active { border-color: var(--accent); background: #1a2838; }
+      .layout {
+        display: grid;
+        grid-template-columns: var(--popup-w) 1fr;
+        gap: 28px;
+        align-items: start;
+      }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+      .phone-cap { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+      .bar-wallet-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        min-width: 0;
+        flex: 1 1 auto;
+      }
+      .bar-wallet {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        max-width: 100%;
+        padding: 5px 12px 5px 5px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+        color: inherit;
+        font: inherit;
+        cursor: default;
+      }
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+      }
+      .bar-wallet-text { min-width: 0; flex: 1; text-align: left; }
+      .bar-wallet-name {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .bar-wallet-addr {
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-family: var(--mono);
+      }
+      .top-title {
+        flex-shrink: 0;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        font-weight: 600;
+      }
+      .icon-btn {
+        flex-shrink: 0;
+        width: 34px; height: 34px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .icon-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+      .icon-btn:hover { background: var(--fill); border-color: var(--stroke); color: var(--text); }
+      .body {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 14px 12px 16px;
+      }
+      .body::-webkit-scrollbar { width: 6px; }
+      .body::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 4px; }
+      .dock {
+        flex-shrink: 0;
+        padding: 10px 12px 12px;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        display: flex;
+        gap: 8px;
+      }
+      .ghost {
+        flex: 0 0 38%;
+        border: 1px solid var(--stroke);
+        background: transparent;
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .ghost:hover { color: var(--text); border-color: var(--text-dim); }
+      .ghost:disabled { opacity: 0.4; cursor: default; }
+      .primary {
+        flex: 1;
+        border: 0;
+        background: var(--accent);
+        color: #061018;
+        font-weight: 700;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .primary:disabled { opacity: 0.4; cursor: default; }
+
+      .site-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        margin: 0 0 12px;
+      }
+      .site-k {
+        flex-shrink: 0;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+      }
+      .site-code {
+        min-width: 0;
+        max-width: 100%;
+        padding: 1px 6px;
+        border-radius: 4px;
+        border: 1px solid var(--stroke-soft);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text-muted);
+        font-family: var(--mono);
+        font-size: 0.74rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .msg {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        padding: 12px;
+        font-size: 0.86rem;
+        line-height: 1.5;
+        color: var(--text);
+        white-space: pre-wrap;
+        word-break: break-word;
+        height: auto;
+        max-height: calc(1.5em * var(--card-lines) + 24px);
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+      .page-title {
+        margin: 0 0 14px;
+        text-align: center;
+        font-size: 1.05rem;
+        font-weight: 650;
+        letter-spacing: 0.02em;
+      }
+      .payload-k {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        font-weight: 600;
+        margin: 0 0 6px;
+      }
+      .hex-head {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin: 0 0 6px;
+      }
+      .hex-head .payload-k { flex: 1; }
+      .hex-block summary {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        list-style: none;
+        padding: 0;
+      }
+      .hex-block summary::-webkit-details-marker { display: none; }
+      .hex-block summary .chev {
+        width: 12px;
+        height: 12px;
+        color: var(--text-dim);
+        flex-shrink: 0;
+        transition: transform 0.12s ease;
+      }
+      .hex-block[open] summary .chev { transform: rotate(90deg); }
+      .hex-block .hex-card { margin-top: 8px; }
+      .hex-k {
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        font-weight: 600;
+        flex: 1;
+      }
+      .hex-card {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        padding: 12px;
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        line-height: 1.5;
+        color: var(--text-muted);
+        word-break: break-all;
+        height: auto;
+        max-height: calc(1.5em * var(--card-lines) + 24px);
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+      .notice-card {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        padding: 16px 14px;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        text-align: center;
+      }
+        border: 1px solid #4a2a2a;
+        background: #1a1416;
+        border-radius: var(--radius);
+        padding: 14px 12px;
+        color: #e8a0a0;
+        font-size: 0.86rem;
+      }
+      .body:has(.unlock-screen) {
+        display: flex;
+        padding: 16px 16px;
+      }
+      .unlock-screen {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0;
+      }
+      .unlock-screen h1 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0 0 8px;
+      }
+      .unlock-screen p {
+        margin: 0 0 14px;
+        font-size: 0.88rem;
+        color: var(--text-muted);
+      }
+      .unlock-screen input {
+        display: block;
+        width: 100%;
+        margin: 0;
+        box-sizing: border-box;
+        padding: 10px 12px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-sm);
+        background: var(--fill);
+        color: var(--text);
+        font: inherit;
+        font-size: 0.88rem;
+        -webkit-text-security: disc;
+      }
+      .unlock-screen input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .dock[hidden] { display: none !important; }
+      .unlock-screen .primary {
+        display: block;
+        width: 100%;
+        margin-top: 12px;
+      }
+      .notes { font-size: 0.86rem; color: var(--text-muted); }
+      .notes h2 { font-size: 0.95rem; color: var(--text); margin: 0 0 10px; }
+      .notes h3 { font-size: 0.82rem; color: var(--text); margin: 18px 0 8px; }
+      .notes ul { padding-left: 1.2rem; margin: 0 0 8px; }
+      .notes li { margin: 0 0 6px; }
+      .tag {
+        display: inline-block;
+        font-size: 0.68rem;
+        letter-spacing: 0.04em;
+        border: 1px solid var(--accent-dim);
+        color: var(--accent);
+        border-radius: 999px;
+        padding: 1px 8px;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>簽署訊息 popout</h1>
+      <p class="lede">
+        非正式契約。UTF-8 通過則先顯示文字卡，其下永遠有 Hex 卡可複製；否則只顯示 Hex。
+        示範 <code>https://drip.example.test</code>、<code>4aF1…pda4</code>。
+      </p>
+      <div class="controls" role="tablist" aria-label="畫面狀態">
+        <button class="chip active" type="button" data-preset="utf8">可讀訊息</button>
+        <button class="chip" type="button" data-preset="bin">非 UTF-8</button>
+        <button class="chip" type="button" data-preset="tx">內容是交易</button>
+        <button class="chip" type="button" data-preset="gone">載入失敗</button>
+        <button class="chip" type="button" data-preset="busy">批准中</button>
+        <button class="chip" type="button" data-preset="lock">鎖定</button>
+      </div>
+      <div class="layout">
+        <div>
+          <p class="phone-cap">Popout 384×600</p>
+          <div class="phone" id="phone">
+            <div class="top" id="top"></div>
+            <div class="body" id="body"></div>
+            <div class="dock" id="dock"></div>
+          </div>
+        </div>
+        <aside class="notes">
+          <h2>畫面意圖</h2>
+          <p><span class="tag">非正式</span>帳戶在左上，與 Home 同一套 widget。站點是內容第一行，不是仿輸入列。</p>
+          <ul>
+            <li>頂欄左：帳戶 widget（名稱在上、地址在下）。popout 裡不當切換器，只標明將簽名的帳戶。</li>
+            <li>主區最上中央是「簽署訊息」，再來才是站點。</li>
+            <li>主體用一般卡；副呈現才用展開列、預設收合。</li>
+            <li>可讀 UTF-8：主體 <code>Message payload</code> 文字卡；副 <code>Raw binary payload</code> 預設收合。</li>
+            <li>非 UTF-8：主體就是 <code>Raw binary payload</code> 一般卡（不展開）。沒有第二份 payload。</li>
+            <li>鎖定：整頁一般解鎖；「解鎖」在密碼欄正下方（內容區），殼底隱藏。解鎖後才出現拒絕／批准。批准在解鎖後約 0.7 秒內 disabled，避免連點打到同一熱區。</li>
+          </ul>
+        </aside>
+      </div>
+    </div>
+    <script>
+      const UTF8 =
+        "drip.example.test wants you to sign in with your Solana account:\n" +
+        "4aF1f57apxHe3yLvoW96VHsvXK64AU1txGP2UB6Mpda4\n\n" +
+        "Sign in to DRiP\n" +
+        "Request ID: 6622:9e82757a-d42d-4a01-96a7-f1b839666319\n\n" +
+        "This session is valid for the current visit only.";
+
+      const BIN = Uint8Array.from({ length: 96 }, (_, i) => (i * 17 + 0x89) & 0xff);
+
+      const ORIGIN = "https://drip.example.test";
+
+      let preset = "utf8";
+      let fromUnlock = false;
+      let armTimer = 0;
+
+      const $ = (id) => document.getElementById(id);
+
+      const ICO_COPY =
+        '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+
+      function bytesToHex(bytes) {
+        return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+      }
+
+      function hexDisplay(hex) {
+        return hex.replace(/(.{2})/g, "$1 ").trim();
+      }
+
+      function looksLikeUtf8Text(bytes) {
+        try {
+          const s = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+          for (let i = 0; i < s.length; i++) {
+            const c = s.charCodeAt(i);
+            if (c === 0) return false;
+            if (c < 32 && c !== 9 && c !== 10 && c !== 13) return false;
+          }
+          return s.replace(/[\s]/g, "").length > 0;
+        } catch {
+          return false;
+        }
+      }
+
+      function pageTitle() {
+        return `<h2 class="page-title">簽署訊息</h2>`;
+      }
+
+      function siteLine() {
+        return `<div class="site-line">
+          <span class="site-k">站點</span>
+          <span class="site-code" title="${ORIGIN}">${ORIGIN}</span>
+        </div>`;
+      }
+
+      function hexPrimary(bytes) {
+        const compact = bytesToHex(bytes);
+        return `<div class="hex-block">
+          <div class="hex-head">
+            <span class="payload-k" style="margin:0">Raw binary payload</span>
+            <button class="icon-btn" type="button" data-copy-hex="${compact}" title="複製 hex" aria-label="複製 hex">${ICO_COPY}</button>
+          </div>
+          <div class="hex-card">${hexDisplay(compact)}</div>
+        </div>`;
+      }
+
+      function hexSecondary(bytes) {
+        const compact = bytesToHex(bytes);
+        return `<details class="hex-block">
+          <summary>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            <span class="hex-k">Raw binary payload</span>
+            <button class="icon-btn" type="button" data-copy-hex="${compact}" title="複製 hex" aria-label="複製 hex">${ICO_COPY}</button>
+          </summary>
+          <div class="hex-card">${hexDisplay(compact)}</div>
+        </details>`;
+      }
+
+      function topBar() {
+        return `
+          <div class="bar-wallet-group">
+            <div class="bar-wallet" title="主要  4aF1…pda4">
+              <span class="avatar" aria-hidden="true">主</span>
+              <span class="bar-wallet-text">
+                <span class="bar-wallet-name">主要</span>
+                <span class="bar-wallet-addr">4aF1…pda4</span>
+              </span>
+            </div>
+            <button class="icon-btn" type="button" title="複製" aria-label="複製">${ICO_COPY}</button>
+          </div>`;
+      }
+
+      function render() {
+        $("top").hidden = false;
+        $("top").innerHTML = topBar();
+        const body = $("body");
+        const dock = $("dock");
+
+        $("dock").hidden = false;
+        if (preset === "lock") {
+          $("top").hidden = true;
+          $("top").innerHTML = "";
+          $("dock").hidden = true;
+          $("dock").innerHTML = "";
+          body.innerHTML = `
+            <div class="unlock-screen">
+              <h1>Airwave</h1>
+              <p>錢包已鎖定</p>
+              <input id="pw" type="text" placeholder="密碼" autocomplete="off" />
+              <button class="primary" type="button" id="btn-unlock-demo">解鎖</button>
+            </div>`;
+          const u = $("btn-unlock-demo");
+          if (u) {
+            u.onclick = () => {
+              fromUnlock = true;
+              preset = "utf8";
+              document.querySelectorAll("[data-preset]").forEach((x) => {
+                x.classList.toggle("active", x.dataset.preset === "utf8");
+              });
+              render();
+            };
+          }
+          return;
+        }
+
+        if (preset === "tx") {
+          body.innerHTML = `
+            ${pageTitle()}
+            ${siteLine()}
+            <div class="notice-card">不能把交易當成訊息簽署。</div>`;
+          dock.innerHTML = `
+            <button class="ghost" type="button">拒絕</button>
+            <button class="primary" type="button" disabled>批准</button>`;
+          return;
+        }
+
+        if (preset === "gone") {
+          body.innerHTML = `${pageTitle()}<div class="err-card">請求已不在</div>`;
+          dock.innerHTML = `
+            <button class="ghost" type="button" disabled>拒絕</button>
+            <button class="primary" type="button" disabled>批准</button>`;
+          return;
+        }
+
+        const utf8Bytes = new TextEncoder().encode(UTF8);
+        const payload = preset === "bin" ? BIN : utf8Bytes;
+        const asText = looksLikeUtf8Text(payload);
+        const textCard = asText
+          ? `<span class="payload-k">Message payload</span><div class="msg">${new TextDecoder("utf-8", { fatal: true }).decode(payload)}</div>`
+          : "";
+        const binary = asText ? hexSecondary(payload) : hexPrimary(payload);
+        body.innerHTML = pageTitle() + siteLine() + textCard + binary;
+
+        const busy = preset === "busy";
+        const holdApprove = busy || fromUnlock;
+        dock.innerHTML = `
+          <button class="ghost" type="button" ${busy ? "disabled" : ""}>拒絕</button>
+          <button class="primary" type="button" ${holdApprove ? "disabled" : ""}>${busy ? "批准中" : "批准"}</button>`;
+        if (fromUnlock && !busy) {
+          window.clearTimeout(armTimer);
+          armTimer = window.setTimeout(() => {
+            fromUnlock = false;
+            render();
+          }, 700);
+        }
+
+        body.querySelectorAll("[data-copy-hex]").forEach((btn) => {
+          btn.onclick = (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            void navigator.clipboard.writeText(btn.getAttribute("data-copy-hex") || "");
+          };
+        });
+      }
+
+      document.querySelectorAll("[data-preset]").forEach((b) => {
+        b.onclick = () => {
+          preset = b.dataset.preset;
+          fromUnlock = false;
+          window.clearTimeout(armTimer);
+          document.querySelectorAll("[data-preset]").forEach((x) => x.classList.toggle("active", x === b));
+          render();
+        };
+      });
+
+      render();
+    </script>
+  </body>
+</html>

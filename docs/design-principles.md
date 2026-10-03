@@ -13,6 +13,7 @@
 - 頂欄沿用方案 A：Home 為 widget；子頁為 **Back + 標題 + Menu**。Bottom Token／Activity **只**在 Home。
 - 色票與圓角對齊 [`design-demos/wallet-030-ui-concepts.html`](design-demos/wallet-030-ui-concepts.html) 的 CSS 變數（`--bg`、`--fill`、`--accent` 等）。不要另開一套高對比主題。
 - **頁殼直欄 flex（有頁級主行動時）：** 頂欄 `flex-shrink: 0` → 內容區 `flex: 1; min-height: 0; overflow: auto` → 主行動列 `flex-shrink: 0` 貼在 popup **殼底**。主按鈕（匯入、產生、建立）停在這列，**不**進內容捲動、**不**用 `position: fixed`／`absolute`／`sticky` 浮在內容上。沒有主行動的頁（選項列表）不畫這列。
+- **鎖定／解鎖全屏：** 無頂欄、無殼底 dock。標題＋說明＋密碼欄＋「解鎖」垂直置中。欄位全寬、`--fill` 底、focus 用 `--accent` 邊框且 `outline: none`。主按鈕在欄位下方內容區。錢包密碼用類 B 遮罩（`type="text"` + `-webkit-text-security`）。概念稿：[`design-demos/sign-message-ux.html`](design-demos/sign-message-ux.html) 的 lock 預設。
 
 ---
 

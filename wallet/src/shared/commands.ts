@@ -57,6 +57,10 @@ export type PendingRecord = {
   origin: string;
   payload: unknown;
   createdAt: number;
+  /** signMessage：enqueue 時凍結的簽名帳戶（僅 SW 記憶體） */
+  signAccountId?: string;
+  /** signMessage：enqueue 時 SW 判定（popout 只信此旗標） */
+  messageLooksLikeTx?: boolean;
 };
 
 export type ConnectPayload = {

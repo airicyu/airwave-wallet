@@ -14,6 +14,7 @@ import type {
   SignMessagePayload,
   SignTransactionPayload,
 } from "../shared/commands";
+import { messageLooksLikeTransactionMessage } from "../shared/sign-message-tx";
 import {
   dedupePreserveOrder,
   findCombinedById,
@@ -150,11 +151,6 @@ async function notifyAccountChangedForConnectionAccount(
   }
 }
 
-function looksLikeVersionedTransaction(bytes: Uint8Array): boolean {
-  if (bytes.length < 80) return false;
-  return bytes[0] === 0x80 || bytes[0] === 0x81;
-}
-
 async function openPopout(requestId: string): Promise<void> {
   const url = chrome.runtime.getURL(
     `src/popout/index.html?requestId=${encodeURIComponent(requestId)}`,
@@ -274,6 +270,53 @@ async function signGateError(): Promise<SignGateError | null> {
   return null;
 }
 
+/** signMessage enqueue：不含鎖定早退（鎖定仍 pending＋popout）。 */
+async function signMessageEnqueueGateError(): Promise<SignGateError | null> {
+  const active = await getActiveAccountMeta();
+  if (!active) {
+    return { code: "NO_ACCOUNT", message: "No active account" };
+  }
+  const gatePubkey = getExposedPublicKey(active);
+  const accounts = await readAccounts();
+  const secrets = session.isUnlocked() ? session.getVaultSecrets()?.secrets : undefined;
+  const resolved = resolvePubkey(accounts, secrets, gatePubkey);
+  if (resolved.role === "readOnly") {
+    return { code: "ACCOUNT_READ_ONLY", message: "Read-only account cannot sign" };
+  }
+  return null;
+}
+
+async function keypairForAccountId(accountId: string): Promise<Keypair | null> {
+  if (!session.isUnlocked()) return null;
+  const accounts = await readAccounts();
+  const meta = accounts.find((a) => a.id === accountId);
+  if (!meta) return null;
+  const secrets = session.getVaultSecrets()?.secrets;
+  const gatePubkey = getExposedPublicKey(meta);
+  const resolved = resolvePubkey(accounts, secrets, gatePubkey);
+  if (resolved.role !== "signing") return null;
+  return session.getKeypair(resolved.accountId) ?? null;
+}
+
+async function signingErrorForAccountId(accountId: string): Promise<SignGateError | null> {
+  const accounts = await readAccounts();
+  const meta = accounts.find((a) => a.id === accountId);
+  if (!meta) {
+    return { code: "NO_KEY", message: "Missing key" };
+  }
+  const secrets = session.getVaultSecrets()?.secrets;
+  const gatePubkey = getExposedPublicKey(meta);
+  const resolved = resolvePubkey(accounts, secrets, gatePubkey);
+  if (resolved.role === "readOnly") {
+    return { code: "ACCOUNT_READ_ONLY", message: "Read-only account cannot sign" };
+  }
+  const kp = session.getKeypair(resolved.accountId);
+  if (!kp) {
+    return { code: "NO_KEY", message: "Missing key" };
+  }
+  return null;
+}
+
 async function keypairForActiveSigning(): Promise<Keypair | null> {
   const active = await getActiveAccountMeta();
   if (!active || !session.isUnlocked()) return null;
@@ -335,6 +378,23 @@ async function finishSignMessage(
   const pending = takePending(requestId);
   if (!pending) return;
 
+  const { message } = pending.payload as SignMessagePayload;
+  const msgBytes = Uint8Array.from(message);
+  const looksLikeTx = messageLooksLikeTransactionMessage(msgBytes);
+
+  if (looksLikeTx) {
+    await sendBridgeResult(tabId, {
+      type: "airwave-bridge-result",
+      requestId,
+      ok: false,
+      error: {
+        code: "SIGN_MESSAGE_LOOKS_LIKE_TRANSACTION",
+        message: "Message looks like a transaction",
+      },
+    });
+    return;
+  }
+
   if (!approved) {
     await sendBridgeResult(tabId, {
       type: "airwave-bridge-result",
@@ -345,18 +405,39 @@ async function finishSignMessage(
     return;
   }
 
-  const gate = await signGateError();
-  if (gate) {
+  if (!session.isUnlocked()) {
     await sendBridgeResult(tabId, {
       type: "airwave-bridge-result",
       requestId,
       ok: false,
-      error: gate,
+      error: { code: "WALLET_LOCKED", message: "Unlock wallet in extension popup" },
     });
     return;
   }
 
-  const kp = await keypairForActiveSigning();
+  const signAccountId = pending.signAccountId;
+  if (!signAccountId) {
+    await sendBridgeResult(tabId, {
+      type: "airwave-bridge-result",
+      requestId,
+      ok: false,
+      error: { code: "NO_KEY", message: "Missing key" },
+    });
+    return;
+  }
+
+  const accountErr = await signingErrorForAccountId(signAccountId);
+  if (accountErr) {
+    await sendBridgeResult(tabId, {
+      type: "airwave-bridge-result",
+      requestId,
+      ok: false,
+      error: accountErr,
+    });
+    return;
+  }
+
+  const kp = await keypairForAccountId(signAccountId);
   if (!kp) {
     await sendBridgeResult(tabId, {
       type: "airwave-bridge-result",
@@ -367,8 +448,6 @@ async function finishSignMessage(
     return;
   }
 
-  const { message } = pending.payload as SignMessagePayload;
-  const msgBytes = Uint8Array.from(message);
   const signature = nacl.sign.detached(msgBytes, kp.secretKey);
 
   await sendBridgeResult(tabId, {
@@ -520,7 +599,7 @@ async function handleDappCommand(
   }
 
   if (req.command === "dapp.signMessage") {
-    const gate = await signGateError();
+    const gate = await signMessageEnqueueGateError();
     if (gate) {
       return respond({
         kind: "airwave-ext-res",
@@ -529,19 +608,18 @@ async function handleDappCommand(
         error: gate,
       });
     }
-    const payload = req.payload as SignMessagePayload;
-    const msgBytes = Uint8Array.from(payload.message);
-    if (looksLikeVersionedTransaction(msgBytes)) {
+    const activeId = await readActiveAccountId();
+    if (!activeId) {
       return respond({
         kind: "airwave-ext-res",
         requestId: req.requestId,
         ok: false,
-        error: {
-          code: "SIGN_MESSAGE_LOOKS_LIKE_TRANSACTION",
-          message: "Message looks like a transaction",
-        },
+        error: { code: "NO_ACCOUNT", message: "No active account" },
       });
     }
+    const payload = req.payload as SignMessagePayload;
+    const msgBytes = Uint8Array.from(payload.message);
+    const messageLooksLikeTx = messageLooksLikeTransactionMessage(msgBytes);
     const requestId = req.requestId;
     addPending(requestId, {
       kind: "signMessage",
@@ -550,6 +628,8 @@ async function handleDappCommand(
       origin,
       payload,
       createdAt: Date.now(),
+      signAccountId: activeId,
+      messageLooksLikeTx,
     });
     schedulePendingTimeout(requestId);
     await openPopout(requestId);
@@ -1728,12 +1808,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 chrome.windows.onRemoved.addListener((windowId) => {
   const requestId = unbindPopoutWindow(windowId);
   if (!requestId) return;
-  const p = takePending(requestId);
+  const p = getPending(requestId);
   if (!p) return;
+  takePending(requestId);
+
+  let error: { code: string; message: string } = {
+    code: "USER_REJECTED",
+    message: "Approval window closed",
+  };
+  if (p.kind === "signMessage") {
+    const { message } = p.payload as SignMessagePayload;
+    const msgBytes = Uint8Array.from(message);
+    if (messageLooksLikeTransactionMessage(msgBytes)) {
+      error = {
+        code: "SIGN_MESSAGE_LOOKS_LIKE_TRANSACTION",
+        message: "Message looks like a transaction",
+      };
+    }
+  }
+
   void sendBridgeResult(p.tabId, {
     type: "airwave-bridge-result",
     requestId,
     ok: false,
-    error: { code: "USER_REJECTED", message: "Approval window closed" },
+    error,
   });
 });

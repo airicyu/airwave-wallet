@@ -71,6 +71,51 @@ body {
   margin: 0 0 12px;
 }
 
+.unlock-screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 16px;
+  overflow: auto;
+}
+
+.unlock-screen h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.unlock-screen p {
+  margin: 0 0 14px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.unlock-screen input {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-sm);
+  background: var(--fill);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+.unlock-screen input:focus,
+.unlock-screen input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.unlock-screen .primary-btn {
+  margin-top: 12px;
+}
+
 .shell {
   display: flex;
   flex-direction: column;
@@ -1401,6 +1446,14 @@ select {
   border-radius: var(--radius-sm);
   background: var(--fill);
   color: var(--text);
+}
+
+input:not([type="radio"]):not([type="checkbox"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]):focus,
+input:not([type="radio"]):not([type="checkbox"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]):focus-visible,
+textarea:focus,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .block-btn {

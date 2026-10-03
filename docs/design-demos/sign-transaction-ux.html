@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 簽署交易（概念稿）</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --accent-dim: #2a6ea8;
+        --danger: #c75050;
+        --ok: #4ecb8d;
+        --popup-w: 384px;
+        --popup-h: 620px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1120px; margin: 0 auto; padding: 28px 20px 56px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 18px; max-width: 54rem; font-size: 0.92rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+      .chip {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 7px 13px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      .chip:hover { border-color: var(--text-dim); }
+      .chip.active { border-color: var(--accent); background: #1a2838; }
+      .layout {
+        display: grid;
+        grid-template-columns: var(--popup-w) 1fr;
+        gap: 28px;
+        align-items: start;
+      }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+      .phone-cap { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+      .top h2 {
+        font-size: 0.95rem;
+        margin: 0;
+        font-weight: 600;
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .icon-btn {
+        flex-shrink: 0;
+        width: 28px; height: 28px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .icon-btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+      .icon-btn:hover { background: var(--fill); border-color: var(--stroke); color: var(--text); }
+      .body { flex: 1; min-height: 0; overflow: auto; padding: 12px 12px 16px; }
+      .body::-webkit-scrollbar { width: 6px; }
+      .body::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 4px; }
+      .dock {
+        flex-shrink: 0;
+        padding: 10px 12px 12px;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        display: flex;
+        gap: 8px;
+      }
+      .dock[hidden] { display: none; }
+      .ghost {
+        flex: 0 0 38%;
+        border: 1px solid var(--stroke);
+        background: transparent;
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .ghost:hover { color: var(--text); border-color: var(--text-dim); }
+      .ghost:disabled { opacity: 0.4; cursor: default; }
+      .primary {
+        flex: 1;
+        border: 0;
+        background: var(--accent);
+        color: #061018;
+        font-weight: 700;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .primary:disabled { opacity: 0.4; cursor: default; }
+      .primary.dim { box-shadow: none; opacity: 0.85; }
+
+      .meta {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        padding: 10px 12px;
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+      }
+      .row .k {
+        flex-shrink: 0;
+        font-size: 0.68rem;
+        color: var(--text-dim);
+        width: 2.6rem;
+      }
+      .row .v {
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.82rem;
+      }
+      .acct-name { font-weight: 600; }
+      .acct-addr {
+        margin-left: 6px;
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--text-muted);
+      }
+      .sec-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        margin: 0 0 6px;
+      }
+      .sec-head h3 {
+        margin: 0;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        font-weight: 600;
+      }
+      .count { font-size: 0.68rem; color: var(--text-dim); }
+      .card {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        overflow: hidden;
+        margin-bottom: 12px;
+      }
+      .ix {
+        padding: 10px 12px;
+        border-top: 1px solid var(--stroke-soft);
+      }
+      .ix:first-child { border-top: 0; }
+      .ix .prog {
+        font-size: 0.78rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .ix .prog.mono { font-family: var(--mono); font-weight: 500; font-size: 0.72rem; color: var(--text-muted); }
+      .ix .desc {
+        margin: 2px 0 0;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+      }
+      .badge {
+        display: inline-block;
+        font-size: 0.62rem;
+        color: var(--text-dim);
+        border: 1px solid var(--stroke);
+        border-radius: 999px;
+        padding: 1px 6px;
+        margin-left: 6px;
+        vertical-align: middle;
+      }
+      .fee-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .fee-cell {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        padding: 10px 12px;
+        min-width: 0;
+      }
+      .fee-cell .lbl { display: block; font-size: 0.68rem; color: var(--text-dim); margin-bottom: 4px; }
+      .fee-cell .val {
+        font-size: 0.82rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .fee-cell .val.mono { font-family: var(--mono); font-size: 0.72rem; }
+      .sim-head {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 10px 0;
+      }
+      .sim-head h3 {
+        margin: 0;
+        flex: 1;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        font-weight: 600;
+      }
+      .sim-status {
+        font-size: 0.68rem;
+        color: var(--text-muted);
+      }
+      .sim-status.ok { color: var(--ok); }
+      .sim-status.bad { color: #e8a0a0; }
+      .sim-body { padding: 8px 12px 12px; font-size: 0.82rem; }
+      .sim-wait {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+      }
+      .bal { list-style: none; margin: 6px 0 0; padding: 0; }
+      .bal li {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 4px 0;
+        border-top: 1px solid var(--stroke-soft);
+        font-size: 0.8rem;
+      }
+      .bal li:first-child { border-top: 0; }
+      .bal .tok { color: var(--text-muted); }
+      .bal .plus { color: var(--ok); font-variant-numeric: tabular-nums; }
+      .bal .minus { color: #e8a0a0; font-variant-numeric: tabular-nums; }
+      .sim-err {
+        margin: 0;
+        color: #e8a0a0;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      details.raw {
+        border: 1px solid var(--stroke-soft);
+        border-radius: var(--radius-sm);
+        background: var(--bg);
+      }
+      details.raw summary {
+        cursor: pointer;
+        list-style: none;
+        padding: 8px 10px;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+      }
+      details.raw summary::-webkit-details-marker { display: none; }
+      details.raw pre {
+        margin: 0;
+        padding: 0 10px 10px;
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        color: var(--text-dim);
+        white-space: pre-wrap;
+        word-break: break-all;
+        max-height: 72px;
+        overflow: auto;
+      }
+      .err-card {
+        border: 1px solid #4a2a2a;
+        background: #1a1416;
+        border-radius: var(--radius);
+        padding: 14px 12px;
+        color: #e8a0a0;
+        font-size: 0.86rem;
+      }
+      .notes { font-size: 0.86rem; color: var(--text-muted); }
+      .notes h2 { font-size: 0.95rem; color: var(--text); margin: 0 0 10px; }
+      .notes h3 { font-size: 0.82rem; color: var(--text); margin: 18px 0 8px; }
+      .notes ul { padding-left: 1.2rem; margin: 0 0 8px; }
+      .notes li { margin: 0 0 6px; }
+      .tag {
+        display: inline-block;
+        font-size: 0.68rem;
+        letter-spacing: 0.04em;
+        border: 1px solid var(--accent-dim);
+        color: var(--accent);
+        border-radius: 999px;
+        padding: 1px 8px;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>簽署交易 popout</h1>
+      <p class="lede">
+        非正式契約。頁面骨架與摘要對齊 backlog；<strong>simulation 區僅供預覽</strong>，尚未排進契約。
+        畫布約 384×620。示範 origin <code>https://swap.example.test</code>、帳戶 <code>4aF1…pda4</code>。
+        批准仍＝簽名；不代廣播。
+      </p>
+      <div class="controls" role="tablist" aria-label="畫面狀態">
+        <button class="chip active" type="button" data-preset="sim-run">模擬進行中</button>
+        <button class="chip" type="button" data-preset="sim-ok">模擬成功</button>
+        <button class="chip" type="button" data-preset="sim-fail">模擬失敗</button>
+        <button class="chip" type="button" data-preset="sim-rpc">RPC 做不到</button>
+        <button class="chip" type="button" data-preset="multi">多指令</button>
+        <button class="chip" type="button" data-preset="unknown">查不到程式</button>
+        <button class="chip" type="button" data-preset="v0">v0／lookup</button>
+        <button class="chip" type="button" data-preset="gone">載入失敗</button>
+        <button class="chip" type="button" data-preset="busy">批准中</button>
+      </div>
+      <div class="layout">
+        <div>
+          <p class="phone-cap">Popout 384×620</p>
+          <div class="phone" id="phone">
+            <div class="top" id="top"></div>
+            <div class="body" id="body"></div>
+            <div class="dock" id="dock"></div>
+          </div>
+        </div>
+        <aside class="notes">
+          <h2>畫面意圖</h2>
+          <p><span class="tag">非正式</span>掃過就能知道誰在請、簽哪個帳戶、幾條指令、費用與模擬結果。JSON 收合。</p>
+          <ul>
+            <li>指令：程式名或縮寫 + 一句固定說明。對不出來只寫程式縮寫，不編造損益。</li>
+            <li>手續費查不到寫「未知」，不要 $0。</li>
+            <li>Simulation 是安靜列表，不是彩色 token 卡。重試用列內 icon，不是第三顆主鈕。</li>
+            <li>殼底：幽靈拒絕 + accent 批准。</li>
+          </ul>
+          <h3>模擬進行中（建議，非正式）</h3>
+          <p>摘要先出來。批准<strong>可按</strong>，但主按鈕略降不透明度，表示模擬尚未完成。失敗不自動拒絕；仍可簽名（簽名 ≠ 鏈上成功）。</p>
+        </aside>
+      </div>
+    </div>
+    <script>
+      const ICO = {
+        retry: '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>',
+      };
+
+      let preset = "sim-run";
+      const $ = (id) => document.getElementById(id);
+
+      function meta(origin) {
+        return `
+          <div class="meta">
+            <div class="row">
+              <span class="k">站點</span>
+              <span class="v" title="${origin}">${origin}</span>
+            </div>
+            <div class="row">
+              <span class="k">帳戶</span>
+              <span class="v"><span class="acct-name">主要</span><span class="acct-addr">4aF1…pda4</span></span>
+            </div>
+          </div>`;
+      }
+
+      function fee(payer, amount) {
+        return `
+          <div class="fee-grid">
+            <div class="fee-cell">
+              <span class="lbl">費用付款人</span>
+              <span class="val mono">${payer}</span>
+            </div>
+            <div class="fee-cell">
+              <span class="lbl">預估手續費</span>
+              <span class="val">${amount}</span>
+            </div>
+          </div>`;
+      }
+
+      function ixs(items, countLabel) {
+        return `
+          <div class="sec-head"><h3>摘要</h3><span class="count">${countLabel}</span></div>
+          <div class="card">${items.map((it) => `
+            <div class="ix">
+              <div class="prog ${it.mono ? "mono" : ""}">${it.prog}${it.badge ? `<span class="badge">${it.badge}</span>` : ""}</div>
+              ${it.desc ? `<p class="desc">${it.desc}</p>` : ""}
+            </div>`).join("")}
+          </div>`;
+      }
+
+      function simBlock(kind) {
+        const retry = `<button class="icon-btn" type="button" title="重試模擬" aria-label="重試模擬">${ICO.retry}</button>`;
+        if (kind === "run") {
+          return `<div class="card">
+            <div class="sim-head"><h3>模擬</h3><span class="sim-status">進行中</span>${retry}</div>
+            <div class="sim-body"><p class="sim-wait">查詢中</p></div>
+          </div>`;
+        }
+        if (kind === "ok") {
+          return `<div class="card">
+            <div class="sim-head"><h3>模擬</h3><span class="sim-status ok">會成功</span>${retry}</div>
+            <div class="sim-body">
+              <ul class="bal">
+                <li><span class="tok">SOL</span><span class="minus">−0.0124</span></li>
+                <li><span class="tok">USDC</span><span class="plus">+2.10</span></li>
+              </ul>
+            </div>
+          </div>`;
+        }
+        if (kind === "fail") {
+          return `<div class="card">
+            <div class="sim-head"><h3>模擬</h3><span class="sim-status bad">失敗</span>${retry}</div>
+            <div class="sim-body"><p class="sim-err" title="Error: insufficient lamports">insufficient lamports</p></div>
+          </div>`;
+        }
+        return `<div class="card">
+          <div class="sim-head"><h3>模擬</h3><span class="sim-status">做不到</span>${retry}</div>
+          <div class="sim-body"><p class="sim-err">RPC 不可用</p></div>
+        </div>`;
+      }
+
+      const RAW = `{
+  "kind": "signTransaction",
+  "origin": "https://swap.example.test"
+}`;
+
+      function render() {
+        $("top").innerHTML = "<h2>簽署交易</h2>";
+        const body = $("body");
+        const dock = $("dock");
+        dock.hidden = false;
+
+        if (preset === "gone") {
+          body.innerHTML = `<div class="err-card">請求已不在</div>`;
+          dock.innerHTML = `
+            <button class="ghost" type="button" disabled>拒絕</button>
+            <button class="primary" type="button" disabled>批准</button>`;
+          return;
+        }
+
+        const origin = "https://swap.example.test";
+        let ixHtml = "";
+        let feeHtml = fee("4aF1…pda4", "0.000005 SOL");
+        let sim = "ok";
+
+        if (preset === "sim-run") {
+          ixHtml = ixs([{ prog: "System Program", desc: "轉移 SOL" }], "1 條指令");
+          sim = "run";
+        } else if (preset === "sim-ok") {
+          ixHtml = ixs([{ prog: "System Program", desc: "轉移 SOL" }], "1 條指令");
+          sim = "ok";
+        } else if (preset === "sim-fail") {
+          ixHtml = ixs([{ prog: "System Program", desc: "轉移 SOL" }], "1 條指令");
+          sim = "fail";
+        } else if (preset === "sim-rpc") {
+          ixHtml = ixs([{ prog: "System Program", desc: "轉移 SOL" }], "1 條指令");
+          feeHtml = fee("4aF1…pda4", "未知");
+          sim = "rpc";
+        } else if (preset === "multi") {
+          ixHtml = ixs([
+            { prog: "Associated Token Account", desc: "建立關聯代幣帳戶" },
+            { prog: "Token Program", desc: "轉移代幣" },
+            { prog: "System Program", desc: "轉移 SOL" },
+          ], "3 條指令");
+          sim = "ok";
+        } else if (preset === "unknown") {
+          ixHtml = ixs([
+            { prog: "9xQe…d3m0", mono: true },
+            { prog: "Token Program", desc: "轉移代幣" },
+          ], "2 條指令");
+          sim = "ok";
+        } else if (preset === "v0") {
+          ixHtml = ixs([
+            { prog: "Token Program", desc: "轉移代幣", badge: "帳戶未解析" },
+            { prog: "1111…1111", mono: true, badge: "帳戶未解析" },
+          ], "2 條 · v0");
+          feeHtml = fee("未知", "未知");
+          sim = "ok";
+        } else {
+          ixHtml = ixs([{ prog: "System Program", desc: "轉移 SOL" }], "1 條指令");
+          sim = "ok";
+        }
+
+        body.innerHTML =
+          meta(origin) +
+          ixHtml +
+          feeHtml +
+          simBlock(sim) +
+          `<details class="raw"><summary>原始交易</summary><pre>${RAW}</pre></details>`;
+
+        const busy = preset === "busy";
+        const running = preset === "sim-run";
+        dock.innerHTML = `
+          <button class="ghost" type="button" ${busy ? "disabled" : ""}>拒絕</button>
+          <button class="primary${running ? " dim" : ""}" type="button" ${busy ? "disabled" : ""}>${busy ? "批准中" : "批准"}</button>`;
+      }
+
+      document.querySelectorAll("[data-preset]").forEach((b) => {
+        b.onclick = () => {
+          preset = b.dataset.preset;
+          document.querySelectorAll("[data-preset]").forEach((x) => x.classList.toggle("active", x === b));
+          render();
+        };
+      });
+
+      render();
+    </script>
+  </body>
+</html>

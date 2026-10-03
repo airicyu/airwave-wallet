@@ -17,6 +17,7 @@ import type { Wallet } from "@wallet-standard/base";
 import bs58 from "bs58";
 import {
   Connection,
+  Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
@@ -31,6 +32,8 @@ const statusEl = document.getElementById("status")!;
 const btnConnect = document.getElementById("connect") as HTMLButtonElement;
 const btnDisconnect = document.getElementById("disconnect") as HTMLButtonElement;
 const btnSignMsg = document.getElementById("sign-msg") as HTMLButtonElement;
+const btnSignMsgBinary = document.getElementById("sign-msg-binary") as HTMLButtonElement;
+const btnSignMsgTx = document.getElementById("sign-msg-tx") as HTMLButtonElement;
 const btnSignTx = document.getElementById("sign-tx") as HTMLButtonElement;
 const btnAirdrop = document.getElementById("airdrop") as HTMLButtonElement;
 
@@ -51,6 +54,8 @@ function findAirwave(): Wallet | undefined {
 function enableSigning(address: string | undefined): void {
   const ok = Boolean(address);
   btnSignMsg.disabled = !ok;
+  btnSignMsgBinary.disabled = !ok;
+  btnSignMsgTx.disabled = !ok;
   btnSignTx.disabled = !ok;
   btnAirdrop.disabled = !ok;
   if (address) setStatus(`已連線：${address}`);
@@ -149,6 +154,66 @@ btnSignMsg.addEventListener("click", async () => {
   } catch (e) {
     const err = e as Error & { code?: string };
     log("Sign message error:", err.code ?? "", err.message ?? e);
+  }
+});
+
+btnSignMsgBinary.addEventListener("click", async () => {
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as
+      | StandardConnectFeature[typeof StandardConnect]
+      | undefined;
+    const signMessage = wallet.features[SolanaSignMessage] as
+      | SolanaSignMessageFeature[typeof SolanaSignMessage]
+      | undefined;
+    if (!connect || !signMessage) return;
+    const { accounts } = await connect.connect({ silent: true });
+    const account = accounts[0];
+    if (!account) throw new Error("no account");
+    const message = new Uint8Array([0xff, 0x00, 0xab, 0xcd, 0x01]);
+    const [out] = await signMessage.signMessage({ account, message });
+    log("Binary sign signature base58:", bs58.encode(out.signature));
+  } catch (e) {
+    const err = e as Error & { code?: string };
+    log("Sign binary error:", err.code ?? "", err.message ?? e);
+  }
+});
+
+function syntheticTxMessageBytes(): Uint8Array {
+  const payer = Keypair.generate();
+  const msg = new TransactionMessage({
+    payerKey: payer.publicKey,
+    recentBlockhash: "11111111111111111111111111111111",
+    instructions: [
+      SystemProgram.transfer({
+        fromPubkey: payer.publicKey,
+        toPubkey: payer.publicKey,
+        lamports: 0,
+      }),
+    ],
+  }).compileToV0Message();
+  return msg.serialize();
+}
+
+btnSignMsgTx.addEventListener("click", async () => {
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as
+      | StandardConnectFeature[typeof StandardConnect]
+      | undefined;
+    const signMessage = wallet.features[SolanaSignMessage] as
+      | SolanaSignMessageFeature[typeof SolanaSignMessage]
+      | undefined;
+    if (!connect || !signMessage) return;
+    const { accounts } = await connect.connect({ silent: true });
+    const account = accounts[0];
+    if (!account) throw new Error("no account");
+    const message = syntheticTxMessageBytes();
+    await signMessage.signMessage({ account, message });
+    log("Unexpected: tx-as-message should not succeed");
+  } catch (e) {
+    const err = e as Error & { code?: string };
+    log("Sign tx-as-message error:", err.code ?? "", err.message ?? e);
   }
 });
 

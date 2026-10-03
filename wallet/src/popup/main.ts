@@ -1997,12 +1997,23 @@ document.getElementById("btn-create")!.addEventListener("click", async () => {
   }
 });
 
-document.getElementById("btn-unlock")!.addEventListener("click", async () => {
+async function submitUnlock(): Promise<void> {
   clearError();
   const password = (document.getElementById("unlock-password") as HTMLInputElement).value;
   const res = await sendExtensionRequest("wallet.unlock", { password });
   if (!res.ok) showError(res.error?.message ?? "解鎖失敗");
   else await refresh();
+}
+
+document.getElementById("btn-unlock")!.addEventListener("click", () => {
+  void submitUnlock();
+});
+
+document.getElementById("unlock-password")!.addEventListener("keydown", (ev) => {
+  if ((ev as KeyboardEvent).key === "Enter") {
+    ev.preventDefault();
+    void submitUnlock();
+  }
 });
 
 document.getElementById("btn-lock-home")!.addEventListener("click", async () => {

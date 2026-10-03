@@ -1,6 +1,6 @@
 # 簽署訊息頁 UI／UX — backlog
 
-構想尚未排進某版 INDEX，**不是契約**。排程後以該版 INDEX 為準。
+構想。**已排程 [0.9.0](../0.9.0/INDEX.md)**；衝突以該 INDEX 為準。
 
 ## 現況
 
@@ -16,18 +16,13 @@ dApp 的 `signMessage` 走 popout 審批（[`wallet/src/popout/`](../../../walle
 
 - 哪個站點在請求（origin）
 - 將用哪個帳戶簽（名稱與縮寫地址；跟該筆 pending 的簽名帳戶一致）
-- 訊息本文：能當文字讀就顯示文字；不能就給短的編碼預覽，並能展開全文
-- 拒絕與批准；主行動是批准，拒絕在次要位置
-
-原始 payload 可以收在「詳細」裡，不當主畫面。載入失敗、請求已不在，顯示短錯誤，不要用空白 JSON 充數。批准中按鈕不可連點。
+- 訊息本文：合法 UTF-8 且少控制字元 → 文字卡（標 Message payload，約 6 行後卡內捲）；其下 Raw binary payload 預設收合。否則主體只有 Raw binary payload 一般卡。
+- 若 bytes 可被 `@solana/web3.js` parse 成 legacy／versioned **message**（整段吃完）：**禁止**當成 `signMessage` 批准。畫面短句：「不能把交易當成訊息簽署。」不要寫有害網站、偷錢、誘騙。dApp 錯誤碼對齊 `SIGN_MESSAGE_LOOKS_LIKE_TRANSACTION`。殼底與一般審批相同：**拒絕可按**（等於拒絕該請求），**批准 disabled**。
+- 一般訊息：拒絕與批准；主行動是批准。載入失敗顯示「請求已不在」。批准中不可連點。
 
 `connect` 與 `signTransaction` 仍走各自版面；本項不順手改它們。
 
-## 開工前仍須拍板（排進 INDEX 時）
-
-- 訊息很長時：頁內捲動、截斷加展開，或兩者。
-- 非 UTF-8 bytes 的預覽格式（hex 或 base58）與截斷長度。
-- 鎖定中開啟此頁時，是先解鎖再看到本文，或解鎖與審批同一頁。
+- 鎖定時 popout **整頁**為與 popup 相同的一般解鎖（Airwave、錢包已鎖定、密碼欄）。**「解鎖」在內容區、緊接密碼欄下方**，此時**不畫**殼底拒絕／批准。解鎖成功才進入簽署頁並出現殼底。批准在解鎖後至少約 700ms 內 disabled（防連點打到同一位置）。關窗仍拒絕該 pending。密碼欄類 B。
 
 ## 非目標（構想層）
 
