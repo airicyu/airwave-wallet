@@ -35,6 +35,7 @@ const btnSignMsg = document.getElementById("sign-msg") as HTMLButtonElement;
 const btnSignMsgBinary = document.getElementById("sign-msg-binary") as HTMLButtonElement;
 const btnSignMsgTx = document.getElementById("sign-msg-tx") as HTMLButtonElement;
 const btnSignTx = document.getElementById("sign-tx") as HTMLButtonElement;
+const btnSignTxFail = document.getElementById("sign-tx-fail") as HTMLButtonElement;
 const btnAirdrop = document.getElementById("airdrop") as HTMLButtonElement;
 
 function log(...args: unknown[]): void {
@@ -57,6 +58,7 @@ function enableSigning(address: string | undefined): void {
   btnSignMsgBinary.disabled = !ok;
   btnSignMsgTx.disabled = !ok;
   btnSignTx.disabled = !ok;
+  btnSignTxFail.disabled = !ok;
   btnAirdrop.disabled = !ok;
   if (address) setStatus(`已連線：${address}`);
 }
@@ -255,6 +257,48 @@ btnAirdrop.addEventListener("click", async () => {
     );
   } finally {
     enableSigning(connectedAddress);
+  }
+});
+
+btnSignTxFail.addEventListener("click", async () => {
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as
+      | StandardConnectFeature[typeof StandardConnect]
+      | undefined;
+    const signTx = wallet.features[SolanaSignTransaction] as
+      | SolanaSignTransactionFeature[typeof SolanaSignTransaction]
+      | undefined;
+    if (!connect || !signTx) return;
+
+    const { accounts } = await connect.connect({ silent: true });
+    const account = accounts[0];
+    if (!account) throw new Error("no account");
+
+    const connection = new Connection(DEVNET_RPC);
+    const from = new PublicKey(account.address);
+    const { blockhash } = await connection.getLatestBlockhash();
+    const drainTo = Keypair.generate().publicKey;
+    const msg = new TransactionMessage({
+      payerKey: from,
+      recentBlockhash: blockhash,
+      instructions: [
+        SystemProgram.transfer({
+          fromPubkey: from,
+          toPubkey: drainTo,
+          lamports: 10 * LAMPORTS_PER_SOL,
+        }),
+      ],
+    }).compileToV0Message();
+    const tx = new VersionedTransaction(msg);
+
+    const [out] = await signTx.signTransaction({
+      account,
+      transaction: tx.serialize(),
+    });
+    log("Signed fail-case tx base58:", bs58.encode(out.signedTransaction));
+  } catch (e) {
+    log("Sign fail-case tx error:", e instanceof Error ? e.message : e);
   }
 });
 

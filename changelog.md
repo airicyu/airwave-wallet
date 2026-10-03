@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.0 — 2026-10-04
+
+`signTransaction` 專用 popout：主舞台為 SW `ui.simulatePendingTx` 回傳的簽署帳戶 SOL／SPL 預期變動；「預計交易失敗」或「無法模擬」notice 在預期變動上方；交易明細預設收合且指令列只信 SW。鎖定時仍 pending＋開窗（對齊 0.9.0 signMessage）；enqueue 凍結 `signAccountId`；批准只簽名不廣播。無法 deserialize 時批准 disabled，強制 approve 回 `INVALID_TRANSACTION`。test-web 新增「預期模擬失敗」簽交易入口。`connect`／`signMessage` popout 維持 0.8.0／0.9.0。
+
 ## 0.9.0 — 2026-10-04
 
 `signMessage` 專用 popout：站點、凍結帳戶 widget、UTF-8 Message payload 或 Raw binary hex；SDK 整段判定的 transaction message 僅顯示「不能把交易當成訊息簽署。」且永不代簽（拒絕／關窗／誤批准回 `SIGN_MESSAGE_LOOKS_LIKE_TRANSACTION`）。鎖定時仍 pending＋開窗，popout 類 B 解鎖（無殼底 dock）；本窗解鎖後批准 700ms hold。enqueue 寫入 `signAccountId`／`messageLooksLikeTx`（僅 SW Map）。`connect`／`signTransaction` popout 維持 JSON 版面。popup 鎖定屏對齊 HOW；popup／popout 文字欄 focus 用 `--accent`。test-web 新增簽 UTF-8／二進位／交易當訊息三入口。

@@ -61,6 +61,7 @@ import {
   type CombinedAccountMeta,
 } from "../shared/storage-keys";
 import { getHomeTokensForOwners } from "./home-tokens-service";
+import { simulatePendingTx } from "./simulate-pending-tx";
 import {
   createEnglishMnemonic12,
   keypairFromMnemonic,
@@ -476,18 +477,54 @@ async function finishSignTransaction(
     return;
   }
 
-  const gate = await signGateError();
-  if (gate) {
+  if (!session.isUnlocked()) {
     await sendBridgeResult(tabId, {
       type: "airwave-bridge-result",
       requestId,
       ok: false,
-      error: gate,
+      error: { code: "WALLET_LOCKED", message: "Unlock wallet in extension popup" },
     });
     return;
   }
 
-  const kp = await keypairForActiveSigning();
+  const signAccountId = pending.signAccountId;
+  if (!signAccountId) {
+    await sendBridgeResult(tabId, {
+      type: "airwave-bridge-result",
+      requestId,
+      ok: false,
+      error: { code: "NO_KEY", message: "Missing key" },
+    });
+    return;
+  }
+
+  const accountErr = await signingErrorForAccountId(signAccountId);
+  if (accountErr) {
+    await sendBridgeResult(tabId, {
+      type: "airwave-bridge-result",
+      requestId,
+      ok: false,
+      error: accountErr,
+    });
+    return;
+  }
+
+  const { transaction } = pending.payload as SignTransactionPayload;
+  const txBytes = Uint8Array.from(transaction);
+  let tx: VersionedTransaction;
+  try {
+    tx = VersionedTransaction.deserialize(txBytes);
+  } catch {
+    await sendBridgeResult(tabId, {
+      type: "airwave-bridge-result",
+      requestId,
+      ok: false,
+      error: { code: "INVALID_TRANSACTION", message: "Invalid transaction" },
+    });
+    return;
+  }
+
+  const kp = await keypairForAccountId(signAccountId);
   if (!kp) {
     await sendBridgeResult(tabId, {
       type: "airwave-bridge-result",
@@ -498,9 +535,6 @@ async function finishSignTransaction(
     return;
   }
 
-  const { transaction } = pending.payload as SignTransactionPayload;
-  const txBytes = Uint8Array.from(transaction);
-  const tx = VersionedTransaction.deserialize(txBytes);
   tx.sign([kp]);
 
   await sendBridgeResult(tabId, {
@@ -642,13 +676,22 @@ async function handleDappCommand(
   }
 
   if (req.command === "dapp.signTransaction") {
-    const gate = await signGateError();
+    const gate = await signMessageEnqueueGateError();
     if (gate) {
       return respond({
         kind: "airwave-ext-res",
         requestId: req.requestId,
         ok: false,
         error: gate,
+      });
+    }
+    const activeId = await readActiveAccountId();
+    if (!activeId) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "NO_ACCOUNT", message: "No active account" },
       });
     }
     const requestId = req.requestId;
@@ -659,6 +702,7 @@ async function handleDappCommand(
       origin,
       payload: req.payload as SignTransactionPayload,
       createdAt: Date.now(),
+      signAccountId: activeId,
     });
     schedulePendingTimeout(requestId);
     await openPopout(requestId);
@@ -723,6 +767,60 @@ async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionResponse
       requestId: req.requestId,
       ok: true,
       result: { done: true },
+    });
+  }
+
+  if (req.command === "ui.simulatePendingTx") {
+    const { requestId } = (req.payload ?? {}) as { requestId: string };
+    const p = getPending(requestId);
+    if (!p || p.kind !== "signTransaction") {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "NOT_FOUND", message: "Pending not found" },
+      });
+    }
+    const signAccountId = p.signAccountId;
+    if (!signAccountId) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "NOT_FOUND", message: "Pending not found" },
+      });
+    }
+    const accounts = await readAccounts();
+    const meta = accounts.find((a) => a.id === signAccountId);
+    if (!meta) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "NOT_FOUND", message: "Pending not found" },
+      });
+    }
+    const pubkeyStr = getExposedPublicKey(meta);
+    let signerPubkey: PublicKey;
+    try {
+      signerPubkey = new PublicKey(pubkeyStr);
+    } catch {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "NOT_FOUND", message: "Pending not found" },
+      });
+    }
+    const settings = await readSettings();
+    const rpcUrl = settings.rpcUrl;
+    const { transaction } = p.payload as SignTransactionPayload;
+    const result = await simulatePendingTx(rpcUrl, Uint8Array.from(transaction), signerPubkey);
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result,
     });
   }
 

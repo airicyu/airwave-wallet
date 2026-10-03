@@ -116,6 +116,8 @@ pre {
 
 .unlock-screen .primary-btn {
   margin-top: 12px;
+  flex: none;
+  align-self: flex-start;
 }
 
 input.wallet-pwd-masked {
@@ -385,4 +387,113 @@ textarea:focus,
 textarea:focus-visible {
   outline: none;
   border-color: var(--accent);
+}
+
+.notice-card {
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+  background: rgba(199, 80, 80, 0.08);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  font-size: 0.86rem;
+}
+
+.notice-card.warn-neutral {
+  border-color: var(--stroke);
+  background: var(--fill);
+}
+
+.notice-title {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.notice-card.warn-neutral .notice-title {
+  color: var(--text);
+}
+
+.notice-reason {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.notice-card details {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.delta-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.delta-card-head .card-label {
+  margin: 0;
+}
+
+.delta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 6px 0;
+  font-size: 0.88rem;
+  border-bottom: 1px solid var(--stroke-soft);
+}
+
+.delta-row:last-child {
+  border-bottom: none;
+}
+
+.delta-amount.plus {
+  color: #4ecb8d;
+}
+
+.delta-amount.minus {
+  color: var(--danger);
+}
+
+.tx-details {
+  margin-bottom: 12px;
+}
+
+.tx-details summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.ix-row {
+  font-size: 0.8rem;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--stroke-soft);
+}
+
+.ix-row:last-child {
+  border-bottom: none;
+}
+
+.ix-desc {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
+
+.fee-line {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.muted-center {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  margin: 8px 0;
 }

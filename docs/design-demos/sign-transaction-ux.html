@@ -19,13 +19,14 @@
         --danger: #c75050;
         --ok: #4ecb8d;
         --popup-w: 384px;
-        --popup-h: 620px;
+        --popup-h: 600px;
         --radius: 12px;
         --radius-sm: 8px;
         --font: "Segoe UI", system-ui, -apple-system, sans-serif;
         --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
       }
       * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
       body {
         margin: 0;
         min-height: 100vh;
@@ -77,19 +78,63 @@
         min-height: 52px;
         flex-shrink: 0;
       }
-      .top h2 {
-        font-size: 0.95rem;
-        margin: 0;
-        font-weight: 600;
-        flex: 1;
+      .bar-wallet-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
         min-width: 0;
+        flex: 1 1 auto;
+      }
+      .bar-wallet {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        max-width: 100%;
+        padding: 5px 12px 5px 5px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+        color: inherit;
+        font: inherit;
+        cursor: default;
+      }
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+      }
+      .bar-wallet-text { min-width: 0; flex: 1; text-align: left; }
+      .bar-wallet-name {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 600;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
+      .bar-wallet-addr {
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-family: var(--mono);
+      }
       .icon-btn {
         flex-shrink: 0;
-        width: 28px; height: 28px;
+        width: 34px; height: 34px;
         border: 1px solid transparent;
         border-radius: var(--radius-sm);
         background: transparent;
@@ -100,9 +145,9 @@
         justify-content: center;
         padding: 0;
       }
-      .icon-btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+      .icon-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
       .icon-btn:hover { background: var(--fill); border-color: var(--stroke); color: var(--text); }
-      .body { flex: 1; min-height: 0; overflow: auto; padding: 12px 12px 16px; }
+      .body { flex: 1; min-height: 0; overflow: auto; padding: 14px 12px 16px; }
       .body::-webkit-scrollbar { width: 6px; }
       .body::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 4px; }
       .dock {
@@ -113,7 +158,7 @@
         display: flex;
         gap: 8px;
       }
-      .dock[hidden] { display: none; }
+      .dock[hidden] { display: none !important; }
       .ghost {
         flex: 0 0 38%;
         border: 1px solid var(--stroke);
@@ -139,44 +184,35 @@
         cursor: pointer;
       }
       .primary:disabled { opacity: 0.4; cursor: default; }
-      .primary.dim { box-shadow: none; opacity: 0.85; }
-
-      .meta {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-bottom: 12px;
+      .primary.dim { opacity: 0.85; }
+      .page-title {
+        margin: 0 0 14px;
+        text-align: center;
+        font-size: 1.05rem;
+        font-weight: 650;
+        letter-spacing: 0.02em;
       }
-      .row {
+      .site-line {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         min-width: 0;
-        padding: 10px 12px;
-        border: 1px solid var(--stroke);
-        background: var(--bg-elevated);
-        border-radius: var(--radius);
+        margin: 0 0 12px;
       }
-      .row .k {
-        flex-shrink: 0;
-        font-size: 0.68rem;
-        color: var(--text-dim);
-        width: 2.6rem;
-      }
-      .row .v {
-        flex: 1;
+      .site-k { flex-shrink: 0; font-size: 0.72rem; color: var(--text-dim); }
+      .site-code {
         min-width: 0;
+        max-width: 100%;
+        padding: 1px 6px;
+        border-radius: 4px;
+        border: 1px solid var(--stroke-soft);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text-muted);
+        font-family: var(--mono);
+        font-size: 0.74rem;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-size: 0.82rem;
-      }
-      .acct-name { font-weight: 600; }
-      .acct-addr {
-        margin-left: 6px;
-        font-family: var(--mono);
-        font-size: 0.72rem;
-        color: var(--text-muted);
       }
       .sec-head {
         display: flex;
@@ -200,10 +236,20 @@
         margin-bottom: 12px;
       }
       .ix {
+        display: grid;
+        grid-template-columns: 22px 1fr;
+        gap: 8px;
         padding: 10px 12px;
         border-top: 1px solid var(--stroke-soft);
+        align-items: start;
       }
       .ix:first-child { border-top: 0; }
+      .ix .n {
+        font-size: 0.68rem;
+        color: var(--text-dim);
+        font-variant-numeric: tabular-nums;
+        padding-top: 2px;
+      }
       .ix .prog {
         font-size: 0.78rem;
         font-weight: 600;
@@ -212,11 +258,7 @@
         text-overflow: ellipsis;
       }
       .ix .prog.mono { font-family: var(--mono); font-weight: 500; font-size: 0.72rem; color: var(--text-muted); }
-      .ix .desc {
-        margin: 2px 0 0;
-        font-size: 0.78rem;
-        color: var(--text-muted);
-      }
+      .ix .desc { margin: 2px 0 0; font-size: 0.78rem; color: var(--text-muted); }
       .badge {
         display: inline-block;
         font-size: 0.62rem;
@@ -231,13 +273,13 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 8px;
-        margin-bottom: 12px;
+        margin: 10px 0 0;
       }
       .fee-cell {
-        border: 1px solid var(--stroke);
-        background: var(--bg-elevated);
-        border-radius: var(--radius);
-        padding: 10px 12px;
+        border: 1px solid var(--stroke-soft);
+        background: var(--bg);
+        border-radius: var(--radius-sm);
+        padding: 8px 10px;
         min-width: 0;
       }
       .fee-cell .lbl { display: block; font-size: 0.68rem; color: var(--text-dim); margin-bottom: 4px; }
@@ -248,52 +290,113 @@
         text-overflow: ellipsis;
       }
       .fee-cell .val.mono { font-family: var(--mono); font-size: 0.72rem; }
+      .sim-stage {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        padding: 14px 14px 12px;
+        margin-bottom: 12px;
+      }
       .sim-head {
         display: flex;
         align-items: center;
         gap: 6px;
-        padding: 8px 10px 0;
+        margin: 0 0 10px;
       }
       .sim-head h3 {
         margin: 0;
         flex: 1;
-        font-size: 0.72rem;
-        color: var(--text-dim);
-        font-weight: 600;
+        font-size: 0.82rem;
+        color: var(--text);
+        font-weight: 650;
       }
-      .sim-status {
-        font-size: 0.68rem;
-        color: var(--text-muted);
-      }
+      .sim-status { font-size: 0.72rem; color: var(--text-muted); }
       .sim-status.ok { color: var(--ok); }
       .sim-status.bad { color: #e8a0a0; }
-      .sim-body { padding: 8px 12px 12px; font-size: 0.82rem; }
-      .sim-wait {
-        color: var(--text-muted);
-        font-size: 0.8rem;
-      }
-      .bal { list-style: none; margin: 6px 0 0; padding: 0; }
+      .sim-wait { margin: 8px 0 4px; color: var(--text-muted); font-size: 0.88rem; }
+      .bal { list-style: none; margin: 0; padding: 0; }
       .bal li {
         display: flex;
         justify-content: space-between;
+        align-items: baseline;
         gap: 12px;
-        padding: 4px 0;
+        padding: 10px 0;
         border-top: 1px solid var(--stroke-soft);
-        font-size: 0.8rem;
       }
-      .bal li:first-child { border-top: 0; }
-      .bal .tok { color: var(--text-muted); }
-      .bal .plus { color: var(--ok); font-variant-numeric: tabular-nums; }
-      .bal .minus { color: #e8a0a0; font-variant-numeric: tabular-nums; }
-      .sim-err {
+      .bal li:first-child { border-top: 0; padding-top: 2px; }
+      .bal .tok { color: var(--text); font-size: 0.92rem; font-weight: 600; }
+      .bal .amt { font-size: 1.02rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+      .bal .plus { color: var(--ok); }
+      .bal .minus { color: #e8a0a0; }
+      .sim-empty { margin: 4px 0 2px; color: var(--text-muted); font-size: 0.88rem; }
+      .warn-card {
+        border: 1px solid #4a2a2a;
+        background: #1a1416;
+        border-radius: var(--radius);
+        padding: 12px 14px;
+        margin-bottom: 10px;
+      }
+      .warn-card .warn-title {
         margin: 0;
+        font-size: 0.88rem;
+        font-weight: 650;
         color: #e8a0a0;
+      }
+      .warn-card .warn-reason {
+        margin: 4px 0 0;
         font-size: 0.8rem;
+        color: #c9a0a0;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
+      details.fail-detail {
+        margin: 10px -14px -12px;
+        border-top: 1px solid #4a2a2a;
+        background: transparent;
+      }
+      details.fail-detail > summary {
+        cursor: pointer;
+        list-style: none;
+        padding: 8px 14px;
+        font-size: 0.78rem;
+        color: #c9a0a0;
+      }
+      details.fail-detail > summary::-webkit-details-marker { display: none; }
+      details.fail-detail[open] > summary { color: #e8a0a0; }
+      details.fail-detail pre {
+        margin: 0;
+        padding: 0 14px 12px;
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        color: #9a7a7a;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 140px;
+        overflow: auto;
+      }
+      details.tx-detail {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+      details.tx-detail > summary {
+        cursor: pointer;
+        list-style: none;
+        padding: 10px 12px;
+        font-size: 0.82rem;
+        color: var(--text-muted);
+      }
+      details.tx-detail > summary::-webkit-details-marker { display: none; }
+      details.tx-detail[open] > summary {
+        border-bottom: 1px solid var(--stroke-soft);
+        color: var(--text);
+      }
+      .tx-detail-body { padding: 10px 12px 12px; }
+      .tx-detail-body .card { margin-bottom: 0; border: 0; background: transparent; }
       details.raw {
+        margin-top: 10px;
         border: 1px solid var(--stroke-soft);
         border-radius: var(--radius-sm);
         background: var(--bg);
@@ -317,13 +420,63 @@
         max-height: 72px;
         overflow: auto;
       }
-      .err-card {
-        border: 1px solid #4a2a2a;
-        background: #1a1416;
+      .err-card, .notice-card {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
         border-radius: var(--radius);
-        padding: 14px 12px;
+        padding: 16px 14px;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        text-align: center;
+      }
+      .err-card {
+        border-color: #4a2a2a;
+        background: #1a1416;
         color: #e8a0a0;
         font-size: 0.86rem;
+        text-align: left;
+      }
+      .body:has(.unlock-screen) {
+        display: flex;
+        padding: 16px;
+      }
+      .unlock-screen {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0;
+      }
+      .unlock-screen h1 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0 0 8px;
+      }
+      .unlock-screen p {
+        margin: 0 0 14px;
+        font-size: 0.88rem;
+        color: var(--text-muted);
+      }
+      .unlock-screen input {
+        display: block;
+        width: 100%;
+        margin: 0;
+        box-sizing: border-box;
+        padding: 10px 12px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-sm);
+        background: var(--fill);
+        color: var(--text);
+        font: inherit;
+        font-size: 0.88rem;
+        -webkit-text-security: disc;
+      }
+      .unlock-screen input:focus { outline: none; border-color: var(--accent); }
+      .unlock-screen .primary {
+        display: block;
+        flex: none;
+        width: 100%;
+        margin-top: 12px;
       }
       .notes { font-size: 0.86rem; color: var(--text-muted); }
       .notes h2 { font-size: 0.95rem; color: var(--text); margin: 0 0 10px; }
@@ -347,24 +500,23 @@
     <div class="page">
       <h1>簽署交易 popout</h1>
       <p class="lede">
-        非正式契約。頁面骨架與摘要對齊 backlog；<strong>simulation 區僅供預覽</strong>，尚未排進契約。
-        畫布約 384×620。示範 origin <code>https://swap.example.test</code>、帳戶 <code>4aF1…pda4</code>。
-        批准仍＝簽名；不代廣播。
+        非正式契約。殼層對齊簽署訊息。主舞台是<strong>模擬結果</strong>：簽署帳戶預期的 SOL／代幣變動。
+        指令與 program 名稱放在預設收合的「交易明細」。示範 <code>https://swap.example.test</code>、<code>4aF1…pda4</code>。批准＝簽名，不代廣播。
       </p>
       <div class="controls" role="tablist" aria-label="畫面狀態">
-        <button class="chip active" type="button" data-preset="sim-run">模擬進行中</button>
-        <button class="chip" type="button" data-preset="sim-ok">模擬成功</button>
+        <button class="chip active" type="button" data-preset="sim-ok">模擬成功</button>
+        <button class="chip" type="button" data-preset="sim-run">模擬進行中</button>
         <button class="chip" type="button" data-preset="sim-fail">模擬失敗</button>
         <button class="chip" type="button" data-preset="sim-rpc">RPC 做不到</button>
-        <button class="chip" type="button" data-preset="multi">多指令</button>
-        <button class="chip" type="button" data-preset="unknown">查不到程式</button>
+        <button class="chip" type="button" data-preset="xfer">僅 SOL</button>
         <button class="chip" type="button" data-preset="v0">v0／lookup</button>
         <button class="chip" type="button" data-preset="gone">載入失敗</button>
         <button class="chip" type="button" data-preset="busy">批准中</button>
+        <button class="chip" type="button" data-preset="lock">鎖定</button>
       </div>
       <div class="layout">
         <div>
-          <p class="phone-cap">Popout 384×620</p>
+          <p class="phone-cap">Popout 384×600</p>
           <div class="phone" id="phone">
             <div class="top" id="top"></div>
             <div class="body" id="body"></div>
@@ -373,38 +525,58 @@
         </div>
         <aside class="notes">
           <h2>畫面意圖</h2>
-          <p><span class="tag">非正式</span>掃過就能知道誰在請、簽哪個帳戶、幾條指令、費用與模擬結果。JSON 收合。</p>
+          <p><span class="tag">非正式</span>帳戶與站點不要做成輸入列。與簽署訊息同一套審批殼。</p>
           <ul>
-            <li>指令：程式名或縮寫 + 一句固定說明。對不出來只寫程式縮寫，不編造損益。</li>
-            <li>手續費查不到寫「未知」，不要 $0。</li>
-            <li>Simulation 是安靜列表，不是彩色 token 卡。重試用列內 icon，不是第三顆主鈕。</li>
-            <li>殼底：幽靈拒絕 + accent 批准。</li>
+            <li>頂欄左：Home 同款 widget（名稱／前 4…後 4）＋複製。不是切換器。</li>
+            <li>主區最上中央「簽署交易」，再來站點 chip。</li>
+            <li>其下主舞台：模擬得到的 SOL／代幣預期變動。成功不另標「會成功」。</li>
+            <li>預計會失敗：預期變動<strong>上方</strong>一張 notice（一句原因；「失敗詳情」收合在同一張卡片內）。</li>
+            <li>再下：「交易明細」可展開卡片，<strong>預設收合</strong>。內含指令列（program 名）、費用、原始交易。</li>
+            <li>鎖定：與簽署訊息同一套整頁解鎖（Airwave、錢包已鎖定、密碼欄、內容區「解鎖」）。無帳戶頂欄、無殼底。解鎖後約 0.7 秒批准 disabled。</li>
+            <li>載入失敗：標題可留；主體「請求已不在」；兩鈕 disabled。</li>
           </ul>
-          <h3>模擬進行中（建議，非正式）</h3>
-          <p>摘要先出來。批准<strong>可按</strong>，但主按鈕略降不透明度，表示模擬尚未完成。失敗不自動拒絕；仍可簽名（簽名 ≠ 鏈上成功）。</p>
+          <h3>主舞台：模擬</h3>
+          <p>成功只秀變動。失敗才出 notice，不把錯誤塞進預期變動標題。RPC 做不到用「無法模擬」notice，沒有 program logs 就不畫失敗詳情。不自動拒絕。</p>
+          <h3>交易明細（輔助）</h3>
+          <p>單位仍是 compiled instruction 陣列，不是「主程式」。每列：序號、該列 <code>programId</code>（熟名或縮寫）。對不出 data 不猜。同一 program 兩次就兩列。不依 program 分組。CPI 不在已簽訊息裡，明細也不畫 inner ix。</p>
         </aside>
       </div>
     </div>
     <script>
+      const ORIGIN = "https://swap.example.test";
       const ICO = {
         retry: '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>',
+        copy: '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
       };
 
-      let preset = "sim-run";
+      let preset = "sim-ok";
+      let fromUnlock = false;
+      let armTimer = 0;
       const $ = (id) => document.getElementById(id);
 
-      function meta(origin) {
+      function topBar() {
         return `
-          <div class="meta">
-            <div class="row">
-              <span class="k">站點</span>
-              <span class="v" title="${origin}">${origin}</span>
+          <div class="bar-wallet-group">
+            <div class="bar-wallet" title="主要  4aF1…pda4">
+              <span class="avatar" aria-hidden="true">主</span>
+              <span class="bar-wallet-text">
+                <span class="bar-wallet-name">主要</span>
+                <span class="bar-wallet-addr">4aF1…pda4</span>
+              </span>
             </div>
-            <div class="row">
-              <span class="k">帳戶</span>
-              <span class="v"><span class="acct-name">主要</span><span class="acct-addr">4aF1…pda4</span></span>
-            </div>
+            <button class="icon-btn" type="button" title="複製" aria-label="複製">${ICO.copy}</button>
           </div>`;
+      }
+
+      function pageTitle() {
+        return `<h2 class="page-title">簽署交易</h2>`;
+      }
+
+      function siteLine() {
+        return `<div class="site-line">
+          <span class="site-k">站點</span>
+          <span class="site-code" title="${ORIGIN}">${ORIGIN}</span>
+        </div>`;
       }
 
       function fee(payer, amount) {
@@ -421,127 +593,179 @@
           </div>`;
       }
 
-      function ixs(items, countLabel) {
+      const SWAP_IX = [
+        { prog: "Compute Budget", desc: "設定計算單位上限" },
+        { prog: "Associated Token Account", desc: "建立關聯代幣帳戶" },
+        { prog: "Token Program", desc: "轉移代幣" },
+        { prog: "Jupiter Aggregator" },
+      ];
+      const SOL_IX = [{ prog: "System Program", desc: "轉移 SOL" }];
+      const V0_IX = [
+        { prog: "Token Program", desc: "轉移代幣", badge: "帳戶未解析" },
+        { prog: "1111…1111", mono: true, badge: "帳戶未解析" },
+      ];
+
+      const FAIL_LOGS = `err: { InstructionError: [2, { Custom: 1 }] }
+Program log: Instruction: Transfer
+Program log: Error: insufficient lamports 890880, need 1000000000
+Program 11111111111111111111111111111111 failed: custom program error: 0x1`;
+
+      function ixs(items) {
         return `
-          <div class="sec-head"><h3>摘要</h3><span class="count">${countLabel}</span></div>
-          <div class="card">${items.map((it) => `
+          <div class="sec-head"><h3>指令</h3><span class="count">${items.length} 條</span></div>
+          <div class="card">${items.map((it, i) => `
             <div class="ix">
-              <div class="prog ${it.mono ? "mono" : ""}">${it.prog}${it.badge ? `<span class="badge">${it.badge}</span>` : ""}</div>
-              ${it.desc ? `<p class="desc">${it.desc}</p>` : ""}
+              <span class="n">${i + 1}</span>
+              <div>
+                <div class="prog ${it.mono ? "mono" : ""}">${it.prog}${it.badge ? `<span class="badge">${it.badge}</span>` : ""}</div>
+                ${it.desc ? `<p class="desc">${it.desc}</p>` : ""}
+              </div>
             </div>`).join("")}
           </div>`;
       }
 
-      function simBlock(kind) {
+      function warnNotice(title, reason, detailHtml) {
+        const r = reason
+          ? `<p class="warn-reason" title="${reason}">${reason}</p>`
+          : "";
+        return `<div class="warn-card"><p class="warn-title">${title}</p>${r}${detailHtml || ""}</div>`;
+      }
+
+      function failDetail(body) {
+        return `<details class="fail-detail">
+          <summary>失敗詳情</summary>
+          <pre>${body}</pre>
+        </details>`;
+      }
+
+      function simStage(kind, rows) {
         const retry = `<button class="icon-btn" type="button" title="重試模擬" aria-label="重試模擬">${ICO.retry}</button>`;
+        let notice = "";
+        let inner = "";
         if (kind === "run") {
-          return `<div class="card">
-            <div class="sim-head"><h3>模擬</h3><span class="sim-status">進行中</span>${retry}</div>
-            <div class="sim-body"><p class="sim-wait">查詢中</p></div>
-          </div>`;
+          inner = `<p class="sim-wait">查詢中</p>`;
+        } else if (kind === "fail") {
+          notice = warnNotice("預計交易失敗", "insufficient lamports", failDetail(FAIL_LOGS));
+          inner = `<p class="sim-empty">無法估計變動</p>`;
+        } else if (kind === "rpc") {
+          notice = warnNotice("無法模擬", "RPC 不可用");
+          inner = `<p class="sim-empty">無法估計變動</p>`;
+        } else {
+          inner = (rows && rows.length)
+            ? `<ul class="bal">${rows.map((r) => `<li><span class="tok">${r.tok}</span><span class="amt ${r.cls}">${r.amt}</span></li>`).join("")}</ul>`
+            : `<p class="sim-empty">無餘額變動</p>`;
         }
-        if (kind === "ok") {
-          return `<div class="card">
-            <div class="sim-head"><h3>模擬</h3><span class="sim-status ok">會成功</span>${retry}</div>
-            <div class="sim-body">
-              <ul class="bal">
-                <li><span class="tok">SOL</span><span class="minus">−0.0124</span></li>
-                <li><span class="tok">USDC</span><span class="plus">+2.10</span></li>
-              </ul>
-            </div>
-          </div>`;
-        }
-        if (kind === "fail") {
-          return `<div class="card">
-            <div class="sim-head"><h3>模擬</h3><span class="sim-status bad">失敗</span>${retry}</div>
-            <div class="sim-body"><p class="sim-err" title="Error: insufficient lamports">insufficient lamports</p></div>
-          </div>`;
-        }
-        return `<div class="card">
-          <div class="sim-head"><h3>模擬</h3><span class="sim-status">做不到</span>${retry}</div>
-          <div class="sim-body"><p class="sim-err">RPC 不可用</p></div>
+        return `${notice}<div class="sim-stage">
+          <div class="sim-head"><h3>預期變動</h3>${retry}</div>
+          ${inner}
         </div>`;
       }
 
-      const RAW = `{
-  "kind": "signTransaction",
-  "origin": "https://swap.example.test"
-}`;
+      function txDetail(items, feeHtml) {
+        return `<details class="tx-detail">
+          <summary>交易明細</summary>
+          <div class="tx-detail-body">
+            ${ixs(items)}
+            ${feeHtml}
+            <details class="raw"><summary>原始交易</summary><pre>versioned tx bytes…</pre></details>
+          </div>
+        </details>`;
+      }
 
       function render() {
-        $("top").innerHTML = "<h2>簽署交易</h2>";
+        $("top").hidden = false;
+        $("top").innerHTML = topBar();
+        $("dock").hidden = false;
         const body = $("body");
         const dock = $("dock");
-        dock.hidden = false;
+
+        if (preset === "lock") {
+          $("top").hidden = true;
+          $("top").innerHTML = "";
+          dock.hidden = true;
+          dock.innerHTML = "";
+          body.innerHTML = `
+            <div class="unlock-screen">
+              <h1>Airwave</h1>
+              <p>錢包已鎖定</p>
+              <input id="pw" type="text" placeholder="密碼" autocomplete="off" />
+              <button class="primary" type="button" id="btn-unlock-demo">解鎖</button>
+            </div>`;
+          const u = $("btn-unlock-demo");
+          if (u) {
+            u.onclick = () => {
+              fromUnlock = true;
+              preset = "sim-ok";
+              document.querySelectorAll("[data-preset]").forEach((x) => {
+                x.classList.toggle("active", x.dataset.preset === "sim-ok");
+              });
+              render();
+            };
+          }
+          return;
+        }
 
         if (preset === "gone") {
-          body.innerHTML = `<div class="err-card">請求已不在</div>`;
+          body.innerHTML = `${pageTitle()}<div class="err-card">請求已不在</div>`;
           dock.innerHTML = `
             <button class="ghost" type="button" disabled>拒絕</button>
             <button class="primary" type="button" disabled>批准</button>`;
           return;
         }
 
-        const origin = "https://swap.example.test";
-        let ixHtml = "";
         let feeHtml = fee("4aF1…pda4", "0.000005 SOL");
-        let sim = "ok";
+        let items = SWAP_IX;
+        let simKind = "ok";
+        let rows = [
+          { tok: "SOL", amt: "−0.0124", cls: "minus" },
+          { tok: "USDC", amt: "+2.10", cls: "plus" },
+        ];
 
-        if (preset === "sim-run") {
-          ixHtml = ixs([{ prog: "System Program", desc: "轉移 SOL" }], "1 條指令");
-          sim = "run";
-        } else if (preset === "sim-ok") {
-          ixHtml = ixs([{ prog: "System Program", desc: "轉移 SOL" }], "1 條指令");
-          sim = "ok";
-        } else if (preset === "sim-fail") {
-          ixHtml = ixs([{ prog: "System Program", desc: "轉移 SOL" }], "1 條指令");
-          sim = "fail";
-        } else if (preset === "sim-rpc") {
-          ixHtml = ixs([{ prog: "System Program", desc: "轉移 SOL" }], "1 條指令");
-          feeHtml = fee("4aF1…pda4", "未知");
-          sim = "rpc";
-        } else if (preset === "multi") {
-          ixHtml = ixs([
-            { prog: "Associated Token Account", desc: "建立關聯代幣帳戶" },
-            { prog: "Token Program", desc: "轉移代幣" },
-            { prog: "System Program", desc: "轉移 SOL" },
-          ], "3 條指令");
-          sim = "ok";
-        } else if (preset === "unknown") {
-          ixHtml = ixs([
-            { prog: "9xQe…d3m0", mono: true },
-            { prog: "Token Program", desc: "轉移代幣" },
-          ], "2 條指令");
-          sim = "ok";
+        if (preset === "xfer") {
+          items = SOL_IX;
+          rows = [{ tok: "SOL", amt: "−0.15", cls: "minus" }];
         } else if (preset === "v0") {
-          ixHtml = ixs([
-            { prog: "Token Program", desc: "轉移代幣", badge: "帳戶未解析" },
-            { prog: "1111…1111", mono: true, badge: "帳戶未解析" },
-          ], "2 條 · v0");
+          items = V0_IX;
           feeHtml = fee("未知", "未知");
-          sim = "ok";
-        } else {
-          ixHtml = ixs([{ prog: "System Program", desc: "轉移 SOL" }], "1 條指令");
-          sim = "ok";
+          rows = [{ tok: "USDC", amt: "−2.10", cls: "minus" }];
+        } else if (preset === "sim-run") {
+          simKind = "run";
+          rows = [];
+        } else if (preset === "sim-fail") {
+          simKind = "fail";
+          rows = [];
+        } else if (preset === "sim-rpc") {
+          simKind = "rpc";
+          feeHtml = fee("4aF1…pda4", "未知");
+          rows = [];
         }
 
         body.innerHTML =
-          meta(origin) +
-          ixHtml +
-          feeHtml +
-          simBlock(sim) +
-          `<details class="raw"><summary>原始交易</summary><pre>${RAW}</pre></details>`;
+          pageTitle() +
+          siteLine() +
+          simStage(simKind, rows) +
+          txDetail(items, feeHtml);
 
         const busy = preset === "busy";
         const running = preset === "sim-run";
+        const holdApprove = busy || fromUnlock;
         dock.innerHTML = `
           <button class="ghost" type="button" ${busy ? "disabled" : ""}>拒絕</button>
-          <button class="primary${running ? " dim" : ""}" type="button" ${busy ? "disabled" : ""}>${busy ? "批准中" : "批准"}</button>`;
+          <button class="primary${running ? " dim" : ""}" type="button" ${holdApprove ? "disabled" : ""}>${busy ? "批准中" : "批准"}</button>`;
+        if (fromUnlock && !busy) {
+          window.clearTimeout(armTimer);
+          armTimer = window.setTimeout(() => {
+            fromUnlock = false;
+            render();
+          }, 700);
+        }
       }
 
       document.querySelectorAll("[data-preset]").forEach((b) => {
         b.onclick = () => {
           preset = b.dataset.preset;
+          fromUnlock = false;
+          window.clearTimeout(armTimer);
           document.querySelectorAll("[data-preset]").forEach((x) => x.classList.toggle("active", x === b));
           render();
         };
