@@ -10,7 +10,9 @@
 
 ## 總評
 
-0.9.0 主軌（shared `messageLooksLikeTransactionMessage`、`dapp.signMessage` 鎖定仍 pending＋popout、凍結 `signAccountId`、`signMessage` 專用 popout、popup 解鎖屏與 accent focus、test-web 三入口）與 INDEX／HOW **靜態對齊良好**；**`cd wallet && npm run typecheck`、`npm run build` 與 `cd test-web && npm run build` 均通過**。**無未關閉 HIGH**。INDEX 驗收 checklist 多項需 **Chrome 載入擴充＋test-web 手驗**；本輪未在瀏覽器走完。
+**R2（出貨）：** INDEX `shipped`；使用者完成 Chrome 手驗；backlog 構想已刪。**無未關閉 HIGH／MEDIUM**。
+
+**R1（初審）：** 靜態與建置通過；手驗留至 R2。
 
 ---
 
@@ -26,7 +28,7 @@
 
 | ID | 標題 | 狀態 | 說明 | 建議 |
 |----|------|------|------|------|
-| M1 | signMessage 全流程未做瀏覽器手驗 | **開啟** | UTF-8／二進位／交易當訊息、鎖定 popout 解鎖與 700ms hold、popup 先解鎖、審批期切帳、關窗錯誤碼、focus 視覺等，本輪僅靜態碼＋建置。 | 出貨前依下方手驗清單在 Chrome 執行並在下一輪更新證據欄。 |
+| M1 | signMessage 全流程未做瀏覽器手驗 | **關閉** | R2：使用者確認 Chrome 手驗通過。 | — |
 | M2 | 版本號仍為 0.8.0 | **關閉** | R1 後已同步 `version.md`、`wallet/package.json`、`changelog.md` → 0.9.0；INDEX 仍 `in progress` 待使用者同意出貨／手驗。 | — |
 
 ### LOW
@@ -122,7 +124,7 @@
 
 | ID | 目標狀態 | 關閉條件 |
 |----|----------|----------|
-| M1 | 開啟 | 手驗清單執行並記於下一輪「驗收對照」 |
+| M1 | 關閉 | 使用者手驗 |
 | M2 | 關閉 | 版本已 0.9.0 |
 | L1 | 關閉 | README 對齊 |
 | L2 | 開啟 | 與程式一併 commit |

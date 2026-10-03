@@ -31,6 +31,6 @@ dapp.signMessage 不要因 WALLET_LOCKED 或「像交易」立刻對 dApp 失敗
 
 ## 完成檢查
 
-- [ ] INDEX 狀態出貨時才 `shipped`（須使用者同意）
-- [ ] changelog／version／package.json 對齊 0.9.0
-- [ ] 已刪 backlog「簽署訊息頁 UI／UX」列與檔
+- [x] INDEX 狀態出貨時才 `shipped`（須使用者同意）
+- [x] changelog／version／package.json 對齊 0.9.0
+- [x] 已刪 backlog「簽署訊息頁 UI／UX」列與檔

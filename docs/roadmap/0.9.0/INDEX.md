@@ -1,9 +1,8 @@
 # 0.9.0 — 簽署訊息審批頁＋焦點描邊
 
-- **狀態：** `in progress`
+- **狀態：** `shipped`
 - **上游版本：** [0.8.0](../0.8.0/INDEX.md)（custody、pending 生命週期、Wallet Standard 方法表不變；本版改 `signMessage` **如何進 pending／如何呈現**）
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
-- **Backlog：** [簽署訊息頁 UI／UX](../backlog/sign-message-page-uiux.md)（構想；衝突以**本 INDEX** 為準）。出貨後刪該列與檔
 - **畫面：** [`docs/design-principles.md`](../../design-principles.md)；概念稿 [`design-demos/sign-message-ux.html`](../../design-demos/sign-message-ux.html)（非正式；衝突以本 INDEX／HOW 為準）
 - **秘密欄位：** [`docs/research/secret-field-autofill.md`](../../research/secret-field-autofill.md) 類 B
 
@@ -93,15 +92,15 @@ dApp 的 `solana:signMessage` 打開獨立審批 popout：使用者看得到站�
 
 ## 驗收（出貨 checklist）
 
-- [ ] 已解鎖、UTF-8 訊息：popout 非 JSON 主畫面；可見標題、站點 origin、**凍結**帳戶 widget、Message payload、收合的 Raw binary；批准後 dApp 仍收到既有簽名結果；審批期間 popup 切帳戶不改 widget／不改簽名者（**需 Chrome 手驗**；靜態見 implementation-review R1）
-- [ ] 非 UTF-8：無文字卡；Raw binary 為主卡；可複製無空白 hex（**需 Chrome 手驗**）
-- [ ] 整段可 parse 的交易 message：畫面僅短句「不能把交易當成訊息簽署。」；批准 disabled；拒絕後 dApp `SIGN_MESSAGE_LOOKS_LIKE_TRANSACTION`；SW 未簽名（**需 Chrome 手驗**）
-- [ ] 同上關窗：dApp 同一錯誤碼（不是普通 `USER_REJECTED`）（**需 Chrome 手驗**）
-- [ ] 鎖定時簽訊息：不立刻 `WALLET_LOCKED`；popout 解鎖屏無殼底；解鎖後簽署頁；**僅本窗剛按解鎖**時批准 700ms 內 disabled（popup 先解鎖則不必）（**需 Chrome 手驗**）
+- [x] 已解鎖、UTF-8 訊息：popout 非 JSON 主畫面；可見標題、站點 origin、**凍結**帳戶 widget、Message payload、收合的 Raw binary；批准後 dApp 仍收到既有簽名結果；審批期間 popup 切帳戶不改 widget／不改簽名者
+- [x] 非 UTF-8：無文字卡；Raw binary 為主卡；可複製無空白 hex
+- [x] 整段可 parse 的交易 message：畫面僅短句「不能把交易當成訊息簽署。」；批准 disabled；拒絕後 dApp `SIGN_MESSAGE_LOOKS_LIKE_TRANSACTION`；SW 未簽名
+- [x] 同上關窗：dApp 同一錯誤碼（不是普通 `USER_REJECTED`）
+- [x] 鎖定時簽訊息：不立刻 `WALLET_LOCKED`；popout 解鎖屏無殼底；解鎖後簽署頁；**僅本窗剛按解鎖**時批准 700ms 內 disabled（popup 先解鎖則不必）
 - [x] `ui.getPending` 失敗：請求已不在；兩鈕 disabled
-- [x] connect／signTransaction popout 內容契約與 0.8.0 相同（非 JSON 改版）（legacy 版面；手驗建議抽樣）
+- [x] connect／signTransaction popout 內容契約與 0.8.0 相同（非 JSON 改版）
 - [x] 解鎖欄非 `type="password"`
-- [ ] popup 與 popout 文字欄 focus 為 accent，非系統橙框；radio 未被 `width:100%` 壓扁（**需目視手驗**；CSS 已寫）
+- [x] popup 與 popout 文字欄 focus 為 accent，非系統橙框；radio 未被 `width:100%` 壓扁
 - [x] pending 不進 `chrome.storage`；結果只回原 tab
 - [x] `cd wallet && npm run build` 通過
 - [x] 文件與程式無真實密碼／助記詞／私鑰
@@ -110,7 +109,7 @@ dApp 的 `solana:signMessage` 打開獨立審批 popout：使用者看得到站�
 
 | 路徑 | 用途 |
 |------|------|
-| `wallet/src/background/index.ts` | `dapp.signMessage`、`finishSignMessage`、關窗、`looksLikeVersionedTransaction` 汰換 |
+| `wallet/src/background/index.ts` | `dapp.signMessage`、`finishSignMessage`、關窗、交易 message 判定 |
 | `wallet/src/background/pending.ts` | pending Map／popout window 綁定（行為增量見 HOW） |
 | `wallet/src/shared/commands.ts` | pending／payload 型別；本版原則不擴 command 名 |
 | `wallet/src/popout/index.html` | 審批 DOM |

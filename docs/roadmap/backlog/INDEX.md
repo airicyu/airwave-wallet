@@ -13,7 +13,6 @@
 | [Sidebar 模式](./sidebar-mode.md) | Settings 改在 Chrome 側欄顯示錢包殼，取代 popup |
 | [帳戶卡片拖曳排序](./account-card-drag-order.md) | 卡片主區懸停出陰影與虛點，游標改為可拖曳，用來拉次序 |
 | [版本升級與 storage 遷移](./storage-migration.md) | 擴充更新時依 schema 世代搬 local 資料；金庫改格式須等解鎖 |
-| [簽署訊息頁 UI／UX](./sign-message-page-uiux.md) | `signMessage` 審批改為可讀訊息頁，不再以 JSON 為主畫面。**已排程 [0.9.0](../0.9.0/INDEX.md)**（構想；以該 INDEX 為準） |
 | [簽署交易頁 UI／UX](./sign-transaction-page-uiux.md) | `signTransaction` 審批改為交易摘要頁；simulation 另項 |
 | [簽署交易頁 simulation 結果](./sign-transaction-simulation.md) | 批准前顯示未簽交易的 simulation；不代廣播 |
 | [清理空 token account](./close-empty-token-accounts.md) | 主畫面看某一戶時，組交易關掉數量為 0 的 token account，收回 rent SOL |
