@@ -31,6 +31,8 @@ export type AirwaveCommand =
   | "wallet.changeVaultPassword"
   | "storage.patchSettings";
 
+export const PENDING_TIMEOUT_MS = 120_000;
+
 export type ExtensionRequest = {
   kind: "airwave-ext-req";
   requestId: string;

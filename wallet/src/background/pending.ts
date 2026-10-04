@@ -1,4 +1,5 @@
 import type { PendingRecord } from "../shared/commands";
+import { clearSignTxState } from "./sign-tx-pending-state";
 
 export const pendingRequests = new Map<string, PendingRecord>();
 
@@ -9,6 +10,7 @@ export function addPending(id: string, record: PendingRecord): void {
 export function takePending(id: string): PendingRecord | undefined {
   const r = pendingRequests.get(id);
   pendingRequests.delete(id);
+  if (r) clearSignTxState(id);
   return r;
 }
 
@@ -18,6 +20,7 @@ export function getPending(id: string): PendingRecord | undefined {
 
 export function removePending(id: string): void {
   pendingRequests.delete(id);
+  clearSignTxState(id);
 }
 
 /** popout windowId → requestId（僅記憶體） */

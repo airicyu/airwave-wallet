@@ -87,6 +87,10 @@ cd test-web && npm install && npm run dev
 
 ---
 
-## License
+## 授權
 
-（尚未定案時於此處補上。）
+程式碼以 [Apache License 2.0](LICENSE) 授權（Copyright 2026 Airic Yu）。可以商用。
+
+## 免責與使用條款
+
+產品內文案（錢包 About this app 載入同一份）：[docs/legal/disclaimer.md](docs/legal/disclaimer.md)、[docs/legal/terms-of-use.md](docs/legal/terms-of-use.md)。說明見 [docs/legal/README.md](docs/legal/README.md)。

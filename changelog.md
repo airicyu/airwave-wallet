@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.0 — 2026-10-04
+
+未簽 `signTransaction` 可改 CU limit／price（Compute Budget 取代不 append），批准簽 `workingTx`；已簽不改 instruction。獨立交易費卡（總費＝簽名費＋優先費）；改 CU 須點套用圖示，dirty 時批准不可按。Settings **Default CU price** 出廠 25000。交易明細每條 ix 列帳戶縮寫與 data hex。簽署 popout 頂欄／底欄釘住、中間捲動。`connect`／`signMessage` 不變。
+
+## 0.10.1 — 2026-10-04
+
+`ui.simulatePendingTx` 改打 JSON-RPC `simulateTransaction`，用 `preBalances`／`postBalances`／`preTokenBalances`／`postTokenBalances` 對凍結簽署帳戶算差；不再 `getMultipleAccounts` 或傳 `accounts.addresses`。手續費優先用 `value.fee`。假設現行 Helius／Agave，缺欄當無法模擬。
+
 ## 0.10.0 — 2026-10-04
 
 `signTransaction` 專用 popout：主舞台為 SW `ui.simulatePendingTx` 回傳的簽署帳戶 SOL／SPL 預期變動；「預計交易失敗」或「無法模擬」notice 在預期變動上方；交易明細預設收合且指令列只信 SW。鎖定時仍 pending＋開窗（對齊 0.9.0 signMessage）；enqueue 凍結 `signAccountId`；批准只簽名不廣播。無法 deserialize 時批准 disabled，強制 approve 回 `INVALID_TRANSACTION`。test-web 新增「預期模擬失敗」簽交易入口。`connect`／`signMessage` popout 維持 0.8.0／0.9.0。

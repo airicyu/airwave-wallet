@@ -25,6 +25,8 @@ export type Settings = {
   rpcByCluster: Record<Cluster, ClusterRpcConfig>;
   heliusApiUrl: string;
   jupiterApiKey: string;
+  /** micro-lamports per CU；未簽 signTransaction 預設 CU price */
+  defaultCuPrice: number;
 };
 
 export type AccountKind = "signing" | "readOnly";
@@ -68,6 +70,7 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   heliusApiUrl: "",
   jupiterApiKey: "",
+  defaultCuPrice: 25_000,
 };
 
 export const PUBLIC_RPC_BY_CLUSTER: Record<Cluster, string> = {

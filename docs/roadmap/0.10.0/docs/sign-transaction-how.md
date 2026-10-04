@@ -36,22 +36,20 @@ Enqueue 寫入（僅記憶體）：
 
 - 呼叫者：popout。payload `{ requestId }`。
 - SW：`getPending(requestId)`。不存在或 `kind !== "signTransaction"` → `ok: false`、`NOT_FOUND`（不要 `UNKNOWN`）。
-- 讀 Settings 目前 cluster 的 `rpcUrl`，`Connection`。整段模擬（含 pre-fetch、`simulateTransaction`、`getFeeForMessage`）共用 **15 秒** AbortSignal；逾時 → `outcome: "rpc"`，`reason` 可寫「逾時」。
+- 讀 Settings 目前 cluster 的 `rpcUrl`。整段模擬（`simulateTransaction`、必要時 lookup／`getFeeForMessage`）共用 **15 秒**；逾時 → `outcome: "rpc"`，`reason` 可寫「逾時」。
 - `VersionedTransaction.deserialize` 失敗 → `ok: true`、`outcome: "unparseable"`（無法模擬、批准 disabled）。`instructions` 空；手續費「未知」；不要當 RPC 掛了。
 - **差額（必須寫在本節，不是模組註解）：**
-  1. 解析 message 帳戶：legacy 用 `staticAccountKeys`；v0 再載入 address lookup table。Lookup 載入失敗 → `outcome: "rpc"`，不要附 `deltas`。
-  2. 對凍結公鑰＋上述已解析公鑰做模擬**前** `getMultipleAccounts`（或同等）。
-  3. 分類：凍結公鑰的 native lamports；帳戶 `owner` 為 Token／Token-2022 **且** token account 的 token-owner 等於凍結公鑰者，列入該戶 SPL。
-  4. `simulateTransaction(tx, { sigVerify: false, replaceRecentBlockhash: true, accounts: { encoding: "base64", addresses } })`。`addresses` **至少**含凍結公鑰＋步驟 3 的 token account。禁止出貨範圍「先只帶 signer」。
-  5. `deltas` ＝ post（模擬 `value.accounts` 對應同一 `addresses` 順序）減 pre。SOL：凍結公鑰 lamports 差。SPL：按 mint 加總 token amount 差。零差不列入。**禁止**把 post 存量當增減。
-  6. **帳戶不存在**（該槽 `getMultipleAccounts`／模擬 `accounts` 為 `null`）視為該槽存量 **0** 再相減（新建 ATA 入帳等）。僅 RPC 失敗、回傳對不上 `addresses`、encoding 解不出時才不附可信 `deltas`（預期變動「無法估計變動」）。不要把「帳戶尚未存在」當成缺資料。
-  7. 前後齊且所有差為 0 → `deltas: []`，UI「無餘額變動」。
+  1. JSON-RPC `simulateTransaction`：`encoding: "base64"`、`sigVerify: false`、`replaceRecentBlockhash: true`。**不要**傳 `accounts`。不要為了算差先 `getMultipleAccounts`／掃 `getAccountInfo`。不兼容沒有 pre／post 餘額欄的舊節點。
+  2. 帳戶列：legacy 用 `staticAccountKeys`。v0：`value.loadedAddresses.writable` 再 `readonly` 接在 static 後面（與 message 帳戶序相同）。若 lookup 筆數不夠，才 `getAddressLookupTable`。Lookup 仍失敗 → `outcome: "rpc"`，不要附 `deltas`。
+  3. SOL：`accountKeys` 裡公鑰等於凍結簽署帳戶的每個 index `i`，加總 `postBalances[i] - preBalances[i]`（缺欄或 `preBalances` 空而仍有帳戶 → `rpc`，reason「模擬結果缺少餘額欄位」）。
+  4. SPL：以 `accountIndex` 合併 `preTokenBalances` 與 `postTokenBalances`。只保留 `owner` 等於凍結公鑰的列。`amount` 用 `uiTokenAmount.amount`（字串整數）相減，按 `mint` 加總。只在 pre 或只在 post 出現：缺的一側當 0。decimals 用該列 `uiTokenAmount.decimals`。零差不列入。**禁止**把 post 存量當增減。
+  5. 前後欄齊且所有差為 0 → `deltas: []`，UI「無餘額變動」。
 - Durable nonce：`replaceRecentBlockhash: true` 可能失真 → 當成 `fail`／`rpc`，不要把差額當可信。
-- `getFeeForMessage`：成功則 `feeLamports`；失敗或 `unparseable` → `feeLamports: null`（UI「未知」，禁止 0）。`feePayerShort`：已 deserialize 則從 `tx.message` 寫 payer 前 4…後 4；`unparseable` 則省略。
+- 手續費：優先 `value.fee`；沒有再 `getFeeForMessage`。仍沒有或 `unparseable` → `feeLamports: null`（UI「未知」，禁止 0）。`feePayerShort`：已 deserialize 則從 `tx.message` 寫 payer 前 4…後 4；`unparseable` 則省略。
 - **指令列：** 同一 response 附 `instructions[]`（序號順序、program 熟名或縮寫、可選 desc、可選 `unresolved`）。popout **只信此陣列**畫明細，不要自己 deserialize 畫列。SW 列不出 → 空陣列，UI「無法列出指令」。
 - **不**把 result 寫入 `chrome.storage`。可暫存在該筆 pending 物件供同窗重入；畫面以本次 command 回傳為準。
 - `value.err == null`：`outcome: "ok"`。
-- `value.err` 非空：`outcome: "fail"`，附 `err`、`logs`（至少最後約 20 行）、盡力 reason 一行；`deltas` 僅當步驟 5 可算才附。
+- `value.err` 非空：`outcome: "fail"`，附 `err`、`logs`（至少最後約 20 行）、盡力 reason 一行；`deltas` 僅當步驟 3–4 可算才附。
 
 Result 形狀（可加欄；popout 必須能區分 outcome）：
 

@@ -4,10 +4,18 @@ export type SimulateTxDelta = {
   sign: "plus" | "minus";
 };
 
+export type SimulateTxIxAccount = {
+  short: string;
+  unresolved?: boolean;
+};
+
 export type SimulateTxInstruction = {
   program: string;
   desc?: string;
   unresolved?: boolean;
+  accounts?: SimulateTxIxAccount[];
+  /** 連續小寫 hex，無 0x；空字串表示無 data */
+  dataHex?: string;
 };
 
 export type SimulatePendingTxResult = {
@@ -16,7 +24,16 @@ export type SimulatePendingTxResult = {
   err?: unknown;
   logs?: string[];
   deltas?: SimulateTxDelta[];
-  feeLamports?: number | null;
   feePayerShort?: string;
   instructions?: SimulateTxInstruction[];
+  sigFeeLamports?: number | null;
+  priorityLamports?: number | null;
+  totalFeeLamports?: number | null;
+  cuLimit?: number | null;
+  cuPrice?: number | null;
+  cuWriteError?: string;
+  /** 未簽可改 CU limit／price */
+  cuEditable?: boolean;
+  /** popout 丟棄過期回包 */
+  seq?: number;
 };

@@ -384,15 +384,37 @@
       details.tx-detail > summary {
         cursor: pointer;
         list-style: none;
-        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 40px;
+        padding: 8px 12px;
         font-size: 0.82rem;
-        color: var(--text-muted);
-      }
-      details.tx-detail > summary::-webkit-details-marker { display: none; }
-      details.tx-detail[open] > summary {
-        border-bottom: 1px solid var(--stroke-soft);
+        font-weight: 600;
         color: var(--text);
       }
+      details.tx-detail > summary::-webkit-details-marker { display: none; }
+      details.tx-detail > summary:hover { background: var(--fill); }
+      details.tx-detail[open] > summary {
+        border-bottom: 1px solid var(--stroke-soft);
+      }
+      .fold-chev {
+        flex-shrink: 0;
+        width: 16px;
+        height: 16px;
+        display: inline-flex;
+        color: var(--text-muted);
+        transition: transform 0.12s ease;
+      }
+      .fold-chev svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+      details.tx-detail[open] > summary .fold-chev { transform: rotate(90deg); color: var(--text); }
+      .fold-hint {
+        margin-left: auto;
+        font-size: 0.68rem;
+        font-weight: 500;
+        color: var(--text-dim);
+      }
+      details.tx-detail[open] > summary .fold-hint { display: none; }
       .tx-detail-body { padding: 10px 12px 12px; }
       .tx-detail-body .card { margin-bottom: 0; border: 0; background: transparent; }
       details.raw {
@@ -547,6 +569,7 @@
       const ICO = {
         retry: '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>',
         copy: '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+        chev: '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>',
       };
 
       let preset = "sim-ok";
@@ -663,7 +686,7 @@ Program 11111111111111111111111111111111 failed: custom program error: 0x1`;
 
       function txDetail(items, feeHtml) {
         return `<details class="tx-detail">
-          <summary>交易明細</summary>
+          <summary><span class="fold-chev" aria-hidden="true">${ICO.chev}</span>交易明細<span class="fold-hint">指令 · 費用</span></summary>
           <div class="tx-detail-body">
             ${ixs(items)}
             ${feeHtml}

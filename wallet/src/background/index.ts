@@ -14,6 +14,7 @@ import type {
   SignMessagePayload,
   SignTransactionPayload,
 } from "../shared/commands";
+import { PENDING_TIMEOUT_MS } from "../shared/commands";
 import { messageLooksLikeTransactionMessage } from "../shared/sign-message-tx";
 import {
   dedupePreserveOrder,
@@ -61,7 +62,8 @@ import {
   type CombinedAccountMeta,
 } from "../shared/storage-keys";
 import { getHomeTokensForOwners } from "./home-tokens-service";
-import { simulatePendingTx } from "./simulate-pending-tx";
+import { simulateSignTransaction } from "./sign-tx-simulate";
+import { getWorkingTx } from "./sign-tx-pending-state";
 import {
   createEnglishMnemonic12,
   keypairFromMnemonic,
@@ -165,8 +167,6 @@ async function openPopout(requestId: string): Promise<void> {
   });
   if (win.id != null) bindPopoutWindow(win.id, requestId);
 }
-
-const PENDING_TIMEOUT_MS = 120_000;
 
 function schedulePendingTimeout(requestId: string): void {
   setTimeout(() => {
@@ -464,6 +464,7 @@ async function finishSignTransaction(
   tabId: number,
   approved: boolean,
 ): Promise<void> {
+  const workingBytes = getWorkingTx(requestId);
   const pending = takePending(requestId);
   if (!pending) return;
 
@@ -510,7 +511,7 @@ async function finishSignTransaction(
   }
 
   const { transaction } = pending.payload as SignTransactionPayload;
-  const txBytes = Uint8Array.from(transaction);
+  const txBytes = Uint8Array.from(workingBytes ?? transaction);
   let tx: VersionedTransaction;
   try {
     tx = VersionedTransaction.deserialize(txBytes);
@@ -771,7 +772,12 @@ async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionResponse
   }
 
   if (req.command === "ui.simulatePendingTx") {
-    const { requestId } = (req.payload ?? {}) as { requestId: string };
+    const payload = (req.payload ?? {}) as {
+      requestId: string;
+      cuLimit?: number;
+      cuPrice?: number;
+    };
+    const { requestId } = payload;
     const p = getPending(requestId);
     if (!p || p.kind !== "signTransaction") {
       return respond({
@@ -815,12 +821,27 @@ async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionResponse
     const settings = await readSettings();
     const rpcUrl = settings.rpcUrl;
     const { transaction } = p.payload as SignTransactionPayload;
-    const result = await simulatePendingTx(rpcUrl, Uint8Array.from(transaction), signerPubkey);
+    const sim = await simulateSignTransaction(
+      rpcUrl,
+      requestId,
+      Uint8Array.from(transaction),
+      signerPubkey,
+      settings.defaultCuPrice,
+      { cuLimit: payload.cuLimit, cuPrice: payload.cuPrice },
+    );
+    if (!sim.ok) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: sim.code, message: sim.message },
+      });
+    }
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
       ok: true,
-      result,
+      result: { ...sim.result, seq: sim.seq },
     });
   }
 

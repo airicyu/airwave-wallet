@@ -53,7 +53,8 @@
 4. **訊息：** typed command + `requestId`；結果只回發起 tab；禁止預設全 tab 廣播。
 5. **不要**對 inject↔extension 每筆 operation result 做 Solibra 式 RSA encrypt/decrypt 劇場。
 6. **依賴：** 擴充本體壓低 3rd-party；引入依賴須能說明必要理由。
-7. **Agent（若實作）：** 跑在無 `chrome.*` 的 sandbox（或同等隔離）；query-only；host 代打 LLM/MCP；永遠不碰 vault／不代簽。不依賴 long-living 背景當正確性前提。
+7. **數字：** 金額、餘額、手續費、模擬差額禁止用 JavaScript `number` 做加減乘除。鏈上整數單位（lamport、代幣最小單位）用 `BigInt`，並從字串建成，不可先經 JSON `number`。需要小數時用 `big.js`（尚未安裝；第一次做小數運算再加入），不要改用 `decimal.js`。
+8. **Agent（若實作）：** 跑在無 `chrome.*` 的 sandbox（或同等隔離）；query-only；host 代打 LLM/MCP；永遠不碰 vault／不代簽。不依賴 long-living 背景當正確性前提。
 
 就算本版只做垂直切片，**請求生命週期、持久 state 同步、custody** 仍須符合上列，不可用 Solibra 壞套路「先跑起來」。
 

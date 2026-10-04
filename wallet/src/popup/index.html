@@ -50,6 +50,7 @@
                   <button type="button" class="menu-item" data-nav="accounts">Wallet accounts</button>
                   <button type="button" class="menu-item" data-nav="settings">Settings</button>
                   <button type="button" class="menu-item" data-nav="connected-sites">Connected sites</button>
+                  <button type="button" class="menu-item" data-nav="about">About this app</button>
                 </div>
               </div>
             </div>
@@ -67,6 +68,7 @@
                 <button type="button" class="menu-item" data-nav="accounts">Wallet accounts</button>
                 <button type="button" class="menu-item" data-nav="settings">Settings</button>
                 <button type="button" class="menu-item" data-nav="connected-sites">Connected sites</button>
+                <button type="button" class="menu-item" data-nav="about">About this app</button>
               </div>
             </div>
           </div>
@@ -281,6 +283,12 @@
                 </button>
               </li>
               <li>
+                <button type="button" class="settings-hub-row" data-settings-nav="settings-cu-price">
+                  <span class="hub-label">Default CU price</span>
+                  <span class="hub-summary" id="hub-summary-cu-price"></span>
+                </button>
+              </li>
+              <li>
                 <button type="button" class="settings-hub-row" data-settings-nav="settings-password">
                   <span class="hub-label">錢包密碼</span>
                   <span class="hub-summary">變更</span>
@@ -354,6 +362,13 @@
             </div>
           </section>
 
+          <section id="screen-settings-cu-price" class="screen" hidden>
+            <div class="field">
+              <label for="settings-default-cu-price">micro-lamports / CU</label>
+              <input id="settings-default-cu-price" type="number" inputmode="numeric" min="0" step="1" autocomplete="off" />
+            </div>
+          </section>
+
           <section id="screen-settings-password" class="screen" hidden>
             <div class="field">
               <label for="change-pwd-current">目前密碼</label>
@@ -368,6 +383,35 @@
               <input id="change-pwd-confirm" type="text" class="wallet-pwd-masked" autocomplete="off" />
             </div>
             <p id="change-pwd-err" class="inline-err"></p>
+          </section>
+
+          <section id="screen-about" class="screen" hidden>
+            <div class="about-version">
+              <span class="hub-label">版本</span>
+              <span class="about-version-value" id="about-version"></span>
+            </div>
+            <ul class="settings-hub-list">
+              <li>
+                <button type="button" class="settings-hub-row" data-about-nav="about-disclaimer">
+                  <span class="hub-label">免責聲明</span>
+                  <span class="kind-chev" aria-hidden="true">›</span>
+                </button>
+              </li>
+              <li>
+                <button type="button" class="settings-hub-row" data-about-nav="about-terms">
+                  <span class="hub-label">使用條款</span>
+                  <span class="kind-chev" aria-hidden="true">›</span>
+                </button>
+              </li>
+            </ul>
+          </section>
+
+          <section id="screen-about-disclaimer" class="screen" hidden>
+            <article id="legal-disclaimer" class="legal-doc"></article>
+          </section>
+
+          <section id="screen-about-terms" class="screen" hidden>
+            <article id="legal-terms" class="legal-doc"></article>
           </section>
 
           <section id="screen-connected-sites" class="screen" hidden>

@@ -10,6 +10,7 @@ import {
   type ConnectionsMap,
   type Settings,
 } from "../shared/storage-keys";
+import { normalizeDefaultCuPrice } from "./compute-budget-tx";
 import type { VaultBlob } from "../shared/crypto-vault";
 
 export async function readSettings(): Promise<Settings> {
@@ -54,6 +55,7 @@ export function normalizeSettings(raw: Partial<Settings> | undefined): Settings 
     rpcUrl: effectiveRpcUrl(cluster, rpcByCluster[cluster]),
     heliusApiUrl: typeof raw?.heliusApiUrl === "string" ? raw.heliusApiUrl : "",
     jupiterApiKey: typeof raw?.jupiterApiKey === "string" ? raw.jupiterApiKey : "",
+    defaultCuPrice: normalizeDefaultCuPrice(raw?.defaultCuPrice),
   };
 }
 

@@ -1,3 +1,5 @@
+import disclaimerMd from "../../../docs/legal/disclaimer.md?raw";
+import termsMd from "../../../docs/legal/terms-of-use.md?raw";
 import { sendExtensionRequest } from "../shared/ext-api";
 import {
   getExposedPublicKey,
@@ -55,7 +57,11 @@ type View =
   | "settings-network"
   | "settings-rpc"
   | "settings-keys"
+  | "settings-cu-price"
   | "settings-password"
+  | "about"
+  | "about-disclaimer"
+  | "about-terms"
   | "connected-sites";
 
 const SUBPAGE_TITLES: Record<Exclude<View, "home-token" | "home-activity">, string> = {
@@ -75,7 +81,11 @@ const SUBPAGE_TITLES: Record<Exclude<View, "home-token" | "home-activity">, stri
   "settings-network": "網路",
   "settings-rpc": "RPC",
   "settings-keys": "API keys",
+  "settings-cu-price": "Default CU price",
   "settings-password": "錢包密碼",
+  about: "About this app",
+  "about-disclaimer": "免責聲明",
+  "about-terms": "使用條款",
   "connected-sites": "Connected sites",
 };
 
@@ -159,6 +169,8 @@ const el = {
   hubSummaryNetwork: document.getElementById("hub-summary-network")!,
   hubSummaryRpc: document.getElementById("hub-summary-rpc")!,
   hubSummaryKeys: document.getElementById("hub-summary-keys")!,
+  hubSummaryCuPrice: document.getElementById("hub-summary-cu-price")!,
+  defaultCuPriceInput: document.getElementById("settings-default-cu-price") as HTMLInputElement,
   heliusApiUrl: document.getElementById("helius-api-url") as HTMLInputElement,
   jupiterApiKey: document.getElementById("jupiter-api-key") as HTMLInputElement,
   changePwdCurrent: document.getElementById("change-pwd-current") as HTMLInputElement,
@@ -187,7 +199,11 @@ const screens: Record<View, HTMLElement> = {
   "settings-network": document.getElementById("screen-settings-network")!,
   "settings-rpc": document.getElementById("screen-settings-rpc")!,
   "settings-keys": document.getElementById("screen-settings-keys")!,
+  "settings-cu-price": document.getElementById("screen-settings-cu-price")!,
   "settings-password": document.getElementById("screen-settings-password")!,
+  about: document.getElementById("screen-about")!,
+  "about-disclaimer": document.getElementById("screen-about-disclaimer")!,
+  "about-terms": document.getElementById("screen-about-terms")!,
   "connected-sites": document.getElementById("screen-connected-sites")!,
 };
 
@@ -212,6 +228,24 @@ function clearError(): void {
   }
   el.error.hidden = true;
   el.error.textContent = "";
+}
+
+function renderLegalDoc(root: HTMLElement, markdown: string): void {
+  root.replaceChildren();
+  const blocks = markdown.replace(/\r\n/g, "\n").trim().split(/\n\n+/);
+  for (const block of blocks) {
+    const line = block.trim();
+    if (!line || line.startsWith("# ")) continue;
+    if (line.startsWith("## ")) {
+      const heading = document.createElement("h3");
+      heading.textContent = line.slice(3).trim();
+      root.append(heading);
+      continue;
+    }
+    const p = document.createElement("p");
+    p.textContent = line.replace(/\n/g, " ");
+    root.append(p);
+  }
 }
 
 function shortAddr(pk: string): string {
@@ -1039,7 +1073,7 @@ function rpcFingerprint(settings: Settings): string {
 }
 
 function settingsFingerprint(settings: Settings): string {
-  return `${settings.cluster}|${rpcFingerprint(settings)}|${settings.heliusApiUrl}|${settings.jupiterApiKey}`;
+  return `${settings.cluster}|${rpcFingerprint(settings)}|${settings.heliusApiUrl}|${settings.jupiterApiKey}|${settings.defaultCuPrice}`;
 }
 
 function cloneRpcByCluster(
@@ -1108,6 +1142,7 @@ function renderSettingsHub(settings: Settings): void {
   el.hubSummaryNetwork.textContent = settings.cluster === "mainnet" ? "Mainnet" : "Devnet";
   el.hubSummaryRpc.textContent = settings.rpcUrl;
   el.hubSummaryKeys.textContent = apiKeysHubSummary(settings);
+  el.hubSummaryCuPrice.textContent = String(settings.defaultCuPrice);
 }
 
 function syncNetworkRadios(settings: Settings): void {
@@ -1145,6 +1180,11 @@ function renderSettingsKeysFields(settings: Settings): void {
   }
 }
 
+function renderSettingsCuPriceField(settings: Settings): void {
+  if (document.activeElement === el.defaultCuPriceInput) return;
+  el.defaultCuPriceInput.value = String(settings.defaultCuPrice);
+}
+
 function renderSettingsPanel(settings: Settings): void {
   renderSettingsHub(settings);
   syncNetworkRadios(settings);
@@ -1155,6 +1195,7 @@ function renderSettingsPanel(settings: Settings): void {
   renderRpcByCluster(settings, "devnet");
   renderRpcByCluster(settings, "mainnet");
   renderSettingsKeysFields(settings);
+  renderSettingsCuPriceField(settings);
 }
 
 function renderRpcByCluster(settings: Settings, cluster: Cluster): void {
@@ -1660,6 +1701,7 @@ function render(state: State): void {
   applyViewChrome();
 
   renderSettingsPanel(state.settings);
+  lastLegalDefaultCuPrice = state.settings.defaultCuPrice;
 
   const settingsFp = settingsFingerprint(state.settings);
   const settingsChanged = settingsFp !== lastSettingsFingerprint;
@@ -1762,12 +1804,17 @@ function handleBack(): void {
     currentView === "settings-network" ||
     currentView === "settings-rpc" ||
     currentView === "settings-keys" ||
+    currentView === "settings-cu-price" ||
     currentView === "settings-password"
   ) {
     navigateTo("settings");
     return;
   }
-  if (currentView === "settings" || currentView === "connected-sites") {
+  if (currentView === "about-disclaimer" || currentView === "about-terms") {
+    navigateTo("about");
+    return;
+  }
+  if (currentView === "settings" || currentView === "connected-sites" || currentView === "about") {
     navigateTo("home-token");
     return;
   }
@@ -2034,9 +2081,16 @@ el.menuOverlay.addEventListener("click", () => setMenuOpen(false));
 document.querySelectorAll(".menu-item").forEach((item) => {
   item.addEventListener("click", () => {
     const nav = (item as HTMLElement).dataset.nav as View;
-    if (nav === "accounts" || nav === "settings" || nav === "connected-sites") {
+    if (nav === "accounts" || nav === "settings" || nav === "connected-sites" || nav === "about") {
       navigateTo(nav);
     }
+  });
+});
+
+document.querySelectorAll("[data-about-nav]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const target = (btn as HTMLElement).dataset.aboutNav as View;
+    if (target) navigateTo(target);
   });
 });
 
@@ -2312,6 +2366,10 @@ document.getElementById("btn-disconnect-all")!.addEventListener("click", async (
   else await refresh();
 });
 
+document.getElementById("about-version")!.textContent = chrome.runtime.getManifest().version;
+renderLegalDoc(document.getElementById("legal-disclaimer")!, disclaimerMd);
+renderLegalDoc(document.getElementById("legal-terms")!, termsMd);
+
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "local") return;
   if (
@@ -2350,6 +2408,46 @@ hardenApiKeyInput(el.jupiterApiKey);
 
 el.error.addEventListener("click", () => {
   clearError();
+});
+
+let defaultCuPriceDebounce: ReturnType<typeof setTimeout> | null = null;
+let lastLegalDefaultCuPrice = 25_000;
+
+function parseDefaultCuPriceInput(raw: string): number | null {
+  const t = raw.trim();
+  if (!t) return null;
+  const n = Number(t);
+  if (!Number.isFinite(n)) return null;
+  const i = Math.trunc(n);
+  if (i < 0 || i > 1_000_000_000) return null;
+  return i;
+}
+
+function commitDefaultCuPriceFromInput(): void {
+  const parsed = parseDefaultCuPriceInput(el.defaultCuPriceInput.value);
+  if (parsed == null) {
+    el.defaultCuPriceInput.value = String(lastLegalDefaultCuPrice);
+    return;
+  }
+  if (parsed === lastLegalDefaultCuPrice) return;
+  lastLegalDefaultCuPrice = parsed;
+  void patchSettingsPartial({ defaultCuPrice: parsed });
+}
+
+el.defaultCuPriceInput.addEventListener("input", () => {
+  if (defaultCuPriceDebounce != null) clearTimeout(defaultCuPriceDebounce);
+  defaultCuPriceDebounce = setTimeout(() => {
+    defaultCuPriceDebounce = null;
+    commitDefaultCuPriceFromInput();
+  }, 500);
+});
+
+el.defaultCuPriceInput.addEventListener("blur", () => {
+  if (defaultCuPriceDebounce != null) {
+    clearTimeout(defaultCuPriceDebounce);
+    defaultCuPriceDebounce = null;
+  }
+  commitDefaultCuPriceFromInput();
 });
 
 void refresh().catch((e) => showError(String(e)));

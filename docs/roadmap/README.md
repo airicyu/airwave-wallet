@@ -21,7 +21,8 @@
 | [0.7.0](./0.7.0/INDEX.md) | shipped | Home：Wallet Balances／RPC+Token-2022；Jupiter 覆寫名稱 |
 | [0.8.0](./0.8.0/INDEX.md) | shipped | 變更錢包密碼；Settings 樞紐；類 B 密碼欄 |
 | [0.9.0](./0.9.0/INDEX.md) | shipped | `signMessage` 可讀審批頁；鎖定於 popout 解鎖；文字欄 accent focus |
-| [0.10.0](./0.10.0/INDEX.md) | shipped | `signTransaction` 審批：模擬預期變動主舞台＋收合交易明細 |
+| [0.10.0](./0.10.0/INDEX.md) | shipped | `signTransaction` 審批：模擬預期變動主舞台＋收合交易明細（0.10.1：sim 改用 pre／post 餘額，無 pre-fetch） |
+| [0.11.0](./0.11.0/INDEX.md) | shipped | 未簽可寫 CU；交易費卡；Default CU price；明細 accounts／data hex |
 
 **版本號：** `x.y.z` 的 **patch**（例如 **0.3.1**）留給該 minor 的 **bugfix**，不排新功能。新功能走下一個 **minor**（0.3.0 → 0.4.0 → 0.5.0）。
 

@@ -22,13 +22,10 @@
         <button id="btn-unlock" type="button" class="primary-btn">解鎖</button>
       </section>
 
-      <section id="view-gone" class="flow-screen" hidden>
-        <h1 id="gone-title">審批</h1>
-        <p class="lead">請求已不在</p>
-        <div class="approval-dock">
-          <button type="button" class="ghost-btn" disabled>拒絕</button>
-          <button type="button" class="primary-btn" disabled>批准</button>
-        </div>
+      <section id="view-gone" class="expired-screen" hidden>
+        <h1>請求已過期</h1>
+        <p id="gone-lead">這筆請求已不能繼續。</p>
+        <button id="btn-close-expired" type="button" class="primary-btn">關閉</button>
       </section>
 
       <section id="view-legacy" class="flow-screen" hidden>

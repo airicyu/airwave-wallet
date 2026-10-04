@@ -25,6 +25,35 @@ const PROGRAM_NAMES: Record<string, string> = {
   MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr: "Memo",
 };
 
+type RpcTokenAmount = {
+  amount?: string;
+  decimals?: number;
+};
+
+type RpcTokenBalance = {
+  accountIndex?: number;
+  mint?: string;
+  owner?: string;
+  uiTokenAmount?: RpcTokenAmount;
+};
+
+type RpcLoadedAddresses = {
+  writable?: string[];
+  readonly?: string[];
+};
+
+type RpcSimulateValue = {
+  err?: unknown;
+  logs?: string[] | null;
+  unitsConsumed?: number;
+  fee?: number;
+  preBalances?: number[];
+  postBalances?: number[];
+  preTokenBalances?: RpcTokenBalance[] | null;
+  postTokenBalances?: RpcTokenBalance[] | null;
+  loadedAddresses?: RpcLoadedAddresses | null;
+};
+
 function shortPk(pk: PublicKey | string): string {
   const s = typeof pk === "string" ? pk : pk.toBase58();
   if (s.length <= 8) return s;
@@ -35,7 +64,22 @@ function programLabel(programId: PublicKey): string {
   return PROGRAM_NAMES[programId.toBase58()] ?? shortPk(programId);
 }
 
-class SimDeadline {
+function bytesToHex(bytes: Uint8Array): string {
+  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function ixAccounts(
+  accountKeys: (PublicKey | undefined)[],
+  indexes: number[],
+): { short: string; unresolved?: boolean }[] {
+  return indexes.map((i) => {
+    const k = accountKeys[i];
+    if (!k) return { short: "未解析", unresolved: true };
+    return { short: shortPk(k) };
+  });
+}
+
+export class SimDeadline {
   private readonly endsAt = Date.now() + SIM_TIMEOUT_MS;
 
   remainingMs(): number {
@@ -79,20 +123,6 @@ function reasonFromFail(logs: string[] | undefined, err: unknown): string | unde
   return undefined;
 }
 
-function readU64LE(data: Uint8Array, offset: number): bigint {
-  const view = new DataView(data.buffer, data.byteOffset + offset, 8);
-  return view.getBigUint64(0, true);
-}
-
-function parseTokenAccount(data: Uint8Array): { mint: PublicKey; owner: PublicKey; amount: bigint } | null {
-  if (data.length < 72) return null;
-  return {
-    mint: new PublicKey(data.slice(0, 32)),
-    owner: new PublicKey(data.slice(32, 64)),
-    amount: readU64LE(data, 64),
-  };
-}
-
 function formatAmount(amount: bigint, decimals: number): string {
   if (decimals <= 0) return amount.toString();
   const base = 10n ** BigInt(decimals);
@@ -102,18 +132,13 @@ function formatAmount(amount: bigint, decimals: number): string {
   return fracStr ? `${whole}.${fracStr}` : whole.toString();
 }
 
-function accountDataBytes(
-  info: { data: Uint8Array | string[] } | null | undefined,
-): Uint8Array | null {
-  if (!info) return null;
-  const d = info.data;
-  if (d instanceof Uint8Array) return d;
-  if (Array.isArray(d) && d[0]) return Uint8Array.from(atob(d[0]), (c) => c.charCodeAt(0));
-  return null;
-}
-
-function isTokenProgram(owner: PublicKey): boolean {
-  return owner.equals(TOKEN_PROGRAM_ID) || owner.equals(TOKEN_2022_PROGRAM_ID);
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
 }
 
 function instructionDesc(programId: PublicKey, data: Uint8Array): string | undefined {
@@ -145,7 +170,12 @@ function buildInstructions(
   for (const ix of message.compiledInstructions) {
     const programId = accountKeys[ix.programIdIndex];
     if (!programId) {
-      out.push({ program: "?", unresolved: true });
+      out.push({
+        program: "?",
+        unresolved: true,
+        accounts: ixAccounts(accountKeys, ix.accountKeyIndexes),
+        dataHex: bytesToHex(ix.data),
+      });
       continue;
     }
     const desc = instructionDesc(programId, ix.data);
@@ -154,9 +184,31 @@ function buildInstructions(
       program: programLabel(programId),
       desc,
       unresolved: unresolved || undefined,
+      accounts: ixAccounts(accountKeys, ix.accountKeyIndexes),
+      dataHex: bytesToHex(ix.data),
     });
   }
   return out;
+}
+
+function keysFromLoaded(
+  message: VersionedMessage,
+  loaded: RpcLoadedAddresses | null | undefined,
+): PublicKey[] {
+  const staticKeys = message.staticAccountKeys.slice();
+  if (message.version === "legacy") return staticKeys;
+  const writable = (loaded?.writable ?? []).map((s) => new PublicKey(s));
+  const readonly = (loaded?.readonly ?? []).map((s) => new PublicKey(s));
+  return [...staticKeys, ...writable, ...readonly];
+}
+
+function v0LookupCount(message: VersionedMessage): number {
+  if (message.version === "legacy") return 0;
+  let n = 0;
+  for (const lu of message.addressTableLookups) {
+    n += lu.writableIndexes.length + lu.readonlyIndexes.length;
+  }
+  return n;
 }
 
 async function loadLookupTables(
@@ -173,7 +225,7 @@ async function loadLookupTables(
   return tables;
 }
 
-async function resolveAccountKeys(
+async function resolveAccountKeysFromTables(
   connection: Connection,
   message: VersionedMessage,
   deadline: SimDeadline,
@@ -186,9 +238,7 @@ async function resolveAccountKeys(
     if (!tables) return "rpc";
     const keys = message.getAccountKeys({ addressLookupTableAccounts: tables });
     const lookups = keys.accountKeysFromLookups;
-    const fromLu = lookups
-      ? [...lookups.writable, ...lookups.readonly]
-      : [];
+    const fromLu = lookups ? [...lookups.writable, ...lookups.readonly] : [];
     return [...keys.staticAccountKeys, ...fromLu];
   } catch (e) {
     if (e instanceof Error && e.message === "SIM_TIMEOUT") return "timeout";
@@ -196,8 +246,139 @@ async function resolveAccountKeys(
   }
 }
 
-export async function simulatePendingTx(
+export async function simulateTransactionRpc(
   rpcUrl: string,
+  tx: VersionedTransaction,
+  deadline: SimDeadline,
+): Promise<RpcSimulateValue> {
+  const encoded = bytesToBase64(tx.serialize());
+  const payload = {
+    jsonrpc: "2.0",
+    id: 1,
+    method: "simulateTransaction",
+    params: [
+      encoded,
+      {
+        encoding: "base64",
+        sigVerify: false,
+        replaceRecentBlockhash: true,
+        commitment: "confirmed",
+      },
+    ],
+  };
+  const json = (await deadline.run(async () => {
+    const res = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error("RPC_HTTP");
+    return res.json() as Promise<{
+      error?: { message?: string };
+      result?: { value?: RpcSimulateValue };
+    }>;
+  })) as {
+    error?: { message?: string };
+    result?: { value?: RpcSimulateValue };
+  };
+  if (json.error) {
+    throw new Error(json.error.message || "RPC_ERROR");
+  }
+  const value = json.result?.value;
+  if (!value) throw new Error("RPC_EMPTY");
+  return value;
+}
+
+function tokenAmt(row: RpcTokenBalance | undefined): bigint {
+  const a = row?.uiTokenAmount?.amount;
+  if (!a) return 0n;
+  try {
+    return BigInt(a);
+  } catch {
+    return 0n;
+  }
+}
+
+function tokenDecimals(row: RpcTokenBalance | undefined): number {
+  const d = row?.uiTokenAmount?.decimals;
+  return typeof d === "number" && d >= 0 ? d : 0;
+}
+
+function buildDeltas(
+  signer: PublicKey,
+  accountKeys: (PublicKey | undefined)[],
+  value: RpcSimulateValue,
+): SimulateTxDelta[] | "incomplete" {
+  const preB = value.preBalances;
+  const postB = value.postBalances;
+  if (!Array.isArray(preB) || !Array.isArray(postB)) return "incomplete";
+  if (preB.length === 0 && accountKeys.length > 0) return "incomplete";
+
+  const signer58 = signer.toBase58();
+  let nativeDiff = 0;
+  const n = Math.min(preB.length, postB.length, accountKeys.length);
+  for (let i = 0; i < n; i++) {
+    const key = accountKeys[i];
+    if (!key || !key.equals(signer)) continue;
+    nativeDiff += (postB[i] ?? 0) - (preB[i] ?? 0);
+  }
+
+  const preTok = new Map<number, RpcTokenBalance>();
+  const postTok = new Map<number, RpcTokenBalance>();
+  for (const row of value.preTokenBalances ?? []) {
+    if (typeof row.accountIndex === "number") preTok.set(row.accountIndex, row);
+  }
+  for (const row of value.postTokenBalances ?? []) {
+    if (typeof row.accountIndex === "number") postTok.set(row.accountIndex, row);
+  }
+
+  const indexes = new Set<number>([...preTok.keys(), ...postTok.keys()]);
+  const spl = new Map<string, { diff: bigint; decimals: number }>();
+  for (const idx of indexes) {
+    const pre = preTok.get(idx);
+    const post = postTok.get(idx);
+    const owner = post?.owner ?? pre?.owner;
+    if (owner !== signer58) continue;
+    const mint = post?.mint ?? pre?.mint;
+    if (!mint) continue;
+    const diff = tokenAmt(post) - tokenAmt(pre);
+    if (diff === 0n) continue;
+    const decimals = tokenDecimals(post ?? pre);
+    const cur = spl.get(mint);
+    if (cur) {
+      cur.diff += diff;
+    } else {
+      spl.set(mint, { diff, decimals });
+    }
+  }
+
+  const deltas: SimulateTxDelta[] = [];
+  if (nativeDiff !== 0) {
+    deltas.push({
+      symbol: "SOL",
+      amount: (Math.abs(nativeDiff) / 1e9).toString(),
+      sign: nativeDiff > 0 ? "plus" : "minus",
+    });
+  }
+  for (const [mint, { diff, decimals }] of spl) {
+    if (diff === 0n) continue;
+    const abs = diff < 0n ? -diff : diff;
+    deltas.push({
+      symbol: shortPk(mint),
+      amount: formatAmount(abs, decimals),
+      sign: diff > 0n ? "plus" : "minus",
+    });
+  }
+  return deltas;
+}
+
+export type Phase2SimContext = {
+  rpcUrl: string;
+  connection: Connection;
+};
+
+export async function runPhase2Simulation(
+  ctx: Phase2SimContext,
   txBytes: Uint8Array,
   signerPubkey: PublicKey,
 ): Promise<SimulatePendingTxResult> {
@@ -209,174 +390,60 @@ export async function simulatePendingTx(
       outcome: "unparseable",
       reason: "無法解析交易",
       instructions: [],
-      feeLamports: null,
     };
   }
 
-  const connection = new Connection(rpcUrl, "confirmed");
+  const connection = ctx.connection;
   const message = tx.message;
   const deadline = new SimDeadline();
-
-  const keysResult = await resolveAccountKeys(connection, message, deadline);
-  if (keysResult === "rpc") {
-    return {
-      outcome: "rpc",
-      reason: "無法載入 address lookup table",
-      feeLamports: null,
-      feePayerShort: shortPk(message.staticAccountKeys[0]),
-    };
-  }
-  if (keysResult === "timeout") {
-    return { outcome: "rpc", reason: "逾時", feeLamports: null };
-  }
-
-  const accountKeys = keysResult;
-  const instructions = buildInstructions(message, accountKeys);
-  const feePayer = accountKeys[0];
+  const feePayer = message.staticAccountKeys[0];
   const feePayerShort = feePayer ? shortPk(feePayer) : undefined;
 
-  let feeLamports: number | null = null;
+  let value: RpcSimulateValue;
   try {
-    const fee = await deadline.run(() => connection.getFeeForMessage(message));
-    if (fee.value != null) feeLamports = fee.value;
-  } catch (e) {
-    if (e instanceof Error && e.message === "SIM_TIMEOUT") {
-      return { outcome: "rpc", reason: "逾時", instructions, feeLamports: null, feePayerShort };
-    }
-    feeLamports = null;
-  }
-
-  const tokenAccountsForSigner: PublicKey[] = [];
-  for (const key of accountKeys) {
-    if (!key || key.equals(signerPubkey)) continue;
-    if (deadline.remainingMs() <= 0) {
-      return { outcome: "rpc", reason: "逾時", instructions, feeLamports, feePayerShort };
-    }
-    try {
-      const info = await deadline.run(() => connection.getAccountInfo(key));
-      if (!info || !isTokenProgram(info.owner)) continue;
-      const parsed = parseTokenAccount(new Uint8Array(info.data));
-      if (parsed?.owner.equals(signerPubkey)) tokenAccountsForSigner.push(key);
-    } catch {
-      /* skip */
-    }
-  }
-
-  const addresses: PublicKey[] = [signerPubkey];
-  const seen = new Set([signerPubkey.toBase58()]);
-  for (const ta of tokenAccountsForSigner) {
-    const k = ta.toBase58();
-    if (!seen.has(k)) {
-      seen.add(k);
-      addresses.push(ta);
-    }
-  }
-
-  let preInfos: Awaited<ReturnType<Connection["getMultipleAccountsInfo"]>>;
-  try {
-    preInfos = await deadline.run(() => connection.getMultipleAccountsInfo(addresses));
+    value = await simulateTransactionRpc(ctx.rpcUrl, tx, deadline);
   } catch (e) {
     const reason = e instanceof Error && e.message === "SIM_TIMEOUT" ? "逾時" : "RPC 錯誤";
-    return { outcome: "rpc", reason, instructions, feeLamports, feePayerShort };
+    let instructions: SimulateTxInstruction[] | undefined;
+    const keysResult = await resolveAccountKeysFromTables(connection, message, deadline);
+    if (keysResult !== "rpc" && keysResult !== "timeout") {
+      instructions = buildInstructions(message, keysResult);
+    }
+    return { outcome: "rpc", reason, instructions, feePayerShort };
   }
 
-  let simRes: Awaited<ReturnType<Connection["simulateTransaction"]>>;
-  try {
-    simRes = await deadline.run(() =>
-      connection.simulateTransaction(tx, {
-        sigVerify: false,
-        replaceRecentBlockhash: true,
-        accounts: {
-          encoding: "base64",
-          addresses: addresses.map((a) => a.toBase58()),
-        },
-      }),
-    );
-  } catch (e) {
-    const reason = e instanceof Error && e.message === "SIM_TIMEOUT" ? "逾時" : "RPC 錯誤";
-    return { outcome: "rpc", reason, instructions, feeLamports, feePayerShort };
-  }
-
-  const value = simRes.value;
   const logs = tailLogs(value.logs ?? undefined);
-  const postAccounts = value.accounts;
-
-  if (!postAccounts || postAccounts.length !== addresses.length) {
-    if (value.err) {
+  let accountKeys: (PublicKey | undefined)[] = keysFromLoaded(message, value.loadedAddresses);
+  const needLu = v0LookupCount(message);
+  const haveLu =
+    (value.loadedAddresses?.writable?.length ?? 0) + (value.loadedAddresses?.readonly?.length ?? 0);
+  if (needLu > 0 && haveLu < needLu) {
+    const keysResult = await resolveAccountKeysFromTables(connection, message, deadline);
+    if (keysResult === "timeout") {
+      return { outcome: "rpc", reason: "逾時", feePayerShort };
+    }
+    if (keysResult === "rpc") {
       return {
-        outcome: "fail",
-        err: value.err,
-        logs,
-        reason: reasonFromFail(logs, value.err),
-        instructions,
-        feeLamports,
+        outcome: "rpc",
+        reason: "無法載入 address lookup table",
         feePayerShort,
       };
     }
+    accountKeys = keysResult;
+  }
+
+  const instructions = buildInstructions(message, accountKeys);
+
+  const deltasOr = buildDeltas(signerPubkey, accountKeys, value);
+  const deltas = deltasOr === "incomplete" ? undefined : deltasOr;
+
+  if (deltasOr === "incomplete" && !value.err) {
     return {
       outcome: "rpc",
-      reason: "模擬回傳帳戶對不上",
+      reason: "模擬結果缺少餘額欄位",
       instructions,
-      feeLamports,
       feePayerShort,
     };
-  }
-
-  let nativeDiff = 0;
-  const splDiffByMint = new Map<string, bigint>();
-
-  for (let i = 0; i < addresses.length; i++) {
-    const addr = addresses[i];
-    const pre = preInfos[i];
-    const post = postAccounts[i];
-
-    if (addr.equals(signerPubkey)) {
-      const preLam = pre?.lamports ?? 0;
-      const postLam = post?.lamports ?? 0;
-      nativeDiff = postLam - preLam;
-      continue;
-    }
-
-    const preBytes = accountDataBytes(pre);
-    const postBytes = accountDataBytes(post);
-    const preTok = preBytes?.length ? parseTokenAccount(preBytes) : null;
-    const postTok = postBytes?.length ? parseTokenAccount(postBytes) : null;
-    const preAmt = preTok?.amount ?? 0n;
-    const postAmt = postTok?.amount ?? 0n;
-    const mint = (postTok ?? preTok)?.mint;
-    if (!mint) continue;
-    const diff = postAmt - preAmt;
-    if (diff === 0n) continue;
-    const mintKey = mint.toBase58();
-    splDiffByMint.set(mintKey, (splDiffByMint.get(mintKey) ?? 0n) + diff);
-  }
-
-  const deltas: SimulateTxDelta[] = [];
-  if (nativeDiff !== 0) {
-    deltas.push({
-      symbol: "SOL",
-      amount: (Math.abs(nativeDiff) / 1e9).toString(),
-      sign: nativeDiff > 0 ? "plus" : "minus",
-    });
-  }
-
-  for (const [mintKey, diff] of splDiffByMint) {
-    if (diff === 0n) continue;
-    let decimals = 0;
-    try {
-      const mintInfo = await deadline.run(() =>
-        connection.getAccountInfo(new PublicKey(mintKey)),
-      );
-      if (mintInfo && mintInfo.data.length >= 45) decimals = mintInfo.data[44];
-    } catch {
-      /* default 0 */
-    }
-    const abs = diff < 0n ? -diff : diff;
-    deltas.push({
-      symbol: shortPk(mintKey),
-      amount: formatAmount(abs, decimals),
-      sign: diff > 0n ? "plus" : "minus",
-    });
   }
 
   if (value.err) {
@@ -387,16 +454,14 @@ export async function simulatePendingTx(
       reason: reasonFromFail(logs, value.err),
       deltas,
       instructions,
-      feeLamports,
       feePayerShort,
     };
   }
 
   return {
     outcome: "ok",
-    deltas,
+    deltas: deltas ?? [],
     instructions,
-    feeLamports,
     feePayerShort,
   };
 }

@@ -12,7 +12,12 @@
 - 一屏只做一件事。第一層是 **選項列表**（Accounts 的 Add、Settings 的分區）；選了再進 **操作頁或展開列**。禁止把產生／匯入／觀察／Combined 的表單全攤在同一頁。
 - 頂欄沿用方案 A：Home 為 widget；子頁為 **Back + 標題 + Menu**。Bottom Token／Activity **只**在 Home。
 - 色票與圓角對齊 [`design-demos/wallet-030-ui-concepts.html`](design-demos/wallet-030-ui-concepts.html) 的 CSS 變數（`--bg`、`--fill`、`--accent` 等）。不要另開一套高對比主題。
-- **頁殼直欄 flex（有頁級主行動時）：** 頂欄 `flex-shrink: 0` → 內容區 `flex: 1; min-height: 0; overflow: auto` → 主行動列 `flex-shrink: 0` 貼在 popup **殼底**。主按鈕（匯入、產生、建立）停在這列，**不**進內容捲動、**不**用 `position: fixed`／`absolute`／`sticky` 浮在內容上。沒有主行動的頁（選項列表）不畫這列。
+- **頁殼（popup 與 popout 每一個有頂欄／殼底主行動的新 SCREEN 都要過這關，不是某一版特例）：**
+  1. 整窗 **直欄 flex**，`html`／`body`／頁根 **高度 100%、`overflow: hidden`**。禁止整份文件跟著內容長高、讓視窗捲軸捲走頂欄與底欄。
+  2. **頂欄**（帳戶 widget 或 Back＋標題＋Menu）：`flex-shrink: 0`，永遠釘在視窗頂。
+  3. **中間內容：** `flex: 1; min-height: 0; overflow: auto`。**漏寫 `min-height: 0` 會讓頂欄／底欄被整頁捲走。這是已知反覆錯誤，開新畫面第一件事核對。**
+  4. **殼底主行動**（拒絕／批准、匯入、產生、建立）：`flex-shrink: 0` 釘在視窗底。主按鈕在這列，**不**進內容捲動。
+  5. **禁止**用 `position: fixed`／`absolute`／`sticky` 冒充頁殼。沒有頁級主行動的選項列表不畫底列。
 - **鎖定／解鎖全屏：** 無頂欄、無殼底 dock。標題＋說明＋密碼欄＋「解鎖」垂直置中。欄位全寬、`--fill` 底、focus 用 `--accent` 邊框且 `outline: none`。主按鈕在欄位下方內容區。錢包密碼用類 B 遮罩（`type="text"` + `-webkit-text-security`）。概念稿：[`design-demos/sign-message-ux.html`](design-demos/sign-message-ux.html) 的 lock 預設。
 
 ---
@@ -120,6 +125,7 @@ Add account：第一層四個選項；各自進操作頁。Back 回選項列表�
 
 - 為了塞資料把 popup 做成寬桌面後台。
 - 把頁級主按鈕做成 floating／sticky overlay，或放進可捲動內容末尾（長表單時按鈕被捲走或蓋住上層）。
+- 新 SCREEN 讓頂欄或拒絕／批准跟著中間內容一起捲（內容區漏 `min-height: 0` 或讓 `html`／`body` 長高）。
 - 同一設定既 auto-save 又要求 Save 才算數。
 - 用文字按鈕堆列尾。
 - 用說明文字教使用者「這頁怎麼存、清單怎麼分」。

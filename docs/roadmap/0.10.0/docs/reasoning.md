@@ -22,7 +22,7 @@ RPC 慢不應卡死簽署。模擬是諮詢。700ms hold 只防解鎖熱區誤�
 
 ## 為何 deltas 必須是 pre／post 差
 
-`simulateTransaction` 的 `accounts` 是模擬後狀態。若只帶 signer 或不做 pre-fetch，主舞台會把存量當增減，或把真實 token 轉帳畫成「無餘額變動」。諮詢的就是差額，公式必須寫在 HOW。
+主舞台諮詢的是增減，不是存量。現行 Agave／Helius 的 `simulateTransaction` 已回 `preBalances`／`postBalances`／`preTokenBalances`／`postTokenBalances`（與 `getTransaction.meta` 同形），SW 直接相減即可，不必再 pre-fetch 帳戶。產品不兼容缺這些欄的舊 RPC：缺欄當 `rpc`，不要猜存量。v0 帳戶序用 `loadedAddresses`，與 balance 陣列 index 對齊。
 
 ## 為何 SW 打 RPC、只加一個 UI command
 
@@ -58,4 +58,5 @@ popout 自己 fetch 會把 cluster URL、錯誤處理、sigVerify 參數複製�
 | 模擬寫入 chrome.storage | pending／未簽 tx 變成持久 |
 | 鎖定仍 `WALLET_LOCKED` 早退 | 與 0.9.0 簽署流程不一致 |
 | 批准時改用當下 active | 審批頁說謊 |
-| 只帶 signer 當模擬範圍 | 主舞台會漏 SPL 或把存量當增減 |
+| 只讀 `accounts` post 存量、或只帶 signer | 主舞台會漏 SPL 或把存量當增減 |
+| 為算差再 `getMultipleAccounts` | 新 RPC 已給 pre／post；多一輪且漏新建 ATA |

@@ -1,5 +1,5 @@
 import { sendExtensionRequest } from "../shared/ext-api";
-import type { PendingRecord, SignMessagePayload, SignTransactionPayload } from "../shared/commands";
+import { PENDING_TIMEOUT_MS, type PendingRecord, type SignMessagePayload, type SignTransactionPayload } from "../shared/commands";
 import type { SimulatePendingTxResult } from "../shared/simulate-pending-tx-types";
 import type { AccountMeta } from "../shared/storage-keys";
 import { SESSION_UNLOCKED } from "../shared/storage-keys";
@@ -9,6 +9,7 @@ const requestId = params.get("requestId");
 
 const viewUnlock = document.getElementById("view-unlock")!;
 const viewGone = document.getElementById("view-gone")!;
+const goneLead = document.getElementById("gone-lead")!;
 const viewLegacy = document.getElementById("view-legacy")!;
 const viewSign = document.getElementById("view-sign")!;
 
@@ -41,6 +42,59 @@ let approveHoldTimer: ReturnType<typeof setTimeout> | null = null;
 let lastSim: SimulatePendingTxResult | null = null;
 let simulating = false;
 let txRawHex = "";
+let simGen = 0;
+let lastAcceptedSimSeq = 0;
+let localCuLimit: number | null = null;
+let localCuPrice: number | null = null;
+let txCuEditable = false;
+let cuDirty = false;
+let draftLimitStr = "";
+let draftPriceStr = "";
+let cuApplyBusy = false;
+let feeDetailsOpen = false;
+
+const CU_LIMIT_MIN = 1;
+const CU_LIMIT_MAX = 1_400_000;
+const CU_PRICE_MIN = 0;
+const CU_PRICE_MAX = 1_000_000_000;
+
+function formatSolFromLamports(lamports: number): string {
+  const sol = lamports / 1e9;
+  return `${sol.toFixed(9).replace(/\.?0+$/, "") || "0"} SOL`;
+}
+
+function hasCuPair(): boolean {
+  return localCuLimit != null && localCuPrice != null;
+}
+
+function cuPairInBounds(limit: number | null, price: number | null): boolean {
+  return (
+    limit != null &&
+    price != null &&
+    limit >= CU_LIMIT_MIN &&
+    limit <= CU_LIMIT_MAX &&
+    price >= CU_PRICE_MIN &&
+    price <= CU_PRICE_MAX
+  );
+}
+
+function draftsAreDirty(limitRaw: string, priceRaw: string): boolean {
+  const committedL = localCuLimit == null ? "" : String(localCuLimit);
+  const committedP = localCuPrice == null ? "" : String(localCuPrice);
+  return limitRaw.trim() !== committedL || priceRaw.trim() !== committedP;
+}
+
+const CU_CHECK_SVG =
+  '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19 7"/></svg>';
+
+
+function parseCuFieldInput(raw: string): number | null {
+  const t = raw.trim();
+  if (!t) return null;
+  const n = Number(t);
+  if (!Number.isFinite(n)) return null;
+  return Math.trunc(n);
+}
 
 function hideAll(): void {
   viewUnlock.hidden = true;
@@ -160,13 +214,38 @@ function applyApproveFromSimulation(sim: SimulatePendingTxResult | null): void {
     setSignButtons({ approve: true });
     return;
   }
+  if (cuDirty || cuApplyBusy) {
+    setSignButtons({ approve: true });
+    return;
+  }
   setSignButtons({ approve: false });
 }
 
+let requestEnded = false;
+let expiryTimer: number | null = null;
+
 function showGone(): void {
+  requestEnded = true;
+  if (expiryTimer != null) {
+    window.clearTimeout(expiryTimer);
+    expiryTimer = null;
+  }
   hideAll();
-  document.title = "Airwave — 審批";
+  document.title = "Airwave — 請求已過期";
+  if (pending?.kind === "signTransaction") goneLead.textContent = "這筆交易已不能簽署。";
+  else if (pending?.kind === "signMessage") goneLead.textContent = "這筆訊息已不能簽署。";
+  else goneLead.textContent = "這筆請求已不能繼續。";
   viewGone.hidden = false;
+}
+
+function armExpiry(createdAt: number): void {
+  if (expiryTimer != null) window.clearTimeout(expiryTimer);
+  const remain = createdAt + PENDING_TIMEOUT_MS - Date.now();
+  if (remain <= 0) {
+    showGone();
+    return;
+  }
+  expiryTimer = window.setTimeout(() => showGone(), remain);
 }
 
 function showLegacyConnect(p: PendingRecord): void {
@@ -322,6 +401,7 @@ function renderDeltaCard(sim: SimulatePendingTxResult | null, loading: boolean):
   retry.setAttribute("aria-label", "重新查詢");
   retry.innerHTML =
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>';
+  retry.disabled = simulating || cuDirty || (txCuEditable && !hasCuPair());
   retry.addEventListener("click", () => void runSimulation());
   head.append(label, retry);
   card.append(head);
@@ -373,12 +453,169 @@ function renderDeltaCard(sim: SimulatePendingTxResult | null, loading: boolean):
   return card;
 }
 
+function renderFeeCard(sim: SimulatePendingTxResult | null, loading: boolean): HTMLElement {
+  const card = document.createElement("div");
+  card.className = "card fee-card";
+
+  const titleRow = document.createElement("div");
+  titleRow.className = "fee-card-head";
+  const title = document.createElement("span");
+  title.className = "card-label";
+  title.textContent = "交易費";
+  const totalEl = document.createElement("span");
+  totalEl.className = "fee-total";
+  titleRow.append(title, totalEl);
+  card.append(titleRow);
+
+  if (loading || (sim == null && txCuEditable)) {
+    totalEl.textContent = "估計中";
+  } else if (sim?.cuWriteError) {
+    totalEl.textContent = sim.cuWriteError;
+  } else if (sim?.totalFeeLamports != null) {
+    totalEl.textContent = formatSolFromLamports(sim.totalFeeLamports);
+  } else {
+    totalEl.textContent = "未知";
+  }
+
+  const details = document.createElement("details");
+  details.className = "fee-details";
+  const summary = document.createElement("summary");
+  summary.textContent = "簽名費 · CU";
+  details.append(summary);
+
+  const inner = document.createElement("div");
+  inner.className = "fee-details-inner";
+
+  const sigRow = document.createElement("div");
+  sigRow.className = "fee-row";
+  sigRow.innerHTML = `<span>簽名費</span><span>${sim?.sigFeeLamports != null ? formatSolFromLamports(sim.sigFeeLamports) : "未知"}</span>`;
+  inner.append(sigRow);
+
+  const priRow = document.createElement("div");
+  priRow.className = "fee-row";
+  const priVal =
+    sim?.priorityLamports != null ? formatSolFromLamports(sim.priorityLamports) : "未知";
+  priRow.innerHTML = `<span>優先費</span><span>${priVal}</span>`;
+  inner.append(priRow);
+
+  const cuGrid = document.createElement("div");
+  cuGrid.className = "cu-grid";
+
+  const limitWrap = document.createElement("label");
+  limitWrap.className = "cu-field";
+  limitWrap.textContent = "CU limit";
+  const limitInp = document.createElement("input");
+  limitInp.type = "text";
+  limitInp.inputMode = "numeric";
+  limitInp.autocomplete = "off";
+  limitInp.disabled = loading || !txCuEditable || sim?.cuWriteError != null;
+  const limitShown = cuDirty
+    ? draftLimitStr
+    : localCuLimit != null
+      ? String(localCuLimit)
+      : "";
+  limitInp.value = limitShown;
+  limitWrap.append(limitInp);
+
+  const priceWrap = document.createElement("label");
+  priceWrap.className = "cu-field";
+  priceWrap.textContent = "CU price";
+  const priceInp = document.createElement("input");
+  priceInp.type = "text";
+  priceInp.inputMode = "numeric";
+  priceInp.autocomplete = "off";
+  priceInp.disabled = loading || !txCuEditable || sim?.cuWriteError != null;
+  const priceShown = cuDirty
+    ? draftPriceStr
+    : localCuPrice != null
+      ? String(localCuPrice)
+      : "";
+  priceInp.value = priceShown;
+  priceWrap.append(priceInp);
+
+  const applyBtn = document.createElement("button");
+  applyBtn.type = "button";
+  applyBtn.className = "cu-apply";
+
+  const paintApply = (): void => {
+    const dirtyNow = draftsAreDirty(limitInp.value, priceInp.value);
+    if (!limitInp.disabled) {
+      cuDirty = dirtyNow && txCuEditable;
+      draftLimitStr = limitInp.value;
+      draftPriceStr = priceInp.value;
+    }
+    const limit = parseCuFieldInput(limitInp.value);
+    const price = parseCuFieldInput(priceInp.value);
+    const ok = cuPairInBounds(limit, price);
+    applyBtn.classList.remove("pending", "busy");
+    applyBtn.innerHTML = "";
+    if (cuApplyBusy) {
+      applyBtn.classList.add("busy");
+      applyBtn.disabled = true;
+      applyBtn.title = "套用中";
+      applyBtn.setAttribute("aria-label", "套用中");
+      const spin = document.createElement("span");
+      spin.className = "cu-apply-spin";
+      applyBtn.append(spin);
+    } else if (cuDirty && ok) {
+      applyBtn.classList.add("pending");
+      applyBtn.disabled = false;
+      applyBtn.title = "套用 CU";
+      applyBtn.setAttribute("aria-label", "套用 CU");
+      applyBtn.innerHTML = CU_CHECK_SVG;
+    } else if (cuDirty && !ok) {
+      applyBtn.classList.add("pending");
+      applyBtn.disabled = true;
+      applyBtn.title = "無法套用";
+      applyBtn.setAttribute("aria-label", "無法套用");
+      applyBtn.innerHTML = CU_CHECK_SVG;
+    } else {
+      applyBtn.disabled = true;
+      applyBtn.title = "已套用";
+      applyBtn.setAttribute("aria-label", "已套用");
+      applyBtn.innerHTML = CU_CHECK_SVG;
+    }
+    applyApproveFromSimulation(lastSim);
+  };
+
+  applyBtn.addEventListener("click", () => {
+    if (!txCuEditable || !requestId) return;
+    const limit = parseCuFieldInput(limitInp.value);
+    const price = parseCuFieldInput(priceInp.value);
+    if (!cuPairInBounds(limit, price)) return;
+    localCuLimit = limit;
+    localCuPrice = price;
+    cuDirty = false;
+    draftLimitStr = String(limit);
+    draftPriceStr = String(price);
+    cuApplyBusy = true;
+    void runSimulation();
+  });
+
+  cuGrid.append(limitWrap, priceWrap, applyBtn);
+  inner.append(cuGrid);
+  details.append(inner);
+  details.open = feeDetailsOpen;
+  details.addEventListener("toggle", () => {
+    feeDetailsOpen = details.open;
+  });
+  card.append(details);
+
+  if (txCuEditable) {
+    limitInp.addEventListener("input", paintApply);
+    priceInp.addEventListener("input", paintApply);
+  }
+  paintApply();
+
+  return card;
+}
+
 function renderTxDetails(sim: SimulatePendingTxResult | null): HTMLElement {
   const details = document.createElement("details");
   details.className = "tx-details";
   details.open = false;
   const summary = document.createElement("summary");
-  summary.textContent = "交易明細";
+  summary.textContent = "交易明細 · 指令";
   details.append(summary);
 
   const inner = document.createElement("div");
@@ -409,22 +646,34 @@ function renderTxDetails(sim: SimulatePendingTxResult | null): HTMLElement {
         u.textContent = "帳戶未解析";
         row.append(u);
       }
+      const accts = ix.accounts ?? [];
+      if (accts.length) {
+        const ul = document.createElement("ul");
+        ul.className = "ix-accounts";
+        for (const a of accts) {
+          const li = document.createElement("li");
+          li.textContent = a.short;
+          if (a.unresolved) li.classList.add("unresolved");
+          ul.append(li);
+        }
+        row.append(ul);
+      }
+      const dataEl = document.createElement("p");
+      dataEl.className = "ix-data";
+      dataEl.textContent =
+        ix.dataHex != null && ix.dataHex.length > 0 ? ix.dataHex : "（空）";
+      row.append(dataEl);
       inner.append(row);
     });
   }
 
-  const feeLine = document.createElement("p");
-  feeLine.className = "fee-line";
   const payer = sim?.feePayerShort;
-  const fee = sim?.feeLamports;
-  if (payer && fee != null) {
-    feeLine.textContent = `費用付款人 ${payer} · 預估手續費 ${(fee / 1e9).toString()} SOL`;
-  } else if (payer) {
-    feeLine.textContent = `費用付款人 ${payer} · 預估手續費 未知`;
-  } else {
-    feeLine.textContent = "預估手續費 未知";
+  if (payer) {
+    const feeLine = document.createElement("p");
+    feeLine.className = "fee-line";
+    feeLine.textContent = `費用付款人 ${payer}`;
+    inner.append(feeLine);
   }
-  inner.append(feeLine);
 
   const rawDetails = document.createElement("details");
   rawDetails.className = "raw-details";
@@ -445,6 +694,7 @@ function renderSignTransactionBody(sim: SimulatePendingTxResult | null, loading:
   const notice = renderSimulationNotice(sim);
   if (notice) signBody.append(notice);
   signBody.append(renderDeltaCard(sim, loading));
+  signBody.append(renderFeeCard(sim, loading));
   signBody.append(renderTxDetails(sim));
 }
 
@@ -463,14 +713,45 @@ function exposedPk(meta: AccountMeta): string {
 
 async function runSimulation(): Promise<void> {
   if (!requestId || !pending || pending.kind !== "signTransaction") return;
+  const myGen = ++simGen;
   simulating = true;
   renderSignTransactionBody(lastSim, true);
-  const res = await sendExtensionRequest("ui.simulatePendingTx", { requestId });
+
+  const payload: { requestId: string; cuLimit?: number; cuPrice?: number } = { requestId };
+  if (hasCuPair()) {
+    payload.cuLimit = localCuLimit!;
+    payload.cuPrice = localCuPrice!;
+  }
+
+  const res = await sendExtensionRequest("ui.simulatePendingTx", payload);
+  if (requestEnded || myGen !== simGen) return;
   simulating = false;
+  cuApplyBusy = false;
   if (!res.ok) {
-    lastSim = { outcome: "rpc", reason: res.error?.message ?? "RPC 錯誤", feeLamports: null };
+    if (res.error?.code === "NOT_FOUND") {
+      showGone();
+      return;
+    }
+    lastSim = {
+      outcome: "rpc",
+      reason: res.error?.message ?? "RPC 錯誤",
+      sigFeeLamports: null,
+      priorityLamports: null,
+      totalFeeLamports: null,
+    };
   } else {
-    lastSim = res.result as SimulatePendingTxResult;
+    const result = res.result as SimulatePendingTxResult;
+    const seq = result.seq ?? 0;
+    if (seq < lastAcceptedSimSeq) {
+      renderSignTransactionBody(lastSim, false);
+      applyApproveFromSimulation(lastSim);
+      return;
+    }
+    lastAcceptedSimSeq = seq;
+    lastSim = result;
+    txCuEditable = result.cuEditable === true;
+    if (result.cuLimit != null) localCuLimit = result.cuLimit;
+    if (result.cuPrice != null) localCuPrice = result.cuPrice;
   }
   renderSignTransactionBody(lastSim, false);
   applyApproveFromSimulation(lastSim);
@@ -530,6 +811,15 @@ async function renderSignShell(
   } else {
     txRawHex = hexCompact(bytesFromSignTransaction(p));
     lastSim = null;
+    localCuLimit = null;
+    localCuPrice = null;
+    txCuEditable = false;
+    lastAcceptedSimSeq = 0;
+    cuDirty = false;
+    draftLimitStr = "";
+    draftPriceStr = "";
+    cuApplyBusy = false;
+    feeDetailsOpen = false;
     renderSignTransactionBody(null, true);
     void runSimulation();
   }
@@ -575,6 +865,8 @@ async function loadPending(): Promise<void> {
     return;
   }
   pending = res.result as PendingRecord;
+  armExpiry(pending.createdAt);
+  if (requestEnded) return;
 
   if (pending.kind === "connect") {
     showLegacyConnect(pending);
@@ -601,6 +893,13 @@ async function loadPending(): Promise<void> {
 
 async function resolve(decision: "approve" | "reject"): Promise<void> {
   if (!requestId || resolving) return;
+  if (
+    decision === "approve" &&
+    pending?.kind === "signTransaction" &&
+    (cuDirty || cuApplyBusy)
+  ) {
+    return;
+  }
   resolving = true;
   if (pending?.kind === "signMessage" || pending?.kind === "signTransaction") {
     setSignButtons({ reject: true, approve: true, approveLabel: "批准中" });
@@ -610,6 +909,10 @@ async function resolve(decision: "approve" | "reject"): Promise<void> {
   }
   const res = await sendExtensionRequest("ui.resolvePending", { requestId, decision });
   if (!res.ok) {
+    if (res.error?.code === "NOT_FOUND") {
+      showGone();
+      return;
+    }
     resolving = false;
     const msg = res.error?.message ?? "失敗";
     if (pending?.kind === "signMessage" || pending?.kind === "signTransaction") {
@@ -633,6 +936,10 @@ async function resolve(decision: "approve" | "reject"): Promise<void> {
   }
   window.close();
 }
+
+document.getElementById("btn-close-expired")!.addEventListener("click", () => {
+  window.close();
+});
 
 btnUnlock.addEventListener("click", async () => {
   unlockError.hidden = true;

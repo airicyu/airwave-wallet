@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 簽署交易 CU 預算（概念稿）</title>
+    <!--
+      掃描路徑：標題／站點 → 預期變動 → 交易費卡（總費＝簽名費＋優先費）→ 交易明細（指令）。
+      優先費唯讀＝limit×price。CU 兩欄為一對；右側單一確認圖示提交後才重模擬。
+    -->
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --accent-dim: #2a6ea8;
+        --danger: #c75050;
+        --ok: #4ecb8d;
+        --popup-w: 384px;
+        --popup-h: 600px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1120px; margin: 0 auto; padding: 28px 20px 56px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 18px; max-width: 54rem; font-size: 0.92rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+      .chip {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 7px 13px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      .chip:hover { border-color: var(--text-dim); }
+      .chip.active { border-color: var(--accent); background: #1a2838; }
+      .layout {
+        display: grid;
+        grid-template-columns: var(--popup-w) 1fr;
+        gap: 28px;
+        align-items: start;
+      }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+      .phone-cap { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+      .top h2 {
+        font-size: 0.95rem;
+        margin: 0;
+        font-weight: 600;
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .bar-wallet-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        min-width: 0;
+        flex: 1 1 auto;
+      }
+      .bar-wallet {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        max-width: 100%;
+        padding: 5px 12px 5px 5px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+        color: inherit;
+        font: inherit;
+        cursor: default;
+      }
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+      }
+      .bar-wallet-text { min-width: 0; flex: 1; text-align: left; }
+      .bar-wallet-name {
+        display: block;
+        font-size: 0.76rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .bar-wallet-addr {
+        display: block;
+        font-size: 0.62rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-family: var(--mono);
+      }
+      .icon-btn {
+        flex-shrink: 0;
+        width: 34px; height: 34px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .icon-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+      .icon-btn:hover { background: var(--fill); border-color: var(--stroke); color: var(--text); }
+      .body { flex: 1; min-height: 0; overflow: auto; padding: 10px 10px 12px; }
+      .body::-webkit-scrollbar { width: 6px; }
+      .body::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 4px; }
+      .dock {
+        flex-shrink: 0;
+        padding: 10px 12px 12px;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        display: flex;
+        gap: 8px;
+      }
+      .dock[hidden] { display: none !important; }
+      .ghost {
+        flex: 0 0 38%;
+        border: 1px solid var(--stroke);
+        background: transparent;
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .ghost:hover { color: var(--text); border-color: var(--text-dim); }
+      .ghost:disabled { opacity: 0.4; cursor: default; }
+      .primary {
+        flex: 1;
+        border: 0;
+        background: var(--accent);
+        color: #061018;
+        font-weight: 700;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .primary:disabled { opacity: 0.4; cursor: default; }
+      .page-title {
+        margin: 0 0 8px;
+        text-align: center;
+        font-size: 0.9rem;
+        font-weight: 650;
+        letter-spacing: 0.02em;
+      }
+      .site-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        margin: 0 0 8px;
+      }
+      .site-k { flex-shrink: 0; font-size: 0.64rem; color: var(--text-dim); }
+      .site-code {
+        min-width: 0;
+        max-width: 100%;
+        padding: 1px 6px;
+        border-radius: 4px;
+        border: 1px solid var(--stroke-soft);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text-muted);
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .sec-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        margin: 0 0 6px;
+      }
+      .sec-head h3 {
+        margin: 0;
+        font-size: 0.64rem;
+        color: var(--text-dim);
+        font-weight: 600;
+      }
+      .count { font-size: 0.62rem; color: var(--text-dim); }
+      .card {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+      .ix {
+        display: grid;
+        grid-template-columns: 20px 1fr;
+        gap: 6px;
+        padding: 7px 10px;
+        border-top: 1px solid var(--stroke-soft);
+        align-items: start;
+      }
+      .ix:first-child { border-top: 0; }
+      .ix .n {
+        font-size: 0.62rem;
+        color: var(--text-dim);
+        font-variant-numeric: tabular-nums;
+        padding-top: 2px;
+      }
+      .ix .prog {
+        font-size: 0.72rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .ix .desc { margin: 2px 0 0; font-size: 0.68rem; color: var(--text-muted); }
+      .fee-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin: 10px 0 0;
+      }
+      .fee-cell {
+        border: 1px solid var(--stroke-soft);
+        background: var(--bg);
+        border-radius: var(--radius-sm);
+        padding: 8px 10px;
+        min-width: 0;
+      }
+      .fee-cell .lbl { display: block; font-size: 0.62rem; color: var(--text-dim); margin-bottom: 3px; }
+      .fee-cell .val {
+        font-size: 0.74rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .fee-cell .val.mono { font-family: var(--mono); font-size: 0.66rem; }
+      .sim-stage {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        padding: 10px 12px 10px;
+        margin-bottom: 8px;
+      }
+      .sim-head {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0 0 6px;
+      }
+      .sim-head h3 {
+        margin: 0;
+        flex: 1;
+        font-size: 0.72rem;
+        color: var(--text);
+        font-weight: 650;
+      }
+      .sim-wait { margin: 6px 0 2px; color: var(--text-muted); font-size: 0.78rem; }
+      .bal { list-style: none; margin: 0; padding: 0; }
+      .bal li {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        padding: 6px 0;
+        border-top: 1px solid var(--stroke-soft);
+      }
+      .bal li:first-child { border-top: 0; padding-top: 2px; }
+      .bal .tok { color: var(--text); font-size: 0.78rem; font-weight: 600; }
+      .bal .amt { font-size: 0.88rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+      .bal .plus { color: var(--ok); }
+      .bal .minus { color: #e8a0a0; }
+      .sim-empty { margin: 4px 0 2px; color: var(--text-muted); font-size: 0.78rem; }
+      .warn-card {
+        border: 1px solid #4a2a2a;
+        background: #1a1416;
+        border-radius: var(--radius);
+        padding: 12px 14px;
+        margin-bottom: 10px;
+      }
+      .warn-card .warn-title {
+        margin: 0;
+        font-size: 0.78rem;
+        font-weight: 650;
+        color: #e8a0a0;
+      }
+      .warn-card .warn-reason {
+        margin: 4px 0 0;
+        font-size: 0.72rem;
+        color: #c9a0a0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      details.fail-detail {
+        margin: 10px -14px -12px;
+        border-top: 1px solid #4a2a2a;
+        background: transparent;
+      }
+      details.fail-detail > summary {
+        cursor: pointer;
+        list-style: none;
+        padding: 8px 14px;
+        font-size: 0.78rem;
+        color: #c9a0a0;
+      }
+      details.fail-detail > summary::-webkit-details-marker { display: none; }
+      details.fail-detail pre {
+        margin: 0;
+        padding: 0 14px 12px;
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        color: #9a7a7a;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 140px;
+        overflow: auto;
+      }
+      details.tx-detail {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+      details.tx-detail > summary {
+        cursor: pointer;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 34px;
+        padding: 6px 10px;
+        font-size: 0.74rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+      details.tx-detail > summary::-webkit-details-marker { display: none; }
+      details.tx-detail > summary:hover { background: var(--fill); }
+      details.tx-detail[open] > summary {
+        border-bottom: 1px solid var(--stroke-soft);
+      }
+      details.tx-detail > summary .cu-adv-chev { color: var(--text-muted); }
+      details.tx-detail[open] > summary .cu-adv-chev { transform: rotate(90deg); color: var(--text); }
+      details.tx-detail[open] > summary .cu-adv-hint { display: none; }
+      .tx-detail-body { padding: 10px 12px 12px; }
+      .tx-detail-body .card { margin-bottom: 0; border: 0; background: transparent; }
+
+      .cu-adv-chev {
+        flex-shrink: 0;
+        width: 16px;
+        height: 16px;
+        display: inline-flex;
+        color: var(--text-muted);
+        transition: transform 0.12s ease;
+      }
+      .cu-adv-chev svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+      .cu-adv-title { flex-shrink: 0; }
+      .cu-adv-hint {
+        margin-left: auto;
+        min-width: 0;
+        font-size: 0.62rem;
+        font-weight: 500;
+        color: var(--text-dim);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      details.tx-detail[open] > summary .cu-adv-hint { display: none; }
+
+      .fee-card {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        padding: 10px 12px 10px;
+        margin-bottom: 8px;
+      }
+      .fee-card h3 {
+        margin: 0 0 4px;
+        font-size: 0.64rem;
+        color: var(--text-dim);
+        font-weight: 600;
+      }
+      .fee-total {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        min-width: 0;
+        margin-bottom: 8px;
+      }
+      .fee-total .n {
+        flex: 1;
+        min-width: 0;
+        font-size: 1.05rem;
+        font-weight: 650;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .fee-total .u { flex-shrink: 0; font-size: 0.68rem; color: var(--text-muted); }
+      .fee-break {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+      .fee-break .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        font-size: 0.74rem;
+      }
+      .fee-break .k { color: var(--text-dim); }
+      .fee-break .v {
+        font-variant-numeric: tabular-nums;
+        color: var(--text);
+        white-space: nowrap;
+      }
+      .cu-duo {
+        display: grid;
+        grid-template-columns: 1fr 1fr 32px;
+        gap: 8px;
+        align-items: end;
+      }
+      .cu-duo label {
+        display: block;
+        font-size: 0.62rem;
+        color: var(--text-dim);
+        margin-bottom: 4px;
+      }
+      .cu-duo input[type="text"] {
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-sm);
+        background: var(--fill);
+        color: var(--text);
+        font: inherit;
+        font-size: 0.74rem;
+        font-variant-numeric: tabular-nums;
+      }
+      .cu-duo input[type="text"]:focus { outline: none; border-color: var(--accent); }
+      .cu-duo input[type="text"]:disabled {
+        color: var(--text-dim);
+        opacity: 0.75;
+      }
+      .cu-apply {
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        margin-bottom: 0;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-dim);
+        opacity: 0.5;
+        cursor: default;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .cu-apply svg {
+        width: 17px;
+        height: 17px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .cu-apply.pending {
+        opacity: 1;
+        color: var(--accent);
+        border-color: var(--accent-dim);
+        background: #1a2838;
+        cursor: pointer;
+      }
+      .cu-apply.pending:hover { border-color: var(--accent); color: #7ec4f8; }
+      .cu-apply.busy {
+        opacity: 0.75;
+        color: var(--text-muted);
+        cursor: default;
+      }
+      .cu-apply:disabled:not(.pending):not(.busy) { opacity: 0.35; cursor: default; }
+      .cu-apply.pending:disabled {
+        opacity: 0.45;
+        cursor: default;
+        color: var(--text-muted);
+        border-color: var(--stroke);
+        background: transparent;
+      }
+      .cu-apply .spin {
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--stroke);
+        border-top-color: var(--text-muted);
+        border-radius: 50%;
+        animation: cu-spin 0.7s linear infinite;
+      }
+      @keyframes cu-spin { to { transform: rotate(360deg); } }
+      .fee-card.muted .fee-total .n { color: var(--text-dim); }
+      details.fee-more {
+        margin: 0 -12px -10px;
+        border-top: 1px solid var(--stroke-soft);
+      }
+      details.fee-more > summary {
+        cursor: pointer;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 32px;
+        padding: 5px 12px;
+        font-size: 0.74rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+      details.fee-more > summary::-webkit-details-marker { display: none; }
+      details.fee-more > summary:hover { background: var(--fill); }
+      details.fee-more[open] > summary { border-bottom: 1px solid var(--stroke-soft); }
+      details.fee-more > summary .cu-adv-chev { color: var(--text-muted); }
+      details.fee-more[open] > summary .cu-adv-chev { transform: rotate(90deg); color: var(--text); }
+      details.fee-more[open] > summary .cu-adv-hint { display: none; }
+      .fee-more-body { padding: 8px 12px 10px; }
+      .fee-more-body .fee-break { margin-bottom: 10px; }
+
+      .hub-list { display: flex; flex-direction: column; gap: 8px; }
+      .nav-row {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-align: left;
+        padding: 12px;
+        margin: 0;
+        border: 1px solid var(--stroke);
+        border-radius: 10px;
+        background: var(--fill);
+        color: var(--text);
+        cursor: pointer;
+        font: inherit;
+      }
+      .nav-row .meta { flex: 1; min-width: 0; }
+      .nav-row .title { display: block; font-size: 0.88rem; font-weight: 600; }
+      .nav-row .sum {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-family: var(--mono);
+      }
+      .nav-row .sum.plain { font-family: inherit; }
+      .nav-row .chev { color: var(--text-dim); flex-shrink: 0; }
+      .field { margin-bottom: 12px; }
+      .field > label {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        margin-bottom: 5px;
+      }
+      .field input[type="text"] {
+        width: 100%;
+        background: var(--fill);
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        color: var(--text);
+        font: inherit;
+        font-size: 0.88rem;
+        padding: 8px 10px;
+      }
+      .field input[type="text"]:focus { outline: none; border-color: var(--accent); }
+
+      .notes { font-size: 0.86rem; color: var(--text-muted); }
+      .notes h2 { font-size: 0.95rem; color: var(--text); margin: 0 0 10px; }
+      .notes h3 { font-size: 0.82rem; color: var(--text); margin: 18px 0 8px; }
+      .notes ul { padding-left: 1.2rem; margin: 0 0 8px; }
+      .notes li { margin: 0 0 6px; }
+      .tag {
+        display: inline-block;
+        font-size: 0.68rem;
+        letter-spacing: 0.04em;
+        border: 1px solid var(--accent-dim);
+        color: var(--accent);
+        border-radius: 999px;
+        padding: 1px 8px;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>簽署交易 · 交易費</h1>
+      <p class="lede">
+        非正式契約。獨立「交易費」卡：總費＝簽名費＋優先費。CU limit 與 CU price 為一對，右側單一確認圖示提交後才改 Compute Budget、才重模擬。
+        示範 <code>https://swap.example.test</code>。
+      </p>
+      <div class="controls" role="tablist" aria-label="畫面狀態">
+        <button class="chip active" type="button" data-preset="unsigned">未簽 · 就緒</button>
+        <button class="chip" type="button" data-preset="dirty">編輯中 dirty</button>
+        <button class="chip" type="button" data-preset="applied">確認後</button>
+        <button class="chip" type="button" data-preset="estimating">估計中</button>
+        <button class="chip" type="button" data-preset="raised">較高 limit</button>
+        <button class="chip" type="button" data-preset="signed">已簽名</button>
+        <button class="chip" type="button" data-preset="settings">Settings · Default CU price</button>
+        <button class="chip" type="button" data-preset="fail">模擬失敗</button>
+      </div>
+      <div class="layout">
+        <div>
+          <p class="phone-cap">Popout 384×600</p>
+          <div class="phone" id="phone">
+            <div class="top" id="top"></div>
+            <div class="body" id="body"></div>
+            <div class="dock" id="dock"></div>
+          </div>
+        </div>
+        <aside class="notes">
+          <h2>畫面意圖</h2>
+          <p><span class="tag">非正式</span>交易費獨立一卡。總費是簽名費加優先費。</p>
+          <ul>
+            <li>主舞台仍是 phase 2 預期變動。沒有「會成功」。</li>
+            <li>總費永遠可見。簽名費／優先費／CU 收在預設關的明細。</li>
+            <li>配對右側一顆狀態圖示：已套用為淡勾；任一欄相對上次提交變 dirty 則變待確認。點擊才同時套用兩欄、更新 ix、重模擬。不是逐鍵 debounce。</li>
+            <li>dirty 或超出範圍時批准停用；確認成功後圖示再變淡，批准才可點。</li>
+            <li>已簽名：三筆費用與 CU 皆唯讀，圖示淡化。批准不改 instruction。</li>
+            <li>Settings「Default CU price」，出廠 25000。</li>
+          </ul>
+          <h3>計算（本稿 JS）</h3>
+          <p>優先費 lamports = ceil(limit × price / 1e6)，與鏈上進位相同。簽名費示範 5,000 lamports（一個簽名）。總費＝兩者相加。</p>
+        </aside>
+      </div>
+    </div>
+    <script>
+      const ORIGIN = "https://swap.example.test";
+      const MAX_CU = 1_400_000;
+      const MICRO = 1_000_000;
+      const LAMPORTS_PER_SOL = 1_000_000_000;
+      const FACTORY_PRICE = 25000;
+      const SIG_LAMPORTS = 5000;
+      const ICO = {
+        retry: '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>',
+        copy: '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+        back: '<svg viewBox="0 0 24 24"><path d="M15 6 9 12l6 6"/></svg>',
+        menu: '<svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h14"/></svg>',
+        chev: '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>',
+        check: '<svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg>',
+      };
+      let preset = "unsigned";
+      let settingsScreen = "cu-price";
+      let defaultPrice = FACTORY_PRICE;
+      let committedLimit = 400000;
+      let committedPrice = FACTORY_PRICE;
+      let draftLimit = "400000";
+      let draftPrice = String(FACTORY_PRICE);
+      let pairBusy = false;
+      let simKindOverride = null;
+      let feeOpen = false;
+      let applyTimer = 0;
+      const $ = (id) => document.getElementById(id);
+
+      function productOf(lim, pr) {
+        const micro = BigInt(lim) * BigInt(pr);
+        return Number((micro + BigInt(MICRO - 1)) / BigInt(MICRO));
+      }
+      function product() {
+        return productOf(committedLimit, committedPrice);
+      }
+      function solStr(lamports) {
+        if (!Number.isFinite(lamports) || lamports < 0) return "—";
+        const neg = lamports < 0;
+        const n = Math.abs(lamports);
+        const whole = Math.floor(n / LAMPORTS_PER_SOL);
+        let frac = String(n % LAMPORTS_PER_SOL).padStart(9, "0").replace(/0+$/, "");
+        const s = frac ? whole + "." + frac : String(whole);
+        return neg ? "−" + s : s;
+      }
+      function parseIntField(str, min, max) {
+        const n = Number(String(str).replace(/[^\d]/g, ""));
+        if (!Number.isFinite(n)) return null;
+        return Math.min(max, Math.max(min, Math.floor(n)));
+      }
+      function parseStrict(str, min, max) {
+        const t = String(str).trim();
+        if (!/^\d+$/.test(t)) return null;
+        const n = Number(t);
+        if (!Number.isFinite(n) || n < min || n > max) return null;
+        return n;
+      }
+      function parsedDraft() {
+        const lim = parseStrict(draftLimit, 1, MAX_CU);
+        const pr = parseStrict(draftPrice, 0, 1_000_000_000);
+        return { lim, pr, ok: lim != null && pr != null };
+      }
+      function pairDirty() {
+        const { lim, pr, ok } = parsedDraft();
+        if (!ok) return true;
+        return lim !== committedLimit || pr !== committedPrice;
+      }
+      function canEditPair() {
+        return preset === "unsigned" || preset === "dirty" || preset === "applied" || preset === "raised" || preset === "fail";
+      }
+
+      const SWAP_IX = [
+        { prog: "Compute Budget", desc: "設定計算單位上限" },
+        { prog: "Associated Token Account", desc: "建立關聯代幣帳戶" },
+        { prog: "Token Program", desc: "轉移代幣" },
+        { prog: "Jupiter Aggregator" },
+      ];
+      const FAIL_LOGS = `err: { InstructionError: [2, { Custom: 1 }] }
+Program log: Instruction: Transfer
+Program log: Error: insufficient lamports 890880, need 1000000000
+Program 11111111111111111111111111111111 failed: custom program error: 0x1`;
+
+      function applyPreset(name) {
+        preset = name;
+        pairBusy = false;
+        simKindOverride = null;
+        if (applyTimer) clearTimeout(applyTimer);
+        if (name === "unsigned") {
+          feeOpen = false;
+          committedLimit = 400000;
+          committedPrice = defaultPrice;
+          draftLimit = String(committedLimit);
+          draftPrice = String(committedPrice);
+        } else if (name === "dirty") {
+          feeOpen = true;
+          committedLimit = 400000;
+          committedPrice = defaultPrice;
+          draftLimit = "520000";
+          draftPrice = String(defaultPrice);
+        } else if (name === "applied") {
+          feeOpen = true;
+          committedLimit = 520000;
+          committedPrice = defaultPrice;
+          draftLimit = String(committedLimit);
+          draftPrice = String(committedPrice);
+        } else if (name === "estimating") {
+          feeOpen = false;
+          committedLimit = 400000;
+          committedPrice = defaultPrice;
+          draftLimit = String(committedLimit);
+          draftPrice = String(committedPrice);
+        } else if (name === "raised") {
+          feeOpen = true;
+          committedLimit = 1000000;
+          committedPrice = defaultPrice;
+          draftLimit = String(committedLimit);
+          draftPrice = String(committedPrice);
+        } else if (name === "signed") {
+          feeOpen = false;
+          committedLimit = 400000;
+          committedPrice = defaultPrice;
+          draftLimit = String(committedLimit);
+          draftPrice = String(committedPrice);
+        } else if (name === "fail") {
+          feeOpen = false;
+          committedLimit = 400000;
+          committedPrice = defaultPrice;
+          draftLimit = String(committedLimit);
+          draftPrice = String(committedPrice);
+        } else if (name === "settings") {
+          settingsScreen = "cu-price";
+        }
+      }
+
+      function topBarSign() {
+        return `
+          <div class="bar-wallet-group">
+            <div class="bar-wallet" title="主要  4aF1…pda4">
+              <span class="avatar" aria-hidden="true">主</span>
+              <span class="bar-wallet-text">
+                <span class="bar-wallet-name">主要</span>
+                <span class="bar-wallet-addr">4aF1…pda4</span>
+              </span>
+            </div>
+            <button class="icon-btn" type="button" title="複製" aria-label="複製">${ICO.copy}</button>
+          </div>`;
+      }
+
+      function ixs(items) {
+        return `
+          <div class="sec-head"><h3>指令</h3><span class="count">${items.length} 條</span></div>
+          <div class="card">${items.map((it, i) => `
+            <div class="ix">
+              <span class="n">${i + 1}</span>
+              <div>
+                <div class="prog">${it.prog}</div>
+                ${it.desc ? `<p class="desc">${it.desc}</p>` : ""}
+              </div>
+            </div>`).join("")}
+          </div>`;
+      }
+
+      function txDetail() {
+        return `<details class="tx-detail">
+          <summary><span class="cu-adv-chev" aria-hidden="true">${ICO.chev}</span><span class="cu-adv-title">交易明細</span><span class="cu-adv-hint">指令</span></summary>
+          <div class="tx-detail-body">
+            ${ixs(SWAP_IX)}
+            <div class="fee-grid">
+              <div class="fee-cell">
+                <span class="lbl">費用付款人</span>
+                <span class="val mono">4aF1…pda4</span>
+              </div>
+            </div>
+          </div>
+        </details>`;
+      }
+
+      function simStage(kind) {
+        const retry = `<button class="icon-btn" type="button" title="重試模擬" aria-label="重試模擬">${ICO.retry}</button>`;
+        let notice = "";
+        let inner = "";
+        if (kind === "run") {
+          inner = `<p class="sim-wait">查詢中</p>`;
+        } else if (kind === "fail") {
+          notice = `<div class="warn-card"><p class="warn-title">預計交易失敗</p>
+            <p class="warn-reason" title="insufficient lamports">insufficient lamports</p>
+            <details class="fail-detail"><summary>失敗詳情</summary><pre>${FAIL_LOGS}</pre></details>
+          </div>`;
+          inner = `<p class="sim-empty">無法估計變動</p>`;
+        } else {
+          inner = `<ul class="bal">
+            <li><span class="tok">SOL</span><span class="amt minus">−0.0124</span></li>
+            <li><span class="tok">USDC</span><span class="amt plus">+2.10</span></li>
+          </ul>`;
+        }
+        return `${notice}<div class="sim-stage" id="simStage">
+          <div class="sim-head"><h3>預期變動</h3>${retry}</div>
+          <div id="simInner">${inner}</div>
+        </div>`;
+      }
+
+      function applyBtnHtml() {
+        const signed = preset === "signed";
+        const dirty = pairDirty();
+        const { ok } = parsedDraft();
+        if (pairBusy) {
+          return `<button class="cu-apply busy" type="button" disabled title="套用中" aria-label="套用中"><span class="spin" aria-hidden="true"></span></button>`;
+        }
+        if (signed || !canEditPair() || preset === "estimating") {
+          return `<button class="cu-apply" type="button" disabled title="已套用" aria-label="已套用">${ICO.check}</button>`;
+        }
+        if (dirty && ok) {
+          return `<button class="cu-apply pending" type="button" id="cuApply" title="套用 CU" aria-label="套用 CU">${ICO.check}</button>`;
+        }
+        if (dirty && !ok) {
+          return `<button class="cu-apply pending" type="button" id="cuApply" disabled title="無法套用" aria-label="無法套用">${ICO.check}</button>`;
+        }
+        return `<button class="cu-apply" type="button" disabled title="已套用" aria-label="已套用">${ICO.check}</button>`;
+      }
+
+      function feeCard(mode) {
+        const prio = product();
+        const total = SIG_LAMPORTS + prio;
+        const wait = mode === "estimating";
+        const edit = mode === "edit";
+        const totalTxt = wait ? "估計中" : `${solStr(total)}`;
+        const prioTxt = wait ? "估計中" : `${solStr(prio)} SOL`;
+        const sigTxt = `${solStr(SIG_LAMPORTS)} SOL`;
+        const limVal = wait ? "估計中" : draftLimit;
+        const prVal = wait ? "估計中" : draftPrice;
+        const dis = wait || !edit ? " disabled" : "";
+        const open = feeOpen ? " open" : "";
+        return `<div class="fee-card${wait ? " muted" : ""}">
+          <h3>交易費</h3>
+          <div class="fee-total">
+            <span class="n" id="feeTotalN">${totalTxt}</span>
+            ${wait ? "" : `<span class="u">SOL</span>`}
+          </div>
+          <details class="fee-more"${open}>
+            <summary><span class="cu-adv-chev" aria-hidden="true">${ICO.chev}</span><span class="cu-adv-title">明細</span><span class="cu-adv-hint">簽名費 · CU</span></summary>
+            <div class="fee-more-body">
+              <div class="fee-break">
+                <div class="row"><span class="k">簽名費</span><span class="v">${sigTxt}</span></div>
+                <div class="row"><span class="k">優先費</span><span class="v" id="feePrioV">${prioTxt}</span></div>
+              </div>
+              <div class="cu-duo">
+                <div>
+                  <label for="cuLimit">CU limit</label>
+                  <input id="cuLimit" type="text" inputmode="numeric" autocomplete="off" value="${limVal}"${dis} />
+                </div>
+                <div>
+                  <label for="cuPrice">CU price</label>
+                  <input id="cuPrice" type="text" inputmode="numeric" autocomplete="off" value="${prVal}"${dis} />
+                </div>
+                ${applyBtnHtml()}
+              </div>
+            </div>
+          </details>
+        </div>`;
+      }
+
+      function bindFeeFold() {
+        const more = document.querySelector("details.fee-more");
+        if (more) {
+          more.addEventListener("toggle", () => { feeOpen = more.open; });
+        }
+      }
+
+      function patchFees() {
+        const prio = product();
+        const total = SIG_LAMPORTS + prio;
+        const n = $("feeTotalN");
+        const p = $("feePrioV");
+        if (n) n.textContent = solStr(total);
+        if (p) p.textContent = `${solStr(prio)} SOL`;
+      }
+
+      function patchSim(kind) {
+        const inner = $("simInner");
+        if (!inner) return;
+        if (kind === "run") {
+          inner.innerHTML = `<p class="sim-wait">查詢中</p>`;
+        } else {
+          inner.innerHTML = `<ul class="bal">
+            <li><span class="tok">SOL</span><span class="amt minus">−0.0124</span></li>
+            <li><span class="tok">USDC</span><span class="amt plus">+2.10</span></li>
+          </ul>`;
+        }
+      }
+
+      function replaceApplyBtn() {
+        const duo = document.querySelector(".cu-duo");
+        if (!duo) return;
+        const old = duo.querySelector(".cu-apply");
+        const wrap = document.createElement("div");
+        wrap.innerHTML = applyBtnHtml();
+        const next = wrap.firstElementChild;
+        if (!next) {
+          if (old) old.remove();
+          return;
+        }
+        if (old) old.replaceWith(next);
+        else duo.appendChild(next);
+        bindApply();
+      }
+
+      function setApproveEnabled(on) {
+        const btn = $("btnApprove");
+        if (btn) btn.disabled = !on;
+      }
+
+      function approveAllowed() {
+        if (preset === "estimating" || pairBusy) return false;
+        if (preset === "signed") return true;
+        if (canEditPair() && pairDirty()) return false;
+        return true;
+      }
+
+      function syncPairChrome() {
+        replaceApplyBtn();
+        setApproveEnabled(approveAllowed());
+      }
+
+      function bindApply() {
+        const btn = $("cuApply");
+        if (!btn || btn.disabled) return;
+        btn.addEventListener("click", () => {
+          if (pairBusy || !canEditPair()) return;
+          const { lim, pr, ok } = parsedDraft();
+          if (!ok) return;
+          if (lim === committedLimit && pr === committedPrice) return;
+          committedLimit = lim;
+          committedPrice = pr;
+          draftLimit = String(lim);
+          draftPrice = String(pr);
+          pairBusy = true;
+          simKindOverride = "run";
+          patchFees();
+          patchSim("run");
+          syncPairChrome();
+          if (applyTimer) clearTimeout(applyTimer);
+          applyTimer = setTimeout(() => {
+            pairBusy = false;
+            simKindOverride = null;
+            if (preset === "dirty") preset = "applied";
+            patchSim("ok");
+            syncPairChrome();
+          }, 720);
+        });
+      }
+
+      function bindCuEditors() {
+        const limEl = $("cuLimit");
+        const prEl = $("cuPrice");
+        const onDraft = () => {
+          if (limEl) draftLimit = limEl.value;
+          if (prEl) draftPrice = prEl.value;
+          syncPairChrome();
+        };
+        if (limEl) limEl.addEventListener("input", onDraft);
+        if (prEl) prEl.addEventListener("input", onDraft);
+        bindApply();
+      }
+
+      function renderSettings() {
+        $("top").hidden = false;
+        $("dock").hidden = true;
+        $("dock").innerHTML = "";
+        if (settingsScreen === "hub") {
+          $("top").innerHTML = `
+            <button class="icon-btn" type="button" title="返回" aria-label="返回">${ICO.back}</button>
+            <h2>Settings</h2>
+            <button class="icon-btn" type="button" title="選單" aria-label="選單">${ICO.menu}</button>`;
+          $("body").innerHTML = `
+            <div class="hub-list">
+              <button class="nav-row" type="button">
+                <span class="meta"><span class="title">網路</span><span class="sum plain">Mainnet</span></span>
+                <span class="chev">${ICO.chev}</span>
+              </button>
+              <button class="nav-row" type="button">
+                <span class="meta"><span class="title">RPC</span><span class="sum">api.mainnet-beta…</span></span>
+                <span class="chev">${ICO.chev}</span>
+              </button>
+              <button class="nav-row" type="button" id="row-cu">
+                <span class="meta"><span class="title">Default CU price</span><span class="sum">${defaultPrice}</span></span>
+                <span class="chev">${ICO.chev}</span>
+              </button>
+              <button class="nav-row" type="button">
+                <span class="meta"><span class="title">錢包密碼</span><span class="sum plain"></span></span>
+                <span class="chev">${ICO.chev}</span>
+              </button>
+            </div>`;
+          $("row-cu").onclick = () => { settingsScreen = "cu-price"; render(); };
+          return;
+        }
+        $("top").innerHTML = `
+          <button class="icon-btn" type="button" id="btn-back" title="返回" aria-label="返回">${ICO.back}</button>
+          <h2>Default CU price</h2>
+          <button class="icon-btn" type="button" title="選單" aria-label="選單">${ICO.menu}</button>`;
+        $("body").innerHTML = `
+          <div class="field">
+            <label for="defPrice">Default CU price</label>
+            <input id="defPrice" type="text" inputmode="numeric" autocomplete="off" value="${defaultPrice}" />
+          </div>`;
+        $("btn-back").onclick = () => { settingsScreen = "hub"; render(); };
+        const inp = $("defPrice");
+        inp.addEventListener("blur", () => {
+          const n = parseIntField(inp.value, 0, 1_000_000_000);
+          if (n == null) { inp.value = String(defaultPrice); return; }
+          defaultPrice = n;
+          inp.value = String(defaultPrice);
+        });
+      }
+
+      function render() {
+        if (preset === "settings") {
+          renderSettings();
+          return;
+        }
+        $("top").hidden = false;
+        $("top").innerHTML = topBarSign();
+        $("dock").hidden = false;
+        const unsigned = preset !== "signed";
+        const estimating = preset === "estimating";
+        const fail = preset === "fail";
+        const simKind = simKindOverride || (estimating ? "run" : fail ? "fail" : "ok");
+        const mode = estimating ? "estimating" : unsigned ? "edit" : "signed";
+        $("body").innerHTML =
+          `<h2 class="page-title">簽署交易</h2>` +
+          `<div class="site-line"><span class="site-k">站點</span><span class="site-code" title="${ORIGIN}">${ORIGIN}</span></div>` +
+          simStage(simKind) +
+          feeCard(mode) +
+          txDetail();
+        $("dock").innerHTML = `
+          <button class="ghost" type="button">拒絕</button>
+          <button class="primary" type="button" id="btnApprove">批准</button>`;
+        setApproveEnabled(approveAllowed());
+        bindFeeFold();
+        if (mode === "edit") bindCuEditors();
+        else bindApply();
+      }
+
+      document.querySelectorAll("[data-preset]").forEach((b) => {
+        b.onclick = () => {
+          document.querySelectorAll("[data-preset]").forEach((x) => x.classList.toggle("active", x === b));
+          applyPreset(b.dataset.preset);
+          render();
+        };
+      });
+
+      applyPreset("unsigned");
+      render();
+    </script>
+  </body>
+</html>
