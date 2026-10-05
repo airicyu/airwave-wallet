@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.14.0 — 2026-10-05
+
+原始碼目錄化，使用者可見行為與 0.13.0 相同。Service worker 依職責分入 `messaging`、`session`、`storage`、`pending`、`simulate`、`send`、`home-tokens`、`handlers`、`wallet`。`wallet-handlers.ts` 改為 `wallet-dispatch.ts` 只分派命令。Popup 畫面進 `home`、`send`、`accounts`、`settings`、`onboarding`，小工具進 `lib`。審批殼抽出不讀模組狀態的格式化函式與模擬 notice 卡。未改訊息名、storage key、CSS、HTML，也未加依賴。
+
 ## 0.13.0 — 2026-10-05
 
 審批宿主：`walletSend` 改在 popup 殼內（`uiHost: popup`），`beginSend` 不再開 popout；網站 `connect`／`signMessage`／`signTransaction` 仍 popout。抽出 `wallet/src/approval/shell.ts` 共用審批 UI。錢包送出：批准後全頁「確認中」轉圈，鏈上 `confirmed` 後同一畫面變「已確認」，約 0.5s 回 Home 並重查。SW 立刻 `walletSendSettled`，不 sleep。`signTransaction` 批准仍立刻關窗。新增 `ui.abortPending`（關 popup／離審批 view 語意同拒絕）。Sidebar 宿主僅契約預留。

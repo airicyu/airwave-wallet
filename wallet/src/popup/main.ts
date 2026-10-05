@@ -7,18 +7,18 @@ import {
   parsePublicKeyBase58,
 } from "../shared/accounts";
 import type { AccountMeta } from "../shared/storage-keys";
-import { bindAccountsEvents, clearRevealSecret, renderAccountsList, renderConnections, renderManageScreen, renderRevealScreen, renderWidget } from "./accounts-ui";
+import { bindAccountsEvents, clearRevealSecret, renderAccountsList, renderConnections, renderManageScreen, renderRevealScreen, renderWidget } from "./accounts";
 import {
   abortWalletSendOnPopupUnload,
   bindWalletSendSettledListener,
   mountPopupApprovalShell,
   teardownApprovalShell,
-} from "./approval-host";
-import { bindCombinedCreateEvents, renderCombinedCreateScreen, resetCombinedCreate, validCombinedMembers } from "./combined-ui";
-import { el, elBtnBack, elDock, elDockPrimary, elImportSeedRoot, screens } from "./dom";
-import { isHomeView, renderLegalDoc, shortAddr } from "./format";
-import { bindGenerateSeedCopyButtons, renderGenerateChrome, renderGenerateSeedChrome, resetGenerateSeedFlow } from "./generate-seed-flow";
-import { detectSecret, syncImportSecretFmt } from "./import-secret";
+} from "./send";
+import { bindCombinedCreateEvents, renderCombinedCreateScreen, resetCombinedCreate, validCombinedMembers } from "./accounts";
+import { el, elBtnBack, elDock, elDockPrimary, elImportSeedRoot, screens } from "./lib";
+import { isHomeView, renderLegalDoc, shortAddr } from "./lib";
+import { bindGenerateSeedCopyButtons, renderGenerateChrome, renderGenerateSeedChrome, resetGenerateSeedFlow } from "./onboarding";
+import { detectSecret, syncImportSecretFmt } from "./onboarding";
 import {
   bindImportSeedUi,
   importSeedDockReady,
@@ -26,13 +26,13 @@ import {
   renderImportSeedScreen,
   requestSeedPreview,
   resetImportSeedFlow,
-} from "./import-seed-flow";
-import { hardenSensitiveTextInput, hardenWalletPasswordInput } from "./password-input";
-import { bindSendFormEvents, clearSendForm, sendFormValid, submitTokenSend, renderTokenSendScreen } from "./send-flow";
+} from "./onboarding";
+import { hardenSensitiveTextInput, hardenWalletPasswordInput } from "./lib";
+import { bindSendFormEvents, clearSendForm, sendFormValid, submitTokenSend, renderTokenSendScreen } from "./send";
 import {
   bindPopupShell,
   session,
-} from "./session";
+} from "./lib";
 import {
   bindSettingsEvents,
   changePasswordCanSubmit,
@@ -40,8 +40,8 @@ import {
   renderSettingsPanel,
   settingsFingerprint,
   submitChangePassword,
-} from "./settings-ui";
-import { refreshHomeAssets, renderTokenDetailScreen, scheduleRefreshHomeAssets } from "./tokens-ui";
+} from "./settings";
+import { refreshHomeAssets, renderTokenDetailScreen, scheduleRefreshHomeAssets } from "./home";
 import { SUBPAGE_TITLES, type State, type View } from "./types";
 import "../popout/style.css";
 

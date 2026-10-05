@@ -1,14 +1,10 @@
 import type { ExtensionRequest, ExtensionResponse, SignMessagePayload } from "../shared/commands";
 import { messageLooksLikeTransactionMessage } from "../shared/sign-message-tx";
-import { getPending, takePending, unbindPopoutWindow } from "./pending";
+import { handleDappCommand, handleUiCommand, handleWalletCommand } from "./handlers";
+import { respond, sendBridgeResult } from "./messaging";
+import { finishWalletSendWindowClosed, getPending, takePending, unbindPopoutWindow } from "./pending";
+import { pendingTimeoutHandlers } from "./send";
 import * as session from "./session";
-import { respond } from "./ext-respond";
-import { sendBridgeResult } from "./origin-notify";
-import { pendingTimeoutHandlers } from "./wallet-send-broadcast";
-import { finishWalletSendWindowClosed } from "./pending-timeout";
-import { handleDappCommand } from "./dapp-handlers";
-import { handleUiCommand } from "./ui-handlers";
-import { handleWalletCommand } from "./wallet-handlers";
 
 function isExtensionPage(sender: chrome.runtime.MessageSender): boolean {
   const url = sender.url ?? "";

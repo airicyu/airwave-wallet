@@ -1,0 +1,254 @@
+import { Keypair } from "@solana/web3.js";
+import bs58 from "bs58";
+import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
+import { decryptVault, encryptVault } from "../../shared/crypto-vault";
+import { SESSION_UNLOCKED, type AccountMeta } from "../../shared/storage-keys";
+import { respond } from "../messaging";
+import {
+  newAccountId,
+  pubkeyExists,
+  runVaultWrite,
+  secretToStored,
+} from "../session";
+import * as session from "../session";
+import {
+  readAccounts,
+  readActiveAccountId,
+  readConnections,
+  readSettings,
+  readVaultBlob,
+  writeAccounts,
+  writeActiveAccountId,
+  writeSettings,
+  writeVaultBlob,
+} from "../storage";
+
+export async function handleGetState(req: ExtensionRequest): Promise<ExtensionResponse> {
+  const accounts = await readAccounts();
+  const activeAccountId = await readActiveAccountId();
+  const settings = await readSettings();
+  const vaultExists = (await readVaultBlob()) != null;
+  const connections = await readConnections();
+  const connectionsList = Object.entries(connections).map(([origin, rec]) => ({
+    origin,
+    accountId: rec.accountId,
+    connectedAt: rec.connectedAt,
+  }));
+  return respond({
+    kind: "airwave-ext-res",
+    requestId: req.requestId,
+    ok: true,
+    result: {
+      vaultExists,
+      unlocked: session.isUnlocked(),
+      accounts,
+      activeAccountId,
+      settings,
+      connections: connectionsList,
+    },
+  });
+}
+
+export async function handleLock(req: ExtensionRequest): Promise<ExtensionResponse> {
+  await session.lock();
+  return respond({
+    kind: "airwave-ext-res",
+    requestId: req.requestId,
+    ok: true,
+    result: { locked: true },
+  });
+}
+
+export async function handleUnlock(req: ExtensionRequest): Promise<ExtensionResponse> {
+  const { password } = req.payload as { password: string };
+  const blob = await readVaultBlob();
+  if (!blob) {
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: { code: "NO_VAULT", message: "Create a wallet first" },
+    });
+  }
+  try {
+    const { secrets, key } = await decryptVault(password, blob);
+    session.setVaultCrypto(key, blob.kdfParams.salt);
+    session.loadSecrets(secrets);
+    await session.persistUnlockedSession();
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { unlocked: true },
+    });
+  } catch {
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: { code: "INVALID_PASSWORD", message: "密碼錯誤" },
+    });
+  }
+}
+
+export async function handleChangeVaultPassword(req: ExtensionRequest): Promise<ExtensionResponse> {
+  return runVaultWrite(async () => {
+    if (!session.isUnlocked()) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "WALLET_LOCKED", message: "請先解鎖錢包" },
+      });
+    }
+    const { currentPassword, newPassword } = req.payload as {
+      currentPassword: string;
+      newPassword: string;
+    };
+    if (typeof newPassword !== "string" || newPassword.length < 8) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "WEAK_PASSWORD", message: "新密碼過短" },
+      });
+    }
+    const blob = await readVaultBlob();
+    if (!blob) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "VAULT_MISSING", message: "尚未建立錢包" },
+      });
+    }
+    let secrets;
+    try {
+      const decrypted = await decryptVault(
+        typeof currentPassword === "string" ? currentPassword : "",
+        blob,
+      );
+      secrets = decrypted.secrets;
+    } catch {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "INVALID_PASSWORD", message: "密碼錯誤" },
+      });
+    }
+    try {
+      const { blob: newBlob, key: newKey } = await encryptVault(newPassword, secrets);
+      await chrome.storage.session.remove(SESSION_UNLOCKED);
+      await writeVaultBlob(newBlob);
+      session.setVaultCrypto(newKey, newBlob.kdfParams.salt);
+      session.loadSecrets(secrets);
+      await session.persistUnlockedSession();
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: true,
+        result: { ok: true },
+      });
+    } catch {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "UNKNOWN", message: "變更密碼失敗" },
+      });
+    }
+  });
+}
+
+export async function handleCreateVault(req: ExtensionRequest): Promise<ExtensionResponse> {
+  const { password, label, secretBase58, empty } = req.payload as {
+    password: string;
+    label?: string;
+    secretBase58?: string;
+    empty?: boolean;
+  };
+  if (!password) {
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: { code: "INVALID_PASSWORD", message: "Password required" },
+    });
+  }
+  if ((await readVaultBlob()) != null) {
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: { code: "VAULT_EXISTS", message: "Vault already exists" },
+    });
+  }
+  const existingAccounts = await readAccounts();
+  if (empty && !secretBase58?.trim()) {
+    const secrets = { secrets: {} };
+    const { blob, key } = await encryptVault(password, secrets);
+    await runVaultWrite(async () => {
+      await writeVaultBlob(blob);
+      session.setVaultCrypto(key, blob.kdfParams.salt);
+      session.loadSecrets(secrets);
+      await session.persistUnlockedSession();
+    });
+    await writeSettings(await readSettings());
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { account: null },
+    });
+  }
+  let kp: Keypair;
+  if (secretBase58?.trim()) {
+    try {
+      kp = Keypair.fromSecretKey(bs58.decode(secretBase58.trim()));
+    } catch {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "BAD_SECRET", message: "Invalid private key" },
+      });
+    }
+  } else {
+    kp = Keypair.generate();
+  }
+  const publicKeyBase58 = kp.publicKey.toBase58();
+  if (pubkeyExists(existingAccounts, publicKeyBase58)) {
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: { code: "ACCOUNT_EXISTS", message: "Account with this public key already exists" },
+    });
+  }
+  const id = newAccountId();
+  const secrets = { secrets: { [id]: secretToStored(kp) } };
+  const { blob, key } = await encryptVault(password, secrets);
+  const meta: AccountMeta = {
+    id,
+    label: label ?? "Account 1",
+    publicKeyBase58,
+    kind: "signing",
+  };
+  await runVaultWrite(async () => {
+    await writeVaultBlob(blob);
+    session.setVaultCrypto(key, blob.kdfParams.salt);
+    session.loadSecrets(secrets);
+    await session.persistUnlockedSession();
+  });
+  await writeAccounts([...existingAccounts, meta]);
+  await writeActiveAccountId(id);
+  await writeSettings(await readSettings());
+  return respond({
+    kind: "airwave-ext-res",
+    requestId: req.requestId,
+    ok: true,
+    result: { account: meta },
+  });
+}
+

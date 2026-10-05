@@ -2,13 +2,24 @@ import { sendExtensionRequest } from "../shared/ext-api";
 import {
   PENDING_TIMEOUT_MS,
   type PendingRecord,
-  type SignMessagePayload,
-  type SignTransactionPayload,
   type UiHost,
 } from "../shared/commands";
 import type { SimulatePendingTxResult } from "../shared/simulate-pending-tx-types";
 import type { AccountMeta } from "../shared/storage-keys";
 import { SESSION_UNLOCKED } from "../shared/storage-keys";
+import { renderSimulationNotice } from "./cards";
+import {
+  avatarLetter,
+  bytesFromSignMessage,
+  bytesFromSignTransaction,
+  displayOrigin,
+  formatSolFromLamports,
+  hexCompact,
+  hexGrouped,
+  isDisplayableUtf8,
+  shortPk,
+  shortSignature,
+} from "./format";
 
 export type ApprovalShellCallbacks = {
   onClose: () => void;
@@ -109,11 +120,6 @@ const CU_LIMIT_MAX = 1_400_000;
 const CU_PRICE_MIN = 0;
 const CU_PRICE_MAX = 1_000_000_000;
 
-function formatSolFromLamports(lamports: number): string {
-  const sol = lamports / 1e9;
-  return `${sol.toFixed(9).replace(/\.?0+$/, "") || "0"} SOL`;
-}
-
 function hasCuPair(): boolean {
   return localCuLimit != null && localCuPrice != null;
 }
@@ -176,30 +182,6 @@ function hardenWalletPasswordInput(inp: HTMLInputElement): void {
   hardenSensitiveTextInput(inp);
 }
 
-function shortPk(pk: string): string {
-  if (pk.length <= 8) return pk;
-  return `${pk.slice(0, 4)}…${pk.slice(-4)}`;
-}
-
-function avatarLetter(label: string): string {
-  const t = label.trim();
-  return (t[0] ?? "A").toUpperCase();
-}
-
-function bytesFromSignMessage(p: PendingRecord): Uint8Array {
-  const { message } = p.payload as SignMessagePayload;
-  return Uint8Array.from(message);
-}
-
-function bytesFromSignTransaction(p: PendingRecord): Uint8Array {
-  const { transaction } = p.payload as SignTransactionPayload;
-  return Uint8Array.from(transaction);
-}
-
-function displayOrigin(origin: string): string {
-  return origin === "airwave:wallet" ? "Airwave" : origin;
-}
-
 function isSignTxKind(kind: PendingRecord["kind"]): boolean {
   return kind === "signTransaction" || kind === "walletSend";
 }
@@ -255,11 +237,6 @@ function enterWalletSendConfirming(): void {
   const sigEl = card.querySelector<HTMLElement>(".send-status-sig")!;
   sigEl.hidden = true;
   sigEl.textContent = "";
-}
-
-function shortSignature(sig: string): string {
-  if (sig.length <= 8) return sig;
-  return `${sig.slice(0, 4)}…${sig.slice(-4)}`;
 }
 
 function restoreWalletSendReviewAfterError(): void {
@@ -321,30 +298,6 @@ function enterWalletSendConfirmedPage(signature?: string): void {
     const exit = shellConfig?.callbacks.onWalletSendSuccessExit ?? shellConfig?.callbacks.onClose;
     exit?.();
   }, 500);
-}
-
-function hexGrouped(bytes: Uint8Array): string {
-  const hex = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
-  return hex.replace(/(.{2})/g, "$1 ").trim();
-}
-
-function hexCompact(bytes: Uint8Array): string {
-  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function isDisplayableUtf8(bytes: Uint8Array): { ok: true; text: string } | { ok: false } {
-  try {
-    const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-    if (text.includes("\0")) return { ok: false };
-    for (let i = 0; i < text.length; i++) {
-      const c = text.charCodeAt(i);
-      if (c < 32 && c !== 9 && c !== 10 && c !== 13) return { ok: false };
-    }
-    if (text.replace(/\s/g, "").length === 0) return { ok: false };
-    return { ok: true, text };
-  } catch {
-    return { ok: false };
-  }
 }
 
 async function copyText(text: string): Promise<void> {
@@ -508,61 +461,6 @@ function renderSignMessageBody(p: PendingRecord, bytes: Uint8Array): void {
   if (approveHoldTimer == null) {
     setSignButtons({ approve: false });
   }
-}
-
-function renderSimulationNotice(sim: SimulatePendingTxResult | null): HTMLElement | null {
-  if (!sim) return null;
-  if (sim.outcome === "unparseable") {
-    const card = document.createElement("div");
-    card.className = "notice-card warn-neutral";
-    const title = document.createElement("p");
-    title.className = "notice-title";
-    title.textContent = "無法模擬";
-    const reason = document.createElement("p");
-    reason.className = "notice-reason";
-    reason.textContent = sim.reason ?? "無法解析交易";
-    card.append(title, reason);
-    return card;
-  }
-  if (sim.outcome === "rpc") {
-    const card = document.createElement("div");
-    card.className = "notice-card warn-neutral";
-    const title = document.createElement("p");
-    title.className = "notice-title";
-    title.textContent = "無法模擬";
-    const reason = document.createElement("p");
-    reason.className = "notice-reason";
-    reason.textContent = sim.reason ?? "RPC 錯誤";
-    card.append(title, reason);
-    return card;
-  }
-  if (sim.outcome === "fail") {
-    const card = document.createElement("div");
-    card.className = "notice-card";
-    const title = document.createElement("p");
-    title.className = "notice-title";
-    title.textContent = "預計交易失敗";
-    card.append(title);
-    if (sim.reason) {
-      const reason = document.createElement("p");
-      reason.className = "notice-reason";
-      reason.textContent = sim.reason;
-      card.append(reason);
-    }
-    const details = document.createElement("details");
-    const summary = document.createElement("summary");
-    summary.textContent = "失敗詳情";
-    const pre = document.createElement("pre");
-    pre.style.fontSize = "0.72rem";
-    pre.style.maxHeight = "160px";
-    const errPart = sim.err != null ? JSON.stringify(sim.err, null, 2) : "";
-    const logsPart = sim.logs?.join("\n") ?? "";
-    pre.textContent = [errPart, logsPart].filter(Boolean).join("\n\n");
-    details.append(summary, pre);
-    card.append(details);
-    return card;
-  }
-  return null;
 }
 
 function renderDeltaCard(sim: SimulatePendingTxResult | null, loading: boolean): HTMLElement {
