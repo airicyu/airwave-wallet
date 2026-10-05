@@ -3,6 +3,8 @@ import { Connection, PublicKey } from "@solana/web3.js";
 export const WRAPPED_SOL_MINT = "So11111111111111111111111111111111111111112";
 export const NATIVE_SOL_ID = "native-sol";
 
+export type TokenProgramKind = "spl-token" | "token-2022";
+
 const TOKEN_PROGRAM_ID = new PublicKey(
   "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
 );
@@ -34,6 +36,10 @@ export type HomeTokenRow = {
   isVerified?: boolean;
   organicScore?: number;
   organicScoreLabel?: string;
+  /** 鏈上最小單位小數位；原生 SOL＝9 */
+  decimals: number;
+  /** SPL mint 所屬 token program；原生無此欄 */
+  tokenProgram?: TokenProgramKind;
   /** combined 展開列；單一帳戶路徑不附 */
   members?: HomeTokenMemberShare[];
 };
@@ -83,9 +89,21 @@ type ParsedTokenAmount = {
   decimals: number;
 };
 
+function programKindFromOwner(owner: PublicKey | string): TokenProgramKind | undefined {
+  const s = typeof owner === "string" ? owner : owner.toBase58();
+  if (s === TOKEN_PROGRAM_ID.toBase58()) return "spl-token";
+  if (s === TOKEN_2022_PROGRAM_ID.toBase58()) return "token-2022";
+  return undefined;
+}
+
 export function buildHomeTokenRows(
   lamports: number,
-  parsedAccounts: { account: { data: { parsed?: { type?: string; info?: Record<string, unknown> } } } }[],
+  parsedAccounts: {
+    account: {
+      owner?: PublicKey | string;
+      data: { parsed?: { type?: string; info?: Record<string, unknown> } };
+    };
+  }[],
   usdByMint?: Map<string, number>,
 ): HomeTokenRow[] {
   const solAmount = lamports / 1e9;
@@ -100,10 +118,20 @@ export function buildHomeTokenRows(
       usdLabel: solUsd != null ? formatUsdLabel(solUsd) : "—",
       usdTotal: solUsd != null && Number.isFinite(solUsd) ? solUsd : undefined,
       iconLetter: "SO",
+      decimals: 9,
     },
   ];
 
-  const byMint = new Map<string, { decimals: number; raw: bigint; symbol?: string; iconUrl?: string }>();
+  const byMint = new Map<
+    string,
+    {
+      decimals: number;
+      raw: bigint;
+      symbol?: string;
+      iconUrl?: string;
+      tokenProgram?: TokenProgramKind;
+    }
+  >();
 
   for (const { account } of parsedAccounts) {
     const parsed = account.data.parsed;
@@ -117,15 +145,20 @@ export function buildHomeTokenRows(
     if (tokenAmount.uiAmount === 0) continue;
     if (tokenAmount.decimals === 0) continue;
 
+    const ownerKind = account.owner ? programKindFromOwner(account.owner) : undefined;
     const prev = byMint.get(mint);
     if (prev) {
       prev.raw += raw;
     } else {
-      byMint.set(mint, { decimals: tokenAmount.decimals, raw });
+      byMint.set(mint, {
+        decimals: tokenAmount.decimals,
+        raw,
+        tokenProgram: ownerKind,
+      });
     }
   }
 
-  for (const [mint, { decimals, raw, symbol: sym, iconUrl }] of byMint) {
+  for (const [mint, { decimals, raw, symbol: sym, iconUrl, tokenProgram }] of byMint) {
     if (raw === 0n) continue;
     const ui =
       decimals > 0 ? Number(raw) / 10 ** decimals : Number(raw);
@@ -145,6 +178,8 @@ export function buildHomeTokenRows(
       usdTotal: mintUsd != null && Number.isFinite(mintUsd) ? mintUsd : undefined,
       iconLetter: iconLetterForSymbol(symbol),
       iconUrl,
+      decimals,
+      tokenProgram,
     });
   }
 

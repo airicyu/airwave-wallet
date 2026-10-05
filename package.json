@@ -1,0 +1,8 @@
+{
+  "name": "airwave-wallet",
+  "private": true,
+  "scripts": {
+    "test-web": "bun run --cwd test-web start",
+    "build": "bun run --cwd wallet build"
+  }
+}

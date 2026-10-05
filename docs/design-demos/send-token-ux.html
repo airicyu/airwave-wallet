@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 送出代幣（概念稿）</title>
+    <!--
+      非正式。點持倉列進詳情。名稱下方「送出」才填數量與地址。
+      確認後用現有簽署交易 popout。批准後錢包送出，等到 confirmed 再停 500ms 離開。
+    -->
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --accent-dim: #2a6ea8;
+        --danger: #c75050;
+        --ok: #4ecb8d;
+        --popup-w: 384px;
+        --popup-h: 640px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1120px; margin: 0 auto; padding: 28px 20px 56px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 18px; max-width: 54rem; font-size: 0.92rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+      .chip {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 7px 13px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      .chip:hover { border-color: var(--text-dim); }
+      .chip.active { border-color: var(--accent); background: #1a2838; }
+      .layout {
+        display: grid;
+        grid-template-columns: var(--popup-w) 1fr;
+        gap: 28px;
+        align-items: start;
+      }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+      .phone-cap { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+      .top h2 {
+        font-size: 0.95rem;
+        margin: 0;
+        font-weight: 600;
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .widget {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        flex: 1;
+        background: transparent;
+        border: 0;
+        color: inherit;
+        text-align: left;
+        padding: 0;
+      }
+      .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--fill);
+        display: grid;
+        place-items: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .widget-text { min-width: 0; }
+      .widget-name {
+        display: block;
+        font-size: 0.86rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .widget-addr {
+        display: block;
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--text-dim);
+      }
+      .icon-btn {
+        flex-shrink: 0;
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-sm);
+        background: var(--fill);
+        color: var(--text);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .icon-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+      .icon-btn.ghost { border-color: transparent; background: transparent; color: var(--text-muted); }
+      .body { flex: 1; min-height: 0; overflow: auto; padding: 12px; }
+      .body::-webkit-scrollbar { width: 6px; }
+      .body::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 4px; }
+      .dock {
+        flex-shrink: 0;
+        padding: 10px 12px 12px;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+      }
+      .primary {
+        width: 100%;
+        border: 0;
+        background: var(--accent);
+        color: #061018;
+        font-weight: 700;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .primary:disabled { opacity: 0.4; cursor: default; }
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      .section-head h3 { margin: 0; font-size: 0.88rem; font-weight: 600; }
+      .token-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+      .token-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 14px 12px;
+        border: 1px solid var(--stroke-soft);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        color: inherit;
+        text-align: left;
+        font: inherit;
+      }
+      button.token-card { cursor: pointer; }
+      button.token-card:hover { border-color: var(--accent-dim); }
+      .token-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--fill);
+        display: grid;
+        place-items: center;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        flex-shrink: 0;
+      }
+      .token-main { flex: 1; min-width: 0; }
+      .token-name-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+      }
+      .token-sym {
+        font-weight: 600;
+        font-size: 0.92rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+      .token-verified { flex-shrink: 0; font-size: 0.72rem; font-weight: 700; color: #3dd68c; }
+      .token-score {
+        flex-shrink: 0;
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        border: 1px solid var(--stroke-soft);
+        border-radius: 4px;
+        padding: 0 4px;
+        line-height: 1.4;
+      }
+      .token-qty { margin-top: 2px; font-size: 0.78rem; color: var(--text-muted); }
+      .token-right { flex-shrink: 0; text-align: right; }
+      .token-usd { font-weight: 600; font-size: 0.92rem; }
+      .tabs {
+        flex-shrink: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+      }
+      .tabs button {
+        border: 0;
+        background: transparent;
+        color: var(--text-dim);
+        padding: 12px;
+        font: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .tabs button.on { color: var(--accent); }
+      .asset {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid var(--stroke-soft);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        margin-bottom: 14px;
+      }
+      .field { margin-bottom: 12px; }
+      .field label {
+        display: block;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+      }
+      .amount-row, .addr-row { display: flex; gap: 8px; align-items: center; }
+      .field input {
+        width: 100%;
+        background: var(--fill);
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        color: var(--text);
+        font: inherit;
+        font-size: 0.95rem;
+        padding: 10px 12px;
+      }
+      .field input.mono { font-family: var(--mono); font-size: 0.78rem; }
+      .field input:focus { outline: none; border-color: var(--accent); }
+      .field input.bad { border-color: var(--danger); }
+      .max-btn {
+        flex-shrink: 0;
+        border: 1px solid var(--stroke);
+        background: var(--fill);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 10px 12px;
+        font: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .max-btn:disabled { opacity: 0.4; cursor: default; }
+      .fee-line {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+      .fee-line b { color: var(--text); font-weight: 600; }
+      .err { color: var(--danger); font-size: 0.78rem; margin: 6px 0 0; }
+      .kv { list-style: none; margin: 0; padding: 0; }
+      .kv li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--stroke-soft);
+        font-size: 0.86rem;
+      }
+      .kv .k { color: var(--text-muted); flex-shrink: 0; }
+      .kv .v {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        font-weight: 600;
+      }
+      .kv .v span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .mono { font-family: var(--mono); font-weight: 500; }
+      .notice {
+        border: 1px solid #5c3030;
+        background: #241416;
+        color: #f0c4c4;
+        border-radius: var(--radius-sm);
+        padding: 10px 12px;
+        font-size: 0.82rem;
+        margin-bottom: 12px;
+      }
+      .done {
+        text-align: center;
+        padding: 28px 8px 8px;
+      }
+      .done .mark {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 12px;
+        border-radius: 50%;
+        background: #143024;
+        color: var(--ok);
+        display: grid;
+        place-items: center;
+      }
+      .done .mark svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; }
+      .done h3 { margin: 0 0 6px; font-size: 1rem; }
+      .done p { margin: 0; color: var(--text-muted); font-size: 0.86rem; }
+      .empty { padding: 28px 8px; text-align: center; color: var(--text-muted); }
+      .empty .muted { color: var(--text-dim); font-size: 0.8rem; }
+      .send-text {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        width: auto;
+        margin-top: 8px;
+        border: 1px solid var(--stroke);
+        background: var(--fill);
+        color: var(--text);
+        font: inherit;
+        font-weight: 600;
+        font-size: 0.86rem;
+        border-radius: 8px;
+        padding: 7px 12px;
+        cursor: pointer;
+      }
+      .send-text:hover { border-color: var(--accent); }
+      .send-text svg {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+      }
+      .detail-hero {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 0 16px;
+      }
+      .detail-hero .token-icon { width: 56px; height: 56px; font-size: 0.95rem; }
+      .detail-hero .token-name-row { justify-content: center; }
+      .detail-hero .token-name-row { justify-content: center; }
+      .detail-hero .token-sym { font-size: 1.05rem; }
+      .dock.split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .ghost {
+        border: 1px solid var(--stroke);
+        background: transparent;
+        color: var(--text);
+        font-weight: 700;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .delta { font-weight: 650; font-size: 1.05rem; }
+      .wait {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 10px;
+        color: var(--text-muted);
+      }
+      .spinner {
+        width: 28px;
+        height: 28px;
+        border: 2px solid var(--stroke);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .page-title { margin: 0 0 10px; font-size: 1.05rem; font-weight: 650; }
+      .site-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+      .site-chip {
+        color: var(--text);
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .sim-stage, .fee-card {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        padding: 10px 12px;
+        margin-bottom: 8px;
+      }
+      .sim-head { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; }
+      .sim-head h3 { margin: 0; flex: 1; font-size: 0.78rem; font-weight: 650; }
+      .bal { list-style: none; margin: 0; padding: 0; }
+      .bal li {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        padding: 6px 0;
+        border-top: 1px solid var(--stroke-soft);
+      }
+      .bal li:first-child { border-top: 0; padding-top: 2px; }
+      .bal .tok { font-size: 0.78rem; font-weight: 600; }
+      .bal .amt { font-size: 0.88rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+      .bal .minus { color: #e8a0a0; }
+      .fee-card h3 {
+        margin: 0 0 4px;
+        font-size: 0.68rem;
+        color: var(--text-dim);
+        font-weight: 600;
+      }
+      .fee-total { display: flex; align-items: baseline; gap: 8px; }
+      .fee-total .n { font-size: 1.05rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+      .fee-total .u { font-size: 0.68rem; color: var(--text-muted); }
+      details.fee-more { margin: 8px -12px -10px; border-top: 1px solid var(--stroke-soft); }
+      details.fee-more > summary {
+        cursor: pointer;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 32px;
+        padding: 5px 12px;
+        font-size: 0.74rem;
+        font-weight: 600;
+      }
+      details.fee-more > summary::-webkit-details-marker { display: none; }
+      details.fee-more .chev { width: 16px; height: 16px; color: var(--text-muted); }
+      details.fee-more .chev svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+      details.fee-more[open] > summary .chev { transform: rotate(90deg); color: var(--text); }
+      details.fee-more .hint { margin-left: auto; font-size: 0.68rem; font-weight: 500; color: var(--text-dim); }
+      details.fee-more[open] > summary .hint { display: none; }
+      .fee-more-body { padding: 8px 12px 10px; }
+      .fee-break { display: grid; gap: 6px; margin-bottom: 10px; }
+      .fee-break .row { display: flex; justify-content: space-between; gap: 12px; font-size: 0.74rem; }
+      .fee-break .k { color: var(--text-dim); }
+      .cu-duo { display: grid; grid-template-columns: 1fr 1fr 32px; gap: 8px; align-items: end; }
+      .cu-duo label { display: block; font-size: 0.62rem; color: var(--text-dim); margin-bottom: 4px; }
+      .cu-duo input {
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-sm);
+        background: var(--fill);
+        color: var(--text-dim);
+        font: inherit;
+        font-size: 0.74rem;
+      }
+      .cu-apply {
+        width: 32px;
+        height: 32px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-dim);
+        opacity: 0.45;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .cu-apply svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; }
+      details.tx-detail {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        margin-bottom: 8px;
+        overflow: hidden;
+      }
+      details.tx-detail > summary {
+        cursor: pointer;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 34px;
+        padding: 6px 10px;
+        font-size: 0.74rem;
+        font-weight: 600;
+      }
+      details.tx-detail > summary::-webkit-details-marker { display: none; }
+      details.tx-detail .chev { width: 16px; height: 16px; color: var(--text-muted); display: inline-flex; }
+      details.tx-detail .chev svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+      details.tx-detail[open] > summary .chev { transform: rotate(90deg); color: var(--text); }
+      details.tx-detail .hint { margin-left: auto; font-size: 0.68rem; font-weight: 500; color: var(--text-dim); }
+      details.tx-detail[open] > summary .hint { display: none; }
+      details.tx-detail[open] > summary { border-bottom: 1px solid var(--stroke-soft); }
+      .tx-detail-body { padding: 4px 12px 12px; }
+      .ix-row { font-size: 0.78rem; padding: 8px 0; border-bottom: 1px solid var(--stroke-soft); }
+      .ix-desc { color: var(--text-dim); font-size: 0.72rem; margin-top: 2px; }
+      .ix-accounts {
+        margin: 4px 0 0;
+        padding-left: 1.1rem;
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        color: var(--text-muted);
+      }
+      .ix-data {
+        margin: 4px 0 0;
+        font-family: var(--mono);
+        font-size: 0.62rem;
+        line-height: 1.4;
+        word-break: break-all;
+        color: var(--text-dim);
+      }
+      .payer-line { margin: 8px 0 0; font-size: 0.75rem; color: var(--text-dim); }
+      details.raw-tx { margin-top: 8px; }
+      details.raw-tx > summary { cursor: pointer; font-size: 0.75rem; color: var(--text-muted); }
+      .raw-hex {
+        margin: 6px 0 0;
+        font-family: var(--mono);
+        font-size: 0.62rem;
+        word-break: break-all;
+        color: var(--text-dim);
+      }
+      .notes { font-size: 0.86rem; color: var(--text-muted); }
+      .notes h2 { font-size: 0.95rem; color: var(--text); margin: 0 0 10px; }
+      .notes h3 { font-size: 0.82rem; color: var(--text); margin: 18px 0 8px; }
+      .notes ul { padding-left: 1.2rem; margin: 0 0 8px; }
+      .notes li { margin: 0 0 6px; }
+      .tag {
+        display: inline-block;
+        font-size: 0.68rem;
+        letter-spacing: 0.04em;
+        border: 1px solid var(--accent-dim);
+        color: var(--accent);
+        border-radius: 999px;
+        padding: 1px 8px;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>送出代幣</h1>
+      <p class="lede">
+        非正式契約。點持倉列進入代幣詳情。名稱下方的「送出」才進填寫。確認後打開現有簽署交易審批，不另做一頁。
+      </p>
+      <div class="controls" role="tablist" aria-label="畫面狀態">
+        <button class="chip active" type="button" data-preset="home">持倉</button>
+        <button class="chip" type="button" data-preset="detail-sol">詳情 · SOL</button>
+        <button class="chip" type="button" data-preset="detail-token">詳情 · 代幣</button>
+        <button class="chip" type="button" data-preset="detail-combined">詳情 · 聚合</button>
+        <button class="chip" type="button" data-preset="detail-watch">詳情 · 觀察</button>
+        <button class="chip" type="button" data-preset="form">送出</button>
+        <button class="chip" type="button" data-preset="approval">簽署交易</button>
+        <button class="chip" type="button" data-preset="waiting">確認中</button>
+      </div>
+      <div class="layout">
+        <div>
+          <p class="phone-cap" id="cap">Popup 384×640</p>
+          <div class="phone" id="phone">
+            <div class="top" id="top"></div>
+            <div class="body" id="body"></div>
+            <div class="dock" id="dock" hidden></div>
+            <div class="tabs" id="tabs" hidden></div>
+          </div>
+        </div>
+        <aside class="notes">
+          <h2>畫面意圖</h2>
+          <p><span class="tag">非正式</span>持倉列版面不改。點列是看詳情，不是送出。</p>
+          <ul>
+            <li>整張持倉卡進入詳情：圖示、名稱、mint、數量、verified、Jupiter score。原生 SOL 的 mint 寫「原生」。</li>
+            <li>「送出」在代幣名稱下方：圖示加文字、有外框，寬度只包住內容。只有單一可簽帳戶有這顆。聚合、觀察可看詳情，沒有送出。</li>
+            <li>送出頁只填數量與收款地址。確認後組的是一般轉帳，打開<strong>現有</strong>簽署交易 popout：預期變動、交易費卡，以及預設收合的交易明細（每條指令的帳戶縮寫與 data hex）。不另做審批頁。</li>
+            <li>批准後由錢包送出。該表面轉圈直到 <code>confirmed</code>，再等 500ms。Popout 關窗。Popup 回主畫面。日後 sidebar 也回主畫面。</li>
+            <li>dApp 叫來的 <code>signTransaction</code> 仍只簽名交回，不由錢包再廣播。等 confirmed 用在錢包自己送出的交易。</li>
+            <li>wSOL 當代幣送，不先 unwrap。地址簿未排，不留空圖示。</li>
+          </ul>
+          <h3>本稿數字</h3>
+          <p>SOL 餘額 1.25、簽名費 5,000 lamports。確認中在本稿約 1 秒後回主畫面，正式版要等鏈上 confirmed 再加 500ms。地址與 mint 為假資料。</p>
+        </aside>
+      </div>
+    </div>
+    <script>
+      const B58 = /^[1-9A-HJ-NP-Za-km-z]+$/;
+      const RECIPIENT = "DEm11111111111111111111111111111111111111112";
+      const SIG = "5demoSig11111111111111111111111111111111111111111111111111111111111111111111";
+      const FEE = 5000n;
+      const CU_LIMIT = 200000n;
+      const CU_PRICE = 25000n;
+      const ATA_RENT = "0.00203928 SOL";
+      const ICO = {
+        back: '<svg viewBox="0 0 24 24"><path d="M15 6 9 12l6 6"/></svg>',
+        menu: '<svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h14"/></svg>',
+        copy: '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+        refresh: '<svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>',
+        check: '<svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg>',
+        chev: '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>',
+        lock: '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+      };
+      const ASSETS = {
+        sol: { id: "sol", sym: "SOL", name: "Solana", letter: "S", decimals: 9, raw: 1250000000n, usd: "$182.40", native: true, verified: true, score: 99, mint: "" },
+        usdc: { id: "usdc", sym: "USDC", name: "USD Coin", letter: "U", decimals: 6, raw: 42500000n, usd: "$42.50", native: false, verified: true, score: 80, mint: "Mntdem111111111111111111111111111111111112" },
+        wsol: { id: "wsol", sym: "wSOL", name: "Wrapped SOL", letter: "W", decimals: 9, raw: 400000000n, usd: "$58.20", native: false, verified: false, score: null, mint: "So11111111111111111111111111111111111111112" },
+      };
+      const WALLETS = {
+        signing: { avatar: "A", name: "Main", addr: "7xKX…gAsU" },
+        combined: { avatar: "C", name: "Combined", addr: "7xKX…gAsU" },
+        watch: { avatar: "W", name: "觀察", addr: "9pQ2…kLm3" },
+      };
+
+      let preset = "home";
+      let mode = "signing";
+      let screen = "home";
+      let assetId = "sol";
+      let amount = "";
+      let address = "";
+      let feeUnknown = false;
+      let copied = "";
+      let sendTimer = 0;
+
+      const $ = (id) => document.getElementById(id);
+
+      function pow10(n) {
+        let x = 1n;
+        for (let i = 0; i < n; i++) x *= 10n;
+        return x;
+      }
+
+      function formatRaw(raw, decimals) {
+        const neg = raw < 0n;
+        const v = neg ? -raw : raw;
+        const base = pow10(decimals);
+        const whole = v / base;
+        let frac = (v % base).toString().padStart(decimals, "0").replace(/0+$/, "");
+        const body = frac ? `${whole}.${frac}` : `${whole}`;
+        return neg ? `-${body}` : body;
+      }
+
+      function parseUi(str, decimals) {
+        if (!/^\d+(\.\d+)?$/.test(str)) return null;
+        const [a, b = ""] = str.split(".");
+        if (b.length > decimals) return null;
+        const frac = (b + "0".repeat(decimals)).slice(0, decimals);
+        return BigInt(a) * pow10(decimals) + BigInt(frac || "0");
+      }
+
+      function esc(s) {
+        return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+      }
+
+      function shortAddr(s) {
+        if (s.length < 9) return s;
+        return `${s.slice(0, 4)}…${s.slice(-4)}`;
+      }
+
+      function asset() {
+        return ASSETS[assetId];
+      }
+
+      function spendable() {
+        const a = asset();
+        if (a.native && !feeUnknown) return a.raw > FEE ? a.raw - FEE : 0n;
+        return a.raw;
+      }
+
+      function amountError() {
+        if (amount === "") return "";
+        const raw = parseUi(amount, asset().decimals);
+        if (raw === null || raw === 0n) return "數量無效";
+        if (asset().native && !feeUnknown && raw > asset().raw - FEE && raw <= asset().raw) return "須留下手續費";
+        if (raw > spendable()) return "超過可動用";
+        return "";
+      }
+
+      function addressError() {
+        if (address === "") return "";
+        if (!B58.test(address) || address.length < 32 || address.length > 44) return "地址無效";
+        return "";
+      }
+
+      function canNext() {
+        return amount !== "" && address !== "" && !amountError() && !addressError();
+      }
+
+      function feeLabel() {
+        if (feeUnknown) return "未知";
+        return "0.000005 SOL";
+      }
+
+      function clearTimer() {
+        if (sendTimer) {
+          clearTimeout(sendTimer);
+          sendTimer = 0;
+        }
+      }
+
+      function canSend() {
+        return mode === "signing";
+      }
+
+      function applyPreset(id) {
+        clearTimer();
+        preset = id;
+        copied = "";
+        feeUnknown = false;
+        mode = "signing";
+        screen = "home";
+        assetId = "sol";
+        amount = "";
+        address = "";
+        if (id === "detail-sol") screen = "detail";
+        if (id === "detail-token") {
+          screen = "detail";
+          assetId = "usdc";
+        }
+        if (id === "detail-combined") {
+          mode = "combined";
+          screen = "detail";
+        }
+        if (id === "detail-watch") {
+          mode = "watch";
+          screen = "detail";
+        }
+        if (id === "form") {
+          screen = "form";
+          amount = "0.1";
+          address = RECIPIENT;
+        }
+        if (id === "approval" || id === "waiting") {
+          screen = id === "waiting" ? "waiting" : "approval";
+          amount = "0.1";
+          address = RECIPIENT;
+        }
+        document.querySelectorAll(".chip").forEach((el) => {
+          el.classList.toggle("active", el.dataset.preset === id);
+        });
+        render();
+      }
+
+      function go(next) {
+        preset = "";
+        document.querySelectorAll(".chip").forEach((el) => el.classList.remove("active"));
+        screen = next;
+        copied = "";
+        render();
+      }
+
+      function iconBtn(action, title, svg, ghost) {
+        return `<button type="button" class="icon-btn${ghost ? " ghost" : ""}" data-act="${action}" title="${title}" aria-label="${title}">${svg}</button>`;
+      }
+
+      function renderTop() {
+        const popout = screen === "approval" || screen === "waiting";
+        const home = screen === "home" || screen === "activity";
+        if (home || popout) {
+          const w = WALLETS[mode];
+          const tools = popout
+            ? iconBtn("copy-widget", "複製公鑰", ICO.copy, true)
+            : `${iconBtn("copy-widget", "複製公鑰", ICO.copy, true)}${iconBtn("lock", "鎖定", ICO.lock, false)}${iconBtn("menu", "Menu", ICO.menu, false)}`;
+          $("top").innerHTML = `
+            <div class="widget">
+              <span class="avatar">${w.avatar}</span>
+              <span class="widget-text">
+                <span class="widget-name">${w.name}</span>
+                <span class="widget-addr">${w.addr}</span>
+              </span>
+            </div>
+            ${tools}
+          `;
+          return;
+        }
+        const title = screen === "form" ? "送出" : asset().name;
+        $("top").innerHTML = `
+          ${iconBtn("back", "返回", ICO.back, false)}
+          <h2>${title}</h2>
+          ${iconBtn("menu", "Menu", ICO.menu, false)}
+        `;
+      }
+
+      function tokenFace(a) {
+        const qty = formatRaw(a.raw, a.decimals);
+        const tick = a.verified ? `<span class="token-verified" title="Jupiter verified">✓</span>` : "";
+        const score = a.score == null ? "" : `<span class="token-score" title="organic ${a.score}">${a.score}</span>`;
+        return `
+          <span class="token-icon" aria-hidden="true">${a.letter}</span>
+          <span class="token-main">
+            <span class="token-name-row">
+              <span class="token-sym">${a.name}</span>
+              ${tick}${score}
+            </span>
+            <span class="token-qty">${qty} ${a.sym}</span>
+          </span>
+          <span class="token-right"><span class="token-usd">${a.usd}</span></span>
+        `;
+      }
+
+      function tokenRow(a) {
+        return `<li><button type="button" class="token-card" data-asset="${a.id}">${tokenFace(a)}</button></li>`;
+      }
+
+      function renderHome() {
+        const rows = ["sol", "wsol", "usdc"].map((id) => tokenRow(ASSETS[id])).join("");
+        $("body").innerHTML = `
+          <div class="section-head">
+            <h3>Tokens</h3>
+            ${iconBtn("refresh", "重新整理", ICO.refresh, true)}
+          </div>
+          <ul class="token-list">${rows}</ul>
+        `;
+      }
+
+      function renderActivity() {
+        $("body").innerHTML = `<div class="empty"><p>尚無交易歷史</p><p class="muted">鏈上 Activity 將於後續版本提供。</p></div>`;
+      }
+
+      function renderDetail() {
+        const a = asset();
+        const mint = a.native
+          ? `<span>原生</span>`
+          : `<span class="mono">${shortAddr(a.mint)}</span>${iconBtn("copy-mint", copied === "mint" ? "已複製" : "複製", ICO.copy, true)}`;
+        const verified = a.verified ? "已驗證" : "—";
+        const score = a.score == null ? "—" : String(a.score);
+        const send = canSend()
+          ? `<button type="button" class="send-text" data-act="to-send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>送出</button>`
+          : "";
+        $("body").innerHTML = `
+          <div class="detail-hero">
+            <span class="token-icon" aria-hidden="true">${a.letter}</span>
+            <span class="token-name-row">
+              <span class="token-sym">${a.name}</span>
+              ${a.verified ? `<span class="token-verified">✓</span>` : ""}
+            </span>
+            ${send}
+          </div>
+          <ul class="kv">
+            <li><span class="k">Mint</span><span class="v">${mint}</span></li>
+            <li><span class="k">數量</span><span class="v"><span>${formatRaw(a.raw, a.decimals)} ${a.sym}</span></span></li>
+            <li><span class="k">Verified</span><span class="v"><span>${verified}</span></span></li>
+            <li><span class="k">Jupiter score</span><span class="v"><span>${score}</span></span></li>
+          </ul>
+        `;
+      }
+
+      function renderForm() {
+        const a = asset();
+        const aErr = amountError();
+        const dErr = addressError();
+        $("body").innerHTML = `
+          <div class="asset">${tokenFace(a)}</div>
+          <div class="field">
+            <label for="amt">數量</label>
+            <div class="amount-row">
+              <input id="amt" inputmode="decimal" autocomplete="off" placeholder="0" value="${esc(amount)}" class="${aErr ? "bad" : ""}" />
+              <button type="button" class="max-btn" data-act="max">全部</button>
+            </div>
+            ${aErr ? `<p class="err">${aErr}</p>` : ""}
+          </div>
+          <div class="field">
+            <label for="addr">收款地址</label>
+            <input id="addr" class="mono ${dErr ? "bad" : ""}" autocomplete="off" spellcheck="false" placeholder="地址" value="${esc(address)}" />
+            ${dErr ? `<p class="err">${dErr}</p>` : ""}
+          </div>
+        `;
+        $("amt").addEventListener("input", (e) => {
+          amount = e.target.value.trim();
+          render();
+          const el = $("amt");
+          if (el) {
+            el.focus();
+            el.setSelectionRange(el.value.length, el.value.length);
+          }
+        });
+        $("addr").addEventListener("input", (e) => {
+          address = e.target.value.trim();
+          render();
+          const el = $("addr");
+          if (el) {
+            el.focus();
+            el.setSelectionRange(el.value.length, el.value.length);
+          }
+        });
+      }
+
+      function priorityLamports() {
+        const micro = 1000000n;
+        return (CU_LIMIT * CU_PRICE + micro - 1n) / micro;
+      }
+
+      function totalFeeLamports() {
+        return FEE + priorityLamports();
+      }
+
+      function simLines() {
+        const a = asset();
+        const raw = parseUi(amount, a.decimals) ?? 0n;
+        if (a.native) {
+          return `<li><span class="tok">SOL</span><span class="amt minus">−${formatRaw(raw + totalFeeLamports(), 9)}</span></li>`;
+        }
+        return `<li><span class="tok">${a.sym}</span><span class="amt minus">−${esc(amount)}</span></li>
+          <li><span class="tok">SOL</span><span class="amt minus">−${formatRaw(totalFeeLamports(), 9)}</span></li>`;
+      }
+
+      function renderApproval() {
+        const sig = formatRaw(FEE, 9);
+        const prio = formatRaw(priorityLamports(), 9);
+        const total = formatRaw(totalFeeLamports(), 9);
+        $("body").innerHTML = `
+          <h2 class="page-title">簽署交易</h2>
+          <div class="site-row"><span>站點</span><span class="site-chip">Airwave</span></div>
+          <div class="sim-stage">
+            <div class="sim-head">
+              <h3>預期變動</h3>
+              ${iconBtn("retry", "重試模擬", ICO.refresh, false)}
+            </div>
+            <ul class="bal">${simLines()}</ul>
+          </div>
+          <div class="fee-card">
+            <h3>交易費</h3>
+            <div class="fee-total"><span class="n">${total}</span><span class="u">SOL</span></div>
+            <details class="fee-more">
+              <summary><span class="chev">${ICO.chev}</span><span>明細</span><span class="hint">簽名費 · CU</span></summary>
+              <div class="fee-more-body">
+                <div class="fee-break">
+                  <div class="row"><span class="k">簽名費</span><span>${sig} SOL</span></div>
+                  <div class="row"><span class="k">優先費</span><span>${prio} SOL</span></div>
+                </div>
+                <div class="cu-duo">
+                  <div><label>CU limit</label><input type="text" value="${CU_LIMIT}" disabled /></div>
+                  <div><label>CU price</label><input type="text" value="${CU_PRICE}" disabled /></div>
+                  <button type="button" class="cu-apply" disabled title="已套用" aria-label="已套用">${ICO.check}</button>
+                </div>
+              </div>
+            </details>
+          </div>
+          ${txDetail()}
+        `;
+      }
+
+      function ixRow(n, prog, desc, accounts, hex) {
+        const accts = accounts.length
+          ? `<ul class="ix-accounts">${accounts.map((a) => `<li>${a}</li>`).join("")}</ul>`
+          : "";
+        return `<div class="ix-row">
+          <div>${n}. ${prog}</div>
+          ${desc ? `<div class="ix-desc">${desc}</div>` : ""}
+          ${accts}
+          <p class="ix-data">${hex}</p>
+        </div>`;
+      }
+
+      function txDetail() {
+        const a = asset();
+        const from = "7xKX…gAsU";
+        const to = shortAddr(address || RECIPIENT);
+        const head = [
+          ixRow(1, "Compute Budget", "SetComputeUnitLimit", [], "0200400d0300"),
+          ixRow(2, "Compute Budget", "SetComputeUnitPrice", [], "03a861000000000000"),
+        ];
+        const tail = a.native
+          ? ixRow(3, "System", "Transfer", [from, to], "02000000e1f50500000000")
+          : ixRow(3, "Token", "Transfer", [from, to, from], "0300ca9a3b");
+        return `<details class="tx-detail">
+          <summary><span class="chev">${ICO.chev}</span><span>交易明細</span><span class="hint">指令</span></summary>
+          <div class="tx-detail-body">
+            ${head.join("")}
+            ${tail}
+            <p class="payer-line">費用付款人 ${from}</p>
+            <details class="raw-tx">
+              <summary>原始交易</summary>
+              <p class="raw-hex">0100000000000000…demo</p>
+            </details>
+          </div>
+        </details>`;
+      }
+
+      function renderWaiting() {
+        $("body").innerHTML = `<div class="wait"><div class="spinner" aria-hidden="true"></div><p>確認中</p></div>`;
+      }
+
+      function renderDock() {
+        const dock = $("dock");
+        const tabs = $("tabs");
+        const home = screen === "home" || screen === "activity";
+        tabs.hidden = !home;
+        dock.classList.toggle("split", screen === "approval");
+        if (home) {
+          dock.hidden = true;
+          tabs.innerHTML = `
+            <button type="button" class="${screen === "home" ? "on" : ""}" data-act="tab-token">Token</button>
+            <button type="button" class="${screen === "activity" ? "on" : ""}" data-act="tab-activity">Activity</button>
+          `;
+          return;
+        }
+        tabs.hidden = true;
+        if (screen === "form") {
+          dock.hidden = false;
+          dock.innerHTML = `<button type="button" class="primary" data-act="confirm" ${canNext() ? "" : "disabled"}>確認</button>`;
+        } else if (screen === "approval") {
+          dock.hidden = false;
+          dock.innerHTML = `
+            <button type="button" class="ghost" data-act="reject">拒絕</button>
+            <button type="button" class="primary" data-act="approve">批准</button>
+          `;
+        } else {
+          dock.hidden = true;
+          dock.innerHTML = "";
+        }
+      }
+
+      function render() {
+        renderTop();
+        if (screen === "home") renderHome();
+        else if (screen === "activity") renderActivity();
+        else if (screen === "detail") renderDetail();
+        else if (screen === "form") renderForm();
+        else if (screen === "approval") renderApproval();
+        else if (screen === "waiting") renderWaiting();
+        renderDock();
+        const surface = screen === "approval" || screen === "waiting" ? "Popout · 現有簽署交易" : "Popup 384×640";
+        $("cap").textContent = surface;
+      }
+
+      function beginWait() {
+        go("waiting");
+        clearTimer();
+        sendTimer = setTimeout(() => {
+          amount = "";
+          address = "";
+          go("home");
+          $("cap").textContent = "Popup · 回主畫面（popout 則關窗）";
+        }, 1000);
+      }
+
+      document.querySelector(".controls").addEventListener("click", (e) => {
+        const btn = e.target.closest(".chip");
+        if (!btn) return;
+        applyPreset(btn.dataset.preset);
+      });
+
+      $("phone").addEventListener("click", (e) => {
+        const assetBtn = e.target.closest("[data-asset]");
+        if (assetBtn) {
+          assetId = assetBtn.dataset.asset;
+          amount = "";
+          address = "";
+          go("detail");
+          return;
+        }
+        const act = e.target.closest("[data-act]");
+        if (!act) return;
+        const name = act.dataset.act;
+        if (name === "back") {
+          clearTimer();
+          if (screen === "form") go("detail");
+          else go("home");
+        } else if (name === "to-send" && canSend()) {
+          amount = "";
+          address = "";
+          go("form");
+        } else if (name === "max") {
+          amount = formatRaw(spendable(), asset().decimals);
+          preset = "";
+          render();
+        } else if (name === "confirm" && canNext()) {
+          go("approval");
+        } else if (name === "reject") {
+          go("form");
+        } else if (name === "approve") {
+          beginWait();
+        } else if (name === "tab-token") {
+          go("home");
+        } else if (name === "tab-activity") {
+          go("activity");
+        } else if (name === "copy-mint") {
+          copied = "mint";
+          render();
+        }
+      });
+
+      applyPreset("home");
+
+    </script>
+  </body>
+</html>

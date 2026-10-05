@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.0 — 2026-10-05
+
+審批宿主：`walletSend` 改在 popup 殼內（`uiHost: popup`），`beginSend` 不再開 popout；網站 `connect`／`signMessage`／`signTransaction` 仍 popout。抽出 `wallet/src/approval/shell.ts` 共用審批 UI。錢包送出：批准後全頁「確認中」轉圈，鏈上 `confirmed` 後同一畫面變「已確認」，約 0.5s 回 Home 並重查。SW 立刻 `walletSendSettled`，不 sleep。`signTransaction` 批准仍立刻關窗。新增 `ui.abortPending`（關 popup／離審批 view 語意同拒絕）。Sidebar 宿主僅契約預留。
+
+## 0.12.0 — 2026-10-05
+
+代幣詳情與單一可簽送出：Home 持倉列進詳情；signing 帳戶可填數量／地址後 `wallet.beginSend` 組未簽轉帳，開既有簽署 popout（`walletSend`）。批准後錢包廣播並等到 `confirmed`（再約 500ms 關窗）；popup 回 Tokens 並重查。持倉列帶 `decimals`／SPL `tokenProgram`。送出頁顯示餘額、50%／全部快捷；離開頁或切帳戶清空表單。dApp `signTransaction` 仍只簽不廣播。聚合／觀察無「送出」。
+
 ## 0.11.0 — 2026-10-04
 
 未簽 `signTransaction` 可改 CU limit／price（Compute Budget 取代不 append），批准簽 `workingTx`；已簽不改 instruction。獨立交易費卡（總費＝簽名費＋優先費）；改 CU 須點套用圖示，dirty 時批准不可按。Settings **Default CU price** 出廠 25000。交易明細每條 ix 列帳戶縮寫與 data hex。簽署 popout 頂欄／底欄釘住、中間捲動。`connect`／`signMessage` 不變。

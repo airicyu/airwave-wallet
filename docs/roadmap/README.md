@@ -23,6 +23,8 @@
 | [0.9.0](./0.9.0/INDEX.md) | shipped | `signMessage` 可讀審批頁；鎖定於 popout 解鎖；文字欄 accent focus |
 | [0.10.0](./0.10.0/INDEX.md) | shipped | `signTransaction` 審批：模擬預期變動主舞台＋收合交易明細（0.10.1：sim 改用 pre／post 餘額，無 pre-fetch） |
 | [0.11.0](./0.11.0/INDEX.md) | shipped | 未簽可寫 CU；交易費卡；Default CU price；明細 accounts／data hex |
+| [0.12.0](./0.12.0/INDEX.md) | shipped | 代幣詳情；單一可簽送出；既有審批後錢包送到 confirmed |
+| [0.13.0](./0.13.0/INDEX.md) | shipped | 共用審批殼；walletSend→popup 內；pending confirm→confirmed；網站仍 popout |
 
 **版本號：** `x.y.z` 的 **patch**（例如 **0.3.1**）留給該 minor 的 **bugfix**，不排新功能。新功能走下一個 **minor**（0.3.0 → 0.4.0 → 0.5.0）。
 

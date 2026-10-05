@@ -1,4 +1,5 @@
 import type { Settings } from "../shared/storage-keys";
+import { Connection, PublicKey } from "@solana/web3.js";
 import {
   NATIVE_SOL_ID,
   WRAPPED_SOL_MINT,
@@ -10,6 +11,7 @@ import {
   sortHomeTokenRows,
   type HomeTokenMemberShare,
   type HomeTokenRow,
+  type TokenProgramKind,
 } from "../shared/home-tokens";
 
 export type GetHomeTokensResult = {
@@ -323,10 +325,55 @@ function mergeWalletBalances(pages: WalletTokenBalance[][]): HomeTokenRow[] {
       usdTotal: row.usdTotal,
       iconLetter: iconLetterForSymbol(row.symbol),
       iconUrl: row.iconUrl,
+      decimals: row.decimals,
     });
   }
 
   return rows;
+}
+
+const LEGACY_TOKEN_PROGRAM = new PublicKey(
+  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+);
+const TOKEN_2022_PROGRAM = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
+
+async function attachTokenProgramsForOwner(
+  rpcUrl: string,
+  owner: string,
+  rows: HomeTokenRow[],
+  signal: AbortSignal,
+): Promise<HomeTokenRow[]> {
+  const needsProgram = rows.some((r) => r.id !== NATIVE_SOL_ID && r.tokenProgram == null);
+  if (!needsProgram) return rows;
+  const conn = new Connection(rpcUrl, "confirmed");
+  const pk = new PublicKey(owner);
+  const [legacy, token2022] = await Promise.all([
+    conn.getParsedTokenAccountsByOwner(pk, { programId: LEGACY_TOKEN_PROGRAM }),
+    conn.getParsedTokenAccountsByOwner(pk, { programId: TOKEN_2022_PROGRAM }),
+  ]);
+  if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+  const byMint = new Map<string, TokenProgramKind>();
+  for (const { account } of legacy.value) {
+    const parsed = account.data.parsed;
+    if (parsed?.type !== "account") continue;
+    const mint = (parsed.info as { mint?: string })?.mint;
+    if (!mint || byMint.has(mint)) continue;
+    byMint.set(mint, "spl-token");
+  }
+  for (const { account } of token2022.value) {
+    const parsed = account.data.parsed;
+    if (parsed?.type !== "account") continue;
+    const mint = (parsed.info as { mint?: string })?.mint;
+    if (!mint || byMint.has(mint)) continue;
+    byMint.set(mint, "token-2022");
+  }
+  return rows.map((row) => {
+    if (row.id === NATIVE_SOL_ID) return row;
+    if (row.tokenProgram) return row;
+    const tp = byMint.get(row.id);
+    if (!tp) return row;
+    return { ...row, tokenProgram: tp };
+  });
 }
 
 async function fetchWalletApiHomeTokenRows(
@@ -595,7 +642,8 @@ async function runRefresh(
   try {
     const perOwner: { owner: string; rows: HomeTokenRow[] }[] = [];
     for (const owner of owners) {
-      const rows = await fetchSingleOwnerRows(owner, settings, signal);
+      let rows = await fetchSingleOwnerRows(owner, settings, signal);
+      rows = await attachTokenProgramsForOwner(settings.rpcUrl, owner, rows, signal);
       perOwner.push({ owner, rows });
     }
 

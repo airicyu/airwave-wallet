@@ -10,7 +10,7 @@
 - 側欄裡是現有錢包殼：Home、Accounts、Settings、解鎖。狀態仍以 `chrome.storage` 為真相，與 popup 同一套 command。
 - 切到側欄模式後，點工具列圖示**打開側欄**，不再彈出 popup。切回則恢復 popup。
 - 切換放在 Settings，立刻寫入（對齊設計原則第 2 節）。
-- dApp 審批仍走既有 **popout** 視窗與 SW pending。側欄不取代 popout，也不從 storage 把 pending 撈回來。
+- dApp 審批宿主：popup mode 至 [0.13.0](../0.13.0/INDEX.md) 仍走 **popout**；錢包內 `walletSend` 已在 popup 殼內。側欄殼與「網站請求進 sidebar 殼內」仍由本 backlog 負責。
 
 側欄不會因為失焦而關掉（popup 會）。解鎖 session 的規則不變：仍是 `wallet.lock` 或瀏覽器工作階段結束才鎖，不因為側欄開著就改鎖法。
 

@@ -704,3 +704,88 @@ textarea:focus-visible {
   font-size: 0.86rem;
   margin: 8px 0;
 }
+
+.send-status-mode > .top-bar,
+.send-status-mode .site-row,
+.send-status-mode .bar-wallet-group,
+.send-status-mode .page-title {
+  display: none !important;
+}
+
+.send-status-mode .screen-body,
+.send-status-mode .approval-sign-scroll {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.send-status-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 36px 16px 32px;
+  min-height: 220px;
+  margin: 0;
+  border-color: var(--stroke);
+  transition: border-color 0.35s ease, background 0.35s ease;
+}
+
+.send-status-card.is-confirmed {
+  border-color: var(--accent-dim);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-elevated));
+}
+
+.send-status-mark {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+}
+
+.send-status-spin {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--stroke);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: cu-spin 0.7s linear infinite;
+}
+
+.send-status-check {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  animation: send-status-pop 0.38s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.send-status-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.send-status-sig {
+  margin: 10px 0 0;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+@keyframes send-status-pop {
+  from {
+    transform: scale(0.55);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

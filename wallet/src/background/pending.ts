@@ -44,3 +44,17 @@ export function unbindPopoutByRequest(requestId: string): void {
     }
   }
 }
+
+export async function closePopoutForRequest(requestId: string): Promise<void> {
+  for (const [windowId, id] of pendingByWindow) {
+    if (id === requestId) {
+      pendingByWindow.delete(windowId);
+      try {
+        await chrome.windows.remove(windowId);
+      } catch {
+        /* already closed */
+      }
+      return;
+    }
+  }
+}
