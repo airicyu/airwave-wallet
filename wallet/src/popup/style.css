@@ -733,7 +733,8 @@ body {
   min-width: 0;
 }
 
-.word-slot n {
+.word-slot n,
+.word-slot .word-n {
   font-size: 0.62rem;
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;

@@ -18,4 +18,3 @@
 | [錢包地址簿](./address-book.md) | 名稱＋地址白名單；送出可選，仍可手貼 |
 | [簽署交易指令解析](./sign-transaction-ix-decode.md) | 明細：common parser → Anchor IDL → hex；現況僅 hex |
 | [地址複製回饋](./address-copy-feedback.md) | 頂欄地址複製圖示成功寫入剪貼簿後，按鈕短暫顯示已複製 |
-| [Popup React](./popup-react.md) | 擴充頁改 Vite + React functional component；0.14.0 不做；pending 仍只在 SW |

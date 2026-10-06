@@ -1,2 +1,2 @@
-export * from "./send-flow";
+export * from "./send-logic";
 export * from "./approval-host";

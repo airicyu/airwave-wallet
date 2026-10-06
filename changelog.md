@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.15.0 — 2026-10-06
+
+Popup 改 Vite + React functional component（`createRoot`、`App`、`PopupMarkup`）；行為與 0.14.0 相同。新增 `react`、`react-dom`、`@vitejs/plugin-react`；`@types/react`／`@types/react-dom` 因 npm 上的 React 19.3 未附 TS 定義而加為 devDependency。Service worker、content、inject、popout、審批殼仍 vanilla；`mountApprovalShell` 橋接不變。命令字串與 storage key 未改。
+
 ## 0.14.0 — 2026-10-05
 
 原始碼目錄化，使用者可見行為與 0.13.0 相同。Service worker 依職責分入 `messaging`、`session`、`storage`、`pending`、`simulate`、`send`、`home-tokens`、`handlers`、`wallet`。`wallet-handlers.ts` 改為 `wallet-dispatch.ts` 只分派命令。Popup 畫面進 `home`、`send`、`accounts`、`settings`、`onboarding`，小工具進 `lib`。審批殼抽出不讀模組狀態的格式化函式與模擬 notice 卡。未改訊息名、storage key、CSS、HTML，也未加依賴。

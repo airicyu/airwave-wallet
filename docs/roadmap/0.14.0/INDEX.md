@@ -18,7 +18,7 @@
 3. [docs/reasoning.md](./docs/reasoning.md)
 4. 上游：[0.13.0](../0.13.0/INDEX.md)
 5. [HANDOFF.md](./HANDOFF.md)
-6. 日後 UI 框架：[backlog/popup-react.md](../backlog/popup-react.md)（本版不做）
+6. 日後 UI 框架：[0.15.0](../0.15.0/INDEX.md)（本版不做）
 
 ## 已定案
 
@@ -41,7 +41,7 @@
 
 ## 非目標
 
-- React／Vite React／functional component 重寫（構想見 [backlog/popup-react.md](../backlog/popup-react.md)）
+- React／Vite React／functional component 重寫（已出貨：[0.15.0](../0.15.0/INDEX.md)）
 - 拆或重寫 `style.css`、重排 `index.html`
 - 改 custody、pending 形狀、`uiHost`、訊息名、storage key、Wallet Standard 能力表
 - 再切 `home-tokens-service.ts` 的業務（只允許整檔搬進 `home-tokens/`，外加一個 getHomeTokens 命令薄檔）

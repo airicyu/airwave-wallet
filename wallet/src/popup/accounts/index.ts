@@ -1,2 +1,2 @@
-export * from "./accounts-ui";
-export * from "./combined-ui";
+export * from "./AccountsScreens";
+export * from "./combined-logic";

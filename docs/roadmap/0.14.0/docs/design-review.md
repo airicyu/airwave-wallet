@@ -5,7 +5,7 @@
 - 角色：設計審查（不改 INDEX／HOW／reasoning／HANDOFF／程式；不以本檔當已定案）
 - 對照基準：[`../INDEX.md`](../INDEX.md) 已定案＋驗收；[`folder-plan.md`](./folder-plan.md)、[`reasoning.md`](./reasoning.md)、[`../HANDOFF.md`](../HANDOFF.md)
 - 上游行為契約：[`../../0.13.0/INDEX.md`](../../0.13.0/INDEX.md)、[`../../0.13.0/docs/refactor-plan.md`](../../0.13.0/docs/refactor-plan.md)（本版不推翻）
-- 構想（非契約）：[`../../backlog/popup-react.md`](../../backlog/popup-react.md)
+- 構想（非契約；已出貨）：[`../../0.15.0/INDEX.md`](../../0.15.0/INDEX.md)
 - 架構禁區：[`../../GUIDELINES.md`](../../GUIDELINES.md)
 - 現行程式抽樣：`wallet/src/background/index.ts`、`wallet/src/background/wallet-handlers.ts` 命令分支、`wallet/src/approval/shell.ts` 的 export 與模組級狀態、`wallet/manifest.config.ts`、`wallet/vite.config.ts`；並核對 `background/`、`popup/` 檔案是否都在搬家表內
 - **總評：** 提案可行。初審 M1、L1、L2、L3 均已寫進 INDEX 或 folder-plan，**無未關閉 HIGH、無仍開的應修 MEDIUM**。待拍板為空；HANDOFF 含 paste-ready starter prompt；非目標寫清。**設計審查門檻通過。非不可行。**
@@ -69,7 +69,7 @@
 | `wallet-handlers.ts` 已不存在；`wallet-dispatch.ts` 只分派命令 | 可 | 命令字串與 `shared/commands.ts` 聯集一致（24 條）；未知命令錯誤形狀已寫「原樣留在 dispatch」 |
 | 命令字串與 `chrome.storage` key 字串與 0.13.0 相同 | 可 | 本版明文不改名。現碼 key 在 `storage-io`／`session`，搬家不改字串即可對 |
 | 四個 CSS／HTML 無內容修改 | 可 | 已定案不拆、不重排；Track 3 用內容差分驗 popup HTML／CSS，出貨清單含 popout 兩個檔 |
-| 無新 npm 依賴（僅 `version` 可改 `0.14.0`） | 可 | 與「不上 React」一致；`popup-react.md` 維持構想 |
+| 無新 npm 依賴（僅 `version` 可改 `0.14.0`） | 可 | 與「不上 React」一致；React 構想後於 0.15.0 出貨 |
 | `cd wallet && npm run typecheck` 與 `npm run build` | 可 | 指令與 cwd 已寫。M1 已關，Track 3 的 barrel 範圍有完整句子可對 |
 | 手驗：網站 connect／sign 仍 popout；代幣送出在 popup 殼內；連續兩次送出；拒絕與批准底欄 | 可 | 行為凍結 0.13.0。環境不能載入擴充時，驗收已要求實作審查逐條寫「未在瀏覽器走完」 |
 | 文件與程式無真實密碼／助記詞／私鑰 | 可 | 本版提案抽樣無上述內容 |

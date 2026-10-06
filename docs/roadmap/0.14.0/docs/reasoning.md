@@ -14,7 +14,7 @@
 - Service worker、content、inject 不能改成 React。Pending 仍只活在 SW，框架解決不了命令集過大。
 - 現有 UI state 已是 `wallet.getState` 的一個物件加 `View`。React 有助於之後的畫面函式，但不是本版阻塞點。
 
-因此 React 只留在 [backlog/popup-react.md](../../backlog/popup-react.md)，且寫明 pending 不得進客戶端持久 store。
+因此 React 只留到後來的 [0.15.0](../../0.15.0/INDEX.md)，且寫明 pending 不得進客戶端持久 store。
 
 ## 否決：硬性行數上限
 

@@ -26,6 +26,7 @@
 | [0.12.0](./0.12.0/INDEX.md) | shipped | 代幣詳情；單一可簽送出；既有審批後錢包送到 confirmed |
 | [0.13.0](./0.13.0/INDEX.md) | shipped | 共用審批殼；walletSend→popup 內；pending confirm→confirmed；網站仍 popout |
 | [0.14.0](./0.14.0/INDEX.md) | shipped | 原始碼目錄化；wallet-handlers 與審批純函式分檔；行為與 0.13.0 相同 |
+| [0.15.0](./0.15.0/INDEX.md) | shipped | Popup 改 Vite React；審批殼仍 vanilla 橋接；行為與 0.14.0 相同 |
 
 **版本號：** `x.y.z` 的 **patch**（例如 **0.3.1**）留給該 minor 的 **bugfix**，不排新功能。新功能走下一個 **minor**（0.3.0 → 0.4.0 → 0.5.0）。
 
