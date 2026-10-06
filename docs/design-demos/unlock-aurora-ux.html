@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 解鎖頁暗淡北極光</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --sol-green: #14f195;
+        --sol-purple: #9945ff;
+        --sol-mid: #5b8cff;
+        --popup-w: 384px;
+        --popup-h: 600px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1280px; margin: 0 auto; padding: 28px 20px 64px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 8px; max-width: 54rem; font-size: 0.92rem; }
+      .note { color: var(--text-dim); font-size: 0.82rem; margin: 0 0 24px; }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(var(--popup-w), 1fr));
+        gap: 28px;
+      }
+      .cap {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        margin-bottom: 8px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .cap strong { color: var(--text-muted); font-weight: 600; text-transform: none; letter-spacing: 0; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        overflow: hidden;
+        background: var(--bg);
+      }
+      .unlock {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 28px 20px 36px;
+      }
+      .unlock-now {
+        background: radial-gradient(
+          ellipse 90% 48% at 50% 22%,
+          color-mix(in srgb, var(--accent) 14%, transparent),
+          transparent 72%
+        );
+      }
+      .unlock-dim {
+        background:
+          radial-gradient(ellipse 80% 55% at 12% 82%, color-mix(in srgb, var(--sol-purple) 11%, transparent), transparent 72%),
+          radial-gradient(ellipse 70% 48% at 92% 14%, color-mix(in srgb, var(--sol-green) 8%, transparent), transparent 70%),
+          radial-gradient(ellipse 55% 40% at 72% 68%, color-mix(in srgb, var(--sol-mid) 7%, transparent), transparent 68%),
+          var(--bg);
+      }
+      .unlock-softer {
+        background:
+          radial-gradient(ellipse 80% 55% at 12% 82%, color-mix(in srgb, var(--sol-purple) 7%, transparent), transparent 72%),
+          radial-gradient(ellipse 70% 48% at 92% 14%, color-mix(in srgb, var(--sol-green) 5%, transparent), transparent 70%),
+          radial-gradient(ellipse 55% 40% at 72% 68%, color-mix(in srgb, var(--sol-mid) 5%, transparent), transparent 68%),
+          var(--bg);
+      }
+      .unlock-stronger {
+        background:
+          radial-gradient(ellipse 80% 55% at 12% 82%, color-mix(in srgb, var(--sol-purple) 16%, transparent), transparent 72%),
+          radial-gradient(ellipse 70% 48% at 92% 14%, color-mix(in srgb, var(--sol-green) 12%, transparent), transparent 70%),
+          radial-gradient(ellipse 55% 40% at 72% 68%, color-mix(in srgb, var(--sol-mid) 10%, transparent), transparent 68%),
+          var(--bg);
+      }
+      .mark {
+        width: 52px;
+        height: 52px;
+        margin: 0 auto 18px;
+        display: grid;
+        place-items: center;
+        border-radius: 16px;
+        color: var(--accent);
+        background: var(--bg-elevated);
+        border: 1px solid var(--stroke);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
+      }
+      .unlock h2 {
+        text-align: center;
+        font-size: 1.28rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        margin: 0 0 6px;
+      }
+      .lead {
+        text-align: center;
+        margin: 0 0 22px;
+        font-size: 0.84rem;
+        color: var(--text-muted);
+      }
+      .form { display: flex; flex-direction: column; gap: 10px; }
+      .form input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid var(--stroke);
+        border-radius: 10px;
+        background: var(--fill);
+        color: var(--text);
+        font: inherit;
+        font-size: 0.88rem;
+      }
+      .form button {
+        width: 100%;
+        border: 0;
+        background: var(--accent);
+        color: #061018;
+        font-weight: 700;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 11px;
+        font-family: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>解鎖頁 — 暗淡北極光底</h1>
+      <p class="lede">
+        拿掉正中那團 <code>--accent</code> 光。改成 Solana 綠／紫／藍的<strong>低濃度</strong>光斑，偏角落、不要搶表單。產品採用「中檔」。
+      </p>
+      <p class="note">左上為舊 accent 光對照。鎖徽章暫未改。</p>
+
+      <div class="grid">
+        <div>
+          <div class="cap">對照 · <strong>現況 accent 光</strong></div>
+          <div class="phone">
+            <section class="unlock unlock-now">
+              <div class="mark" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+              </div>
+              <h2>Airwave</h2>
+              <p class="lead">錢包已鎖定</p>
+              <div class="form">
+                <input type="text" placeholder="密碼" autocomplete="off" />
+                <button type="button">解鎖</button>
+              </div>
+            </section>
+          </div>
+        </div>
+        <div>
+          <div class="cap">中檔 · <strong>暗淡北極光</strong></div>
+          <div class="phone">
+            <section class="unlock unlock-dim">
+              <div class="mark" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+              </div>
+              <h2>Airwave</h2>
+              <p class="lead">錢包已鎖定</p>
+              <div class="form">
+                <input type="text" placeholder="密碼" autocomplete="off" />
+                <button type="button">解鎖</button>
+              </div>
+            </section>
+          </div>
+        </div>
+        <div>
+          <div class="cap">產品 · <strong>更淡</strong></div>
+          <div class="phone">
+            <section class="unlock unlock-softer">
+              <div class="mark" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+              </div>
+              <h2>Airwave</h2>
+              <p class="lead">錢包已鎖定</p>
+              <div class="form">
+                <input type="text" placeholder="密碼" autocomplete="off" />
+                <button type="button">解鎖</button>
+              </div>
+            </section>
+          </div>
+        </div>
+        <div>
+          <div class="cap">稍明顯</div>
+          <div class="phone">
+            <section class="unlock unlock-stronger">
+              <div class="mark" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+              </div>
+              <h2>Airwave</h2>
+              <p class="lead">錢包已鎖定</p>
+              <div class="form">
+                <input type="text" placeholder="密碼" autocomplete="off" />
+                <button type="button">解鎖</button>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

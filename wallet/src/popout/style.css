@@ -10,6 +10,7 @@
   --accent: #3d9cf0;
   --accent-dim: #2a6ea8;
   --danger: #c75050;
+  --ok: #4ecb8d;
   --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
   --radius: 12px;
   --radius-sm: 8px;
@@ -91,38 +92,78 @@ pre {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 16px;
+  padding: 28px 20px 36px;
+  background:
+    radial-gradient(ellipse 80% 55% at 12% 82%, color-mix(in srgb, #9945ff 11%, transparent), transparent 72%),
+    radial-gradient(ellipse 70% 48% at 92% 14%, color-mix(in srgb, #14f195 8%, transparent), transparent 70%),
+    radial-gradient(ellipse 55% 40% at 72% 68%, color-mix(in srgb, #5b8cff 7%, transparent), transparent 68%),
+    var(--bg);
+}
+
+.unlock-mark {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  color: var(--accent);
+  background: var(--bg-elevated);
+  border: 1px solid var(--stroke);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .unlock-screen h1 {
-  font-size: 1.1rem;
+  text-align: center;
+  font-size: 1.28rem;
   font-weight: 600;
-  margin: 0 0 8px;
+  letter-spacing: 0.02em;
+  margin: 0 0 6px;
 }
 
-.unlock-screen p {
-  margin: 0 0 14px;
-  font-size: 0.88rem;
+.unlock-screen > p,
+.unlock-screen .unlock-lead {
+  text-align: center;
+  margin: 0 0 22px;
+  font-size: 0.84rem;
   color: var(--text-muted);
+}
+
+.unlock-screen > p.inline-error {
+  text-align: left;
+  margin: 0;
+}
+
+.unlock-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .unlock-screen input {
   display: block;
   width: 100%;
   margin: 0;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 1px solid var(--stroke);
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
   background: var(--fill);
   color: var(--text);
   font: inherit;
   font-size: 0.88rem;
 }
 
+.unlock-screen input:focus,
+.unlock-screen input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+
 .unlock-screen .primary-btn {
-  margin-top: 12px;
+  margin-top: 2px;
   flex: none;
-  align-self: flex-start;
+  width: 100%;
+  align-self: stretch;
 }
 
 .expired-screen {
@@ -712,64 +753,76 @@ textarea:focus-visible {
   display: none !important;
 }
 
+.approval-sign-shell.send-status-mode {
+  background: var(--bg);
+}
+
 .send-status-mode .screen-body,
 .send-status-mode .approval-sign-scroll {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  padding: 28px 20px;
 }
 
 .send-status-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   text-align: center;
-  padding: 36px 16px 32px;
-  min-height: 220px;
+  width: 100%;
   margin: 0;
-  border-color: var(--stroke);
-  transition: border-color 0.35s ease, background 0.35s ease;
-}
-
-.send-status-card.is-confirmed {
-  border-color: var(--accent-dim);
-  background: color-mix(in srgb, var(--accent) 10%, var(--bg-elevated));
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .send-status-mark {
-  width: 56px;
-  height: 56px;
+  width: 112px;
+  height: 112px;
+  margin: 0 0 18px;
   display: grid;
   place-items: center;
-  margin-bottom: 16px;
+  color: var(--ok);
 }
 
-.send-status-spin {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--stroke);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: cu-spin 0.7s linear infinite;
+.send-aurora {
+  width: 112px;
+  height: 112px;
+  overflow: visible;
+}
+
+.send-aurora-green {
+  stroke: #14f195;
+}
+
+.send-aurora-mid {
+  stroke: #5b8cff;
+}
+
+.send-aurora-purple {
+  stroke: #9945ff;
 }
 
 .send-status-check {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
   display: grid;
   place-items: center;
   animation: send-status-pop 0.38s cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
 
 .send-status-title {
-  margin: 0;
-  font-size: 1.05rem;
+  margin: 0 0 6px;
+  font-size: 1.28rem;
   font-weight: 600;
+  letter-spacing: 0.02em;
   color: var(--text);
+}
+
+.send-status-lead {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--text-muted);
 }
 
 .send-status-sig {

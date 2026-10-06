@@ -5,21 +5,29 @@ import { sendExtensionRequest } from "../../shared/ext-api";
 import { accountKind } from "../../shared/storage-keys";
 import { NATIVE_SOL_ID, shortMint, type HomeTokenRow } from "../home/home-tokens";
 import { shortAddr } from "../lib/format";
-import { session } from "../lib/session";
+import { usePopupContext } from "../state/PopupContext";
 import type { State, View } from "../types";
+
+let homeTokensGen = 0;
 
 type Props = {
   wallet: State;
   currentView: View;
   onOpenDetail: (tokenId: string) => void;
-  tick?: number;
 };
 
-export function HomeTokenList({ wallet, currentView, onOpenDetail, tick = 0 }: Props): JSX.Element {
-  const [rows, setRows] = useState<HomeTokenRow[]>(() => session.lastSuccessfulTokenRows);
+export function HomeTokenList({ wallet, currentView, onOpenDetail }: Props): JSX.Element {
+  const {
+    homeTokenRows,
+    setHomeTokenRows,
+    expandedTokenRowIds,
+    setExpandedTokenRowIds,
+    homeAssetsForce,
+    setHomeAssetsForce,
+  } = usePopupContext();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(session.expandedTokenRowIds));
+  const rowsLen = homeTokenRows.length;
 
   const active = wallet.accounts.find((a) => a.id === wallet.activeAccountId);
   const activeIsCombined = active != null && isCombinedAccount(active);
@@ -27,28 +35,27 @@ export function HomeTokenList({ wallet, currentView, onOpenDetail, tick = 0 }: P
   const load = useCallback(
     async (force = false) => {
       if (currentView !== "home-token" || !wallet.activeAccountId) return;
-      setLoading((prev) => prev || rows.length === 0);
-      const gen = ++session.homeAssetsRequestGen;
+      setLoading((prev) => prev || rowsLen === 0);
+      const gen = ++homeTokensGen;
       try {
         const res = await sendExtensionRequest("wallet.getHomeTokens", force ? { force: true } : {});
-        if (gen !== session.homeAssetsRequestGen || session.currentView !== "home-token") return;
+        if (gen !== homeTokensGen) return;
         if (!res.ok) {
           setError(res.error?.message ?? "無法載入持倉");
           return;
         }
         const payload = res.result as { rows?: HomeTokenRow[]; error?: string };
         const next = payload.rows ?? [];
-        session.lastSuccessfulTokenRows = next;
-        setRows(next);
+        setHomeTokenRows(next);
         setError(payload.error ?? null);
       } catch (e) {
-        if (gen !== session.homeAssetsRequestGen) return;
+        if (gen !== homeTokensGen) return;
         setError(e instanceof Error ? e.message : "無法載入持倉");
       } finally {
-        setLoading(false);
+        if (gen === homeTokensGen) setLoading(false);
       }
     },
-    [currentView, wallet.activeAccountId, rows.length],
+    [currentView, wallet.activeAccountId, rowsLen, setHomeTokenRows],
   );
 
   useEffect(() => {
@@ -56,16 +63,12 @@ export function HomeTokenList({ wallet, currentView, onOpenDetail, tick = 0 }: P
   }, [load, wallet.activeAccountId, wallet.settings.rpcUrl, wallet.settings.defaultCuPrice]);
 
   useEffect(() => {
-    if (!session.homeAssetsForce) return;
-    session.homeAssetsForce = false;
+    if (!homeAssetsForce) return;
+    setHomeAssetsForce(false);
     void load(true);
-  }, [load, tick]);
+  }, [homeAssetsForce, load, setHomeAssetsForce]);
 
-  useEffect(() => {
-    session.expandedTokenRowIds = expanded;
-  }, [expanded]);
-
-  if (loading && rows.length === 0) {
+  if (loading && homeTokenRows.length === 0) {
     return (
       <>
         <ul id="home-tokens" className="token-list">
@@ -79,9 +82,9 @@ export function HomeTokenList({ wallet, currentView, onOpenDetail, tick = 0 }: P
   return (
     <>
       <ul id="home-tokens" className="token-list">
-        {rows.map((row) => {
+        {homeTokenRows.map((row) => {
           const canExpand = activeIsCombined && row.members != null && row.members.length >= 1;
-          const isExpanded = canExpand && expanded.has(row.id);
+          const isExpanded = canExpand && expandedTokenRowIds.has(row.id);
           return (
             <TokenRow
               key={row.id}
@@ -90,7 +93,7 @@ export function HomeTokenList({ wallet, currentView, onOpenDetail, tick = 0 }: P
               isExpanded={isExpanded}
               onOpenDetail={onOpenDetail}
               onToggleExpand={() =>
-                setExpanded((prev) => {
+                setExpandedTokenRowIds((prev) => {
                   const next = new Set(prev);
                   if (next.has(row.id)) next.delete(row.id);
                   else next.add(row.id);
@@ -206,7 +209,8 @@ export function TokenDetailView({
   tokenId: string;
   onSend: () => void;
 }): JSX.Element {
-  const row = session.lastSuccessfulTokenRows.find((r) => r.id === tokenId);
+  const { homeTokenRows } = usePopupContext();
+  const row = homeTokenRows.find((r) => r.id === tokenId);
   if (!row) {
     return (
       <div id="token-detail-root" className="token-detail">

@@ -8,6 +8,8 @@ import {
   type StandardEventsFeature,
 } from "@wallet-standard/features";
 import {
+  SolanaSignAndSendTransaction,
+  type SolanaSignAndSendTransactionFeature,
   SolanaSignMessage,
   type SolanaSignMessageFeature,
   SolanaSignTransaction,
@@ -35,6 +37,10 @@ const btnSignMsg = document.getElementById("sign-msg") as HTMLButtonElement;
 const btnSignMsgBinary = document.getElementById("sign-msg-binary") as HTMLButtonElement;
 const btnSignMsgTx = document.getElementById("sign-msg-tx") as HTMLButtonElement;
 const btnSignTx = document.getElementById("sign-tx") as HTMLButtonElement;
+const btnSignAndSendTx = document.getElementById("sign-and-send-tx") as HTMLButtonElement;
+const btnSignAndSendTxStd = document.getElementById(
+  "sign-and-send-tx-std",
+) as HTMLButtonElement;
 const btnSignTxFail = document.getElementById("sign-tx-fail") as HTMLButtonElement;
 const btnAirdrop = document.getElementById("airdrop") as HTMLButtonElement;
 
@@ -58,6 +64,8 @@ function enableSigning(address: string | undefined): void {
   btnSignMsgBinary.disabled = !ok;
   btnSignMsgTx.disabled = !ok;
   btnSignTx.disabled = !ok;
+  btnSignAndSendTx.disabled = !ok;
+  btnSignAndSendTxStd.disabled = !ok;
   btnSignTxFail.disabled = !ok;
   btnAirdrop.disabled = !ok;
   if (address) setStatus(`已連線：${address}`);
@@ -340,6 +348,99 @@ btnSignTx.addEventListener("click", async () => {
     log("Signed tx base58:", bs58.encode(out.signedTransaction));
   } catch (e) {
     log("Sign tx error:", e instanceof Error ? e.message : e);
+  }
+});
+
+btnSignAndSendTx.addEventListener("click", async () => {
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as
+      | StandardConnectFeature[typeof StandardConnect]
+      | undefined;
+    const signTx = wallet.features[SolanaSignTransaction] as
+      | SolanaSignTransactionFeature[typeof SolanaSignTransaction]
+      | undefined;
+    if (!connect || !signTx) return;
+
+    const { accounts } = await connect.connect({ silent: true });
+    const account = accounts[0];
+    if (!account) throw new Error("no account");
+
+    const connection = new Connection(DEVNET_RPC);
+    const from = new PublicKey(account.address);
+    const latest = await connection.getLatestBlockhash();
+    const msg = new TransactionMessage({
+      payerKey: from,
+      recentBlockhash: latest.blockhash,
+      instructions: [
+        SystemProgram.transfer({
+          fromPubkey: from,
+          toPubkey: from,
+          lamports: 0,
+        }),
+      ],
+    }).compileToV0Message();
+    const tx = new VersionedTransaction(msg);
+
+    const [out] = await signTx.signTransaction({
+      account,
+      transaction: tx.serialize(),
+    });
+    log("Signed for send, broadcasting…");
+    const signature = await connection.sendRawTransaction(out.signedTransaction, {
+      skipPreflight: false,
+    });
+    log("Broadcast signature:", signature);
+    await connection.confirmTransaction({ signature, ...latest }, "confirmed");
+    log("Confirmed:", signature);
+  } catch (e) {
+    log("Sign and send error:", e instanceof Error ? e.message : e);
+  }
+});
+
+btnSignAndSendTxStd.addEventListener("click", async () => {
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as
+      | StandardConnectFeature[typeof StandardConnect]
+      | undefined;
+    const signAndSend = wallet.features[SolanaSignAndSendTransaction] as
+      | SolanaSignAndSendTransactionFeature[typeof SolanaSignAndSendTransaction]
+      | undefined;
+    if (!connect) return;
+    if (!signAndSend) {
+      throw new Error(`wallet 無 ${SolanaSignAndSendTransaction} feature`);
+    }
+
+    const { accounts } = await connect.connect({ silent: true });
+    const account = accounts[0];
+    if (!account) throw new Error("no account");
+
+    const connection = new Connection(DEVNET_RPC);
+    const from = new PublicKey(account.address);
+    const { blockhash } = await connection.getLatestBlockhash();
+    const msg = new TransactionMessage({
+      payerKey: from,
+      recentBlockhash: blockhash,
+      instructions: [
+        SystemProgram.transfer({
+          fromPubkey: from,
+          toPubkey: from,
+          lamports: 0,
+        }),
+      ],
+    }).compileToV0Message();
+    const tx = new VersionedTransaction(msg);
+
+    const [out] = await signAndSend.signAndSendTransaction({
+      account,
+      chain: "solana:devnet",
+      transaction: tx.serialize(),
+    });
+    log("signAndSendTransaction ok:", bs58.encode(out.signature));
+  } catch (e) {
+    const err = e as Error & { code?: string };
+    log("signAndSendTransaction error:", err.code ?? "", err.message ?? e);
   }
 });
 

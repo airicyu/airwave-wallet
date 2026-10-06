@@ -18,3 +18,4 @@
 | [錢包地址簿](./address-book.md) | 名稱＋地址白名單；送出可選，仍可手貼 |
 | [簽署交易指令解析](./sign-transaction-ix-decode.md) | 明細：common parser → Anchor IDL → hex；現況僅 hex |
 | [地址複製回饋](./address-copy-feedback.md) | 頂欄地址複製圖示成功寫入剪貼簿後，按鈕短暫顯示已複製 |
+| [持倉刷新按鈕硬冷卻](./token-balance-refresh-cooldown.md) | Tokens 刷新鈕按完後 disabled 3 秒，避免同一錢包連按打太多 RPC；切頁或切帳戶可清掉 |

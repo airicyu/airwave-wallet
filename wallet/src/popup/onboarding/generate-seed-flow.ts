@@ -1,17 +1,25 @@
 import { createEnglishMnemonic12, keypairFromMnemonic } from "../../shared/seed-derive";
-import { session } from "../lib/session";
 
-export function resetGenerateSeedFlow(): void {
-  session.generateSeedBusy = false;
-  session.generateSeedLabel = "";
-  session.generateSeedErr = "";
+export type GenerateSeedDraft = {
+  words: string[] | null;
+  pk: string | null;
+  busy: boolean;
+  label: string;
+  err: string;
+};
+
+export function createGenerateSeedDraft(): GenerateSeedDraft {
   try {
     const mnemonic = createEnglishMnemonic12();
     const kp = keypairFromMnemonic(mnemonic, "phantom", 0);
-    session.generateSeedWords = mnemonic.split(" ");
-    session.generateSeedPk = kp.publicKey.toBase58();
+    return {
+      words: mnemonic.split(" "),
+      pk: kp.publicKey.toBase58(),
+      busy: false,
+      label: "",
+      err: "",
+    };
   } catch {
-    session.generateSeedWords = null;
-    session.generateSeedPk = null;
+    return { words: null, pk: null, busy: false, label: "", err: "" };
   }
 }

@@ -10,8 +10,12 @@ import { getPending, unbindPopoutByRequest } from "../pending";
 import { readAccounts, readSettings } from "../storage";
 import { respond } from "../messaging";
 import { broadcastWalletSendSettled, walletSendNotify } from "../send";
-import { finishWalletSendUserAbort } from "../send";
-import { runWalletSendAfterApprove } from "../send";
+import {
+  finishSignAndSendRejected,
+  finishSignAndSendWindowClosed,
+  finishWalletSendUserAbort,
+  runWalletSendAfterApprove,
+} from "../send";
 import { finishConnect, finishSignMessage, finishSignTransaction } from "../pending";
 import { keypairForAccountId, signingErrorForAccountId } from "../session";
 import { simulateSignTransaction } from "../simulate";
@@ -49,6 +53,61 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
       });
     }
     const approved = decision === "approve";
+
+    if (p.kind === "signAndSendTransaction") {
+      if (!approved) {
+        await finishSignAndSendRejected(requestId, p.tabId);
+        return respond({
+          kind: "airwave-ext-res",
+          requestId: req.requestId,
+          ok: true,
+          result: { done: true },
+        });
+      }
+      if (!session.isUnlocked()) {
+        return respond({
+          kind: "airwave-ext-res",
+          requestId: req.requestId,
+          ok: false,
+          error: { code: "WALLET_LOCKED", message: "Unlock wallet in extension popup" },
+        });
+      }
+      const signAccountId = p.signAccountId;
+      if (!signAccountId) {
+        return respond({
+          kind: "airwave-ext-res",
+          requestId: req.requestId,
+          ok: false,
+          error: { code: "NOT_FOUND", message: "Pending not found" },
+        });
+      }
+      const accountErr = await signingErrorForAccountId(signAccountId);
+      if (accountErr) {
+        return respond({
+          kind: "airwave-ext-res",
+          requestId: req.requestId,
+          ok: false,
+          error: accountErr,
+        });
+      }
+      const kp = await keypairForAccountId(signAccountId);
+      if (!kp) {
+        return respond({
+          kind: "airwave-ext-res",
+          requestId: req.requestId,
+          ok: false,
+          error: { code: "NO_KEY", message: "Missing key" },
+        });
+      }
+      const settings = await readSettings();
+      void runWalletSendAfterApprove(requestId, settings.rpcUrl, kp, walletSendNotify);
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: true,
+        result: { accepted: true },
+      });
+    }
 
     if (p.kind === "walletSend") {
       if (!approved) {
@@ -124,7 +183,12 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
   if (req.command === "ui.abortPending") {
     const { requestId } = (req.payload ?? {}) as { requestId: string };
     if (requestId) {
-      finishWalletSendUserAbort(requestId, broadcastWalletSendSettled);
+      const p = getPending(requestId);
+      if (p?.kind === "signAndSendTransaction") {
+        await finishSignAndSendWindowClosed(requestId);
+      } else {
+        finishWalletSendUserAbort(requestId, broadcastWalletSendSettled);
+      }
     }
     return respond({
       kind: "airwave-ext-res",
@@ -142,7 +206,12 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
     };
     const { requestId } = payload;
     const p = getPending(requestId);
-    if (!p || (p.kind !== "signTransaction" && p.kind !== "walletSend")) {
+    if (
+      !p ||
+      (p.kind !== "signTransaction" &&
+        p.kind !== "walletSend" &&
+        p.kind !== "signAndSendTransaction")
+    ) {
       return respond({
         kind: "airwave-ext-res",
         requestId: req.requestId,

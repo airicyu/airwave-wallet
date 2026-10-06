@@ -2,15 +2,21 @@ import type { JSX } from "react";
 import { memo, useEffect, useRef } from "react";
 import { mountApprovalShell } from "../../approval/shell";
 import { sendExtensionRequest } from "../../shared/ext-api";
-import { session, navigateTo, bumpUi } from "../lib/session";
+import { usePopupContext } from "../state/PopupContext";
 
 /** Markup matches today's popup #approval-root; mountApprovalShell queries these ids. */
 export const APPROVAL_ROOT_HTML = `
               <section id="appr-view-unlock" class="unlock-screen" hidden>
-                <p>錢包已鎖定</p>
-                <input id="appr-unlock-password" type="text" class="wallet-pwd-masked" placeholder="密碼" autocomplete="off" />
-                <p id="appr-unlock-error" class="inline-error" hidden></p>
-                <button id="appr-btn-unlock" type="button" class="primary-btn">解鎖</button>
+                <div class="unlock-mark" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                </div>
+                <h1>Airwave</h1>
+                <p class="unlock-lead">錢包已鎖定</p>
+                <div class="unlock-form">
+                  <input id="appr-unlock-password" type="text" class="wallet-pwd-masked" placeholder="密碼" autocomplete="off" />
+                  <p id="appr-unlock-error" class="inline-error" hidden></p>
+                  <button id="appr-btn-unlock" type="button" class="primary-btn">解鎖</button>
+                </div>
               </section>
               <section id="appr-view-gone" class="expired-screen" hidden>
                 <p id="appr-gone-lead">這筆請求已不能繼續。</p>
@@ -53,8 +59,25 @@ export const APPROVAL_ROOT_HTML = `
               </section>
 `;
 
+let abortRequestId: string | null = null;
+
+export function syncWalletSendAbortId(id: string | null): void {
+  abortRequestId = id;
+}
+
+/** 唯一一份 popup 送出 pending abort（pagehide／beforeunload／離開審批 view）。 */
+export function abortWalletSendOnPopupUnload(): void {
+  const rid = abortRequestId;
+  if (!rid) return;
+  abortRequestId = null;
+  void sendExtensionRequest("ui.abortPending", { requestId: rid });
+}
+
 export const ApprovalHost = memo(function ApprovalHost({ requestId }: { requestId: string }): JSX.Element {
   const rootRef = useRef<HTMLDivElement>(null);
+  const api = usePopupContext();
+  const apiRef = useRef(api);
+  apiRef.current = api;
   useEffect(() => {
     const el = rootRef.current;
     if (!el || !requestId) return;
@@ -64,20 +87,18 @@ export const ApprovalHost = memo(function ApprovalHost({ requestId }: { requestI
         host: "popup",
         elementIdPrefix: "appr-",
         callbacks: {
-          onClose: () => navigateTo("token-send"),
+          onClose: () => apiRef.current.navigateTo("token-send"),
           onWalletSendReject: () => {
-            session.activeWalletSendRequestId = null;
-            navigateTo("token-send");
+            syncWalletSendAbortId(null);
+            apiRef.current.setActiveWalletSendRequestId(null);
+            apiRef.current.navigateTo("token-send");
           },
           onWalletSendSuccessExit: () => {
-            session.activeWalletSendRequestId = null;
-            session.sendAmount = "";
-            session.sendRecipient = "";
-            session.sendFormError = "";
-            session.detailTokenId = null;
-            session.homeAssetsForce = true;
-            navigateTo("home-token");
-            bumpUi();
+            syncWalletSendAbortId(null);
+            apiRef.current.setActiveWalletSendRequestId(null);
+            apiRef.current.setDetailTokenId(null);
+            apiRef.current.setHomeAssetsForce(true);
+            apiRef.current.navigateTo("home-token");
           },
         },
       },
@@ -96,8 +117,3 @@ export const ApprovalHost = memo(function ApprovalHost({ requestId }: { requestI
   );
 });
 
-export function abortWalletSendOnPopupUnload(): void {
-  if (!session.activeWalletSendRequestId) return;
-  void sendExtensionRequest("ui.abortPending", { requestId: session.activeWalletSendRequestId });
-  session.activeWalletSendRequestId = null;
-}

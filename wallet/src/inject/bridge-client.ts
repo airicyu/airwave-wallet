@@ -1,11 +1,17 @@
 import type { AirwaveCommand } from "../shared/commands";
+import { PENDING_TIMEOUT_MS } from "../shared/commands";
 
 const pending = new Map<
   string,
   { resolve: (v: unknown) => void; reject: (e: Error) => void }
 >();
 
-const TIMEOUT_MS = 120_000;
+const DEFAULT_TIMEOUT_MS = 120_000;
+const SIGN_AND_SEND_TIMEOUT_MS = PENDING_TIMEOUT_MS + 60_000;
+
+function bridgeTimeoutMs(command: AirwaveCommand): number {
+  return command === "dapp.signAndSendTransaction" ? SIGN_AND_SEND_TIMEOUT_MS : DEFAULT_TIMEOUT_MS;
+}
 
 export function bridgeRequest(command: AirwaveCommand, payload?: unknown): Promise<unknown> {
   const requestId = crypto.randomUUID();
@@ -13,7 +19,7 @@ export function bridgeRequest(command: AirwaveCommand, payload?: unknown): Promi
     const timer = setTimeout(() => {
       pending.delete(requestId);
       reject(new Error("Request timed out"));
-    }, TIMEOUT_MS);
+    }, bridgeTimeoutMs(command));
 
     pending.set(requestId, {
       resolve: (v) => {

@@ -2,7 +2,13 @@ import type { ExtensionRequest, ExtensionResponse, SignMessagePayload } from "..
 import { messageLooksLikeTransactionMessage } from "../shared/sign-message-tx";
 import { handleDappCommand, handleUiCommand, handleWalletCommand } from "./handlers";
 import { respond, sendBridgeResult } from "./messaging";
-import { finishWalletSendWindowClosed, getPending, takePending, unbindPopoutWindow } from "./pending";
+import {
+  finishWalletSendWindowClosed,
+  getPending,
+  takePending,
+  unbindPopoutWindow,
+} from "./pending";
+import { finishSignAndSendWindowClosed } from "./send";
 import { pendingTimeoutHandlers } from "./send";
 import * as session from "./session";
 
@@ -68,6 +74,11 @@ chrome.windows.onRemoved.addListener((windowId) => {
 
   if (p.kind === "walletSend") {
     void finishWalletSendWindowClosed(requestId, p, pendingTimeoutHandlers);
+    return;
+  }
+
+  if (p.kind === "signAndSendTransaction") {
+    void finishSignAndSendWindowClosed(requestId);
     return;
   }
 

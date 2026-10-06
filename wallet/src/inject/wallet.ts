@@ -1,4 +1,6 @@
 import {
+  SolanaSignAndSendTransaction,
+  type SolanaSignAndSendTransactionFeature,
   SolanaSignMessage,
   type SolanaSignMessageFeature,
   SolanaSignTransaction,
@@ -35,7 +37,7 @@ function accountFromPublicKey(pk: PublicKey): WalletAccount {
     address: pk.toBase58(),
     publicKey: pk.toBytes(),
     chains: [activeChain()],
-    features: [SolanaSignMessage, SolanaSignTransaction],
+    features: [SolanaSignMessage, SolanaSignTransaction, SolanaSignAndSendTransaction],
   };
 }
 
@@ -134,5 +136,22 @@ export const airwaveWallet: Wallet = {
         return outputs;
       },
     } satisfies SolanaSignTransactionFeature[typeof SolanaSignTransaction],
+    [SolanaSignAndSendTransaction]: {
+      version: "1.0.0",
+      supportedTransactionVersions: [0, "legacy"] as const,
+      signAndSendTransaction: async (...inputs) => {
+        const outputs = [];
+        for (const input of inputs) {
+          const result = (await bridgeRequest("dapp.signAndSendTransaction", {
+            transaction: Array.from(input.transaction),
+            chain: input.chain,
+          })) as { signature: number[] };
+          outputs.push({
+            signature: Uint8Array.from(result.signature),
+          });
+        }
+        return outputs;
+      },
+    } satisfies SolanaSignAndSendTransactionFeature[typeof SolanaSignAndSendTransaction],
   },
 };

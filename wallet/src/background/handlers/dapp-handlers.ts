@@ -2,6 +2,7 @@ import type {
   ConnectPayload,
   ExtensionRequest,
   ExtensionResponse,
+  SignAndSendTransactionPayload,
   SignMessagePayload,
   SignTransactionPayload,
 } from "../../shared/commands";
@@ -14,6 +15,12 @@ import { rememberConnectedTab, removeConnectionAndNotify } from "../messaging";
 import { openPopout } from "../messaging";
 import { pendingTimeoutHandlers } from "../send";
 import { signMessageEnqueueGateError } from "../session";
+
+const ACCEPTED_CHAIN_IDS = new Set(["solana:devnet", "solana:mainnet"]);
+
+function settingsChainId(cluster: "devnet" | "mainnet"): string {
+  return cluster === "mainnet" ? "solana:mainnet" : "solana:devnet";
+}
 
 export async function handleDappCommand(req: ExtensionRequest): Promise<ExtensionResponse> {
   const tabId = req.tabId;
@@ -171,6 +178,68 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
       frameId: req.frameId ?? 0,
       origin,
       payload: req.payload as SignTransactionPayload,
+      createdAt: Date.now(),
+      signAccountId: activeId,
+      uiHost: "popout",
+    });
+    schedulePendingTimeout(requestId, pendingTimeoutHandlers);
+    await openPopout(requestId);
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { pending: true },
+    });
+  }
+
+  if (req.command === "dapp.signAndSendTransaction") {
+    const payload = req.payload as SignAndSendTransactionPayload | undefined;
+    const chain = payload?.chain;
+    if (!chain || typeof chain !== "string" || !ACCEPTED_CHAIN_IDS.has(chain)) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "INVALID_CHAIN", message: "Unsupported chain" },
+      });
+    }
+    const settings = await readSettings();
+    if (settingsChainId(settings.cluster) !== chain) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: {
+          code: "CHAIN_MISMATCH",
+          message: "Wallet cluster does not match request chain",
+        },
+      });
+    }
+    const gate = await signMessageEnqueueGateError();
+    if (gate) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: gate,
+      });
+    }
+    const activeId = await readActiveAccountId();
+    if (!activeId) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "NO_ACCOUNT", message: "No active account" },
+      });
+    }
+    const requestId = req.requestId;
+    addPending(requestId, {
+      kind: "signAndSendTransaction",
+      tabId,
+      frameId: req.frameId ?? 0,
+      origin,
+      payload: payload as SignAndSendTransactionPayload,
       createdAt: Date.now(),
       signAccountId: activeId,
       uiHost: "popout",

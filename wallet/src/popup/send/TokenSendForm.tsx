@@ -1,12 +1,33 @@
 import type { JSX } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { NATIVE_SOL_ID } from "../home/home-tokens";
-import { bumpUi, session } from "../lib/session";
+import { usePopupContext } from "../state/PopupContext";
+import { useRegisterDock } from "../state/dock";
 import { solReserveLamports } from "../../shared/wallet-send-amount";
 import type { State } from "../types";
-import { applyHalfSendAmount, applyMaxSendAmount, findTokenRowById, tokenBalanceRaw } from "./send-logic";
+import { beginTokenSend, findTokenRowById, halfSendAmount, maxSendAmount, sendFormValid, tokenBalanceRaw } from "./send-logic";
+import { syncWalletSendAbortId } from "../components/ApprovalHost";
 
 export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
-  const row = session.detailTokenId ? findTokenRowById(session.detailTokenId) : undefined;
+  const {
+    detailTokenId,
+    homeTokenRows,
+    pendingSendFormError,
+    consumePendingSendFormError,
+    setActiveWalletSendRequestId,
+    navigateTo,
+  } = usePopupContext();
+  const [amount, setAmount] = useState("");
+  const [recipient, setRecipient] = useState("");
+  const [formError, setFormError] = useState("");
+
+  useEffect(() => {
+    if (!pendingSendFormError) return;
+    setFormError(pendingSendFormError);
+    consumePendingSendFormError();
+  }, [pendingSendFormError, consumePendingSendFormError]);
+
+  const row = detailTokenId ? findTokenRowById(homeTokenRows, detailTokenId) : undefined;
   let balance = "—";
   let halfDisabled = true;
   let maxDisabled = true;
@@ -23,6 +44,49 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
       }
     }
   }
+
+  const valid = sendFormValid({
+    state: wallet,
+    rows: homeTokenRows,
+    detailTokenId,
+    amount,
+    recipient,
+  });
+
+  const onPrimary = useCallback(async () => {
+    if (!detailTokenId) return;
+    setFormError("");
+    if (
+      !sendFormValid({
+        state: wallet,
+        rows: homeTokenRows,
+        detailTokenId,
+        amount,
+        recipient,
+      })
+    ) {
+      return;
+    }
+    const res = await beginTokenSend({
+      tokenId: detailTokenId,
+      amountUi: amount.trim(),
+      recipient: recipient.trim(),
+    });
+    if (!res.ok) {
+      setFormError(res.error);
+      return;
+    }
+    setActiveWalletSendRequestId(res.requestId);
+    syncWalletSendAbortId(res.requestId);
+    navigateTo("send-approval");
+  }, [amount, recipient, detailTokenId, homeTokenRows, wallet, setActiveWalletSendRequestId, navigateTo]);
+
+  useRegisterDock({
+    label: "確認",
+    disabled: !wallet || !valid,
+    onPrimary,
+  });
+
   return (
     <div className="token-send-form">
       <div className="token-send-info">
@@ -44,18 +108,19 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
             inputMode="decimal"
             autoComplete="off"
             placeholder="0"
-            value={session.sendAmount}
-            onChange={(e) => {
-              session.sendAmount = e.target.value;
-              bumpUi();
-            }}
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
           />
           <button
             type="button"
             id="send-half"
             className="send-max-btn"
             disabled={halfDisabled}
-            onClick={() => applyHalfSendAmount()}
+            onClick={() => {
+              if (!row) return;
+              const next = halfSendAmount(row);
+              if (next != null) setAmount(next);
+            }}
           >
             50%
           </button>
@@ -64,7 +129,11 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
             id="send-max"
             className="send-max-btn"
             disabled={maxDisabled}
-            onClick={() => applyMaxSendAmount(wallet)}
+            onClick={() => {
+              if (!row) return;
+              const next = maxSendAmount(row, wallet);
+              if (next != null) setAmount(next);
+            }}
           >
             全部
           </button>
@@ -80,15 +149,12 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
             autoComplete="off"
             spellCheck={false}
             placeholder="Base58 地址"
-            value={session.sendRecipient}
-            onChange={(e) => {
-              session.sendRecipient = e.target.value;
-              bumpUi();
-            }}
+            value={recipient}
+            onChange={(e) => setRecipient(e.target.value)}
           />
         </div>
-        <p id="send-form-error" className="error" hidden={!session.sendFormError}>
-          {session.sendFormError}
+        <p id="send-form-error" className="error" hidden={!formError}>
+          {formError}
         </p>
       </div>
     </div>

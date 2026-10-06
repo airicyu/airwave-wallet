@@ -1,9 +1,11 @@
+import bs58 from "bs58";
 import { Connection, Keypair, VersionedTransaction } from "@solana/web3.js";
 import type { SignTransactionPayload } from "../../shared/commands";
 import { getWorkingTx } from "../pending";
 import { getPending, removePending } from "../pending";
 import { clearWalletSendState, getWalletSendState } from "./wallet-send-state";
 import { cancelPendingTimeout } from "../pending";
+import { sendBridgeResult } from "../messaging";
 
 const CONFIRM_MS = 60_000;
 
@@ -19,7 +21,9 @@ export async function runWalletSendAfterApprove(
   notify: WalletSendNotify,
 ): Promise<void> {
   const pending = getPending(requestId);
-  if (!pending || pending.kind !== "walletSend") return;
+  if (!pending || (pending.kind !== "walletSend" && pending.kind !== "signAndSendTransaction")) {
+    return;
+  }
 
   const ws = getWalletSendState(requestId);
   cancelPendingTimeout(requestId);
@@ -68,7 +72,17 @@ async function waitConfirmOnly(
       const st = await conn.getSignatureStatuses([signature]);
       const val = st.value[0];
       if (val?.confirmationStatus === "confirmed" || val?.confirmationStatus === "finalized") {
-        if (!getPending(requestId)) return;
+        const p = getPending(requestId);
+        if (!p) return;
+        if (p.kind === "signAndSendTransaction") {
+          const sigBytes = Array.from(bs58.decode(signature));
+          await sendBridgeResult(p.tabId, {
+            type: "airwave-bridge-result",
+            requestId,
+            ok: true,
+            result: { signature: sigBytes },
+          });
+        }
         removePending(requestId);
         clearWalletSendState(requestId);
         notify.settled(requestId, true, undefined, signature);

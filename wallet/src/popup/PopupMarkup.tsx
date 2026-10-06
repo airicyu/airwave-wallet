@@ -17,7 +17,6 @@ import { WalletWidget } from "./components/WalletWidget";
 import { getExposedPublicKey } from "../shared/accounts";
 import { sendExtensionRequest } from "../shared/ext-api";
 import { isHomeView } from "./lib/format";
-import { bumpUi, navigateTo, refresh, session } from "./lib/session";
 import {
   AboutHub,
   AddAccountChooser,
@@ -30,7 +29,7 @@ import {
   SetupScreen,
   WatchAccountScreen,
 } from "./onboarding/OnboardingScreens";
-import { computeDock, handleBack, handleDockPrimary, subpageTitle } from "./runtime";
+import { screenEnterKey, subpageTitle } from "./runtime";
 import { TokenSendForm } from "./send/TokenSendForm";
 import {
   ChangePasswordScreen,
@@ -40,17 +39,20 @@ import {
   RpcScreen,
   SettingsHub,
 } from "./settings/SettingsScreens";
-import type { State, View } from "./types";
+import { usePopupContext } from "./state/PopupContext";
+import { useDock } from "./state/dock";
 
-export type PopupMarkupProps = {
-  wallet: State | null;
-  currentView: View;
-  tick: number;
-  onOpenTokenDetail: (tokenId: string) => void;
-  onTokenSend: () => void;
-};
+function ErrorToast(): JSX.Element {
+  const { toast, clearError } = usePopupContext();
+  return (
+    <p id="error" className="error toast-error" hidden={!toast} onClick={() => clearError()}>
+      {toast}
+    </p>
+  );
+}
 
 function MenuItems(): JSX.Element {
+  const { navigateTo } = usePopupContext();
   return (
     <>
       <button type="button" className="menu-item" onClick={() => navigateTo("accounts")}>
@@ -69,44 +71,47 @@ function MenuItems(): JSX.Element {
   );
 }
 
-export function PopupMarkup({
-  wallet,
-  currentView,
-  tick,
-  onOpenTokenDetail,
-  onTokenSend,
-}: PopupMarkupProps): JSX.Element {
+export function PopupMarkup(): JSX.Element {
+  const {
+    wallet,
+    currentView,
+    detailTokenId,
+    setDetailTokenId,
+    activeWalletSendRequestId,
+    homeTokenRows,
+    setHomeAssetsForce,
+    menuOpen,
+    setMenuOpen,
+    navSeq,
+    titleOverride,
+    navigateTo,
+    handleBack,
+    refresh,
+  } = usePopupContext();
+  const { dock } = useDock();
+
   const vaultExists = wallet?.vaultExists ?? false;
   const unlocked = wallet?.unlocked ?? false;
   const isLocked = vaultExists && !unlocked;
   const showShell = vaultExists && unlocked;
   const home = isHomeView(currentView);
-  const dock = computeDock(wallet);
-  const title = subpageTitle();
+  const title =
+    titleOverride ??
+    subpageTitle({
+      currentView,
+      detailTokenId,
+      homeTokenRows,
+    });
 
   if (wallet == null) {
-    return (
-      <p id="error" className="error toast-error" hidden={!session.errorMessage} onClick={() => (session.errorMessage = "")}>
-        {session.errorMessage}
-      </p>
-    );
+    return <ErrorToast />;
   }
 
   if (!vaultExists) {
     return (
       <>
         <SetupScreen />
-        <p
-          id="error"
-          className="error toast-error"
-          hidden={!session.errorMessage}
-          onClick={() => {
-            session.errorMessage = "";
-            bumpUi();
-          }}
-        >
-          {session.errorMessage}
-        </p>
+        <ErrorToast />
       </>
     );
   }
@@ -115,17 +120,7 @@ export function PopupMarkup({
     return (
       <>
         <LockedScreen />
-        <p
-          id="error"
-          className="error toast-error"
-          hidden={!session.errorMessage}
-          onClick={() => {
-            session.errorMessage = "";
-            bumpUi();
-          }}
-        >
-          {session.errorMessage}
-        </p>
+        <ErrorToast />
       </>
     );
   }
@@ -183,22 +178,26 @@ export function PopupMarkup({
                   id="btn-menu"
                   title="Menu"
                   aria-label="Menu"
-                  aria-expanded={session.menuOpen}
-                  onClick={() => {
-                    session.menuOpen = !session.menuOpen;
-                    bumpUi();
-                  }}
+                  aria-expanded={menuOpen}
+                  onClick={() => setMenuOpen(!menuOpen)}
                 >
                   <IconMenu />
                 </button>
-                <div id="menu-dropdown" className="menu-dropdown" hidden={!session.menuOpen}>
+                <div id="menu-dropdown" className="menu-dropdown" hidden={!menuOpen}>
                   <MenuItems />
                 </div>
               </div>
             </div>
           </div>
           <div className="bar-subpage" id="bar-subpage" hidden={home}>
-            <button type="button" className="icon-btn" id="btn-back" title="Back" aria-label="Back" onClick={() => handleBack()}>
+            <button
+              type="button"
+              className="icon-btn"
+              id="btn-back"
+              title="Back"
+              aria-label="Back"
+              onClick={() => handleBack()}
+            >
               <IconBack />
             </button>
             <div className="bar-subpage-title" id="subpage-title">
@@ -210,15 +209,12 @@ export function PopupMarkup({
                 className="icon-btn btn-menu-sub"
                 title="Menu"
                 aria-label="Menu"
-                aria-expanded={session.menuOpen}
-                onClick={() => {
-                  session.menuOpen = !session.menuOpen;
-                  bumpUi();
-                }}
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen(!menuOpen)}
               >
                 <IconMenu />
               </button>
-              <div className="menu-dropdown menu-dropdown-sub" hidden={!session.menuOpen}>
+              <div className="menu-dropdown menu-dropdown-sub" hidden={!menuOpen}>
                 <MenuItems />
               </div>
             </div>
@@ -228,12 +224,9 @@ export function PopupMarkup({
         <div
           id="menu-overlay"
           className="menu-overlay"
-          hidden={!session.menuOpen}
-          aria-hidden={session.menuOpen ? "false" : "true"}
-          onClick={() => {
-            session.menuOpen = false;
-            bumpUi();
-          }}
+          hidden={!menuOpen}
+          aria-hidden={menuOpen ? "false" : "true"}
+          onClick={() => setMenuOpen(false)}
         />
 
         <main className="screen-body">
@@ -247,22 +240,30 @@ export function PopupMarkup({
                   id="btn-refresh-assets"
                   title="Refresh balances"
                   aria-label="Refresh balances"
-                  onClick={() => {
-                    session.homeAssetsForce = true;
-                    bumpUi();
-                  }}
+                  onClick={() => setHomeAssetsForce(true)}
                 >
                   <IconRefresh />
                 </button>
               </div>
-              <HomeTokenList wallet={wallet} currentView={currentView} onOpenDetail={onOpenTokenDetail} tick={tick} />
+              <HomeTokenList
+                wallet={wallet}
+                currentView={currentView}
+                onOpenDetail={(tokenId) => {
+                  setDetailTokenId(tokenId);
+                  navigateTo("token-detail");
+                }}
+              />
             </section>
           ) : null}
 
           {currentView === "token-detail" ? (
             <section id="screen-token-detail" className="screen">
-              {session.detailTokenId ? (
-                <TokenDetailView wallet={wallet} tokenId={session.detailTokenId} onSend={onTokenSend} />
+              {detailTokenId ? (
+                <TokenDetailView
+                  wallet={wallet}
+                  tokenId={detailTokenId}
+                  onSend={() => navigateTo("token-send")}
+                />
               ) : (
                 <div id="token-detail-root" className="token-detail" />
               )}
@@ -275,9 +276,9 @@ export function PopupMarkup({
             </section>
           ) : null}
 
-          {currentView === "send-approval" && session.activeWalletSendRequestId ? (
+          {currentView === "send-approval" && activeWalletSendRequestId ? (
             <section id="screen-send-approval" className="screen approval-shell-host">
-              <ApprovalHost requestId={session.activeWalletSendRequestId} />
+              <ApprovalHost key={activeWalletSendRequestId} requestId={activeWalletSendRequestId} />
             </section>
           ) : null}
 
@@ -310,43 +311,43 @@ export function PopupMarkup({
 
           {currentView === "add-import-secret" ? (
             <section id="screen-add-import-secret" className="screen">
-              <ImportSecretScreen />
+              <ImportSecretScreen key={screenEnterKey("add-import-secret", navSeq)} />
             </section>
           ) : null}
 
           {currentView === "add-import-seed" ? (
             <section id="screen-add-import-seed" className="screen">
-              <ImportSeedScreen />
+              <ImportSeedScreen key={screenEnterKey("add-import-seed", navSeq)} />
             </section>
           ) : null}
 
           {currentView === "add-generate-seed" ? (
             <section id="screen-add-generate-seed" className="screen">
-              <GenerateSeedScreen />
+              <GenerateSeedScreen key={screenEnterKey("add-generate-seed", navSeq)} />
             </section>
           ) : null}
 
           {currentView === "add-generate" ? (
             <section id="screen-add-generate" className="screen">
-              <GenerateBurnerScreen />
+              <GenerateBurnerScreen key={screenEnterKey("add-generate", navSeq)} />
             </section>
           ) : null}
 
           {currentView === "add-watch" ? (
             <section id="screen-add-watch" className="screen">
-              <WatchAccountScreen />
+              <WatchAccountScreen key={screenEnterKey("add-watch", navSeq)} />
             </section>
           ) : null}
 
           {currentView === "add-combined" ? (
             <section id="screen-add-combined" className="screen">
-              <CombinedCreateScreen wallet={wallet} />
+              <CombinedCreateScreen key={screenEnterKey("add-combined", navSeq)} wallet={wallet} />
             </section>
           ) : null}
 
           {currentView === "account-rename" ? (
             <section id="screen-account-rename" className="screen">
-              <RenameScreen wallet={wallet} />
+              <RenameScreen key={screenEnterKey("account-rename", navSeq)} wallet={wallet} />
             </section>
           ) : null}
 
@@ -427,9 +428,15 @@ export function PopupMarkup({
           ) : null}
         </main>
 
-        <footer id="shell-dock" className="shell-dock" hidden={dock.hidden}>
-          <button type="button" className="primary-btn" id="dock-primary" disabled={dock.disabled} onClick={() => void handleDockPrimary()}>
-            {dock.label}
+        <footer id="shell-dock" className="shell-dock" hidden={!dock}>
+          <button
+            type="button"
+            className="primary-btn"
+            id="dock-primary"
+            disabled={dock?.disabled ?? true}
+            onClick={() => void dock?.onPrimary()}
+          >
+            {dock?.label ?? ""}
           </button>
         </footer>
 
@@ -451,17 +458,7 @@ export function PopupMarkup({
         </nav>
       </div>
 
-      <p
-        id="error"
-        className="error toast-error"
-        hidden={!session.errorMessage}
-        onClick={() => {
-          session.errorMessage = "";
-          bumpUi();
-        }}
-      >
-        {session.errorMessage}
-      </p>
+      <ErrorToast />
     </>
   );
 }

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.17.0 — 2026-10-07
+
+宣告並實作 Wallet Standard `solana:signAndSendTransaction`：網站請求仍走 popout；批准後錢包簽名、`sendRawTransaction`、等到 `confirmed`，確認中→已確認 hold 1s 再關窗，signature 只回發起 tab。`signTransaction` 仍只簽立刻關；`walletSend` 宿主與成功回 Home 不變。test-web 改走真 feature 路徑。
+
+## 0.16.0 — 2026-10-06
+
+Popup 收斂 React state：廢止模組級 `session`／`bindPopupShell` 與輸入時全樹 `bumpUi`。畫面草稿改元件 `useState`，跨頁暫存與導航走 App context；Back／離開清除／dock 以對照表為準。行為與 0.15.0 相同。未加依賴；審批殼仍 vanilla。
+
 ## 0.15.0 — 2026-10-06
 
 Popup 改 Vite + React functional component（`createRoot`、`App`、`PopupMarkup`）；行為與 0.14.0 相同。新增 `react`、`react-dom`、`@vitejs/plugin-react`；`@types/react`／`@types/react-dom` 因 npm 上的 React 19.3 未附 TS 定義而加為 devDependency。Service worker、content、inject、popout、審批殼仍 vanilla；`mountApprovalShell` 橋接不變。命令字串與 storage key 未改。

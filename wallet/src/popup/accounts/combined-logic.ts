@@ -1,41 +1,40 @@
 import { isSigningOrWatch, parsePublicKeyBase58 } from "../../shared/accounts";
-import { bumpUi, session } from "../lib/session";
+import type { CombinedCreateState, State } from "../types";
 
-export function resetCombinedCreate(): void {
-  session.combinedCreate = { draftChips: [], pickedPks: new Set(), currentMain: "" };
-  session.combinedDraft = "";
-  session.combinedLabel = "";
-  session.combinedErr = "";
+export function emptyCombinedCreate(): CombinedCreateState {
+  return { draftChips: [], pickedPks: new Set(), currentMain: "" };
 }
 
-export function combinedMemberPubkeys(): string[] {
+export function combinedMemberPubkeys(
+  create: CombinedCreateState,
+  wallet: State | null,
+): string[] {
   const fromPick: string[] = [];
-  if (session.lastState) {
-    for (const a of session.lastState.accounts) {
+  if (wallet) {
+    for (const a of wallet.accounts) {
       if (!isSigningOrWatch(a)) continue;
-      if (session.combinedCreate.pickedPks.has(a.publicKeyBase58)) fromPick.push(a.publicKeyBase58);
+      if (create.pickedPks.has(a.publicKeyBase58)) fromPick.push(a.publicKeyBase58);
     }
   }
   const ordered: string[] = [];
-  for (const x of [...session.combinedCreate.draftChips, ...fromPick]) {
+  for (const x of [...create.draftChips, ...fromPick]) {
     if (!ordered.includes(x)) ordered.push(x);
   }
   return ordered;
 }
 
-export function validCombinedMembers(): string[] {
-  return combinedMemberPubkeys().filter((pk) => parsePublicKeyBase58(pk) != null);
+export function validCombinedMembers(create: CombinedCreateState, wallet: State | null): string[] {
+  return combinedMemberPubkeys(create, wallet).filter((pk) => parsePublicKeyBase58(pk) != null);
 }
 
-export function addCombinedDraftParts(text: string): void {
+export function addCombinedDraftParts(create: CombinedCreateState, text: string): CombinedCreateState {
   const parts = text
     .split(/[\s,]+/)
     .map((s) => s.trim())
     .filter(Boolean);
+  const draftChips = [...create.draftChips];
   for (const p of parts) {
-    if (!session.combinedCreate.draftChips.includes(p)) session.combinedCreate.draftChips.push(p);
+    if (!draftChips.includes(p)) draftChips.push(p);
   }
-  session.combinedDraft = "";
-  session.combinedErr = "";
-  bumpUi();
+  return { ...create, draftChips };
 }

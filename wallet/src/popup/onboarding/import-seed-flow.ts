@@ -1,87 +1,103 @@
 import { sendExtensionRequest } from "../../shared/ext-api";
-import { bumpUi, session } from "../lib/session";
+import type { SeedPathKind } from "../../shared/seed-derive";
 
-function importSeedFilledCount(): number {
-  return session.importSeedWords.filter((w) => w.trim()).length;
-}
-
-export function importSeedDockReady(): {
+export type ImportSeedDraft = {
+  words: string[];
   step: "words" | "pick";
-  busy: boolean;
+  kind: SeedPathKind;
+  customPath: string;
+  pathPreview: string;
+  preview: { index: number; publicKeyBase58: string }[];
   selected: number | null;
-  filled: number;
-} {
+  busy: boolean;
+  previewGen: number;
+  err: string;
+};
+
+export function emptyImportSeedDraft(): ImportSeedDraft {
   return {
-    step: session.importSeedStep,
-    busy: session.importSeedBusy,
-    selected: session.importSeedSelected,
-    filled: importSeedFilledCount(),
+    words: Array(12).fill(""),
+    step: "words",
+    kind: "phantom",
+    customPath: "m/44'/501'/{n}'/0'",
+    pathPreview: "",
+    preview: [],
+    selected: null,
+    busy: false,
+    previewGen: 0,
+    err: "",
   };
 }
 
-export function importSeedTargetLength(): number {
-  const n = importSeedFilledCount();
-  return n > 12 ? 24 : 12;
+export function importSeedFilledCount(words: string[]): number {
+  return words.filter((w) => w.trim()).length;
 }
 
-export function resetImportSeedFlow(): void {
-  session.importSeedPreviewGen++;
-  session.importSeedWords = Array(12).fill("");
-  session.importSeedStep = "words";
-  session.importSeedKind = "phantom";
-  session.importSeedCustomPath = "m/44'/501'/{n}'/0'";
-  session.importSeedPathPreview = "";
-  session.importSeedPreview = [];
-  session.importSeedSelected = null;
-  session.importSeedBusy = false;
-  session.importSeedErr = "";
+export function importSeedTargetLength(words: string[]): number {
+  return importSeedFilledCount(words) > 12 ? 24 : 12;
 }
 
-export function mnemonicFromSlots(): string {
-  return session.importSeedWords.map((w) => w.trim().toLowerCase()).filter(Boolean).join(" ");
-}
-
-export function ensureImportSeedWordCapacity(): void {
-  const target = importSeedTargetLength();
-  if (session.importSeedWords.length === target) return;
+export function withImportSeedCapacity(words: string[]): string[] {
+  const target = importSeedTargetLength(words);
+  if (words.length === target) return words;
   const next = Array<string>(target).fill("");
-  session.importSeedWords.forEach((w, i) => {
+  words.forEach((w, i) => {
     if (i < target) next[i] = w;
   });
-  session.importSeedWords = next;
+  return next;
 }
 
-export async function requestSeedPreview(): Promise<"ok" | "fail" | "stale"> {
-  const gen = ++session.importSeedPreviewGen;
-  session.importSeedBusy = true;
-  session.importSeedErr = "";
-  bumpUi();
+export function mnemonicFromSlots(words: string[]): string {
+  return words.map((w) => w.trim().toLowerCase()).filter(Boolean).join(" ");
+}
 
+export function importSeedBackToWords(draft: ImportSeedDraft): ImportSeedDraft {
+  return {
+    ...draft,
+    previewGen: draft.previewGen + 1,
+    busy: false,
+    step: "words",
+    preview: [],
+    selected: null,
+    pathPreview: "",
+  };
+}
+
+export async function requestSeedPreview(
+  draft: ImportSeedDraft,
+): Promise<{ gen: number; next: Partial<ImportSeedDraft>; outcome: "ok" | "fail" }> {
+  const gen = draft.previewGen + 1;
   const res = await sendExtensionRequest("wallet.previewSeedAccounts", {
-    mnemonic: mnemonicFromSlots(),
-    pathKind: session.importSeedKind,
-    customPath: session.importSeedKind === "custom" ? session.importSeedCustomPath : undefined,
+    mnemonic: mnemonicFromSlots(draft.words),
+    pathKind: draft.kind,
+    customPath: draft.kind === "custom" ? draft.customPath : undefined,
   });
-
-  if (gen !== session.importSeedPreviewGen) return "stale";
-
-  session.importSeedBusy = false;
-
   if (!res.ok) {
-    session.importSeedPreview = [];
-    session.importSeedPathPreview = "";
-    session.importSeedErr = res.error?.message ?? "預覽失敗";
-    bumpUi();
-    return "fail";
+    return {
+      gen,
+      outcome: "fail",
+      next: {
+        previewGen: gen,
+        busy: false,
+        preview: [],
+        pathPreview: "",
+        err: res.error?.message ?? "預覽失敗",
+      },
+    };
   }
-
   const result = res.result as {
     pathPreview: string;
     accounts: { index: number; publicKeyBase58: string }[];
   };
-  session.importSeedPathPreview = result.pathPreview;
-  session.importSeedPreview = result.accounts;
-  session.importSeedErr = "";
-  bumpUi();
-  return "ok";
+  return {
+    gen,
+    outcome: "ok",
+    next: {
+      previewGen: gen,
+      busy: false,
+      pathPreview: result.pathPreview,
+      preview: result.accounts,
+      err: "",
+    },
+  };
 }

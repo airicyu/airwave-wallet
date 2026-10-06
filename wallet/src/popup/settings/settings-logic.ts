@@ -6,9 +6,14 @@ import {
   type ClusterRpcConfig,
   type Settings,
 } from "../../shared/storage-keys";
-import { bumpUi, clearError, navigateTo, refresh, session, showError } from "../lib/session";
+import type { State } from "../types";
 
 export const MASKED_SECRET_DISPLAY = "••••••";
+
+export type SettingsIo = {
+  refresh: () => Promise<State>;
+  showError: (msg: string) => void;
+};
 
 export function rpcFingerprint(settings: Settings): string {
   const pack = (c: Cluster): string => {
@@ -35,16 +40,16 @@ export function cloneRpcByCluster(
   };
 }
 
-export async function patchRpcByCluster(next: Record<Cluster, ClusterRpcConfig>): Promise<void> {
+export async function patchRpcByCluster(next: Record<Cluster, ClusterRpcConfig>, io: SettingsIo): Promise<void> {
   const res = await sendExtensionRequest("storage.patchSettings", { rpcByCluster: next });
-  if (!res.ok) showError(res.error?.message ?? "儲存 RPC 失敗");
-  else await refresh();
+  if (!res.ok) io.showError(res.error?.message ?? "儲存 RPC 失敗");
+  else await io.refresh();
 }
 
-export async function patchSettingsPartial(patch: Partial<Settings>): Promise<void> {
+export async function patchSettingsPartial(patch: Partial<Settings>, io: SettingsIo): Promise<void> {
   const res = await sendExtensionRequest("storage.patchSettings", patch);
-  if (!res.ok) showError(res.error?.message ?? "儲存設定失敗");
-  else await refresh();
+  if (!res.ok) io.showError(res.error?.message ?? "儲存設定失敗");
+  else await io.refresh();
 }
 
 export function looksHttpUrl(s: string): boolean {
@@ -63,53 +68,39 @@ export function apiKeysHubSummary(settings: Settings): string {
   return "未設定";
 }
 
-export function changePasswordCanSubmit(): boolean {
-  if (session.changePwdNew.length < 8) return false;
-  if (session.changePwdNew !== session.changePwdConfirm) return false;
-  if (!session.changePwdCurrent) return false;
+export function changePasswordCanSubmit(current: string, next: string, confirm: string): boolean {
+  if (next.length < 8) return false;
+  if (next !== confirm) return false;
+  if (!current) return false;
   return true;
 }
 
-export async function submitChangePassword(): Promise<void> {
-  clearError();
-  session.changePwdErr = "";
-  const currentPassword = session.changePwdCurrent;
-  const newPassword = session.changePwdNew;
-  const confirm = session.changePwdConfirm;
+export async function submitChangePassword(args: {
+  currentPassword: string;
+  newPassword: string;
+  confirm: string;
+  io: SettingsIo;
+}): Promise<{ ok: true } | { ok: false; err?: string }> {
+  const { currentPassword, newPassword, confirm } = args;
   if (newPassword.length < 8) {
-    session.changePwdCurrent = "";
-    session.changePwdNew = "";
-    session.changePwdConfirm = "";
-    session.changePwdErr = "新密碼過短";
-    bumpUi();
-    return;
+    return { ok: false, err: "新密碼過短" };
   }
   if (newPassword !== confirm) {
-    session.changePwdCurrent = "";
-    session.changePwdNew = "";
-    session.changePwdConfirm = "";
-    session.changePwdErr = "新密碼不一致";
-    bumpUi();
-    return;
+    return { ok: false, err: "新密碼不一致" };
   }
   const res = await sendExtensionRequest("wallet.changeVaultPassword", {
     currentPassword,
     newPassword,
   });
-  session.changePwdCurrent = "";
-  session.changePwdNew = "";
-  session.changePwdConfirm = "";
-  bumpUi();
   if (!res.ok) {
     const code = res.error?.code;
-    if (code === "INVALID_PASSWORD") session.changePwdErr = "密碼錯誤";
-    else if (code === "WEAK_PASSWORD") session.changePwdErr = "新密碼過短";
-    else showError(res.error?.message ?? "變更失敗");
-    bumpUi();
-    return;
+    if (code === "INVALID_PASSWORD") return { ok: false, err: "密碼錯誤" };
+    if (code === "WEAK_PASSWORD") return { ok: false, err: "新密碼過短" };
+    args.io.showError(res.error?.message ?? "變更失敗");
+    return { ok: false };
   }
-  await refresh();
-  navigateTo("settings");
+  await args.io.refresh();
+  return { ok: true };
 }
 
 export function parseDefaultCuPriceInput(raw: string): number | null {
@@ -122,61 +113,57 @@ export function parseDefaultCuPriceInput(raw: string): number | null {
   return i;
 }
 
-export function commitDefaultCuPriceFromDraft(): void {
-  const parsed = parseDefaultCuPriceInput(session.cuPriceDraft);
-  if (parsed == null) {
-    session.cuPriceDraft = String(session.lastLegalDefaultCuPrice);
-    bumpUi();
-    return;
+export async function persistHeliusField(args: {
+  wallet: State;
+  revealed: boolean;
+  draft: string;
+  io: SettingsIo;
+}): Promise<boolean> {
+  if (!args.revealed && args.wallet.settings.heliusApiUrl) return false;
+  let heliusApiUrl = args.draft.trim();
+  if (heliusApiUrl === MASKED_SECRET_DISPLAY) heliusApiUrl = args.wallet.settings.heliusApiUrl;
+  if (heliusApiUrl === args.wallet.settings.heliusApiUrl) return false;
+  await patchSettingsPartial({ heliusApiUrl }, args.io);
+  return true;
+}
+
+export async function persistJupiterField(args: {
+  wallet: State;
+  revealed: boolean;
+  draft: string;
+  io: SettingsIo;
+}): Promise<boolean> {
+  if (!args.revealed && args.wallet.settings.jupiterApiKey) return false;
+  let jupiterApiKey = args.draft.trim();
+  if (jupiterApiKey === MASKED_SECRET_DISPLAY) jupiterApiKey = args.wallet.settings.jupiterApiKey;
+  if (jupiterApiKey === args.wallet.settings.jupiterApiKey) return false;
+  await patchSettingsPartial({ jupiterApiKey }, args.io);
+  return true;
+}
+
+export function confirmRpcUrl(args: {
+  cluster: Cluster;
+  url: string;
+  isNew: boolean;
+  draft: string;
+  wallet: State;
+}): { ok: false; error: string } | { ok: true; next: Record<Cluster, ClusterRpcConfig>; nextUrl: string } {
+  const nextUrl = customRpcForCluster(args.draft, args.cluster);
+  if (!looksHttpUrl(args.draft) || !nextUrl) {
+    return { ok: false, error: "請輸入有效的 https RPC URL" };
   }
-  if (parsed === session.lastLegalDefaultCuPrice) return;
-  session.lastLegalDefaultCuPrice = parsed;
-  void patchSettingsPartial({ defaultCuPrice: parsed });
-}
-
-export async function persistHeliusField(): Promise<void> {
-  if (!session.lastState) return;
-  if (!session.keysHeliusRevealed && session.lastState.settings.heliusApiUrl) return;
-  let heliusApiUrl = session.heliusDraft.trim();
-  if (heliusApiUrl === MASKED_SECRET_DISPLAY) heliusApiUrl = session.lastState.settings.heliusApiUrl;
-  if (heliusApiUrl === session.lastState.settings.heliusApiUrl) return;
-  session.keysHeliusRevealed = false;
-  await patchSettingsPartial({ heliusApiUrl });
-}
-
-export async function persistJupiterField(): Promise<void> {
-  if (!session.lastState) return;
-  if (!session.keysJupiterRevealed && session.lastState.settings.jupiterApiKey) return;
-  let jupiterApiKey = session.jupiterDraft.trim();
-  if (jupiterApiKey === MASKED_SECRET_DISPLAY) jupiterApiKey = session.lastState.settings.jupiterApiKey;
-  if (jupiterApiKey === session.lastState.settings.jupiterApiKey) return;
-  session.keysJupiterRevealed = false;
-  await patchSettingsPartial({ jupiterApiKey });
-}
-
-export function confirmRpcUrl(cluster: Cluster, url: string, isNew: boolean): void {
-  clearError();
-  const nextUrl = customRpcForCluster(session.rpcEditDraft, cluster);
-  if (!looksHttpUrl(session.rpcEditDraft) || !nextUrl) {
-    showError("請輸入有效的 https RPC URL");
-    return;
-  }
-  if (!session.lastState) return;
-  const next = cloneRpcByCluster(session.lastState.settings.rpcByCluster);
-  if (isNew) {
-    if (!next[cluster].urls.includes(nextUrl)) {
-      next[cluster].urls = [...next[cluster].urls, nextUrl];
+  const next = cloneRpcByCluster(args.wallet.settings.rpcByCluster);
+  if (args.isNew) {
+    if (!next[args.cluster].urls.includes(nextUrl)) {
+      next[args.cluster].urls = [...next[args.cluster].urls, nextUrl];
     }
-    next[cluster].active = nextUrl;
-    session.rpcEditKey = rpcOptionKey(cluster, false, nextUrl);
+    next[args.cluster].active = nextUrl;
   } else {
-    const urls = next[cluster].urls.map((u) => (u === url ? nextUrl : u));
-    next[cluster].urls = [...new Set(urls)];
-    if (next[cluster].active === url) next[cluster].active = nextUrl;
-    session.rpcEditKey = rpcOptionKey(cluster, false, nextUrl);
+    const urls = next[args.cluster].urls.map((u) => (u === args.url ? nextUrl : u));
+    next[args.cluster].urls = [...new Set(urls)];
+    if (next[args.cluster].active === args.url) next[args.cluster].active = nextUrl;
   }
-  session.rpcEditDraft = nextUrl;
-  void patchRpcByCluster(next);
+  return { ok: true, next, nextUrl };
 }
 
 export { PUBLIC_RPC_BY_CLUSTER };

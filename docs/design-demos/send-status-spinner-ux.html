@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 確認中 Dash ring（fade tail）</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --accent-dim: #2a6ea8;
+        --text-dim: #6b7785;
+        --popup-w: 384px;
+        --popup-h: 600px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 920px; margin: 0 auto; padding: 28px 20px 64px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede {
+        color: var(--text-muted);
+        margin: 0 0 8px;
+        max-width: 54rem;
+        font-size: 0.92rem;
+      }
+      .note { color: var(--text-dim); font-size: 0.82rem; margin: 0 0 24px; }
+      a { color: var(--accent); }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(var(--popup-w), 1fr));
+        gap: 28px;
+      }
+      .cap {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        margin-bottom: 8px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .cap strong { color: var(--text-muted); font-weight: 600; text-transform: none; letter-spacing: 0; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+      .icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+        color: var(--text);
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+      .title {
+        flex: 1;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.92rem;
+      }
+      .body {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 28px 20px;
+        background: var(--bg);
+      }
+      .status-title {
+        margin: 18px 0 6px;
+        font-size: 1.28rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+      .status-lead { margin: 0; font-size: 0.84rem; color: var(--text-muted); }
+
+      .trace {
+        width: 112px;
+        height: 112px;
+        color: var(--accent);
+        display: block;
+        overflow: visible;
+      }
+      .aurora-green { stroke: #14f195; }
+      .aurora-mid { stroke: #5b8cff; }
+      .aurora-purple { stroke: #9945ff; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>確認中 — tracing 尾端淡出</h1>
+      <p class="lede">
+        動作對齊
+        <a href="https://www.loading-ui.com/docs/components/dash-ring">loading-ui DashRing</a>：
+        dash 從 0 長出來（尾追頭），再被 offset 抽走、重來。不是固定長度的 bar 在轉。
+        左：loading-ui 原版（亮藍）。右：Solana 經典色北極光——頭 <code>#14F195</code> 綠、中段藍紫過渡 <code>#5B8CFF</code>、尾 <code>#9945FF</code>。旋轉 4s。圈 112px。
+      </p>
+      <p class="note">產品碼未改。</p>
+
+      <div class="grid">
+        <div>
+          <div class="cap">原版 · <strong>DashRing 伸縮</strong></div>
+          <div class="phone">
+            <header class="top">
+              <div class="icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+              </div>
+              <div class="title">確認送出</div>
+              <div class="icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+              </div>
+            </header>
+            <div class="body">
+              <svg class="trace" viewBox="0 0 24 24" fill="none" stroke="currentColor" role="status" aria-label="確認中">
+                <circle cx="12" cy="12" r="9.5" opacity="0.14" stroke-width="3" />
+                <circle cx="12" cy="12" r="9.5" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 150">
+                  <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="2s" repeatCount="indefinite" />
+                  <animate attributeName="stroke-dasharray" values="0 150;42 150;42 150" keyTimes="0;0.5;1" dur="1.5s" repeatCount="indefinite" />
+                  <animate attributeName="stroke-dashoffset" values="0;-16;-59" keyTimes="0;0.5;1" dur="1.5s" repeatCount="indefinite" />
+                </circle>
+              </svg>
+              <p class="status-title">確認中</p>
+              <p class="status-lead">等待鏈上確認</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="cap">Solana 經典色 · <strong>#14F195 → #9945FF</strong></div>
+          <div class="phone">
+            <header class="top">
+              <div class="icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+              </div>
+              <div class="title">確認送出</div>
+              <div class="icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+              </div>
+            </header>
+            <div class="body">
+              <svg class="trace" viewBox="0 0 24 24" fill="none" stroke="currentColor" role="status" aria-label="確認中">
+                <circle class="aurora-purple" cx="12" cy="12" r="9.5" opacity="0.18" stroke-width="3" />
+                <circle class="aurora-purple" cx="12" cy="12" r="9.5" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 150">
+                  <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="4s" repeatCount="indefinite" />
+                  <animate attributeName="stroke-dasharray" values="0 150;58 150;58 150" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+                  <animate attributeName="stroke-dashoffset" values="0;-16;-59" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+                </circle>
+                <circle class="aurora-mid" cx="12" cy="12" r="9.5" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 150">
+                  <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="4s" repeatCount="indefinite" />
+                  <animate attributeName="stroke-dasharray" values="0 150;48 150;48 150" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+                  <animate attributeName="stroke-dashoffset" values="0;-16;-59" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+                </circle>
+                <circle class="aurora-green" cx="12" cy="12" r="9.5" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 150">
+                  <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="4s" repeatCount="indefinite" />
+                  <animate attributeName="stroke-dasharray" values="0 150;32 150;32 150" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+                  <animate attributeName="stroke-dashoffset" values="0;-16;-59" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+                </circle>
+              </svg>
+              <p class="status-title">確認中</p>
+              <p class="status-lead">等待鏈上確認</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

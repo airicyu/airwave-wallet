@@ -183,7 +183,13 @@ function hardenWalletPasswordInput(inp: HTMLInputElement): void {
 }
 
 function isSignTxKind(kind: PendingRecord["kind"]): boolean {
-  return kind === "signTransaction" || kind === "walletSend";
+  return (
+    kind === "signTransaction" || kind === "walletSend" || kind === "signAndSendTransaction"
+  );
+}
+
+function isBroadcastAfterApproveKind(kind: PendingRecord["kind"]): boolean {
+  return kind === "walletSend" || kind === "signAndSendTransaction";
 }
 
 function setSendStatusChrome(on: boolean): void {
@@ -191,23 +197,44 @@ function setSendStatusChrome(on: boolean): void {
 }
 
 const SEND_STATUS_CHECK_SVG =
-  '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>';
+  '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>';
+
+const SEND_STATUS_AURORA_SVG = `<svg class="send-aurora" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <circle class="send-aurora-purple" cx="12" cy="12" r="9.5" opacity="0.18" stroke-width="3" />
+  <circle class="send-aurora-purple" cx="12" cy="12" r="9.5" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 150">
+    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="4s" repeatCount="indefinite" />
+    <animate attributeName="stroke-dasharray" values="0 150;58 150;58 150" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+    <animate attributeName="stroke-dashoffset" values="0;-16;-59" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+  </circle>
+  <circle class="send-aurora-mid" cx="12" cy="12" r="9.5" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 150">
+    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="4s" repeatCount="indefinite" />
+    <animate attributeName="stroke-dasharray" values="0 150;48 150;48 150" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+    <animate attributeName="stroke-dashoffset" values="0;-16;-59" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+  </circle>
+  <circle class="send-aurora-green" cx="12" cy="12" r="9.5" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 150">
+    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="4s" repeatCount="indefinite" />
+    <animate attributeName="stroke-dasharray" values="0 150;32 150;32 150" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+    <animate attributeName="stroke-dashoffset" values="0;-16;-59" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+  </circle>
+</svg>`;
 
 function ensureSendStatusCard(): HTMLElement {
   let card = signBody.querySelector<HTMLElement>(".send-status-card");
   if (card) return card;
   signBody.replaceChildren();
   card = document.createElement("div");
-  card.className = "card send-status-card";
+  card.className = "send-status-card";
   const mark = document.createElement("div");
   mark.className = "send-status-mark";
   mark.setAttribute("aria-hidden", "true");
   const title = document.createElement("p");
   title.className = "send-status-title";
+  const lead = document.createElement("p");
+  lead.className = "send-status-lead";
   const sigEl = document.createElement("p");
   sigEl.className = "send-status-sig";
   sigEl.hidden = true;
-  card.append(mark, title, sigEl);
+  card.append(mark, title, lead, sigEl);
   signBody.append(card);
   return card;
 }
@@ -217,6 +244,10 @@ function isSendStatusLocked(): boolean {
 }
 
 function enterWalletSendConfirming(): void {
+  if (expiryTimer != null) {
+    window.clearTimeout(expiryTimer);
+    expiryTimer = null;
+  }
   sendStatusPhase = "pending";
   simGen += 1;
   signDock.hidden = true;
@@ -229,11 +260,12 @@ function enterWalletSendConfirming(): void {
   card.classList.add("is-pending");
   const mark = card.querySelector(".send-status-mark")!;
   mark.replaceChildren();
-  const spin = document.createElement("span");
-  spin.className = "send-status-spin";
-  mark.append(spin);
+  mark.innerHTML = SEND_STATUS_AURORA_SVG;
   const title = card.querySelector(".send-status-title")!;
   title.textContent = "確認中";
+  const lead = card.querySelector<HTMLElement>(".send-status-lead")!;
+  lead.hidden = false;
+  lead.textContent = "等待鏈上確認";
   const sigEl = card.querySelector<HTMLElement>(".send-status-sig")!;
   sigEl.hidden = true;
   sigEl.textContent = "";
@@ -285,6 +317,9 @@ function enterWalletSendConfirmedPage(signature?: string): void {
   mark.append(check);
   const title = card.querySelector(".send-status-title")!;
   title.textContent = "已確認";
+  const lead = card.querySelector<HTMLElement>(".send-status-lead")!;
+  lead.hidden = true;
+  lead.textContent = "";
   const sigEl = card.querySelector<HTMLElement>(".send-status-sig")!;
   if (signature) {
     sigEl.hidden = false;
@@ -297,7 +332,7 @@ function enterWalletSendConfirmedPage(signature?: string): void {
     confirmedTimer = null;
     const exit = shellConfig?.callbacks.onWalletSendSuccessExit ?? shellConfig?.callbacks.onClose;
     exit?.();
-  }, 500);
+  }, 1000);
 }
 
 async function copyText(text: string): Promise<void> {
@@ -328,7 +363,7 @@ function startApproveHold(): void {
     approveHoldTimer = null;
     if (!pending || resolving) return;
     if (pending.kind === "signMessage" && pending.messageLooksLikeTx) return;
-    if (pending.kind === "signTransaction" || pending.kind === "walletSend") {
+    if (isSignTxKind(pending.kind)) {
       applyApproveFromSimulation(lastSim);
       return;
     }
@@ -356,6 +391,7 @@ let requestEnded = false;
 let expiryTimer: number | null = null;
 
 function showGone(): void {
+  if (isSendStatusLocked()) return;
   requestEnded = true;
   if (expiryTimer != null) {
     window.clearTimeout(expiryTimer);
@@ -363,7 +399,11 @@ function showGone(): void {
   }
   hideAll();
   document.title = "Airwave — 請求已過期";
-  if (pending?.kind === "signTransaction" || pending?.kind === "walletSend")
+  if (
+    pending?.kind === "signTransaction" ||
+    pending?.kind === "walletSend" ||
+    pending?.kind === "signAndSendTransaction"
+  )
     goneLead.textContent = "這筆交易已不能簽署。";
   else if (pending?.kind === "signMessage") goneLead.textContent = "這筆訊息已不能簽署。";
   else goneLead.textContent = "這筆請求已不能繼續。";
@@ -989,7 +1029,7 @@ async function resolve(decision: "approve" | "reject"): Promise<void> {
     return;
   }
   resolving = true;
-  if (pending?.kind === "walletSend" && decision === "approve") {
+  if (pending && isBroadcastAfterApproveKind(pending.kind) && decision === "approve") {
     enterWalletSendConfirming();
   } else if (pending?.kind === "signMessage" || (pending && isSignTxKind(pending.kind))) {
     setSignButtons({ reject: true, approve: true, approveLabel: "批准中" });
@@ -1004,7 +1044,7 @@ async function resolve(decision: "approve" | "reject"): Promise<void> {
       return;
     }
     resolving = false;
-    if (pending?.kind === "walletSend" && decision === "approve") {
+    if (pending && isBroadcastAfterApproveKind(pending.kind) && decision === "approve") {
       restoreWalletSendReviewAfterError();
     }
     const msg = res.error?.message ?? "失敗";
@@ -1027,10 +1067,14 @@ async function resolve(decision: "approve" | "reject"): Promise<void> {
     }
     return;
   }
-  if (pending?.kind === "walletSend") {
+  if (pending && isBroadcastAfterApproveKind(pending.kind)) {
     resolving = false;
     if (decision === "reject") {
-      walletSendRejectExit();
+      if (pending.kind === "walletSend") {
+        walletSendRejectExit();
+      } else {
+        closeHost();
+      }
       return;
     }
     const accepted = (res.result as { accepted?: boolean })?.accepted === true;
@@ -1113,7 +1157,7 @@ function wireShellEvents(): void {
       return;
     }
     if (rec.kind === "airwave-wallet-send-settled" && rec.ok === true) {
-      if (pending?.kind === "walletSend") {
+      if (pending && isBroadcastAfterApproveKind(pending.kind)) {
         const sig = typeof rec.signature === "string" ? rec.signature : undefined;
         enterWalletSendConfirmedPage(sig);
         return;

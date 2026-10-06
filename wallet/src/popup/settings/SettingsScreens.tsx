@@ -1,26 +1,36 @@
 import type { JSX } from "react";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { hardenApiKeyInput } from "../lib/password-input";
-import { bumpUi, navigateTo, session } from "../lib/session";
 import { IconCheck, IconEye, IconPlus, IconTrash } from "../components/StrokeIcon";
 import { WalletPasswordInput } from "../components/WalletPasswordInput";
 import type { Settings } from "../../shared/storage-keys";
+import { usePopupContext } from "../state/PopupContext";
+import { useRegisterDock } from "../state/dock";
 import {
   apiKeysHubSummary,
+  changePasswordCanSubmit,
   cloneRpcByCluster,
-  commitDefaultCuPriceFromDraft,
   confirmRpcUrl,
   MASKED_SECRET_DISPLAY,
+  parseDefaultCuPriceInput,
   patchRpcByCluster,
   patchSettingsPartial,
   persistHeliusField,
   persistJupiterField,
   PUBLIC_RPC_BY_CLUSTER,
   rpcOptionKey,
+  submitChangePassword,
   type Cluster,
+  type SettingsIo,
 } from "./settings-logic";
 
+function useSettingsIo(): SettingsIo {
+  const { refresh, showError } = usePopupContext();
+  return { refresh, showError };
+}
+
 export function SettingsHub({ settings }: { settings: Settings }): JSX.Element {
+  const { navigateTo } = usePopupContext();
   return (
     <ul className="settings-hub-list" id="settings-hub-list">
       <li>
@@ -66,6 +76,7 @@ export function SettingsHub({ settings }: { settings: Settings }): JSX.Element {
 }
 
 export function NetworkScreen({ settings }: { settings: Settings }): JSX.Element {
+  const io = useSettingsIo();
   return (
     <div className="network-pick-list" role="radiogroup" aria-label="目前網路">
       {(["devnet", "mainnet"] as const).map((cluster) => (
@@ -77,7 +88,7 @@ export function NetworkScreen({ settings }: { settings: Settings }): JSX.Element
             checked={settings.cluster === cluster}
             onChange={() => {
               if (cluster === settings.cluster) return;
-              void patchSettingsPartial({ cluster });
+              void patchSettingsPartial({ cluster }, io);
             }}
           />
           <span className="network-pick-meta">
@@ -93,15 +104,47 @@ export function NetworkScreen({ settings }: { settings: Settings }): JSX.Element
 }
 
 export function RpcScreen({ settings }: { settings: Settings }): JSX.Element {
+  const [editKey, setEditKey] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
   return (
     <>
-      <RpcClusterCard cluster="devnet" settings={settings} />
-      <RpcClusterCard cluster="mainnet" settings={settings} />
+      <RpcClusterCard
+        cluster="devnet"
+        settings={settings}
+        editKey={editKey}
+        editDraft={editDraft}
+        setEditKey={setEditKey}
+        setEditDraft={setEditDraft}
+      />
+      <RpcClusterCard
+        cluster="mainnet"
+        settings={settings}
+        editKey={editKey}
+        editDraft={editDraft}
+        setEditKey={setEditKey}
+        setEditDraft={setEditDraft}
+      />
     </>
   );
 }
 
-function RpcClusterCard({ cluster, settings }: { cluster: Cluster; settings: Settings }): JSX.Element {
+function RpcClusterCard({
+  cluster,
+  settings,
+  editKey,
+  editDraft,
+  setEditKey,
+  setEditDraft,
+}: {
+  cluster: Cluster;
+  settings: Settings;
+  editKey: string | null;
+  editDraft: string;
+  setEditKey: (k: string | null) => void;
+  setEditDraft: (d: string) => void;
+}): JSX.Element {
+  const io = useSettingsIo();
+  const { wallet, showError } = usePopupContext();
   const cfg = settings.rpcByCluster[cluster];
   const rows: { url: string; isPublic: boolean }[] = [
     { url: PUBLIC_RPC_BY_CLUSTER[cluster], isPublic: true },
@@ -120,7 +163,7 @@ function RpcClusterCard({ cluster, settings }: { cluster: Cluster; settings: Set
           {rows.map(({ url, isPublic }) => {
             const key = rpcOptionKey(cluster, isPublic, url);
             const selected = isPublic ? cfg.active === "" : cfg.active === url;
-            const editing = session.rpcEditKey === key;
+            const editing = editKey === key;
             return (
               <div key={key}>
                 <div className={selected ? "rpc-row selected" : "rpc-row"}>
@@ -131,16 +174,15 @@ function RpcClusterCard({ cluster, settings }: { cluster: Cluster; settings: Set
                     onChange={() => {
                       const next = cloneRpcByCluster(settings.rpcByCluster);
                       next[cluster] = { ...next[cluster], active: isPublic ? "" : url };
-                      void patchRpcByCluster(next);
+                      void patchRpcByCluster(next, io);
                     }}
                   />
                   <button
                     type="button"
                     className="rpc-url-text"
                     onClick={() => {
-                      session.rpcEditKey = session.rpcEditKey === key ? null : key;
-                      session.rpcEditDraft = url;
-                      bumpUi();
+                      setEditKey(editKey === key ? null : key);
+                      setEditDraft(url);
                     }}
                   >
                     {url}
@@ -160,20 +202,46 @@ function RpcClusterCard({ cluster, settings }: { cluster: Cluster; settings: Set
                         const urls = next[cluster].urls.filter((u) => u !== url);
                         const active = next[cluster].active === url ? "" : next[cluster].active;
                         next[cluster] = { urls, active };
-                        if (session.rpcEditKey === key) session.rpcEditKey = null;
-                        void patchRpcByCluster(next);
+                        if (editKey === key) setEditKey(null);
+                        void patchRpcByCluster(next, io);
                       }}
                     >
                       <IconTrash />
                     </button>
                   )}
                 </div>
-                {editing ? <RpcEditor cluster={cluster} url={url} isPublic={isPublic} isNew={false} /> : null}
+                {editing ? (
+                  <RpcEditor
+                    cluster={cluster}
+                    url={url}
+                    isPublic={isPublic}
+                    isNew={false}
+                    draft={editDraft}
+                    setDraft={setEditDraft}
+                    onClose={() => setEditKey(null)}
+                    onSaved={(nextUrl) => setEditKey(rpcOptionKey(cluster, false, nextUrl))}
+                    walletNeeded={wallet}
+                    showError={showError}
+                    io={io}
+                  />
+                ) : null}
               </div>
             );
           })}
-          {session.rpcEditKey === `${cluster}:new` ? (
-            <RpcEditor cluster={cluster} url="" isPublic={false} isNew />
+          {editKey === `${cluster}:new` ? (
+            <RpcEditor
+              cluster={cluster}
+              url=""
+              isPublic={false}
+              isNew
+              draft={editDraft}
+              setDraft={setEditDraft}
+              onClose={() => setEditKey(null)}
+              onSaved={(nextUrl) => setEditKey(rpcOptionKey(cluster, false, nextUrl))}
+              walletNeeded={wallet}
+              showError={showError}
+              io={io}
+            />
           ) : null}
         </div>
         <div className="rpc-add-bar">
@@ -183,9 +251,8 @@ function RpcClusterCard({ cluster, settings }: { cluster: Cluster; settings: Set
             title="加入"
             aria-label="加入"
             onClick={() => {
-              session.rpcEditKey = `${cluster}:new`;
-              session.rpcEditDraft = "";
-              bumpUi();
+              setEditKey(`${cluster}:new`);
+              setEditDraft("");
             }}
           >
             <IconPlus />
@@ -201,34 +268,57 @@ function RpcEditor({
   url,
   isPublic,
   isNew,
+  draft,
+  setDraft,
+  onClose,
+  onSaved,
+  walletNeeded,
+  showError,
+  io,
 }: {
   cluster: Cluster;
   url: string;
   isPublic: boolean;
   isNew: boolean;
+  draft: string;
+  setDraft: (d: string) => void;
+  onClose: () => void;
+  onSaved: (nextUrl: string) => void;
+  walletNeeded: ReturnType<typeof usePopupContext>["wallet"];
+  showError: (msg: string) => void;
+  io: SettingsIo;
 }): JSX.Element {
+  const confirm = () => {
+    if (!walletNeeded) return;
+    const result = confirmRpcUrl({
+      cluster,
+      url,
+      isNew,
+      draft,
+      wallet: walletNeeded,
+    });
+    if (!result.ok) {
+      showError(result.error);
+      return;
+    }
+    void patchRpcByCluster(result.next, io).then(() => onSaved(result.nextUrl));
+  };
   return (
     <div className="rpc-edit">
       <input
         type="text"
-        value={session.rpcEditDraft}
+        value={draft}
         readOnly={isPublic}
         autoComplete="off"
         placeholder="https://"
         autoFocus={!isPublic}
-        onChange={(e) => {
-          session.rpcEditDraft = e.target.value;
-          bumpUi();
-        }}
+        onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(ev) => {
           if (ev.key === "Enter") {
             ev.preventDefault();
-            if (!isPublic) confirmRpcUrl(cluster, url, isNew);
+            if (!isPublic) confirm();
           }
-          if (ev.key === "Escape") {
-            session.rpcEditKey = null;
-            bumpUi();
-          }
+          if (ev.key === "Escape") onClose();
         }}
       />
       {!isPublic ? (
@@ -237,7 +327,7 @@ function RpcEditor({
           className="icon-btn ghost-inline rpc-icon-btn"
           title="確認"
           aria-label="確認"
-          onClick={() => confirmRpcUrl(cluster, url, isNew)}
+          onClick={() => confirm()}
         >
           <IconCheck />
         </button>
@@ -312,51 +402,77 @@ function KeysField({
 }
 
 export function KeysScreen({ settings }: { settings: Settings }): JSX.Element {
-  const heliusDraft = session.keysHeliusRevealed ? session.heliusDraft || settings.heliusApiUrl : session.heliusDraft;
-  const jupiterDraft = session.keysJupiterRevealed ? session.jupiterDraft || settings.jupiterApiKey : session.jupiterDraft;
+  const { wallet } = usePopupContext();
+  const io = useSettingsIo();
+  const [heliusRevealed, setHeliusRevealed] = useState(false);
+  const [jupiterRevealed, setJupiterRevealed] = useState(false);
+  const [heliusDraft, setHeliusDraft] = useState("");
+  const [jupiterDraft, setJupiterDraft] = useState("");
+  const heliusShown = heliusRevealed ? heliusDraft || settings.heliusApiUrl : heliusDraft;
+  const jupiterShown = jupiterRevealed ? jupiterDraft || settings.jupiterApiKey : jupiterDraft;
+
   return (
     <>
       <KeysField
         id="helius-api-url"
         label="Helius API URL"
-        revealed={session.keysHeliusRevealed}
+        revealed={heliusRevealed}
         stored={settings.heliusApiUrl}
-        draft={heliusDraft}
+        draft={heliusShown}
         onReveal={() => {
-          session.keysHeliusRevealed = !session.keysHeliusRevealed;
-          if (session.keysHeliusRevealed) session.heliusDraft = settings.heliusApiUrl;
-          bumpUi();
+          setHeliusRevealed((v) => {
+            const next = !v;
+            if (next) setHeliusDraft(settings.heliusApiUrl);
+            return next;
+          });
         }}
-        onDraft={(v) => {
-          session.heliusDraft = v;
-          bumpUi();
+        onDraft={setHeliusDraft}
+        onPersist={() => {
+          if (!wallet) return;
+          void persistHeliusField({ wallet, revealed: heliusRevealed, draft: heliusDraft, io });
         }}
-        onPersist={() => persistHeliusField()}
       />
       <KeysField
         id="jupiter-api-key"
         label="Jupiter API key"
-        revealed={session.keysJupiterRevealed}
+        revealed={jupiterRevealed}
         stored={settings.jupiterApiKey}
-        draft={jupiterDraft}
+        draft={jupiterShown}
         onReveal={() => {
-          session.keysJupiterRevealed = !session.keysJupiterRevealed;
-          if (session.keysJupiterRevealed) session.jupiterDraft = settings.jupiterApiKey;
-          bumpUi();
+          setJupiterRevealed((v) => {
+            const next = !v;
+            if (next) setJupiterDraft(settings.jupiterApiKey);
+            return next;
+          });
         }}
-        onDraft={(v) => {
-          session.jupiterDraft = v;
-          bumpUi();
+        onDraft={setJupiterDraft}
+        onPersist={() => {
+          if (!wallet) return;
+          void persistJupiterField({ wallet, revealed: jupiterRevealed, draft: jupiterDraft, io });
         }}
-        onPersist={() => persistJupiterField()}
       />
     </>
   );
 }
 
 export function CuPriceScreen({ settings }: { settings: Settings }): JSX.Element {
-  const value = session.cuPriceDraft || String(settings.defaultCuPrice);
+  const io = useSettingsIo();
+  const [draft, setDraft] = useState(String(settings.defaultCuPrice));
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const commit = useCallback(
+    (raw: string) => {
+      const parsed = parseDefaultCuPriceInput(raw);
+      if (parsed == null) {
+        setDraft(String(settings.defaultCuPrice));
+        return;
+      }
+      if (parsed === settings.defaultCuPrice) return;
+      void patchSettingsPartial({ defaultCuPrice: parsed }, io);
+    },
+    [io, settings.defaultCuPrice],
+  );
+
   return (
     <div className="field">
       <label htmlFor="settings-default-cu-price">micro-lamports / CU</label>
@@ -367,14 +483,14 @@ export function CuPriceScreen({ settings }: { settings: Settings }): JSX.Element
         min={0}
         step={1}
         autoComplete="off"
-        value={value}
+        value={draft}
         onChange={(e) => {
-          session.cuPriceDraft = e.target.value;
-          bumpUi();
+          const v = e.target.value;
+          setDraft(v);
           if (debounceRef.current != null) clearTimeout(debounceRef.current);
           debounceRef.current = setTimeout(() => {
             debounceRef.current = null;
-            commitDefaultCuPriceFromDraft();
+            commit(v);
           }, 500);
         }}
         onBlur={() => {
@@ -382,7 +498,7 @@ export function CuPriceScreen({ settings }: { settings: Settings }): JSX.Element
             clearTimeout(debounceRef.current);
             debounceRef.current = null;
           }
-          commitDefaultCuPriceFromDraft();
+          commit(draft);
         }}
       />
     </div>
@@ -390,17 +506,44 @@ export function CuPriceScreen({ settings }: { settings: Settings }): JSX.Element
 }
 
 export function ChangePasswordScreen(): JSX.Element {
+  const io = useSettingsIo();
+  const { clearError, navigateTo } = usePopupContext();
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [err, setErr] = useState("");
+
+  const onPrimary = useCallback(async () => {
+    clearError();
+    const result = await submitChangePassword({
+      currentPassword: current,
+      newPassword: next,
+      confirm,
+      io,
+    });
+    if (!result.ok) {
+      if (result.err) setErr(result.err);
+      return;
+    }
+    navigateTo("settings");
+  }, [clearError, current, next, confirm, io, navigateTo]);
+
+  useRegisterDock({
+    label: "變更密碼",
+    disabled: !changePasswordCanSubmit(current, next, confirm),
+    onPrimary,
+  });
+
   return (
     <>
       <div className="field">
         <label htmlFor="change-pwd-current">目前密碼</label>
         <WalletPasswordInput
           id="change-pwd-current"
-          value={session.changePwdCurrent}
+          value={current}
           onChange={(v) => {
-            session.changePwdCurrent = v;
-            session.changePwdErr = "";
-            bumpUi();
+            setCurrent(v);
+            setErr("");
           }}
         />
       </div>
@@ -408,11 +551,10 @@ export function ChangePasswordScreen(): JSX.Element {
         <label htmlFor="change-pwd-new">新密碼</label>
         <WalletPasswordInput
           id="change-pwd-new"
-          value={session.changePwdNew}
+          value={next}
           onChange={(v) => {
-            session.changePwdNew = v;
-            session.changePwdErr = "";
-            bumpUi();
+            setNext(v);
+            setErr("");
           }}
         />
       </div>
@@ -420,16 +562,15 @@ export function ChangePasswordScreen(): JSX.Element {
         <label htmlFor="change-pwd-confirm">再次輸入新密碼</label>
         <WalletPasswordInput
           id="change-pwd-confirm"
-          value={session.changePwdConfirm}
+          value={confirm}
           onChange={(v) => {
-            session.changePwdConfirm = v;
-            session.changePwdErr = "";
-            bumpUi();
+            setConfirm(v);
+            setErr("");
           }}
         />
       </div>
       <p id="change-pwd-err" className="inline-err">
-        {session.changePwdErr}
+        {err}
       </p>
     </>
   );

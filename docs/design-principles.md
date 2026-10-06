@@ -4,6 +4,8 @@
 
 架構禁區（pending、custody、訊息）仍只看 [`roadmap/GUIDELINES.md`](roadmap/GUIDELINES.md)。本檔不管鏈上語意，只管 **怎麼操作、何時寫入、按鈕長什麼樣子**。
 
+**視覺改版流程：** 先在 [`design-demos/`](design-demos/) 寫可直接開啟的 HTML 概念稿（popup 寬高、現有 CSS 變數），給使用者看完並同意後，才改 `wallet/` 產品 CSS／markup。禁止先改產品再補 demo。小修（對齊、sticky 失效、漏 `min-height: 0`）不必走 demo。
+
 ---
 
 ## 1. 表面與密度
@@ -18,7 +20,8 @@
   3. **中間內容：** `flex: 1; min-height: 0; overflow: auto`。**漏寫 `min-height: 0` 會讓頂欄／底欄被整頁捲走。這是已知反覆錯誤，開新畫面第一件事核對。**
   4. **殼底主行動**（拒絕／批准、匯入、產生、建立）：`flex-shrink: 0` 釘在視窗底。主按鈕在這列，**不**進內容捲動。
   5. **禁止**用 `position: fixed`／`absolute`／`sticky` 冒充頁殼。沒有頁級主行動的選項列表不畫底列。
-- **鎖定／解鎖全屏：** 無頂欄、無殼底 dock。標題＋說明＋密碼欄＋「解鎖」垂直置中。欄位全寬、`--fill` 底、focus 用 `--accent` 邊框且 `outline: none`。主按鈕在欄位下方內容區。錢包密碼用類 B 遮罩（`type="text"` + `-webkit-text-security`）。概念稿：[`design-demos/sign-message-ux.html`](design-demos/sign-message-ux.html) 的 lock 預設。
+- **鎖定／解鎖全屏：** 無頂欄、無殼底 dock。垂直置中：鎖徽章（`--accent` 描邊圖示、`--bg-elevated` 圓角方塊）＋置中標題 Airwave＋「錢包已鎖定」＋全寬密碼欄＋內容區「解鎖」。背景為中檔 Solana 北極光（左下 `#9945FF` 11%、右上 `#14F195` 8%、中下 `#5B8CFF` 7% 光斑），**不要**正中 `--accent` 光。欄位 `--fill` 底、focus `--accent` 邊框且 `outline: none`。主按鈕 `flex: none; width: 100%`，禁止沿用殼底批准的 `flex: 1`。錢包密碼用類 B 遮罩（`type="text"` + `-webkit-text-security`）。popup／popout／審批鎖定同一套。概念稿：[`design-demos/unlock-aurora-ux.html`](design-demos/unlock-aurora-ux.html)「中檔」。
+- **錢包送出確認中／已確認：** **禁止**帶邊框大卡、也**不要**解鎖頁那種 radial 漸變底。確認中：置中 112px Solana 經典色 dash-ring（頭 `#14F195`、中 `#5B8CFF`、尾 `#9945FF`），dash 從 0 伸長再被 offset 抽走、重來（旋轉 4s、伸縮 2.4s）；標題「確認中」、說明「等待鏈上確認」。已確認：同一位置換成 `--ok` 勾＋「已確認」＋可選簽名前 4…後 4，**停留 1s** 再 auto-exit。語意仍是同一畫面轉換。概念稿：[`design-demos/send-status-spinner-ux.html`](design-demos/send-status-spinner-ux.html) 右側。
 
 ---
 

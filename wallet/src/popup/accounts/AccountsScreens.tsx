@@ -1,4 +1,5 @@
 import type { JSX } from "react";
+import { useCallback, useState } from "react";
 import {
   getExposedPublicKey,
   isCombinedAccount,
@@ -9,13 +10,15 @@ import { sendExtensionRequest } from "../../shared/ext-api";
 import type { CombinedAccountMeta } from "../../shared/storage-keys";
 import { accountKind, type AccountMeta } from "../../shared/storage-keys";
 import { IconCopy, IconEye, IconKebab, IconPlus, IconRename, IconTrash, IconX } from "../components/StrokeIcon";
-import { addCombinedDraftParts, validCombinedMembers } from "./combined-logic";
+import { addCombinedDraftParts, emptyCombinedCreate, validCombinedMembers } from "./combined-logic";
 import { WalletPasswordInput } from "../components/WalletPasswordInput";
-import { bumpUi, clearError, navigateTo, refresh, session, showError } from "../lib/session";
 import { shortAddr } from "../lib/format";
-import type { State } from "../types";
+import { usePopupContext } from "../state/PopupContext";
+import { useRegisterDock } from "../state/dock";
+import type { CombinedCreateState, State } from "../types";
 
 export function AccountsList({ wallet }: { wallet: State }): JSX.Element {
+  const { navigateTo } = usePopupContext();
   return (
     <>
       <div className="subpage-head compact">
@@ -41,6 +44,7 @@ export function AccountsList({ wallet }: { wallet: State }): JSX.Element {
 }
 
 function AccountCard({ account: a, wallet }: { account: AccountMeta; wallet: State }): JSX.Element {
+  const { clearError, showError, refresh, navigateTo } = usePopupContext();
   return (
     <div className={`account-card${a.id === wallet.activeAccountId ? " active" : ""}`}>
       <div
@@ -64,7 +68,6 @@ function AccountCard({ account: a, wallet }: { account: AccountMeta; wallet: Sta
             aria-label="Rename account"
             onClick={(ev) => {
               ev.stopPropagation();
-              session.renameLabel = a.label;
               navigateTo("account-rename", a.id);
             }}
           >
@@ -108,7 +111,10 @@ function AccountCard({ account: a, wallet }: { account: AccountMeta; wallet: Sta
 }
 
 export function RenameScreen({ wallet }: { wallet: State }): JSX.Element {
-  const acc = wallet.accounts.find((a) => a.id === session.focusAccountId);
+  const { focusAccountId, clearError, showError, refresh, navigateTo } = usePopupContext();
+  const acc = wallet.accounts.find((a) => a.id === focusAccountId);
+  const [renameLabel, setRenameLabel] = useState(acc?.label ?? "");
+
   return (
     <>
       <p id="rename-addr-hint" className="muted addr-hint">
@@ -120,11 +126,8 @@ export function RenameScreen({ wallet }: { wallet: State }): JSX.Element {
           id="rename-label"
           type="text"
           placeholder="新名稱"
-          value={session.renameLabel}
-          onChange={(e) => {
-            session.renameLabel = e.target.value;
-            bumpUi();
-          }}
+          value={renameLabel}
+          onChange={(e) => setRenameLabel(e.target.value)}
         />
       </div>
       <button
@@ -133,10 +136,10 @@ export function RenameScreen({ wallet }: { wallet: State }): JSX.Element {
         id="btn-rename"
         onClick={async () => {
           clearError();
-          if (!session.focusAccountId) return;
+          if (!focusAccountId) return;
           const res = await sendExtensionRequest("wallet.renameAccount", {
-            accountId: session.focusAccountId,
-            label: session.renameLabel,
+            accountId: focusAccountId,
+            label: renameLabel,
           });
           if (!res.ok) showError(res.error?.message ?? "重新命名失敗");
           else {
@@ -152,7 +155,8 @@ export function RenameScreen({ wallet }: { wallet: State }): JSX.Element {
 }
 
 export function ManageScreen({ wallet }: { wallet: State }): JSX.Element {
-  const acc = wallet.accounts.find((a) => a.id === session.focusAccountId);
+  const { focusAccountId, setFocusAccountId, clearError, showError, refresh, navigateTo } = usePopupContext();
+  const acc = wallet.accounts.find((a) => a.id === focusAccountId);
   if (!acc) return <p className="muted">找不到帳戶</p>;
   const combined = isCombinedAccount(acc);
   const ro = !combined && accountKind(acc) === "readOnly";
@@ -191,12 +195,12 @@ export function ManageScreen({ wallet }: { wallet: State }): JSX.Element {
           id="btn-delete"
           onClick={async () => {
             clearError();
-            if (!session.focusAccountId) return;
+            if (!focusAccountId) return;
             if (!confirm("確定移除此錢包帳戶？")) return;
-            const res = await sendExtensionRequest("wallet.deleteAccount", { accountId: session.focusAccountId });
+            const res = await sendExtensionRequest("wallet.deleteAccount", { accountId: focusAccountId });
             if (!res.ok) showError(res.error?.message ?? "刪除失敗");
             else {
-              session.focusAccountId = null;
+              setFocusAccountId(null);
               await refresh();
               navigateTo("accounts");
             }
@@ -216,7 +220,25 @@ function CombinedManagePanel({
   acc: CombinedAccountMeta;
   wallet: State;
 }): JSX.Element {
+  const { clearError, showError, refresh } = usePopupContext();
+  const [manageAddSubPk, setManageAddSubPk] = useState("");
   const inCombined = new Set(acc.subPubkeys.map((pk) => parsePublicKeyBase58(pk) ?? pk));
+
+  const submitManagePaste = async () => {
+    clearError();
+    const publicKeyBase58 = manageAddSubPk.trim();
+    if (!publicKeyBase58) return;
+    const res = await sendExtensionRequest("wallet.addCombinedSub", {
+      combinedId: acc.id,
+      publicKeyBase58,
+    });
+    if (!res.ok) showError(res.error?.message ?? "加入失敗");
+    else {
+      setManageAddSubPk("");
+      await refresh();
+    }
+  };
+
   return (
     <div id="manage-combined-panel">
       <p className="muted small">目前錢包地址</p>
@@ -264,11 +286,8 @@ function CombinedManagePanel({
             spellCheck={false}
             placeholder="地址，或貼上"
             autoComplete="off"
-            value={session.manageAddSubPk}
-            onChange={(e) => {
-              session.manageAddSubPk = e.target.value;
-              bumpUi();
-            }}
+            value={manageAddSubPk}
+            onChange={(e) => setManageAddSubPk(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -339,44 +358,56 @@ function CombinedManagePanel({
   );
 }
 
-async function submitManagePaste(): Promise<void> {
-  clearError();
-  if (!session.focusAccountId) return;
-  const publicKeyBase58 = session.manageAddSubPk.trim();
-  if (!publicKeyBase58) return;
-  const res = await sendExtensionRequest("wallet.addCombinedSub", {
-    combinedId: session.focusAccountId,
-    publicKeyBase58,
-  });
-  if (!res.ok) showError(res.error?.message ?? "加入失敗");
-  else {
-    session.manageAddSubPk = "";
-    await refresh();
-  }
-}
-
 export function RevealScreen({ wallet }: { wallet: State }): JSX.Element {
-  const acc = wallet.accounts.find((a) => a.id === session.focusAccountId);
-  const revealed = session.revealedSecretInMemory;
+  const { focusAccountId, clearError, showError } = usePopupContext();
+  const acc = wallet.accounts.find((a) => a.id === focusAccountId);
+  const [password, setPassword] = useState("");
+  const [revealed, setRevealed] = useState<string | null>(null);
+
+  if (revealed) {
+    return (
+      <>
+        <p id="reveal-hint" className="muted">
+          {acc && isSigningOrWatch(acc) ? `${acc.label} · ${shortAddr(acc.publicKeyBase58)}` : ""}
+        </p>
+        <div id="reveal-secret-block">
+          <div className="secret-card">
+            <div className="secret-value-row">
+              <div className="secret-value" id="reveal-secret-text">
+                {revealed}
+              </div>
+              <button
+                type="button"
+                className="icon-btn primary ghost-inline"
+                id="btn-copy-secret"
+                title="Copy private key"
+                aria-label="Copy private key"
+                onClick={() => {
+                  void navigator.clipboard.writeText(revealed);
+                }}
+              >
+                <IconCopy size={18} />
+              </button>
+            </div>
+          </div>
+          <p className="muted small">請勿分享或截圖保存私鑰。</p>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <p id="reveal-hint" className="muted">
         {acc && isSigningOrWatch(acc) ? `${acc.label} · ${shortAddr(acc.publicKeyBase58)}` : ""}
       </p>
-      <div id="reveal-mask-block" hidden={!!revealed}>
+      <div id="reveal-mask-block">
         <div className="secret-card">
           <div className="secret-mask">••••••••••••••••</div>
         </div>
         <div className="field">
           <label htmlFor="reveal-password">錢包密碼</label>
-          <WalletPasswordInput
-            id="reveal-password"
-            value={session.revealPassword}
-            onChange={(v) => {
-              session.revealPassword = v;
-              bumpUi();
-            }}
-          />
+          <WalletPasswordInput id="reveal-password" value={password} onChange={setPassword} />
         </div>
         <button
           type="button"
@@ -386,53 +417,29 @@ export function RevealScreen({ wallet }: { wallet: State }): JSX.Element {
           aria-label="Reveal private key"
           onClick={async () => {
             clearError();
-            if (!session.focusAccountId) return;
+            if (!focusAccountId) return;
             const res = await sendExtensionRequest("wallet.exportAccountSecret", {
-              accountId: session.focusAccountId,
-              password: session.revealPassword,
+              accountId: focusAccountId,
+              password,
             });
             if (!res.ok) {
               showError(res.error?.message ?? "無法匯出");
               return;
             }
             const { secretBase58 } = res.result as { secretBase58: string };
-            session.revealedSecretInMemory = secretBase58;
-            session.revealPassword = "";
-            bumpUi();
+            setRevealed(secretBase58);
+            setPassword("");
           }}
         >
           <IconEye size={18} />
         </button>
-      </div>
-      <div id="reveal-secret-block" hidden={!revealed}>
-        <div className="secret-card">
-          <div className="secret-value-row">
-            <div className="secret-value" id="reveal-secret-text">
-              {revealed ?? ""}
-            </div>
-            <button
-              type="button"
-              className="icon-btn primary ghost-inline"
-              id="btn-copy-secret"
-              title="Copy private key"
-              aria-label="Copy private key"
-              onClick={() => {
-                if (session.revealedSecretInMemory) {
-                  void navigator.clipboard.writeText(session.revealedSecretInMemory);
-                }
-              }}
-            >
-              <IconCopy size={18} />
-            </button>
-          </div>
-        </div>
-        <p className="muted small">請勿分享或截圖保存私鑰。</p>
       </div>
     </>
   );
 }
 
 export function ConnectedSites({ wallet }: { wallet: State }): JSX.Element {
+  const { clearError, showError, refresh } = usePopupContext();
   return (
     <>
       <ul id="connected-list" className="connected-list">
@@ -474,11 +481,40 @@ export function ConnectedSites({ wallet }: { wallet: State }): JSX.Element {
 }
 
 export function CombinedCreateScreen({ wallet }: { wallet: State }): JSX.Element {
-  const valid = validCombinedMembers();
-  const currentMain =
-    session.combinedCreate.currentMain && valid.includes(session.combinedCreate.currentMain)
-      ? session.combinedCreate.currentMain
-      : (valid[0] ?? "");
+  const { clearError, refresh, navigateTo } = usePopupContext();
+  const [label, setLabel] = useState("");
+  const [draftText, setDraftText] = useState("");
+  const [err, setErr] = useState("");
+  const [create, setCreate] = useState<CombinedCreateState>(emptyCombinedCreate);
+  const valid = validCombinedMembers(create, wallet);
+  const currentMain = create.currentMain && valid.includes(create.currentMain) ? create.currentMain : (valid[0] ?? "");
+
+  const onPrimary = useCallback(async () => {
+    clearError();
+    const subPubkeys = validCombinedMembers(create, wallet);
+    if (subPubkeys.length === 0) {
+      setErr("至少一個有效地址");
+      return;
+    }
+    const res = await sendExtensionRequest("wallet.createCombinedAccount", {
+      label: label.trim() || undefined,
+      subPubkeys,
+      mainPubkey: currentMain || subPubkeys[0],
+    });
+    if (!res.ok) {
+      setErr(res.error?.message ?? "建立失敗");
+      return;
+    }
+    await refresh();
+    navigateTo("accounts");
+  }, [clearError, create, wallet, label, currentMain, refresh, navigateTo]);
+
+  useRegisterDock({
+    label: "建立 Combined",
+    disabled: valid.length < 1,
+    onPrimary,
+  });
+
   return (
     <>
       <div className="field">
@@ -488,25 +524,21 @@ export function CombinedCreateScreen({ wallet }: { wallet: State }): JSX.Element
           type="text"
           placeholder="選填"
           autoComplete="off"
-          value={session.combinedLabel}
-          onChange={(e) => {
-            session.combinedLabel = e.target.value;
-            bumpUi();
-          }}
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
         />
       </div>
       <div className="field">
         <label className="field-label">成員</label>
         <div id="combined-chip-list" className="chip-list">
-          {session.combinedCreate.draftChips.map((pk, i) => (
+          {create.draftChips.map((pk, i) => (
             <span key={`${pk}-${i}`} className={`addr-chip${pk === currentMain ? " main" : ""}`}>
               <button
                 type="button"
                 className="chip-pick"
                 title={pk}
                 onClick={() => {
-                  if (parsePublicKeyBase58(pk)) session.combinedCreate.currentMain = pk;
-                  bumpUi();
+                  if (parsePublicKeyBase58(pk)) setCreate((prev) => ({ ...prev, currentMain: pk }));
                 }}
               >
                 {shortAddr(pk)}
@@ -518,8 +550,10 @@ export function CombinedCreateScreen({ wallet }: { wallet: State }): JSX.Element
                 title="刪除"
                 aria-label="刪除"
                 onClick={() => {
-                  session.combinedCreate.draftChips.splice(i, 1);
-                  bumpUi();
+                  setCreate((prev) => ({
+                    ...prev,
+                    draftChips: prev.draftChips.filter((_, idx) => idx !== i),
+                  }));
                 }}
               >
                 <StrokeX />
@@ -534,22 +568,23 @@ export function CombinedCreateScreen({ wallet }: { wallet: State }): JSX.Element
             spellCheck={false}
             placeholder="地址，或貼上多行"
             autoComplete="off"
-            value={session.combinedDraft}
-            onChange={(e) => {
-              session.combinedDraft = e.target.value;
-              bumpUi();
-            }}
+            value={draftText}
+            onChange={(e) => setDraftText(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                addCombinedDraftParts(session.combinedDraft);
+                setCreate((prev) => addCombinedDraftParts(prev, draftText));
+                setDraftText("");
+                setErr("");
               }
             }}
             onPaste={(e) => {
               const text = e.clipboardData.getData("text");
               if (/[\n,]/.test(text)) {
                 e.preventDefault();
-                addCombinedDraftParts(text);
+                setCreate((prev) => addCombinedDraftParts(prev, text));
+                setDraftText("");
+                setErr("");
               }
             }}
           />
@@ -559,7 +594,11 @@ export function CombinedCreateScreen({ wallet }: { wallet: State }): JSX.Element
             id="btn-combined-add-chip"
             title="加入"
             aria-label="加入"
-            onClick={() => addCombinedDraftParts(session.combinedDraft)}
+            onClick={() => {
+              setCreate((prev) => addCombinedDraftParts(prev, draftText));
+              setDraftText("");
+              setErr("");
+            }}
           >
             <IconPlus size={14} />
           </button>
@@ -571,11 +610,14 @@ export function CombinedCreateScreen({ wallet }: { wallet: State }): JSX.Element
           <label key={a.id} className="combined-pick-row">
             <input
               type="checkbox"
-              checked={session.combinedCreate.pickedPks.has(a.publicKeyBase58)}
+              checked={create.pickedPks.has(a.publicKeyBase58)}
               onChange={(e) => {
-                if (e.target.checked) session.combinedCreate.pickedPks.add(a.publicKeyBase58);
-                else session.combinedCreate.pickedPks.delete(a.publicKeyBase58);
-                bumpUi();
+                setCreate((prev) => {
+                  const pickedPks = new Set(prev.pickedPks);
+                  if (e.target.checked) pickedPks.add(a.publicKeyBase58);
+                  else pickedPks.delete(a.publicKeyBase58);
+                  return { ...prev, pickedPks };
+                });
               }}
             />
             <span className="pick-name">{a.label}</span>
@@ -592,7 +634,7 @@ export function CombinedCreateScreen({ wallet }: { wallet: State }): JSX.Element
         ))}
       </div>
       <p id="combined-err" className="inline-err" aria-live="polite">
-        {session.combinedErr}
+        {err}
       </p>
     </>
   );

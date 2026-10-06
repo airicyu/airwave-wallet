@@ -26,10 +26,14 @@
   display: none !important;
 }
 
-html {
+html,
+body,
+#root,
+#app {
   width: var(--popup-w);
   height: var(--popup-h);
   max-height: 600px;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -39,24 +43,17 @@ body {
 }
 
 body {
-  width: var(--popup-w);
-  height: var(--popup-h);
-  max-height: 600px;
-  overflow: hidden;
   font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
   line-height: 1.45;
 }
 
+#root,
 #app {
   display: flex;
   flex-direction: column;
   position: relative;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
 }
 
 .flow-screen {
@@ -77,29 +74,62 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 16px;
+  padding: 28px 20px 36px;
   overflow: auto;
+  background:
+    radial-gradient(ellipse 80% 55% at 12% 82%, color-mix(in srgb, #9945ff 11%, transparent), transparent 72%),
+    radial-gradient(ellipse 70% 48% at 92% 14%, color-mix(in srgb, #14f195 8%, transparent), transparent 70%),
+    radial-gradient(ellipse 55% 40% at 72% 68%, color-mix(in srgb, #5b8cff 7%, transparent), transparent 68%),
+    var(--bg);
+}
+
+.unlock-mark {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  color: var(--accent);
+  background: var(--bg-elevated);
+  border: 1px solid var(--stroke);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .unlock-screen h1 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0 0 8px;
+  text-align: center;
+  font-size: 1.28rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  margin: 0 0 6px;
 }
 
-.unlock-screen p {
-  margin: 0 0 14px;
-  font-size: 0.88rem;
+.unlock-screen > p,
+.unlock-screen .unlock-lead {
+  text-align: center;
+  margin: 0 0 22px;
+  font-size: 0.84rem;
   color: var(--text-muted);
+}
+
+.unlock-screen > p.inline-error {
+  text-align: left;
+  margin: 0;
+}
+
+.unlock-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .unlock-screen input {
   display: block;
   width: 100%;
   margin: 0;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 1px solid var(--stroke);
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
   background: var(--fill);
   color: var(--text);
   font: inherit;
@@ -113,7 +143,10 @@ body {
 }
 
 .unlock-screen .primary-btn {
-  margin-top: 12px;
+  margin-top: 2px;
+  flex: none;
+  width: 100%;
+  align-self: stretch;
 }
 
 .shell {

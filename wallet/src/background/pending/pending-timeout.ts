@@ -33,13 +33,22 @@ export function schedulePendingTimeout(requestId: string, handlers: TimeoutHandl
 async function onPendingTimeout(requestId: string, handlers: TimeoutHandlers): Promise<void> {
   const p = getPending(requestId);
   if (!p) return;
-  if (p.kind === "walletSend") {
+  if (p.kind === "walletSend" || p.kind === "signAndSendTransaction") {
     const ws = getWalletSendState(requestId);
     if (ws.broadcastSig) return;
     takePending(requestId);
     clearWalletSendState(requestId);
     unbindPopoutByRequest(requestId);
-    handlers.walletSendSettled(requestId, false);
+    if (p.kind === "walletSend") {
+      handlers.walletSendSettled(requestId, false);
+      return;
+    }
+    await handlers.sendBridgeResult(p.tabId, {
+      type: "airwave-bridge-result",
+      requestId,
+      ok: false,
+      error: { code: "TIMEOUT", message: "Request timed out" },
+    });
     return;
   }
   takePending(requestId);

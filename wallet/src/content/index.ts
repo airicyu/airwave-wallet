@@ -18,6 +18,7 @@ const PAGE_COMMANDS = new Set([
   "dapp.disconnect",
   "dapp.signMessage",
   "dapp.signTransaction",
+  "dapp.signAndSendTransaction",
 ]);
 
 window.addEventListener("message", (event) => {

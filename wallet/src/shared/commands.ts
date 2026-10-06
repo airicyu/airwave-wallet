@@ -4,6 +4,7 @@ export type AirwaveCommand =
   | "dapp.disconnect"
   | "dapp.signMessage"
   | "dapp.signTransaction"
+  | "dapp.signAndSendTransaction"
   | "ui.getPending"
   | "ui.resolvePending"
   | "ui.simulatePendingTx"
@@ -53,7 +54,12 @@ export type ExtensionResponse = {
   error?: { code: string; message: string };
 };
 
-export type PendingKind = "connect" | "signMessage" | "signTransaction" | "walletSend";
+export type PendingKind =
+  | "connect"
+  | "signMessage"
+  | "signTransaction"
+  | "signAndSendTransaction"
+  | "walletSend";
 
 export type UiHost = "popout" | "popup";
 
@@ -65,7 +71,7 @@ export type PendingRecord = {
   payload: unknown;
   createdAt: number;
   uiHost: UiHost;
-  /** signMessage／signTransaction：enqueue 時凍結的簽名帳戶（僅 SW 記憶體） */
+  /** signMessage／signTransaction／signAndSendTransaction：enqueue 時凍結的簽名帳戶（僅 SW 記憶體） */
   signAccountId?: string;
   /** signMessage：enqueue 時 SW 判定（popout 只信此旗標） */
   messageLooksLikeTx?: boolean;
@@ -81,6 +87,11 @@ export type SignMessagePayload = {
 
 export type SignTransactionPayload = {
   transaction: number[];
+};
+
+export type SignAndSendTransactionPayload = {
+  transaction: number[];
+  chain: string;
 };
 
 export type BeginSendPayload = {
