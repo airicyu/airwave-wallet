@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — Home Activity</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --danger: #c75050;
+        --ok: #4ecb8d;
+        --popup-w: 384px;
+        --popup-h: 600px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+
+      .page {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 28px 20px 64px;
+      }
+
+      h1 {
+        font-size: 1.28rem;
+        font-weight: 600;
+        margin: 0 0 8px;
+      }
+
+      .lede {
+        color: var(--text-muted);
+        margin: 0 0 8px;
+        max-width: 54rem;
+        font-size: 0.92rem;
+      }
+
+      .note {
+        color: var(--text-dim);
+        font-size: 0.82rem;
+        margin: 0 0 24px;
+        max-width: 54rem;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(var(--popup-w), 1fr));
+        gap: 28px;
+        align-items: start;
+      }
+
+      .cap {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        margin-bottom: 8px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .cap strong {
+        color: var(--text-muted);
+        font-weight: 600;
+        text-transform: none;
+        letter-spacing: 0;
+      }
+
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+
+      .bar-wallet {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        max-width: min(240px, 72%);
+        padding: 5px 10px 5px 5px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+        min-width: 0;
+      }
+
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .bar-wallet-text { min-width: 0; }
+
+      .bar-wallet-name {
+        font-size: 0.82rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .bar-wallet-addr {
+        font-size: 0.68rem;
+        color: var(--text-dim);
+        font-family: ui-monospace, monospace;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .body {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 12px 14px 8px;
+        background: var(--bg);
+      }
+
+      .body.quiet {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .section-head {
+        margin: 0 0 4px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        flex-shrink: 0;
+      }
+
+      .quiet-msg {
+        flex: 1;
+        display: grid;
+        place-items: center;
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 0.88rem;
+        text-align: center;
+      }
+
+      .quiet-msg.err { color: var(--danger); }
+
+      .feed {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--stroke-soft);
+      }
+
+      .row-main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .row-top {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .kind {
+        font-size: 0.85rem;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .when {
+        color: var(--text-dim);
+        font-size: 0.75rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .detail {
+        margin-top: 2px;
+        color: var(--text-muted);
+        font-size: 0.82rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .fail { color: var(--danger); }
+
+      .ext {
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        border-radius: var(--radius-sm);
+        text-decoration: none;
+      }
+
+      .ext:hover { color: var(--text); }
+
+      .ext:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+
+      .ext svg { display: block; }
+
+      .tab-bar {
+        display: flex;
+        flex-shrink: 0;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+      }
+
+      .tab-bar button {
+        flex: 1;
+        border: none;
+        background: transparent;
+        color: var(--text-dim);
+        padding: 12px 8px;
+        font-size: 0.8rem;
+        font-family: inherit;
+        border-top: 2px solid transparent;
+        cursor: default;
+      }
+
+      .tab-bar button.active {
+        color: var(--accent);
+        border-top-color: var(--accent);
+        font-weight: 600;
+      }
+
+      .review {
+        margin: 28px 0 0;
+        padding: 0;
+        max-width: 54rem;
+        color: var(--text-muted);
+        font-size: 0.88rem;
+      }
+
+      .review li { margin: 6px 0; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>首頁活動</h1>
+      <p class="lede">
+        這是概念稿。每一列是一筆交易；列尾圖示在新分頁開啟 Solscan。不是版本契約。
+      </p>
+      <p class="note">
+        mainnet 列假設 Helius 已解析的歷史；devnet 或沒有 key 時較粗。畫面上的金額只供展示。
+      </p>
+
+      <div class="grid">
+        <div>
+          <div class="cap">mainnet · <strong>有資料</strong></div>
+          <div class="phone">
+            <header class="top">
+              <div class="bar-wallet">
+                <div class="avatar" aria-hidden="true">日</div>
+                <div class="bar-wallet-text">
+                  <div class="bar-wallet-name">日常</div>
+                  <div class="bar-wallet-addr">7xKp…m4Qa</div>
+                </div>
+              </div>
+            </header>
+            <div class="body">
+              <h3 class="section-head">活動</h3>
+              <ul class="feed">
+                <li class="row">
+                  <div class="row-main">
+                    <div class="row-top"><span class="kind">送出</span><span class="when">12 分鐘前</span></div>
+                    <div class="detail">−0.42 SOL → Abcd…Wxyz</div>
+                  </div>
+                  <a class="ext" href="https://solscan.io/tx/DemoSendSol12minAAA" target="_blank" rel="noopener noreferrer" aria-label="在 Solscan 開啟" title="在 Solscan 開啟">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  </a>
+                </li>
+                <li class="row">
+                  <div class="row-main">
+                    <div class="row-top"><span class="kind">收到</span><span class="when">2 小時前</span></div>
+                    <div class="detail">+120 USDC</div>
+                  </div>
+                  <a class="ext" href="https://solscan.io/tx/DemoRecvUsdc2hrBBB" target="_blank" rel="noopener noreferrer" aria-label="在 Solscan 開啟" title="在 Solscan 開啟">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  </a>
+                </li>
+                <li class="row">
+                  <div class="row-main">
+                    <div class="row-top"><span class="kind">互換</span><span class="when">昨天</span></div>
+                    <div class="detail">12 USDC → 0.081 SOL</div>
+                  </div>
+                  <a class="ext" href="https://solscan.io/tx/DemoSwapYdayCCC" target="_blank" rel="noopener noreferrer" aria-label="在 Solscan 開啟" title="在 Solscan 開啟">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  </a>
+                </li>
+                <li class="row">
+                  <div class="row-main">
+                    <div class="row-top"><span class="kind">交易</span><span class="when">昨天</span></div>
+                    <div class="detail">5xK2…9pQe</div>
+                  </div>
+                  <a class="ext" href="https://solscan.io/tx/5xK2demoUnknown9pQe" target="_blank" rel="noopener noreferrer" aria-label="在 Solscan 開啟" title="在 Solscan 開啟">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  </a>
+                </li>
+                <li class="row">
+                  <div class="row-main">
+                    <div class="row-top"><span class="kind">送出</span><span class="when">3 天前</span></div>
+                    <div class="detail"><span class="fail">失敗</span> · −0.01 SOL</div>
+                  </div>
+                  <a class="ext" href="https://solscan.io/tx/DemoFailSend3dEEE" target="_blank" rel="noopener noreferrer" aria-label="在 Solscan 開啟" title="在 Solscan 開啟">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  </a>
+                </li>
+                <li class="row">
+                  <div class="row-main">
+                    <div class="row-top"><span class="kind">收到</span><span class="when">3 天前</span></div>
+                    <div class="detail">+0.08 SOL</div>
+                  </div>
+                  <a class="ext" href="https://solscan.io/tx/DemoRecvSol3dFFF" target="_blank" rel="noopener noreferrer" aria-label="在 Solscan 開啟" title="在 Solscan 開啟">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  </a>
+                </li>
+                <li class="row">
+                  <div class="row-main">
+                    <div class="row-top"><span class="kind">互換</span><span class="when">5 天前</span></div>
+                    <div class="detail">40 USDC → 0.27 SOL</div>
+                  </div>
+                  <a class="ext" href="https://solscan.io/tx/DemoSwap5dGGG" target="_blank" rel="noopener noreferrer" aria-label="在 Solscan 開啟" title="在 Solscan 開啟">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  </a>
+                </li>
+                <li class="row">
+                  <div class="row-main">
+                    <div class="row-top"><span class="kind">送出</span><span class="when">1 週前</span></div>
+                    <div class="detail">−15 JUP → MnOp…QrSt</div>
+                  </div>
+                  <a class="ext" href="https://solscan.io/tx/DemoSendJup1wHHH" target="_blank" rel="noopener noreferrer" aria-label="在 Solscan 開啟" title="在 Solscan 開啟">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  </a>
+                </li>
+                <li class="row">
+                  <div class="row-main">
+                    <div class="row-top"><span class="kind">交易</span><span class="when">2 週前</span></div>
+                    <div class="detail">8mNp…kL3s</div>
+                  </div>
+                  <a class="ext" href="https://solscan.io/tx/8mNpdemoUnknownkL3s" target="_blank" rel="noopener noreferrer" aria-label="在 Solscan 開啟" title="在 Solscan 開啟">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <nav class="tab-bar" aria-label="首頁分頁">
+              <button type="button">Token</button>
+              <button type="button" class="active" aria-current="page">Activity</button>
+            </nav>
+          </div>
+        </div>
+
+        <div>
+          <div class="cap">狀態 · <strong>查詢中</strong></div>
+          <div class="phone">
+            <header class="top">
+              <div class="bar-wallet">
+                <div class="avatar" aria-hidden="true">日</div>
+                <div class="bar-wallet-text">
+                  <div class="bar-wallet-name">日常</div>
+                  <div class="bar-wallet-addr">7xKp…m4Qa</div>
+                </div>
+              </div>
+            </header>
+            <div class="body quiet">
+              <h3 class="section-head">活動</h3>
+              <p class="quiet-msg">載入中</p>
+            </div>
+            <nav class="tab-bar" aria-label="首頁分頁">
+              <button type="button">Token</button>
+              <button type="button" class="active" aria-current="page">Activity</button>
+            </nav>
+          </div>
+        </div>
+
+        <div>
+          <div class="cap">狀態 · <strong>尚無紀錄</strong></div>
+          <div class="phone">
+            <header class="top">
+              <div class="bar-wallet">
+                <div class="avatar" aria-hidden="true">日</div>
+                <div class="bar-wallet-text">
+                  <div class="bar-wallet-name">日常</div>
+                  <div class="bar-wallet-addr">7xKp…m4Qa</div>
+                </div>
+              </div>
+            </header>
+            <div class="body quiet">
+              <h3 class="section-head">活動</h3>
+              <p class="quiet-msg">尚無交易</p>
+            </div>
+            <nav class="tab-bar" aria-label="首頁分頁">
+              <button type="button">Token</button>
+              <button type="button" class="active" aria-current="page">Activity</button>
+            </nav>
+          </div>
+        </div>
+
+        <div>
+          <div class="cap">狀態 · <strong>查詢失敗</strong></div>
+          <div class="phone">
+            <header class="top">
+              <div class="bar-wallet">
+                <div class="avatar" aria-hidden="true">日</div>
+                <div class="bar-wallet-text">
+                  <div class="bar-wallet-name">日常</div>
+                  <div class="bar-wallet-addr">7xKp…m4Qa</div>
+                </div>
+              </div>
+            </header>
+            <div class="body quiet">
+              <h3 class="section-head">活動</h3>
+              <p class="quiet-msg err">活動暫時無法載入</p>
+            </div>
+            <nav class="tab-bar" aria-label="首頁分頁">
+              <button type="button">Token</button>
+              <button type="button" class="active" aria-current="page">Activity</button>
+            </nav>
+          </div>
+        </div>
+
+        <div>
+          <div class="cap">devnet · <strong>較粗</strong></div>
+          <div class="phone">
+            <header class="top">
+              <div class="bar-wallet">
+                <div class="avatar" aria-hidden="true">日</div>
+                <div class="bar-wallet-text">
+                  <div class="bar-wallet-name">日常</div>
+                  <div class="bar-wallet-addr">7xKp…m4Qa</div>
+                </div>
+              </div>
+            </header>
+            <div class="body">
+              <h3 class="section-head">活動</h3>
+              <ul class="feed">
+                <li class="row">
+                  <div class="row-main">
+                    <div class="row-top"><span class="kind">交易</span><span class="when">12 分鐘前</span></div>
+                    <div class="detail">成功 · 4kLm…9pQx</div>
+                  </div>
+                  <a class="ext" href="https://solscan.io/tx/4kLmdemoDevnetOk9pQx?cluster=devnet" target="_blank" rel="noopener noreferrer" aria-label="在 Solscan 開啟" title="在 Solscan 開啟">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  </a>
+                </li>
+                <li class="row">
+                  <div class="row-main">
+                    <div class="row-top"><span class="kind">交易</span><span class="when">昨天</span></div>
+                    <div class="detail"><span class="fail">失敗</span> · 7nRt…2wHs</div>
+                  </div>
+                  <a class="ext" href="https://solscan.io/tx/7nRtdemoDevnetBad2wHs?cluster=devnet" target="_blank" rel="noopener noreferrer" aria-label="在 Solscan 開啟" title="在 Solscan 開啟">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  </a>
+                </li>
+                <li class="row">
+                  <div class="row-main">
+                    <div class="row-top"><span class="kind">交易</span><span class="when">3 天前</span></div>
+                    <div class="detail">成功 · 3bVc…8dFy</div>
+                  </div>
+                  <a class="ext" href="https://solscan.io/tx/3bVcdemoDevnetOk8dFy?cluster=devnet" target="_blank" rel="noopener noreferrer" aria-label="在 Solscan 開啟" title="在 Solscan 開啟">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <nav class="tab-bar" aria-label="首頁分頁">
+              <button type="button">Token</button>
+              <button type="button" class="active" aria-current="page">Activity</button>
+            </nav>
+          </div>
+        </div>
+      </div>
+
+      <ul class="review">
+        <li>一列一筆交易；圖示開新分頁，不是整列可點。</li>
+        <li>mainnet 解析列用送出／收到／互換；認不出來用交易。</li>
+        <li>devnet 或沒有 Helius key：只有成功／失敗＋簽名縮寫，連結帶 cluster=devnet。</li>
+        <li>底欄與頂欄不隨列表捲走。</li>
+        <li>這一版草稿不做載入更多、不做 explorer 選擇、不進入交易詳情頁。</li>
+      </ul>
+    </div>
+  </body>
+</html>

@@ -30,6 +30,7 @@ export type AirwaveCommand =
   | "wallet.disconnectOrigin"
   | "wallet.disconnectAllOrigins"
   | "wallet.getHomeTokens"
+  | "wallet.getHomeActivity"
   | "wallet.beginSend"
   | "wallet.changeVaultPassword"
   | "storage.patchSettings";

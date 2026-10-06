@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.18.0 — 2026-10-07
+
+Home Activity：列出目前帳戶對外地址在目前 cluster 上最近最多 20 筆交易。mainnet 且有可解析 Helius key 時用已解析歷史（送出／收到／互換／交易）；否則 `getSignaturesForAddress` 粗列。每一列一筆交易；列尾圖示以新分頁開啟 Solscan（devnet 帶 `cluster=devnet`）。查詢在 service worker；歷史不進 `chrome.storage`。
+
 ## 0.17.0 — 2026-10-07
 
 宣告並實作 Wallet Standard `solana:signAndSendTransaction`：網站請求仍走 popout；批准後錢包簽名、`sendRawTransaction`、等到 `confirmed`，確認中→已確認 hold 1s 再關窗，signature 只回發起 tab。`signTransaction` 仍只簽立刻關；`walletSend` 宿主與成功回 Home 不變。test-web 改走真 feature 路徑。

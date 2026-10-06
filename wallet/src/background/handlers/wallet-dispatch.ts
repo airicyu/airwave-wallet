@@ -1,4 +1,5 @@
 import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
+import { handleGetHomeActivity } from "../home-activity";
 import { handleGetHomeTokens } from "../home-tokens";
 import { respond } from "../messaging";
 import {
@@ -51,6 +52,7 @@ export async function handleWalletCommand(req: ExtensionRequest): Promise<Extens
   if (req.command === "wallet.disconnectAllOrigins") return handleDisconnectAllOrigins(req);
   if (req.command === "wallet.beginSend") return handleBeginSend(req);
   if (req.command === "wallet.getHomeTokens") return handleGetHomeTokens(req);
+  if (req.command === "wallet.getHomeActivity") return handleGetHomeActivity(req);
   if (req.command === "storage.patchSettings") return handlePatchSettings(req);
   return respond({
     kind: "airwave-ext-res",

@@ -29,6 +29,7 @@
 | [0.15.0](./0.15.0/INDEX.md) | shipped | Popup 改 Vite React；審批殼仍 vanilla 橋接；行為與 0.14.0 相同 |
 | [0.16.0](./0.16.0/INDEX.md) | shipped | Popup React 收斂：廢止 session／全樹 tick；行為與 0.15.0 相同 |
 | [0.17.0](./0.17.0/INDEX.md) | shipped | Wallet Standard `solana:signAndSendTransaction`；popout 確認中→已確認 1s |
+| [0.18.0](./0.18.0/INDEX.md) | shipped | Home Activity：最近 20 筆；列尾開 Solscan |
 
 **版本號：** `x.y.z` 的 **patch**（例如 **0.3.1**）留給該 minor 的 **bugfix**，不排新功能。新功能走下一個 **minor**（0.3.0 → 0.4.0 → 0.5.0）。
 

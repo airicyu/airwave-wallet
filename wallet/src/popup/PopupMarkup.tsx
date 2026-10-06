@@ -10,6 +10,7 @@ import {
   RevealScreen,
 } from "./accounts/AccountsScreens";
 import { ApprovalHost } from "./components/ApprovalHost";
+import { HomeActivityList } from "./components/HomeActivityList";
 import { HomeTokenList, TokenDetailView } from "./components/HomeTokenList";
 import { LegalDoc } from "./components/LegalDoc";
 import { IconBack, IconCopy, IconLock, IconMenu, IconRefresh } from "./components/StrokeIcon";
@@ -283,12 +284,7 @@ export function PopupMarkup(): JSX.Element {
           ) : null}
 
           {currentView === "home-activity" ? (
-            <section id="screen-home-activity" className="screen">
-              <div className="empty-state">
-                <p>尚無交易歷史</p>
-                <p className="muted">鏈上 Activity 將於後續版本提供。</p>
-              </div>
-            </section>
+            <HomeActivityList wallet={wallet} currentView={currentView} />
           ) : null}
 
           {currentView === "accounts" ? (
