@@ -1,5 +1,7 @@
 import type { View } from "../types";
 
+export { avatarPrefix, displayAccountName } from "../../shared/account-display";
+
 export function shortAddr(pk: string): string {
   if (pk.length <= 8) return pk;
   return `${pk.slice(0, 4)}…${pk.slice(-4)}`;

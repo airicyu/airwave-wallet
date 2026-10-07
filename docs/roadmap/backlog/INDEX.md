@@ -4,6 +4,17 @@
 
 新項目：在本目錄加一列，並寫 `backlog/<名稱>.md`。
 
+## 已排進 [0.22.0](../0.22.0/INDEX.md)
+
+| 項目 | 說明 |
+|------|------|
+| [地址複製回饋](./address-copy-feedback.md) | 頂欄／簽署複製成功勾 1.6s |
+| [持倉刷新按鈕硬冷卻](./token-balance-refresh-cooldown.md) | 刷新鈕 3 秒冷卻＋弧 |
+| [Kit 估算 compute units](./estimate-cu-via-kit.md) | 簽署 phase 1 改 Kit factory |
+| [Home 顯示 Devnet 或 Mainnet](./home-cluster-indicator.md) | 僅 Devnet 橙黃徽章（INDEX 推翻「兩個都要標」） |
+
+0.22.0 另含：Home pill 改版、Activity 改 Orb、收回租金確認中 dash-ring（無獨立 backlog 檔）。
+
 ## 未排程
 
 | 項目 | 說明 |
@@ -15,9 +26,5 @@
 | [聚合錢包帳戶送出代幣](./send-token-combined.md) | 從目前可簽成員送；可動用≠加總；不含歸集。單一可簽送出已於 [0.12.0](../0.12.0/INDEX.md) 出貨 |
 | [錢包地址簿](./address-book.md) | 名稱＋地址白名單；送出可選，仍可手貼 |
 | [簽署交易 Anchor IDL 解析](./sign-transaction-ix-decode.md) | 靜態 common parser 已於 [0.19.0](../0.19.0/INDEX.md) 出貨；鏈上／metadata IDL 層仍未排程 |
-| [地址複製回饋](./address-copy-feedback.md) | 頂欄地址複製圖示成功寫入剪貼簿後，按鈕短暫顯示已複製 |
-| [持倉刷新按鈕硬冷卻](./token-balance-refresh-cooldown.md) | Tokens 刷新鈕按完後 disabled 3 秒，避免同一錢包連按打太多 RPC；切頁或切帳戶可清掉 |
-| [Kit 估算 compute units](./estimate-cu-via-kit.md) | 簽署交易 phase 1 改用 Kit `estimateResourceLimitsFactory` 讀實際消耗；建議 limit 公式仍是 0.11.0 |
 | [簽署交易 Durable Nonce 提醒](./sign-tx-durable-nonce-alert.md) | 審批時若第一條是 System `AdvanceNonceAccount`，提醒這筆用了 durable nonce；不擋批准 |
 | [簽署交易 AI 安全評估](./sign-tx-ai-security-eval.md) | 簽名前：decode＋規則／批次查詢 → OpenRouter Decisions（等級＋tags）→ 中高風險再 chat；暫不做 harness |
-| [Home 顯示 Devnet 或 Mainnet](./home-cluster-indicator.md) | 持倉與 Activity 不用進 Settings 就看得出目前 cluster；Devnet 更醒目；Home 不另做切換 |

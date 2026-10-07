@@ -1,6 +1,6 @@
 # Home 顯示目前是 Devnet 或 Mainnet — backlog
 
-構想尚未排進某版 INDEX，**不是契約**。排程後以該版 INDEX 為準。
+已排進 [0.22.0](../0.22.0/INDEX.md)，**不是契約**。以該版 INDEX 為準（僅 Devnet 徽章；Mainnet 不標）。
 
 ## 現況
 

@@ -5,6 +5,7 @@ import {
   normalizeSubPubkeysInput,
   parsePublicKeyBase58,
 } from "../../shared/accounts";
+import { parseOptionalAccountLabel } from "../../shared/account-label";
 import type { CombinedAccountMeta } from "../../shared/storage-keys";
 import { notifyAccountChangedForConnectionAccount } from "../messaging";
 import { respond } from "../messaging";
@@ -22,6 +23,15 @@ export async function handleCreateCombinedAccount(req: ExtensionRequest): Promis
     subPubkeys?: string[];
     mainPubkey?: string;
   };
+  const parsedLabel = parseOptionalAccountLabel(label);
+  if (!parsedLabel.ok) {
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: { code: "INVALID_LABEL", message: "名稱最多 15 字" },
+    });
+  }
   const accounts = await readAccounts();
   const normalized = normalizeSubPubkeysInput(rawSubs ?? [], accounts);
   if (!normalized.ok) {
@@ -49,7 +59,7 @@ export async function handleCreateCombinedAccount(req: ExtensionRequest): Promis
   const id = newAccountId();
   const meta: CombinedAccountMeta = {
     id,
-    label: label?.trim() || `Combined ${accounts.length + 1}`,
+    label: parsedLabel.label ?? `Combined ${accounts.length + 1}`,
     kind: "combined",
     subPubkeys,
     mainPubkey,

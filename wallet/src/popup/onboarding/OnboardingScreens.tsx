@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction, JSX } from "react";
 import { useCallback, useEffect, useState } from "react";
+import { ACCOUNT_LABEL_MAX } from "../../shared/account-label";
 import { sendExtensionRequest } from "../../shared/ext-api";
 import { getExposedPublicKey, isSigningOrWatch, parsePublicKeyBase58 } from "../../shared/accounts";
 import type { SeedPathKind } from "../../shared/seed-derive";
@@ -97,6 +98,7 @@ export function ImportSecretScreen(): JSX.Element {
         <input
           id="import-label"
           type="text"
+          maxLength={ACCOUNT_LABEL_MAX}
           placeholder="選填"
           autoComplete="off"
           value={label}
@@ -361,6 +363,7 @@ export function GenerateSeedScreen(): JSX.Element {
         <input
           id="generate-seed-label"
           type="text"
+          maxLength={ACCOUNT_LABEL_MAX}
           placeholder="選填"
           autoComplete="off"
           value={draft.label}
@@ -479,6 +482,7 @@ export function GenerateBurnerScreen(): JSX.Element {
         <input
           id="generate-label"
           type="text"
+          maxLength={ACCOUNT_LABEL_MAX}
           placeholder="選填"
           autoComplete="off"
           value={label}
@@ -527,6 +531,7 @@ export function WatchAccountScreen(): JSX.Element {
         <input
           id="watch-label"
           type="text"
+          maxLength={ACCOUNT_LABEL_MAX}
           placeholder="選填"
           autoComplete="off"
           value={label}

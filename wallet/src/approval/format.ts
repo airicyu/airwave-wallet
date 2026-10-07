@@ -10,6 +10,8 @@ export function shortPk(pk: string): string {
   return `${pk.slice(0, 4)}…${pk.slice(-4)}`;
 }
 
+export { avatarPrefix, displayAccountName } from "../shared/account-display";
+
 export function avatarLetter(label: string): string {
   const t = label.trim();
   return (t[0] ?? "A").toUpperCase();

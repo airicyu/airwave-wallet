@@ -1,6 +1,6 @@
 import type { JSX } from "react";
 import { getExposedPublicKey } from "../../shared/accounts";
-import { avatarLetter, shortAddr } from "../lib/format";
+import { avatarPrefix, displayAccountName } from "../lib/format";
 import type { State } from "../types";
 
 export function WalletWidget({ wallet }: { wallet: State }): JSX.Element {
@@ -15,22 +15,19 @@ export function WalletWidget({ wallet }: { wallet: State }): JSX.Element {
           <span className="bar-wallet-name" id="widget-label">
             —
           </span>
-          <span className="bar-wallet-addr" id="widget-addr" />
         </span>
       </>
     );
   }
+  const name = displayAccountName(active.label, getExposedPublicKey(active));
   return (
     <>
       <span className="avatar" id="widget-avatar" aria-hidden="true">
-        {avatarLetter(active.label)}
+        {avatarPrefix(name)}
       </span>
       <span className="bar-wallet-text">
         <span className="bar-wallet-name" id="widget-label">
-          {active.label}
-        </span>
-        <span className="bar-wallet-addr" id="widget-addr">
-          {shortAddr(getExposedPublicKey(active))}
+          {name}
         </span>
       </span>
     </>

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave 0.22.0 — UI 小改概念稿</title>
+    <!--
+      非正式。衝突時以 docs/roadmap/0.22.0/INDEX.md 為準。
+      產品碼未改。請在瀏覽器直接開啟本檔。
+    -->
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --accent-dim: #2a6ea8;
+        --danger: #c75050;
+        --ok: #4ecb8d;
+        --warn: #e8b84a;
+        --warn-bg: #3a2e14;
+        --recycle: #3ddc84;
+        --popup-w: 384px;
+        --popup-h: 600px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1280px; margin: 0 auto; padding: 28px 20px 80px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      h2 { font-size: 1.05rem; font-weight: 600; margin: 36px 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 8px; max-width: 54rem; font-size: 0.92rem; }
+      .note { color: var(--text-dim); font-size: 0.82rem; margin: 0 0 20px; max-width: 54rem; }
+      a { color: var(--accent); }
+      .locked { color: var(--ok); font-weight: 600; }
+      .pending { color: var(--warn); font-weight: 600; }
+      .spec {
+        background: var(--bg-elevated);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        padding: 14px 16px;
+        margin: 0 0 28px;
+        font-size: 0.86rem;
+      }
+      .spec ul { margin: 8px 0 0; padding-left: 1.2rem; color: var(--text-muted); }
+      .spec li { margin: 4px 0; }
+      .pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+      .pill {
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+        color: var(--text-muted);
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        cursor: pointer;
+      }
+      .pill.on { border-color: var(--accent); color: var(--text); background: #1a2838; }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(var(--popup-w), 1fr));
+        gap: 28px;
+        align-items: start;
+      }
+      .cap {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        margin-bottom: 8px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .cap strong { color: var(--text-muted); font-weight: 600; text-transform: none; letter-spacing: 0; }
+      .cap .ok { color: var(--ok); }
+      .cap .warn { color: var(--warn); }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+      .top-spacer { flex: 1; min-width: 8px; }
+      .wallet {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex: 0 1 auto;
+        max-width: min(240px, 62%);
+        padding: 3px 6px 3px 3px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+        min-width: 0;
+      }
+      .avatar {
+        width: 36px; height: 36px; border-radius: 50%;
+        background: var(--accent); color: #fff;
+        font-weight: 700; font-size: 0.72rem;
+        letter-spacing: -0.02em;
+        display: grid; place-items: center; flex-shrink: 0;
+        line-height: 1;
+      }
+      .wname {
+        font-size: 0.82rem; font-weight: 600;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        min-width: 0; flex: 1 1 auto;
+        line-height: 1;
+        display: flex; align-items: center;
+      }
+      .copy-in {
+        width: 28px; height: 28px;
+        border: none; background: transparent;
+        color: var(--text-muted);
+        display: grid; place-items: center;
+        padding: 0; cursor: pointer; flex-shrink: 0; border-radius: 50%;
+        margin-left: auto;
+      }
+      .copy-in:hover { color: var(--text); }
+      .copy-in.copied { color: var(--ok); }
+      .cluster {
+        flex-shrink: 0;
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        padding: 1px 6px;
+        border-radius: 999px;
+        line-height: 1.4;
+        pointer-events: none;
+      }
+      .cluster.mainnet {
+        border: 1px solid var(--stroke);
+        color: var(--text-dim);
+        background: transparent;
+      }
+      .cluster.devnet {
+        border: 1px solid var(--warn);
+        color: var(--warn);
+        background: var(--warn-bg);
+      }
+      .icon-btn {
+        width: 34px; height: 34px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-sm);
+        background: var(--fill);
+        color: var(--text-muted);
+        display: grid; place-items: center;
+        flex-shrink: 0; padding: 0; cursor: pointer;
+        position: relative;
+      }
+      .icon-btn.ghost {
+        width: 30px; height: 30px;
+        border: none; background: transparent;
+      }
+      .icon-btn:hover { color: var(--text); }
+      .icon-btn:disabled { opacity: 0.38; cursor: default; }
+      .icon-btn.copied { color: var(--ok); }
+      .icon-btn.recycle { color: var(--recycle); }
+      .icon-btn.recycle svg { width: 22px; height: 22px; }
+      .badge {
+        position: absolute;
+        min-width: 14px; height: 14px; padding: 0 3px;
+        border-radius: 999px;
+        border: 1px solid #1a3d2c;
+        background: #10261b;
+        color: #d8ffe8;
+        font-size: 9px; font-weight: 800; line-height: 14px;
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+        pointer-events: none;
+      }
+      .badge.br { right: -1px; bottom: -1px; }
+      .badge.tr { right: -1px; top: -1px; }
+      .strip {
+        flex-shrink: 0;
+        padding: 5px 14px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        border-bottom: 1px solid var(--stroke-soft);
+      }
+      .strip.mainnet { color: var(--text-dim); background: var(--bg-elevated); }
+      .strip.devnet { color: var(--warn); background: var(--warn-bg); }
+      .body { flex: 1; min-height: 0; overflow: auto; padding: 8px 14px 10px; }
+      .body.center {
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        text-align: center; padding: 28px 20px;
+        background: var(--bg);
+      }
+      .sec {
+        display: flex; align-items: center; justify-content: space-between;
+        margin: 6px 0 8px;
+      }
+      .sec h3 { margin: 0; font-size: 0.88rem; }
+      .tools { display: flex; align-items: center; gap: 2px; }
+      .token {
+        display: flex; align-items: center; gap: 10px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--stroke-soft);
+      }
+      .dot {
+        width: 32px; height: 32px; border-radius: 50%;
+        background: var(--fill); border: 1px solid var(--stroke);
+        display: grid; place-items: center;
+        font-size: 0.62rem; font-weight: 700; color: var(--text-muted);
+      }
+      .tn { font-size: 0.88rem; font-weight: 600; }
+      .ts { font-size: 0.75rem; color: var(--text-muted); }
+      .tabs {
+        display: flex; flex-shrink: 0;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+      }
+      .tabs span {
+        flex: 1; text-align: center; padding: 10px 0;
+        font-size: 0.82rem; color: var(--text-dim);
+      }
+      .tabs span.on { color: var(--text); font-weight: 600; }
+      .status-title { margin: 18px 0 6px; font-size: 1.28rem; font-weight: 600; }
+      .status-lead { margin: 0; font-size: 0.84rem; color: var(--text-muted); }
+      .trace { width: 112px; height: 112px; overflow: visible; }
+      .aurora-green { stroke: #14f195; }
+      .aurora-mid { stroke: #5b8cff; }
+      .aurora-purple { stroke: #9945ff; }
+      .sub-top .title {
+        flex: 1; text-align: center; font-weight: 600; font-size: 0.92rem;
+      }
+      .cd-ring {
+        position: absolute; inset: 0;
+        pointer-events: none;
+      }
+      .cd-ring circle {
+        fill: none;
+        stroke: var(--accent);
+        stroke-width: 2;
+        stroke-linecap: round;
+        transform: rotate(-90deg);
+        transform-origin: 15px 15px;
+      }
+      .hint { font-size: 0.8rem; color: var(--text-dim); margin: 8px 0 0; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>0.22.0 — Home 與送出等待小改</h1>
+      <p class="lede">
+        給你看的畫面提案。Kit 估 CU 沒有 UI，不在本稿。衝突以
+        <a href="../roadmap/0.22.0/INDEX.md">0.22.0 INDEX</a> 為準。產品碼尚未改。
+      </p>
+      <p class="note">
+        綠字＝你已拍板。琥珀＝請看完本稿後回一句同不同意。點 Home 稿的複製／刷新可試互動。
+      </p>
+
+      <div class="spec">
+        <strong>已拍板</strong>
+        <ul>
+          <li>收回租金送出等待：<span class="locked">藏頂欄</span>，與簽署送出確認中同一套 dash-ring。</li>
+          <li>回收圖示筆數：<span class="locked">維持右下</span>。不改位置。</li>
+          <li>Wallet pill：<span class="locked">圓形頭像｜名稱垂直置中｜複製靠右</span>；<span class="locked">不顯示</span>地址縮寫。</li>
+          <li>Cluster：<span class="locked">僅 Devnet</span> 在 pill 外側右方橙黃徽章；<span class="locked">Mainnet 不標</span>。</li>
+          <li>名稱最多 <span class="locked">15</span> 字；無名稱則顯示公鑰前 <span class="locked">4</span> 字；頭像只顯示顯示名稱前 <span class="locked">2</span> 字。</li>
+        </ul>
+        <strong style="display:block;margin-top:12px">請拍板（本稿提案）</strong>
+        <ul>
+          <li>複製成功：圖示換 <strong>--ok 勾</strong>，<code>title</code>／<code>aria-label</code>「已複製」，<strong>1.6 秒</strong>還原。失敗不顯示成功。只改頂欄 pill 內與簽署頂欄那兩顆。</li>
+          <li>刷新冷卻：從<strong>按下起算 3 秒</strong>；disabled；外圈 3 秒弧。切頁或切帳戶立刻可再按。</li>
+          <li>等待文案改「<strong>等待鏈上確認</strong>」（與簽署送出同一句）。結束仍走三數結果頁，不套 1 秒勾。</li>
+        </ul>
+      </div>
+
+      <h2>1. 收回租金 · 確認中</h2>
+      <p class="lede">藏頂欄、無殼底、無 Token／Activity tab。環與簽署送出同一份 SVG。結束不在此頁畫勾。</p>
+      <div class="grid">
+        <div>
+          <div class="cap">現況 · <strong>兩行字＋頂欄仍在</strong></div>
+          <div class="phone">
+            <header class="top sub-top">
+              <span class="icon-btn" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+              </span>
+              <div class="title">確認中</div>
+              <span class="icon-btn" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+              </span>
+            </header>
+            <div class="body center">
+              <p class="status-title">確認中</p>
+              <p class="status-lead">等待這一波結束</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="cap">提案 · <strong class="ok">藏頂欄＋ dash-ring</strong></div>
+          <div class="phone">
+            <div class="body center">
+              <svg class="trace" viewBox="0 0 24 24" fill="none" role="status" aria-label="確認中">
+                <circle class="aurora-purple" cx="12" cy="12" r="9.5" opacity="0.18" stroke-width="3" />
+                <circle class="aurora-purple" cx="12" cy="12" r="9.5" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 150">
+                  <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="4s" repeatCount="indefinite" />
+                  <animate attributeName="stroke-dasharray" values="0 150;58 150;58 150" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+                  <animate attributeName="stroke-dashoffset" values="0;-16;-59" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+                </circle>
+                <circle class="aurora-mid" cx="12" cy="12" r="9.5" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 150">
+                  <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="4s" repeatCount="indefinite" />
+                  <animate attributeName="stroke-dasharray" values="0 150;48 150;48 150" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+                  <animate attributeName="stroke-dashoffset" values="0;-16;-59" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+                </circle>
+                <circle class="aurora-green" cx="12" cy="12" r="9.5" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 150">
+                  <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="4s" repeatCount="indefinite" />
+                  <animate attributeName="stroke-dasharray" values="0 150;32 150;32 150" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+                  <animate attributeName="stroke-dashoffset" values="0;-16;-59" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+                </circle>
+              </svg>
+              <p class="status-title">確認中</p>
+              <p class="status-lead">等待鏈上確認</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2>2. Home 頂欄</h2>
+      <p class="lede">同一顆頂欄給 Tokens 與 Activity。切下面看 Mainnet／Devnet。點 pill 內複製、點刷新。</p>
+      <div class="pills">
+        <button type="button" class="pill on" id="pill-mainnet">Mainnet</button>
+        <button type="button" class="pill" id="pill-devnet">Devnet</button>
+      </div>
+      <p class="hint">Mainnet 頂欄不出現網路字。只有 Devnet 才在 pill 右方出現橙黃 <code>Devnet</code>。徽章不能點，改網路仍走 Settings。無帳戶名稱時，pill 中間改顯示地址前 4 字（例如 <code>7xKX</code>），頭像只取前 2 字。</p>
+      <div class="grid" style="margin-top:16px">
+        <div>
+          <div class="cap">採用 · <strong class="ok">僅 Devnet 徽章</strong></div>
+          <div class="phone" id="home-rec"></div>
+        </div>
+        <div>
+          <div class="cap">不採用 · <strong>頂欄下一條狀態</strong></div>
+          <div class="phone" id="home-alt"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const RECYCLE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/>
+        <path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12"/>
+        <path d="m14 16-3 3 3 3"/>
+        <path d="M8.293 13.596 7.196 9.5 3.1 10.598"/>
+        <path d="m9.344 5.811 1.093-1.892A1.83 1.83 0 0 1 11.985 3a1.784 1.784 0 0 1 1.546.888l3.943 6.843"/>
+        <path d="m13.378 9.633 4.096 1.098 1.097-4.096"/>
+      </svg>`;
+      const COPY = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+      const CHECK = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12.5l4.2 4.2L19 7"/></svg>`;
+      const REFRESH = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>`;
+      const LOCK = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`;
+      const MENU = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>`;
+
+      let cluster = "mainnet";
+      const copyTimers = new WeakMap();
+      const refreshTimers = new WeakMap();
+
+      function clusterChip() {
+        if (cluster !== "devnet") return "";
+        return `<span class="cluster devnet">Devnet</span>`;
+      }
+
+      function bindCopy(btn) {
+        btn.addEventListener("click", () => {
+          const prev = copyTimers.get(btn);
+          if (prev) clearTimeout(prev);
+          btn.classList.add("copied");
+          btn.innerHTML = CHECK;
+          btn.title = "已複製";
+          btn.setAttribute("aria-label", "已複製");
+          copyTimers.set(btn, setTimeout(() => {
+            btn.classList.remove("copied");
+            btn.innerHTML = COPY;
+            btn.title = "複製";
+            btn.setAttribute("aria-label", "複製");
+          }, 1600));
+        });
+      }
+
+      function bindRefresh(btn) {
+        btn.addEventListener("click", () => {
+          if (btn.disabled) return;
+          btn.disabled = true;
+          const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          svg.setAttribute("class", "cd-ring");
+          svg.setAttribute("viewBox", "0 0 30 30");
+          svg.setAttribute("aria-hidden", "true");
+          svg.innerHTML = `<circle cx="15" cy="15" r="13" stroke-dasharray="81.7" stroke-dashoffset="0">
+            <animate attributeName="stroke-dashoffset" from="0" to="81.7" dur="3s" fill="freeze"/>
+          </circle>`;
+          btn.appendChild(svg);
+          const t = setTimeout(() => {
+            btn.disabled = false;
+            svg.remove();
+          }, 3000);
+          refreshTimers.set(btn, t);
+        });
+      }
+
+      function homeChrome(opts) {
+        const { strip, badgePos, showCluster = true } = opts;
+        const stripHtml = strip
+          ? `<div class="strip ${cluster}">${cluster === "devnet" ? "Devnet" : "Mainnet"}</div>`
+          : "";
+        const chip = strip || !showCluster ? "" : clusterChip();
+        return `
+          <header class="top">
+            <div class="wallet">
+              <span class="avatar">Tr</span>
+              <span class="wname">Trading</span>
+              <button type="button" class="copy-in copy-btn" title="複製" aria-label="複製">${COPY}</button>
+            </div>
+            ${chip}
+            <div class="top-spacer"></div>
+            <span class="icon-btn" aria-hidden="true">${LOCK}</span>
+            <span class="icon-btn" aria-hidden="true">${MENU}</span>
+          </header>
+          ${stripHtml}
+          <div class="body">
+            <div class="sec">
+              <h3>Tokens</h3>
+              <div class="tools">
+                <button type="button" class="icon-btn ghost recycle" title="收回租金" aria-label="收回租金">
+                  ${RECYCLE}
+                  <span class="badge ${badgePos}">12</span>
+                </button>
+                <button type="button" class="icon-btn ghost refresh-btn" title="重新整理" aria-label="重新整理">${REFRESH}</button>
+              </div>
+            </div>
+            <div class="token"><div class="dot">SOL</div><div><div class="tn">SOL</div><div class="ts">1.842</div></div></div>
+            <div class="token"><div class="dot">US</div><div><div class="tn">USDC</div><div class="ts">240.50</div></div></div>
+            <div class="token"><div class="dot">JI</div><div><div class="tn">JitoSOL</div><div class="ts">0.410</div></div></div>
+          </div>
+          <nav class="tabs"><span class="on">Token</span><span>Activity</span></nav>
+        `;
+      }
+
+      function mountHome(el, opts) {
+        el.innerHTML = homeChrome(opts);
+        el.querySelectorAll(".copy-btn").forEach(bindCopy);
+        el.querySelectorAll(".refresh-btn").forEach(bindRefresh);
+      }
+
+      function renderHomes() {
+        mountHome(document.getElementById("home-rec"), { strip: false, badgePos: "br" });
+        mountHome(document.getElementById("home-alt"), { strip: true, badgePos: "br" });
+      }
+
+      document.getElementById("pill-mainnet").addEventListener("click", () => {
+        cluster = "mainnet";
+        document.getElementById("pill-mainnet").classList.add("on");
+        document.getElementById("pill-devnet").classList.remove("on");
+        renderHomes();
+      });
+      document.getElementById("pill-devnet").addEventListener("click", () => {
+        cluster = "devnet";
+        document.getElementById("pill-devnet").classList.add("on");
+        document.getElementById("pill-mainnet").classList.remove("on");
+        renderHomes();
+      });
+
+      renderHomes();
+    </script>
+  </body>
+</html>

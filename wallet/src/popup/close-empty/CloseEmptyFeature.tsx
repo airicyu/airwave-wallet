@@ -4,6 +4,7 @@ import { useRegisterDock } from "../state/dock";
 import { isCombinedAccount } from "../../shared/accounts";
 import { getClosableOwnerTargets } from "../../shared/close-empty-owners";
 import { sendExtensionRequest } from "../../shared/ext-api";
+import { SEND_STATUS_AURORA_SVG } from "../../shared/send-status-mark";
 import { IconRecycle } from "../components/StrokeIcon";
 import type { ClosableEntry, CloseEmptyCommitResult, CloseEmptyPlanResult } from "../../shared/close-empty-types";
 import { iconLetterForSymbol } from "../../shared/home-tokens";
@@ -305,9 +306,14 @@ export function CloseEmptyConfirmScreen({
 
 export function CloseEmptySendingScreen(): JSX.Element {
   return (
-    <div className="close-empty-screen close-empty-sending">
-      <p className="close-empty-sending-title">確認中</p>
-      <p className="muted">等待這一波結束</p>
+    <div className="close-empty-screen close-empty-sending send-status-card is-pending">
+      <div
+        className="send-status-mark"
+        aria-hidden="true"
+        dangerouslySetInnerHTML={{ __html: SEND_STATUS_AURORA_SVG }}
+      />
+      <p className="send-status-title">確認中</p>
+      <p className="send-status-lead">等待鏈上確認</p>
     </div>
   );
 }

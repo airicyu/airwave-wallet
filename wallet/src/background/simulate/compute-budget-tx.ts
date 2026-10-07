@@ -165,6 +165,13 @@ function mergeSignatures(
   return { ...updated, signatures };
 }
 
+export async function decompileTxMessageFromBytes(txBytes: Uint8Array, rpcUrl: string) {
+  const tx = decodeWireTransaction(txBytes);
+  const compiled = decodeCompiledMessage(messageBytesToUint8Array(tx.messageBytes));
+  const rpc = solanaRpcForUrl(rpcUrl) as Rpc<GetMultipleAccountsApi>;
+  return decompileTransactionMessageFetchingLookupTables(compiled, rpc);
+}
+
 export async function writeCuToTransactionBytes(
   txBytes: Uint8Array,
   limit: number,

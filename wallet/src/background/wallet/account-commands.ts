@@ -1,6 +1,10 @@
 import bs58 from "bs58";
 import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
 import { getExposedPublicKey, parsePublicKeyBase58 } from "../../shared/accounts";
+import {
+  parseOptionalAccountLabel,
+  parseRequiredAccountLabel,
+} from "../../shared/account-label";
 import { decryptVault } from "../../shared/crypto-vault";
 import {
   generateRandomLoadedAccount,
@@ -39,6 +43,18 @@ import {
   writeConnections,
 } from "../storage";
 
+function invalidLabel(req: ExtensionRequest, empty: boolean): ExtensionResponse {
+  return respond({
+    kind: "airwave-ext-res",
+    requestId: req.requestId,
+    ok: false,
+    error: {
+      code: "INVALID_LABEL",
+      message: empty ? "Label cannot be empty" : "名稱最多 15 字",
+    },
+  });
+}
+
 export async function handleGenerateSeedAccount(req: ExtensionRequest): Promise<ExtensionResponse> {
   if (!session.isUnlocked()) {
     return respond({
@@ -49,6 +65,8 @@ export async function handleGenerateSeedAccount(req: ExtensionRequest): Promise<
     });
   }
   const { label } = (req.payload ?? {}) as { label?: string };
+  const parsedLabel = parseOptionalAccountLabel(label);
+  if (!parsedLabel.ok) return invalidLabel(req, false);
   const accounts = await readAccounts();
   const mnemonic = createEnglishMnemonic12();
   const kp = await keypairFromMnemonic(mnemonic, "phantom", 0);
@@ -68,7 +86,7 @@ export async function handleGenerateSeedAccount(req: ExtensionRequest): Promise<
   await persistVaultFromSession();
   const meta: AccountMeta = {
     id,
-    label: label ?? `Account ${accounts.length + 1}`,
+    label: parsedLabel.label ?? `Account ${accounts.length + 1}`,
     publicKeyBase58,
     kind: "signing",
   };
@@ -92,6 +110,8 @@ export async function handleGenerateAccount(req: ExtensionRequest): Promise<Exte
     });
   }
   const { label } = (req.payload ?? {}) as { label?: string };
+  const parsedLabel = parseOptionalAccountLabel(label);
+  if (!parsedLabel.ok) return invalidLabel(req, false);
   const accounts = await readAccounts();
   const kp = await generateRandomLoadedAccount();
   const publicKeyBase58 = kp.address;
@@ -110,7 +130,7 @@ export async function handleGenerateAccount(req: ExtensionRequest): Promise<Exte
   await persistVaultFromSession();
   const meta: AccountMeta = {
     id,
-    label: label ?? `Account ${accounts.length + 1}`,
+    label: parsedLabel.label ?? `Account ${accounts.length + 1}`,
     publicKeyBase58,
     kind: "signing",
   };
@@ -160,6 +180,8 @@ export async function handleImportAccount(req: ExtensionRequest): Promise<Extens
     secretBase58?: string;
     label?: string;
   };
+  const parsedLabel = parseOptionalAccountLabel(label);
+  if (!parsedLabel.ok) return invalidLabel(req, false);
   const secretRaw = (secret ?? secretBase58 ?? "").trim();
   const kp = await loadedFromSecretRaw(secretRaw);
   if (!kp) {
@@ -187,7 +209,7 @@ export async function handleImportAccount(req: ExtensionRequest): Promise<Extens
   await persistVaultFromSession();
   const meta: AccountMeta = {
     id,
-    label: label ?? `Imported ${accounts.length + 1}`,
+    label: parsedLabel.label ?? `Imported ${accounts.length + 1}`,
     publicKeyBase58,
     kind: "signing",
   };
@@ -268,6 +290,8 @@ export async function handleImportSeedAccount(req: ExtensionRequest): Promise<Ex
     index?: number;
     label?: string;
   };
+  const parsedLabel = parseOptionalAccountLabel(label);
+  if (!parsedLabel.ok) return invalidLabel(req, false);
   if (!Number.isInteger(index) || (index as number) < 0 || (index as number) >= SEED_PREVIEW_COUNT) {
     return respond({
       kind: "airwave-ext-res",
@@ -312,7 +336,7 @@ export async function handleImportSeedAccount(req: ExtensionRequest): Promise<Ex
   await persistVaultFromSession();
   const meta: AccountMeta = {
     id,
-    label: label ?? `Imported ${accounts.length + 1}`,
+    label: parsedLabel.label ?? `Imported ${accounts.length + 1}`,
     publicKeyBase58,
     kind: "signing",
   };
@@ -350,15 +374,9 @@ export async function handleSetActiveAccount(req: ExtensionRequest): Promise<Ext
 
 export async function handleRenameAccount(req: ExtensionRequest): Promise<ExtensionResponse> {
   const { accountId, label: rawLabel } = req.payload as { accountId: string; label: string };
-  const label = rawLabel?.trim() ?? "";
-  if (!label) {
-    return respond({
-      kind: "airwave-ext-res",
-      requestId: req.requestId,
-      ok: false,
-      error: { code: "INVALID_LABEL", message: "Label cannot be empty" },
-    });
-  }
+  const parsed = parseRequiredAccountLabel(rawLabel);
+  if (!parsed.ok) return invalidLabel(req, !(rawLabel?.trim()));
+  const label = parsed.label;
   const accounts = await readAccounts();
   const idx = accounts.findIndex((a) => a.id === accountId);
   if (idx < 0) {
@@ -457,6 +475,8 @@ export async function handleAddReadOnlyAccount(req: ExtensionRequest): Promise<E
     publicKeyBase58: string;
     label?: string;
   };
+  const parsedLabel = parseOptionalAccountLabel(label);
+  if (!parsedLabel.ok) return invalidLabel(req, false);
   const publicKeyBase58 = parsePublicKeyBase58(rawPk?.trim() ?? "");
   if (!publicKeyBase58) {
     return respond({
@@ -478,7 +498,7 @@ export async function handleAddReadOnlyAccount(req: ExtensionRequest): Promise<E
   const id = newAccountId();
   const meta: AccountMeta = {
     id,
-    label: label?.trim() || `Watch ${publicKeyBase58.slice(0, 6)}…`,
+    label: parsedLabel.label ?? `Watch ${publicKeyBase58.slice(0, 6)}…`,
     publicKeyBase58,
     kind: "readOnly",
   };

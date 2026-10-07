@@ -209,16 +209,16 @@ input.wallet-pwd-masked {
   align-items: center;
   gap: 2px;
   min-width: 0;
-  width: 100%;
+  flex: 0 1 auto;
 }
 
 .bar-wallet {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  flex: 1 1 auto;
+  gap: 2px;
+  flex: 0 1 auto;
   max-width: 100%;
-  padding: 5px 12px 5px 5px;
+  padding: 4px 6px 4px 4px;
   border-radius: 999px;
   border: 1px solid var(--stroke);
   background: var(--bg);
@@ -247,14 +247,17 @@ input.wallet-pwd-masked {
 }
 
 .bar-wallet-addr {
-  display: block;
-  font-size: 0.68rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: none;
+}
+
+.bar-wallet .avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 0.7rem;
+}
+
+.icon-btn.copy-ok {
+  color: var(--ok);
 }
 
 .avatar {

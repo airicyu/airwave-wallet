@@ -20,7 +20,9 @@ import {
   CloseEmptySendingScreen,
 } from "./close-empty/CloseEmptyFeature";
 import { LegalDoc } from "./components/LegalDoc";
-import { IconBack, IconCopy, IconLock, IconMenu, IconRefresh } from "./components/StrokeIcon";
+import { CopyPkButton } from "./components/CopyPkButton";
+import { RefreshAssetsButton } from "./components/RefreshAssetsButton";
+import { IconBack, IconLock, IconMenu } from "./components/StrokeIcon";
 import { WalletWidget } from "./components/WalletWidget";
 import { getExposedPublicKey } from "../shared/accounts";
 import { sendExtensionRequest } from "../shared/ext-api";
@@ -158,31 +160,32 @@ export function PopupMarkup(): JSX.Element {
   return (
     <>
       <div id="shell" className="shell">
-        <header className="top-bar" id="top-bar">
+        <header className="top-bar" id="top-bar" hidden={currentView === "close-empty-sending"}>
           <div className="bar-home" id="bar-home" hidden={!home}>
             <div className="bar-wallet-group">
-              <button
-                type="button"
-                className="bar-wallet"
-                id="btn-widget-accounts"
-                title="Wallet accounts"
-                onClick={() => navigateTo("accounts")}
-              >
-                <WalletWidget wallet={wallet} />
-              </button>
-              <button
-                type="button"
-                className="icon-btn ghost-inline"
-                id="btn-widget-copy"
-                title="Copy public key"
-                aria-label="Copy public key"
-                onClick={() => {
-                  const active = wallet.accounts.find((a) => a.id === wallet.activeAccountId);
-                  if (active) void navigator.clipboard.writeText(getExposedPublicKey(active));
-                }}
-              >
-                <IconCopy />
-              </button>
+              <div className="bar-wallet">
+                <button
+                  type="button"
+                  className="bar-wallet-hit"
+                  id="btn-widget-accounts"
+                  title="Wallet accounts"
+                  onClick={() => navigateTo("accounts")}
+                >
+                  <WalletWidget wallet={wallet} />
+                </button>
+                <CopyPkButton
+                  id="btn-widget-copy"
+                  publicKey={(() => {
+                    const active = wallet.accounts.find((a) => a.id === wallet.activeAccountId);
+                    return active ? getExposedPublicKey(active) : "";
+                  })()}
+                />
+              </div>
+              {wallet.settings.cluster === "devnet" ? (
+                <span className="cluster-badge" aria-hidden="true">
+                  Devnet
+                </span>
+              ) : null}
             </div>
             <div className="bar-spacer" />
             <div className="bar-end">
@@ -274,16 +277,11 @@ export function PopupMarkup(): JSX.Element {
                     navigateTo("close-empty-pick");
                   }}
                 />
-                <button
-                  type="button"
-                  className="icon-btn ghost-inline"
-                  id="btn-refresh-assets"
-                  title="Refresh balances"
-                  aria-label="Refresh balances"
-                  onClick={() => setHomeAssetsForce(true)}
-                >
-                  <IconRefresh />
-                </button>
+                <RefreshAssetsButton
+                  activeAccountId={wallet.activeAccountId}
+                  currentView={currentView}
+                  onRefresh={() => setHomeAssetsForce(true)}
+                />
                 </div>
               </div>
               <HomeTokenList

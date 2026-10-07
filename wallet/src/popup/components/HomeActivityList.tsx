@@ -2,7 +2,7 @@ import type { JSX, MouseEvent } from "react";
 import { useEffect, useState } from "react";
 import {
   activityWhen,
-  isSolscanTxUrl,
+  isOrbTxUrl,
   kindLabel,
   type HomeActivityRow,
 } from "../../shared/home-activity";
@@ -17,9 +17,9 @@ type Props = {
   currentView: View;
 };
 
-function openSolscan(url: string, event: MouseEvent<HTMLAnchorElement>): void {
+function openOrb(url: string, event: MouseEvent<HTMLAnchorElement>): void {
   event.preventDefault();
-  if (!isSolscanTxUrl(url)) return;
+  if (!isOrbTxUrl(url)) return;
   void chrome.tabs.create({ url });
 }
 
@@ -86,12 +86,12 @@ export function HomeActivityList({ wallet, currentView }: Props): JSX.Element {
               </div>
               <a
                 className="activity-ext"
-                href={row.solscanUrl}
+                href={row.orbUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                title="在 Solscan 開啟"
-                aria-label="在 Solscan 開啟"
-                onClick={(event) => openSolscan(row.solscanUrl, event)}
+                title="在 Orb 開啟"
+                aria-label="在 Orb 開啟"
+                onClick={(event) => openOrb(row.orbUrl, event)}
               >
                 <IconExternal />
               </a>

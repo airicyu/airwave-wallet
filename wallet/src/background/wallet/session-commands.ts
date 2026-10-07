@@ -1,5 +1,6 @@
 import bs58 from "bs58";
 import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
+import { parseOptionalAccountLabel } from "../../shared/account-label";
 import { decryptVault, encryptVault } from "../../shared/crypto-vault";
 import {
   generateRandomLoadedAccount,
@@ -171,6 +172,15 @@ export async function handleCreateVault(req: ExtensionRequest): Promise<Extensio
     secretBase58?: string;
     empty?: boolean;
   };
+  const parsedLabel = parseOptionalAccountLabel(label);
+  if (!parsedLabel.ok) {
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: { code: "INVALID_LABEL", message: "名稱最多 15 字" },
+    });
+  }
   if (!password) {
     return respond({
       kind: "airwave-ext-res",
@@ -234,7 +244,7 @@ export async function handleCreateVault(req: ExtensionRequest): Promise<Extensio
   const { blob, key } = await encryptVault(password, secrets);
   const meta: AccountMeta = {
     id,
-    label: label ?? "Account 1",
+    label: parsedLabel.label ?? "Account 1",
     publicKeyBase58,
     kind: "signing",
   };

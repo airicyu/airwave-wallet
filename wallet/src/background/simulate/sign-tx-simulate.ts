@@ -1,6 +1,7 @@
-import { getCompiledTransactionMessageDecoder } from "@solana/kit";
+import { estimateResourceLimitsFactory, getCompiledTransactionMessageDecoder } from "@solana/kit";
 import {
   CU_LIMIT_MAX,
+  decompileTxMessageFromBytes,
   estimateCuLimitFromCompiledIxs,
   hasDuplicateCbDisc,
   isTransactionSigned,
@@ -12,6 +13,7 @@ import {
   writeCuToTransactionBytes,
   type WriteCuResult,
 } from "./compute-budget-tx";
+import { solanaRpcForUrl } from "../../shared/solana-rpc";
 import {
   runPhase2Simulation,
   SimDeadline,
@@ -106,10 +108,18 @@ async function simulatePhase1ForLimit(
 
   const deadline = new SimDeadline();
   try {
-    const probeTx = decodeWireTransaction(probeBytes);
-    const value = await simulateTransactionRpc(ctx.rpcUrl, probeTx, deadline);
-    if (!value.err && typeof value.unitsConsumed === "number") {
-      return suggestedLimitFromPhase1(value.unitsConsumed, originalLimit);
+    const decompiled = await decompileTxMessageFromBytes(probeBytes, ctx.rpcUrl);
+    const estimate = estimateResourceLimitsFactory({ rpc: solanaRpcForUrl(ctx.rpcUrl) });
+    const { computeUnitLimit } = await deadline.run(() =>
+      estimate(decompiled, { commitment: "confirmed" }),
+    );
+    if (
+      typeof computeUnitLimit === "number" &&
+      Number.isFinite(computeUnitLimit) &&
+      Number.isInteger(computeUnitLimit) &&
+      computeUnitLimit >= 0
+    ) {
+      return suggestedLimitFromPhase1(computeUnitLimit, originalLimit);
     }
   } catch {
     /* fall through */

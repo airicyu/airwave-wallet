@@ -8,10 +8,13 @@ import type { SimulatePendingTxResult } from "../shared/simulate-pending-tx-type
 import type { AccountMeta } from "../shared/storage-keys";
 import { SESSION_UNLOCKED } from "../shared/storage-keys";
 import { renderSimulationNotice } from "./cards";
+import { copyPublicKeyWithFeedback } from "../shared/copy-pk-feedback";
+import { SEND_STATUS_AURORA_SVG } from "../shared/send-status-mark";
 import {
-  avatarLetter,
+  avatarPrefix,
   bytesFromSignMessage,
   bytesFromSignTransaction,
+  displayAccountName,
   displayOrigin,
   formatSolFromLamports,
   hexCompact,
@@ -199,24 +202,6 @@ function setSendStatusChrome(on: boolean): void {
 const SEND_STATUS_CHECK_SVG =
   '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>';
 
-const SEND_STATUS_AURORA_SVG = `<svg class="send-aurora" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-  <circle class="send-aurora-purple" cx="12" cy="12" r="9.5" opacity="0.18" stroke-width="3" />
-  <circle class="send-aurora-purple" cx="12" cy="12" r="9.5" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 150">
-    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="4s" repeatCount="indefinite" />
-    <animate attributeName="stroke-dasharray" values="0 150;58 150;58 150" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
-    <animate attributeName="stroke-dashoffset" values="0;-16;-59" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
-  </circle>
-  <circle class="send-aurora-mid" cx="12" cy="12" r="9.5" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 150">
-    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="4s" repeatCount="indefinite" />
-    <animate attributeName="stroke-dasharray" values="0 150;48 150;48 150" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
-    <animate attributeName="stroke-dashoffset" values="0;-16;-59" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
-  </circle>
-  <circle class="send-aurora-green" cx="12" cy="12" r="9.5" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 150">
-    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="4s" repeatCount="indefinite" />
-    <animate attributeName="stroke-dasharray" values="0 150;32 150;32 150" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
-    <animate attributeName="stroke-dashoffset" values="0;-16;-59" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
-  </circle>
-</svg>`;
 
 function ensureSendStatusCard(): HTMLElement {
   let card = signBody.querySelector<HTMLElement>(".send-status-card");
@@ -334,6 +319,7 @@ function enterWalletSendConfirmedPage(signature?: string): void {
     exit?.();
   }, 1000);
 }
+
 
 async function copyText(text: string): Promise<void> {
   try {
@@ -967,9 +953,10 @@ async function renderSignShell(
   }
 
   frozenPk = exposedPk(meta);
-  signAvatar.textContent = avatarLetter(meta.label);
-  signLabel.textContent = meta.label;
-  signAddr.textContent = shortPk(frozenPk);
+  const name = displayAccountName(meta.label, frozenPk);
+  signAvatar.textContent = avatarPrefix(name);
+  signLabel.textContent = name;
+  signAddr.textContent = "";
 
   if (mode === "signMessage") {
     renderSignMessageBody(p, bytesFromSignMessage(p));
@@ -1166,7 +1153,7 @@ function wireShellEvents(): void {
   btnCopyPk.addEventListener(
     "click",
     () => {
-      if (frozenPk) void copyText(frozenPk);
+      if (frozenPk) void copyPublicKeyWithFeedback(btnCopyPk, frozenPk);
     },
     { signal },
   );

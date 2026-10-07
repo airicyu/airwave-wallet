@@ -9,7 +9,7 @@ export type HomeActivityRow = {
   lead: HomeActivityLead;
   detail: string;
   timestampSec: number | null;
-  solscanUrl: string;
+  orbUrl: string;
 };
 
 const SOL_MINT = "So11111111111111111111111111111111111111112";
@@ -25,14 +25,14 @@ export function homeActivityLimit(): number {
   return ACTIVITY_LIMIT;
 }
 
-export function solscanTxUrl(signature: string, cluster: "mainnet" | "devnet"): string {
+export function orbTxUrl(signature: string, cluster: "mainnet" | "devnet"): string {
   const sig = encodeURIComponent(signature);
-  if (cluster === "devnet") return `https://solscan.io/tx/${sig}?cluster=devnet`;
-  return `https://solscan.io/tx/${sig}`;
+  const q = cluster === "devnet" ? "devnet" : "mainnet-beta";
+  return `https://orb.helius.dev/tx/${sig}/history?cluster=${q}`;
 }
 
-export function isSolscanTxUrl(url: string): boolean {
-  return url.startsWith("https://solscan.io/tx/");
+export function isOrbTxUrl(url: string): boolean {
+  return url.startsWith("https://orb.helius.dev/tx/");
 }
 
 export function activityWhen(timestampSec: number | null, nowMs = Date.now()): string {
@@ -261,7 +261,7 @@ export function rowFromEnhanced(
     lead: failed ? "fail" : null,
     detail,
     timestampSec: typeof timestamp === "number" && Number.isFinite(timestamp) ? timestamp : null,
-    solscanUrl: solscanTxUrl(signature, cluster),
+    orbUrl: orbTxUrl(signature, cluster),
   };
 }
 
@@ -294,6 +294,6 @@ export function rowFromSignature(
     lead: failed ? "fail" : "ok",
     detail: shortAddr(signature),
     timestampSec: blockTime,
-    solscanUrl: solscanTxUrl(signature, cluster),
+    orbUrl: orbTxUrl(signature, cluster),
   };
 }

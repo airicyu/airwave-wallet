@@ -6,6 +6,7 @@ import {
   isSigningOrWatch,
   parsePublicKeyBase58,
 } from "../../shared/accounts";
+import { ACCOUNT_LABEL_MAX } from "../../shared/account-label";
 import { sendExtensionRequest } from "../../shared/ext-api";
 import type { CombinedAccountMeta } from "../../shared/storage-keys";
 import { accountKind, type AccountMeta } from "../../shared/storage-keys";
@@ -125,6 +126,7 @@ export function RenameScreen({ wallet }: { wallet: State }): JSX.Element {
         <input
           id="rename-label"
           type="text"
+          maxLength={ACCOUNT_LABEL_MAX}
           placeholder="新名稱"
           value={renameLabel}
           onChange={(e) => setRenameLabel(e.target.value)}
@@ -522,6 +524,7 @@ export function CombinedCreateScreen({ wallet }: { wallet: State }): JSX.Element
         <input
           id="combined-label"
           type="text"
+          maxLength={ACCOUNT_LABEL_MAX}
           placeholder="選填"
           autoComplete="off"
           value={label}

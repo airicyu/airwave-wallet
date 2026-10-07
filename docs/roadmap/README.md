@@ -33,6 +33,7 @@
 | [0.19.0](./0.19.0/INDEX.md) | shipped | 簽署明細靜態解讀；預期變動開 Explorer Inspector |
 | [0.20.0](./0.20.0/INDEX.md) | shipped | 全轉 `@solana/kit`；行為與 0.19.0 相同 |
 | [0.21.0](./0.21.0/INDEX.md) | shipped | 清理空 token account，收回 rent SOL |
+| [0.22.0](./0.22.0/INDEX.md) | planned | Home pill／Devnet 徽章／複製回饋／刷新冷卻／Activity Orb／收回租金確認中／Kit 估 CU |
 
 **版本號：** `x.y.z` 的 **patch**（例如 **0.3.1**）留給該 minor 的 **bugfix**，不排新功能。新功能走下一個 **minor**（0.3.0 → 0.4.0 → 0.5.0）。
 
