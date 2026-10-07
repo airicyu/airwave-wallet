@@ -17,6 +17,7 @@ import { rpcTransactionPlanExecutor } from "@solana/kit-plugin-rpc";
 import type { KeyPairSigner } from "@solana/signers";
 import { randomUUID } from "../../shared/uuid";
 import type { ClosableEntry, CloseEmptyCommitResult, CloseEmptyPlanResult } from "../../shared/close-empty-types";
+import { computeCloseEmptyUnitLimit } from "../../shared/close-empty-compute-units";
 import {
   lamportsDecimalString,
   priorityFeeLamportsFromCu,
@@ -48,12 +49,14 @@ import {
   packAndBuildCloseTxGroups,
 } from "./build-close-txs";
 import { closableCacheKey, getClosableCache, setClosableCache } from "./closable-cache";
+import { enrichClosableEntries } from "./closable-enrich";
 import {
   readTokenAccountClosableState,
   scanClosableForOwners,
   scanClosableFromCachedParsed,
 } from "./closable-scan";
 import { deleteClosePlan, getClosePlan, putClosePlan, type StoredClosePlan } from "./plan-store";
+import { waitForSignatureConfirmed } from "./wait-signature-confirmed";
 
 let lastListEntries: ClosableEntry[] = [];
 
@@ -80,22 +83,23 @@ export async function listClosableTokenAccounts(options?: {
 
   const settings = await readSettings();
   const cacheKey = closableCacheKey(active.id, settings.cluster, settings.rpcUrl);
-  if (options?.force !== true) {
-    const cached = getClosableCache(cacheKey);
-    if (cached) {
-      lastListEntries = cached.entries;
-      return {
-        ok: true,
-        entries: cached.entries,
-        partialScan: cached.partialScan ? true : undefined,
-      };
-    }
-  }
-
   const owners = getHomeTokenOwners(active);
   const home = await getHomeTokensForOwners(owners, settings, {
     withMembers: isCombinedAccount(active),
   });
+
+  if (options?.force !== true) {
+    const cached = getClosableCache(cacheKey);
+    if (cached) {
+      const entries = await enrichClosableEntries(cached.entries, home.rows, settings);
+      lastListEntries = entries;
+      return {
+        ok: true,
+        entries,
+        partialScan: cached.partialScan ? true : undefined,
+      };
+    }
+  }
   const tokenFp = homeTokensCacheFingerprint(owners, settings);
   const parsedByOwner = new Map<string, ParsedOwnerTokenAccount[]>();
   let cacheComplete = true;
@@ -123,6 +127,7 @@ export async function listClosableTokenAccounts(options?: {
     return { ok: false, code: "RPC_ERROR", message: "掃描失敗" };
   }
 
+  entries = await enrichClosableEntries(entries, home.rows, settings);
   lastListEntries = entries;
   setClosableCache(cacheKey, entries, ownerFailures > 0);
   return {
@@ -213,9 +218,10 @@ export async function planCloseEmpty(
         null,
         null,
       );
-      const { computeUnitLimit } = await estimateResourceLimits(estimateMsg, {
+      const { computeUnitLimit: simulatedUnits } = await estimateResourceLimits(estimateMsg, {
         commitment: "confirmed",
       });
+      const computeUnitLimit = computeCloseEmptyUnitLimit(simulatedUnits);
       builtTxs.push(
         buildUnsignedCloseTx(
           selected,
@@ -480,7 +486,8 @@ export async function commitCloseEmpty(planId: string): Promise<
           },
         );
       } catch {
-        throw new Error("send failed");
+        const onChain = await waitForSignatureConfirmed(settings.rpcUrl, signature, "confirmed");
+        if (!onChain) throw new Error("send failed");
       }
       return {
         signature,

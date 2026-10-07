@@ -6,6 +6,7 @@ import { getClosableOwnerTargets } from "../../shared/close-empty-owners";
 import { sendExtensionRequest } from "../../shared/ext-api";
 import { IconRecycle } from "../components/StrokeIcon";
 import type { ClosableEntry, CloseEmptyCommitResult, CloseEmptyPlanResult } from "../../shared/close-empty-types";
+import { iconLetterForSymbol } from "../../shared/home-tokens";
 import {
   countCloseEmptyTransactions,
   estimateCloseEmptyTxBytes,
@@ -100,6 +101,23 @@ export function CloseEmptyRecycleButton({
       <IconRecycle />
       {!dimmed ? <span className="close-empty-badge">{count}</span> : null}
     </button>
+  );
+}
+
+function CloseEmptyTokenIcon({ entry }: { entry: ClosableEntry }): JSX.Element {
+  const [failed, setFailed] = useState(false);
+  const letter = entry.iconLetter ?? iconLetterForSymbol(entry.symbol);
+  if (entry.iconUrl && !failed) {
+    return (
+      <div className="close-empty-token-icon" aria-hidden="true">
+        <img src={entry.iconUrl} alt="" onError={() => setFailed(true)} />
+      </div>
+    );
+  }
+  return (
+    <div className="close-empty-token-icon" aria-hidden="true">
+      {letter}
+    </div>
   );
 }
 
@@ -204,6 +222,7 @@ export function CloseEmptyPickScreen({
                         });
                       }}
                     />
+                    <CloseEmptyTokenIcon entry={e} />
                     <span className="close-empty-symbol">{e.symbol}</span>
                     <span className="close-empty-addr">{shortAddr(e.tokenAccount)}</span>
                     <span className="close-empty-rent">

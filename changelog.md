@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.21.1 — 2026-10-08
+
+Close-empty 修補：`planCloseEmpty` 對 Kit 估出的 CU 加 margin（×1.25、Compute Budget 兩條 ix headroom、最低 10k），避免 preflight `ComputationalBudgetExceeded`。`commitCloseEmpty` 在 WebSocket 確認失敗時以 HTTP 輪詢 `getSignatureStatuses`，避免鏈上已成功卻顯示「鏈上失敗」。回收勾選清單補 SYMBOL 與 icon（持倉 → mainnet Helius 零餘額 balances → Jupiter）。
+
 ## 0.21.0 — 2026-10-08
 
 Home Tokens 可掃描並關閉餘額為 0 的 token account，收回 rent 為 SOL。流程在 popup 內勾選→確認→一次送出；命令 `wallet.listClosableTokenAccounts`、`wallet.planCloseEmpty`、`wallet.commitCloseEmpty`；Kit 估 CU、plan executor 並發送出（`@solana/kit-plugin-rpc`）。無 popout、無新 pending kind、不改 `walletSend`。持倉 RPC 限流或 Kit 技術錯誤改底部 warn toast（約 4 秒、可點關），不再在列表下顯示 decode 長文；刷新時合併 token account 掃描、避免重複背景 refresh。

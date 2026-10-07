@@ -212,13 +212,14 @@ async function fetchWalletBalancesPage(
   owner: string,
   page: number,
   signal: AbortSignal,
+  options?: { showZeroBalance?: boolean },
 ): Promise<WalletBalancesPage> {
   const url = new URL(`${WALLET_API_ORIGIN}/v1/wallet/${owner}/balances`);
   url.searchParams.set("api-key", apiKey);
   url.searchParams.set("page", String(page));
   url.searchParams.set("limit", String(WALLET_BALANCES_LIMIT));
   url.searchParams.set("showNfts", "false");
-  url.searchParams.set("showZeroBalance", "false");
+  url.searchParams.set("showZeroBalance", options?.showZeroBalance === true ? "true" : "false");
   url.searchParams.set("showNative", "true");
 
   const res = await fetchWith429Retry(
@@ -717,6 +718,82 @@ export async function getHomeTokensForOwners(
   } finally {
     if (inFlight?.promise === promise) inFlight = null;
   }
+}
+
+export type MintDisplayMeta = {
+  symbol?: string;
+  iconUrl?: string;
+};
+
+const HELIUS_MINT_LOOKUP_MAX_PAGES = 20;
+
+/** 從 Helius Wallet API（含零餘額）解析 mint 的 symbol／icon。 */
+export async function lookupHeliusWalletMintMetadata(
+  apiKey: string,
+  owner: string,
+  mints: ReadonlySet<string>,
+): Promise<Map<string, MintDisplayMeta>> {
+  const remaining = new Set(mints);
+  const out = new Map<string, MintDisplayMeta>();
+  if (remaining.size === 0) return out;
+
+  const signal = new AbortController().signal;
+  let page = 1;
+  while (remaining.size > 0 && page <= HELIUS_MINT_LOOKUP_MAX_PAGES) {
+    const { balances, hasMore } = await fetchWalletBalancesPage(apiKey, owner, page, signal, {
+      showZeroBalance: true,
+    });
+    for (const item of balances) {
+      if (!remaining.has(item.mint)) continue;
+      const symbol = item.symbol?.trim();
+      const iconUrl = httpsIconUrl(item.logoUri);
+      if (!symbol && !iconUrl) continue;
+      out.set(item.mint, {
+        symbol: symbol || undefined,
+        iconUrl,
+      });
+      remaining.delete(item.mint);
+    }
+    if (!hasMore) break;
+    page += 1;
+    await sleep(PAGE_DELAY_MS, signal);
+  }
+  return out;
+}
+
+/** mainnet：Jupiter tokens v2 search 批次查 symbol／icon。 */
+export async function lookupJupiterMintMetadata(
+  mints: string[],
+  jupiterApiKey: string,
+): Promise<Map<string, MintDisplayMeta>> {
+  const out = new Map<string, MintDisplayMeta>();
+  if (mints.length === 0) return out;
+
+  const signal = new AbortController().signal;
+  const key = jupiterApiKey.trim();
+  const batchDelay = key ? JUPITER_DELAY_WITH_KEY_MS : JUPITER_DELAY_NO_KEY_MS;
+  const headers: Record<string, string> = {};
+  if (key) headers["x-api-key"] = key;
+
+  for (let i = 0; i < mints.length; i += JUPITER_BATCH_SIZE) {
+    if (i > 0) await sleep(batchDelay, signal);
+    const batch = mints.slice(i, i + JUPITER_BATCH_SIZE);
+    const url = `${JUPITER_BASE}/tokens/v2/search?query=${encodeURIComponent(batch.join(","))}`;
+    try {
+      const res = await fetchWith429Retry(url, { method: "GET", headers }, signal);
+      if (!res.ok) break;
+      const json = (await res.json()) as unknown;
+      for (const [mint, hit] of parseJupiterSearchArray(json)) {
+        const symbol = hit.symbol?.trim();
+        const iconUrl = hit.icon;
+        if (!symbol && !iconUrl) continue;
+        out.set(mint, { symbol: symbol || undefined, iconUrl });
+      }
+    } catch {
+      break;
+    }
+  }
+  return out;
 }
 
 /** @deprecated 單 owner 路徑；popup 應走 getHomeTokensForOwners */

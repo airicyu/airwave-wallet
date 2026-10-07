@@ -7,6 +7,8 @@ export type ClosableEntry = {
   ownerLabel: string;
   mint: string;
   symbol: string;
+  iconUrl?: string;
+  iconLetter?: string;
   tokenProgram: TokenProgramKind;
   rentLamports: string;
 };
