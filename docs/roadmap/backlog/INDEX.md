@@ -15,6 +15,6 @@
 | [清理空 token account](./close-empty-token-accounts.md) | 主畫面看某一戶時，組交易關掉數量為 0 的 token account，收回 rent SOL |
 | [聚合錢包帳戶送出代幣](./send-token-combined.md) | 從目前可簽成員送；可動用≠加總；不含歸集。單一可簽送出已於 [0.12.0](../0.12.0/INDEX.md) 出貨 |
 | [錢包地址簿](./address-book.md) | 名稱＋地址白名單；送出可選，仍可手貼 |
-| [簽署交易指令解析](./sign-transaction-ix-decode.md) | 明細：common parser → Anchor IDL → hex；現況僅 hex |
+| [簽署交易 Anchor IDL 解析](./sign-transaction-ix-decode.md) | 靜態 common parser 已於 [0.19.0](../0.19.0/INDEX.md) 出貨；鏈上／metadata IDL 層仍未排程 |
 | [地址複製回饋](./address-copy-feedback.md) | 頂欄地址複製圖示成功寫入剪貼簿後，按鈕短暫顯示已複製 |
 | [持倉刷新按鈕硬冷卻](./token-balance-refresh-cooldown.md) | Tokens 刷新鈕按完後 disabled 3 秒，避免同一錢包連按打太多 RPC；切頁或切帳戶可清掉 |

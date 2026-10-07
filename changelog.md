@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.19.0 — 2026-10-07
+
+簽署交易審批：常見 program 靜態解讀指令名與欄位（System Transfer、Compute Budget limit／price、Token／Token-2022 Transfer 與 TransferChecked、ATA Create、Memo UTF-8）；其餘仍帳戶縮寫＋ hex。預期變動列新增 Solana Explorer Transaction Inspector 外連（message base64、`cluster` 依設定）；34px 有底重試與 Explorer 鈕。解讀與 URL 僅在 service worker、不進 `chrome.storage`；未加套件。
+
 ## 0.18.0 — 2026-10-07
 
 Home Activity：列出目前帳戶對外地址在目前 cluster 上最近最多 20 筆交易。mainnet 且有可解析 Helius key 時用已解析歷史（送出／收到／互換／交易）；否則 `getSignaturesForAddress` 粗列。每一列一筆交易；列尾圖示以新分頁開啟 Solscan（devnet 帶 `cluster=devnet`）。查詢在 service worker；歷史不進 `chrome.storage`。

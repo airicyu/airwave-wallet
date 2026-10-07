@@ -24,6 +24,7 @@ import {
   tryCommitWorkingTx,
 } from "../pending";
 import type { SimulatePendingTxResult } from "../../shared/simulate-pending-tx-types";
+import type { Cluster } from "../../shared/storage-keys";
 
 const CU_WRITE_FAIL_MSG = "無法寫入計算預算";
 
@@ -110,6 +111,7 @@ async function runPhase2WithFees(
   ctx: Phase2SimContext,
   txBytes: Uint8Array,
   signer: PublicKey,
+  cluster: Cluster,
   cuLimit: number | null,
   cuPrice: number | null,
   cuEditable: boolean,
@@ -131,7 +133,7 @@ async function runPhase2WithFees(
       cuWriteError,
     };
   }
-  const base = await runPhase2Simulation(ctx, txBytes, signer);
+  const base = await runPhase2Simulation(ctx, txBytes, signer, cluster);
   return attachFees(base, tx, cuLimit, cuPrice, cuEditable, cuWriteError);
 }
 
@@ -140,6 +142,7 @@ export async function simulateSignTransaction(
   requestId: string,
   originalBytes: Uint8Array,
   signerPubkey: PublicKey,
+  cluster: Cluster,
   defaultCuPrice: number,
   payload: SimulateSignTxPayload,
 ): Promise<SimulateSignTxOutcome> {
@@ -170,6 +173,7 @@ export async function simulateSignTransaction(
       ctx,
       originalBytes,
       signerPubkey,
+      cluster,
       parsedOriginal.limit,
       parsedOriginal.price,
       false,
@@ -194,6 +198,7 @@ export async function simulateSignTransaction(
         ctx,
         originalBytes,
         signerPubkey,
+        cluster,
         null,
         null,
         true,
@@ -211,6 +216,7 @@ export async function simulateSignTransaction(
       ctx,
       simBytes,
       signerPubkey,
+      cluster,
       limit,
       price,
       true,
@@ -225,7 +231,15 @@ export async function simulateSignTransaction(
     try {
       wtx = VersionedTransaction.deserialize(working);
     } catch {
-      const result = await runPhase2WithFees(ctx, originalBytes, signerPubkey, null, null, true);
+      const result = await runPhase2WithFees(
+        ctx,
+        originalBytes,
+        signerPubkey,
+        cluster,
+        null,
+        null,
+        true,
+      );
       return { ok: true, result, seq };
     }
     const parsed = parseCuFromMessage(wtx.message);
@@ -233,6 +247,7 @@ export async function simulateSignTransaction(
       ctx,
       working,
       signerPubkey,
+      cluster,
       parsed.limit,
       parsed.price,
       true,
@@ -249,6 +264,7 @@ export async function simulateSignTransaction(
       ctx,
       originalBytes,
       signerPubkey,
+      cluster,
       null,
       null,
       true,
@@ -272,6 +288,7 @@ export async function simulateSignTransaction(
     ctx,
     simBytes,
     signerPubkey,
+    cluster,
     suggestedLimit,
     price,
     true,

@@ -503,24 +503,52 @@ function renderSignMessageBody(p: PendingRecord, bytes: Uint8Array): void {
   }
 }
 
+const EXPLORER_INSPECTOR_PREFIX = "https://explorer.solana.com/tx/inspector";
+
+const EXPLORER_ICON_SVG =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+
+const RETRY_ICON_SVG =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>';
+
+function validInspectorUrl(url: string | null | undefined): string | null {
+  if (!url || !url.startsWith(EXPLORER_INSPECTOR_PREFIX)) return null;
+  return url;
+}
+
 function renderDeltaCard(sim: SimulatePendingTxResult | null, loading: boolean): HTMLElement {
   const card = document.createElement("div");
   card.className = "card";
   const head = document.createElement("div");
-  head.className = "delta-card-head";
-  const label = document.createElement("span");
-  label.className = "card-label";
+  head.className = "sim-head";
+  const label = document.createElement("h3");
   label.textContent = "預期變動";
+  const tools = document.createElement("div");
+  tools.className = "sim-tools";
   const retry = document.createElement("button");
   retry.type = "button";
   retry.className = "icon-btn";
   retry.title = "重新查詢";
   retry.setAttribute("aria-label", "重新查詢");
-  retry.innerHTML =
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>';
+  retry.innerHTML = RETRY_ICON_SVG;
   retry.disabled = simulating || cuDirty || (txCuEditable && !hasCuPair());
   retry.addEventListener("click", () => void runSimulation());
-  head.append(label, retry);
+  tools.append(retry);
+  const inspectorUrl = validInspectorUrl(sim?.inspectorUrl);
+  if (inspectorUrl) {
+    const explorer = document.createElement("a");
+    explorer.className = "icon-btn explorer";
+    explorer.href = inspectorUrl;
+    explorer.title = "在 Explorer 模擬";
+    explorer.setAttribute("aria-label", "在 Explorer 模擬");
+    explorer.innerHTML = EXPLORER_ICON_SVG;
+    explorer.addEventListener("click", (e) => {
+      e.preventDefault();
+      void chrome.tabs.create({ url: inspectorUrl });
+    });
+    tools.append(explorer);
+  }
+  head.append(label, tools);
   card.append(head);
 
   if (loading) {
@@ -748,38 +776,51 @@ function renderTxDetails(sim: SimulatePendingTxResult | null): HTMLElement {
     instructions.forEach((ix, i) => {
       const row = document.createElement("div");
       row.className = "ix-row";
-      const line = document.createElement("div");
-      line.textContent = `${i + 1}. ${ix.program}`;
-      row.append(line);
-      if (ix.desc) {
-        const desc = document.createElement("div");
-        desc.className = "ix-desc";
-        desc.textContent = ix.desc;
-        row.append(desc);
-      }
-      if (ix.unresolved) {
-        const u = document.createElement("div");
-        u.className = "ix-desc";
-        u.textContent = "帳戶未解析";
-        row.append(u);
-      }
-      const accts = ix.accounts ?? [];
-      if (accts.length) {
-        const ul = document.createElement("ul");
-        ul.className = "ix-accounts";
-        for (const a of accts) {
-          const li = document.createElement("li");
-          li.textContent = a.short;
-          if (a.unresolved) li.classList.add("unresolved");
-          ul.append(li);
+      const prog = document.createElement("div");
+      prog.className = "ix-prog";
+      prog.textContent = `${i + 1}. ${ix.program}`;
+      row.append(prog);
+      if (ix.decoded === true) {
+        if (ix.name) {
+          const nameEl = document.createElement("div");
+          nameEl.className = "ix-name";
+          nameEl.textContent = ix.name;
+          row.append(nameEl);
         }
-        row.append(ul);
+        const fields = ix.fields ?? [];
+        if (fields.length) {
+          const kv = document.createElement("div");
+          kv.className = "ix-kv";
+          for (const f of fields) {
+            const k = document.createElement("span");
+            k.className = "ix-k";
+            k.textContent = f.label;
+            const v = document.createElement("span");
+            v.className = "ix-v";
+            v.textContent = f.value;
+            kv.append(k, v);
+          }
+          row.append(kv);
+        }
+      } else {
+        const accts = ix.accounts ?? [];
+        if (accts.length) {
+          const ul = document.createElement("ul");
+          ul.className = "ix-accounts";
+          for (const a of accts) {
+            const li = document.createElement("li");
+            li.textContent = a.short;
+            if (a.unresolved) li.classList.add("unresolved");
+            ul.append(li);
+          }
+          row.append(ul);
+        }
+        const dataEl = document.createElement("p");
+        dataEl.className = "ix-data";
+        dataEl.textContent =
+          ix.dataHex != null && ix.dataHex.length > 0 ? ix.dataHex : "（空）";
+        row.append(dataEl);
       }
-      const dataEl = document.createElement("p");
-      dataEl.className = "ix-data";
-      dataEl.textContent =
-        ix.dataHex != null && ix.dataHex.length > 0 ? ix.dataHex : "（空）";
-      row.append(dataEl);
       inner.append(row);
     });
   }

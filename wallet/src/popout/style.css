@@ -498,16 +498,59 @@ textarea:focus-visible {
   color: var(--text-muted);
 }
 
-.delta-card-head {
+.sim-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
-  margin-bottom: 10px;
+  margin: 0 0 10px;
 }
 
-.delta-card-head .card-label {
+.sim-head h3 {
   margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.72rem;
+  color: var(--text);
+  font-weight: 650;
+}
+
+.sim-tools {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.sim-tools .icon-btn {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--stroke);
+  background: var(--fill);
+  color: var(--text);
+}
+
+.sim-tools .icon-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.2;
+}
+
+.sim-tools .icon-btn:hover {
+  border-color: var(--text-dim);
+  background: #243040;
+  color: #fff;
+}
+
+.sim-tools .icon-btn.explorer {
+  border-color: var(--accent);
+  background: #1a2838;
+  color: #7ec4f8;
+  box-shadow: 0 0 0 1px rgba(61, 156, 240, 0.28);
+}
+
+.sim-tools .icon-btn.explorer:hover {
+  background: #203448;
+  color: #b6defc;
+  box-shadow: 0 0 0 1px rgba(61, 156, 240, 0.5);
 }
 
 .fee-card {
@@ -707,9 +750,44 @@ textarea:focus-visible {
   border-bottom: none;
 }
 
-.ix-desc {
+.ix-prog {
+  font-size: 0.62rem;
   color: var(--text-dim);
-  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ix-name {
+  margin: 2px 0 6px;
+  font-size: 0.78rem;
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ix-kv {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 2px 8px;
+  align-items: baseline;
+}
+
+.ix-k {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.ix-v {
+  min-width: 0;
+  font-size: 0.7rem;
+  font-family: var(--mono);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ix-accounts {

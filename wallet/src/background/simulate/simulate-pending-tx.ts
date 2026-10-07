@@ -10,11 +10,10 @@ import type {
   SimulateTxDelta,
   SimulateTxInstruction,
 } from "../../shared/simulate-pending-tx-types";
+import { decodeCompiledIx } from "./decode-compiled-ix";
+import type { Cluster } from "../../shared/storage-keys";
 
 const SIM_TIMEOUT_MS = 15_000;
-
-const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
-const TOKEN_2022_PROGRAM_ID = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
 
 const PROGRAM_NAMES: Record<string, string> = {
   "11111111111111111111111111111111": "System Program",
@@ -141,25 +140,10 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
-function instructionDesc(programId: PublicKey, data: Uint8Array): string | undefined {
-  const pid = programId.toBase58();
-  if (pid === "11111111111111111111111111111111" && data.length >= 1 && data[0] === 2) {
-    return "轉移 SOL";
-  }
-  if (pid === "ComputeBudget111111111111111111111111111111" && data.length >= 1) {
-    if (data[0] === 2) return "設定計算單位上限";
-    if (data[0] === 3) return "設定優先費單價";
-  }
-  if (pid === "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" && data.length >= 1) {
-    if (data[0] === 0 || data[0] === 1) return "建立關聯代幣帳戶";
-  }
-  if (
-    (programId.equals(TOKEN_PROGRAM_ID) || programId.equals(TOKEN_2022_PROGRAM_ID)) &&
-    data.length >= 1
-  ) {
-    if (data[0] === 3 || data[0] === 12) return "轉移代幣";
-  }
-  return undefined;
+export function buildInspectorUrl(message: VersionedMessage, cluster: Cluster): string {
+  const clusterParam = cluster === "devnet" ? "devnet" : "mainnet-beta";
+  const b64 = bytesToBase64(message.serialize());
+  return `https://explorer.solana.com/tx/inspector?cluster=${clusterParam}&message=${encodeURIComponent(b64)}`;
 }
 
 function buildInstructions(
@@ -178,11 +162,19 @@ function buildInstructions(
       });
       continue;
     }
-    const desc = instructionDesc(programId, ix.data);
+    const decoded = decodeCompiledIx(programId, ix.data, accountKeys, ix.accountKeyIndexes);
+    if (decoded.decoded) {
+      out.push({
+        program: programLabel(programId),
+        name: decoded.name,
+        decoded: true,
+        fields: decoded.fields,
+      });
+      continue;
+    }
     const unresolved = ix.accountKeyIndexes.some((i) => accountKeys[i] === undefined);
     out.push({
       program: programLabel(programId),
-      desc,
       unresolved: unresolved || undefined,
       accounts: ixAccounts(accountKeys, ix.accountKeyIndexes),
       dataHex: bytesToHex(ix.data),
@@ -377,10 +369,20 @@ export type Phase2SimContext = {
   connection: Connection;
 };
 
+function withInspector(
+  result: SimulatePendingTxResult,
+  message: VersionedMessage | null,
+  cluster: Cluster,
+): SimulatePendingTxResult {
+  if (!message) return result;
+  return { ...result, inspectorUrl: buildInspectorUrl(message, cluster) };
+}
+
 export async function runPhase2Simulation(
   ctx: Phase2SimContext,
   txBytes: Uint8Array,
   signerPubkey: PublicKey,
+  cluster: Cluster,
 ): Promise<SimulatePendingTxResult> {
   let tx: VersionedTransaction;
   try {
@@ -409,7 +411,11 @@ export async function runPhase2Simulation(
     if (keysResult !== "rpc" && keysResult !== "timeout") {
       instructions = buildInstructions(message, keysResult);
     }
-    return { outcome: "rpc", reason, instructions, feePayerShort };
+    return withInspector(
+      { outcome: "rpc", reason, instructions, feePayerShort },
+      message,
+      cluster,
+    );
   }
 
   const logs = tailLogs(value.logs ?? undefined);
@@ -420,14 +426,22 @@ export async function runPhase2Simulation(
   if (needLu > 0 && haveLu < needLu) {
     const keysResult = await resolveAccountKeysFromTables(connection, message, deadline);
     if (keysResult === "timeout") {
-      return { outcome: "rpc", reason: "逾時", feePayerShort };
+      return withInspector(
+        { outcome: "rpc", reason: "逾時", feePayerShort },
+        message,
+        cluster,
+      );
     }
     if (keysResult === "rpc") {
-      return {
-        outcome: "rpc",
-        reason: "無法載入 address lookup table",
-        feePayerShort,
-      };
+      return withInspector(
+        {
+          outcome: "rpc",
+          reason: "無法載入 address lookup table",
+          feePayerShort,
+        },
+        message,
+        cluster,
+      );
     }
     accountKeys = keysResult;
   }
@@ -438,30 +452,42 @@ export async function runPhase2Simulation(
   const deltas = deltasOr === "incomplete" ? undefined : deltasOr;
 
   if (deltasOr === "incomplete" && !value.err) {
-    return {
-      outcome: "rpc",
-      reason: "模擬結果缺少餘額欄位",
-      instructions,
-      feePayerShort,
-    };
+    return withInspector(
+      {
+        outcome: "rpc",
+        reason: "模擬結果缺少餘額欄位",
+        instructions,
+        feePayerShort,
+      },
+      message,
+      cluster,
+    );
   }
 
   if (value.err) {
-    return {
-      outcome: "fail",
-      err: value.err,
-      logs,
-      reason: reasonFromFail(logs, value.err),
-      deltas,
-      instructions,
-      feePayerShort,
-    };
+    return withInspector(
+      {
+        outcome: "fail",
+        err: value.err,
+        logs,
+        reason: reasonFromFail(logs, value.err),
+        deltas,
+        instructions,
+        feePayerShort,
+      },
+      message,
+      cluster,
+    );
   }
 
-  return {
-    outcome: "ok",
-    deltas: deltas ?? [],
-    instructions,
-    feePayerShort,
-  };
+  return withInspector(
+    {
+      outcome: "ok",
+      deltas: deltas ?? [],
+      instructions,
+      feePayerShort,
+    },
+    message,
+    cluster,
+  );
 }

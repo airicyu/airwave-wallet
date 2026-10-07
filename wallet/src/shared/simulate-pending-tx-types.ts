@@ -9,8 +9,16 @@ export type SimulateTxIxAccount = {
   unresolved?: boolean;
 };
 
+export type SimulateTxIxField = {
+  label: string;
+  value: string;
+};
+
 export type SimulateTxInstruction = {
   program: string;
+  name?: string;
+  decoded?: true;
+  fields?: SimulateTxIxField[];
   desc?: string;
   unresolved?: boolean;
   accounts?: SimulateTxIxAccount[];
@@ -26,6 +34,7 @@ export type SimulatePendingTxResult = {
   deltas?: SimulateTxDelta[];
   feePayerShort?: string;
   instructions?: SimulateTxInstruction[];
+  inspectorUrl?: string | null;
   sigFeeLamports?: number | null;
   priorityLamports?: number | null;
   totalFeeLamports?: number | null;

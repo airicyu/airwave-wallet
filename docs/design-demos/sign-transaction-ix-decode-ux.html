@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 簽署交易指令解讀（概念稿）</title>
+    <!--
+      0.19.0 畫面意向：交易明細用靜態 parser 解常見 program；不解欄位時才退回 hex。
+      預期變動列尾圖示開 Solana Explorer Transaction Inspector（帶 message query）。
+      非正式契約；衝突以日後 INDEX 為準。
+    -->
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --accent-dim: #2a6ea8;
+        --danger: #c75050;
+        --ok: #4ecb8d;
+        --popup-w: 384px;
+        --popup-h: 600px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1320px; margin: 0 auto; padding: 28px 20px 64px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede {
+        color: var(--text-muted);
+        margin: 0 0 8px;
+        max-width: 54rem;
+        font-size: 0.92rem;
+      }
+      .note {
+        color: var(--text-dim);
+        font-size: 0.82rem;
+        margin: 0 0 24px;
+        max-width: 54rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(var(--popup-w), 1fr));
+        gap: 28px;
+        align-items: start;
+      }
+      .cap {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        margin-bottom: 8px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .cap strong { color: var(--text-muted); font-weight: 600; text-transform: none; letter-spacing: 0; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+      .bar-wallet {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        flex: 1;
+        padding: 5px 12px 5px 5px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+      }
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+      }
+      .bar-wallet-text { min-width: 0; flex: 1; }
+      .bar-wallet-name {
+        display: block;
+        font-size: 0.76rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .bar-wallet-addr {
+        display: block;
+        font-size: 0.62rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        font-family: var(--mono);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .icon-btn {
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        text-decoration: none;
+      }
+      .icon-btn svg {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .icon-btn:hover { background: var(--fill); border-color: var(--stroke); color: var(--text); }
+      .icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+      .body { flex: 1; min-height: 0; overflow: auto; padding: 10px 10px 12px; }
+      .body::-webkit-scrollbar { width: 6px; }
+      .body::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 4px; }
+      .dock {
+        flex-shrink: 0;
+        padding: 10px 12px 12px;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        display: flex;
+        gap: 8px;
+      }
+      .ghost {
+        flex: 0 0 38%;
+        border: 1px solid var(--stroke);
+        background: transparent;
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+      }
+      .primary {
+        flex: 1;
+        border: 0;
+        background: var(--accent);
+        color: #061018;
+        font-weight: 700;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+      }
+      .primary.disabled { opacity: 0.4; }
+      .page-title {
+        margin: 0 0 8px;
+        text-align: center;
+        font-size: 0.9rem;
+        font-weight: 650;
+      }
+      .site-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        margin: 0 0 8px;
+      }
+      .site-k { flex-shrink: 0; font-size: 0.64rem; color: var(--text-dim); }
+      .site-code {
+        min-width: 0;
+        padding: 1px 6px;
+        border-radius: 4px;
+        border: 1px solid var(--stroke-soft);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text-muted);
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .sim-stage {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        padding: 10px 12px;
+        margin-bottom: 8px;
+      }
+      .sim-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 6px;
+      }
+      .sim-head h3 {
+        margin: 0;
+        flex: 1;
+        min-width: 0;
+        font-size: 0.72rem;
+        color: var(--text);
+        font-weight: 650;
+      }
+      .sim-tools {
+        display: inline-flex;
+        flex-shrink: 0;
+        gap: 6px;
+      }
+      .sim-tools .icon-btn {
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--stroke);
+        background: var(--fill);
+        color: var(--text);
+      }
+      .sim-tools .icon-btn svg {
+        width: 18px;
+        height: 18px;
+        stroke-width: 2.2;
+      }
+      .sim-tools .icon-btn:hover {
+        border-color: var(--text-dim);
+        background: #243040;
+        color: #fff;
+      }
+      .sim-tools .icon-btn.explorer {
+        border-color: var(--accent);
+        background: #1a2838;
+        color: #7ec4f8;
+        box-shadow: 0 0 0 1px rgba(61, 156, 240, 0.28);
+      }
+      .sim-tools .icon-btn.explorer:hover {
+        background: #203448;
+        color: #b6defc;
+        box-shadow: 0 0 0 1px rgba(61, 156, 240, 0.5);
+      }
+      .bal { list-style: none; margin: 0; padding: 0; }
+      .bal li {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        padding: 6px 0;
+        border-top: 1px solid var(--stroke-soft);
+      }
+      .bal li:first-child { border-top: 0; padding-top: 2px; }
+      .bal .tok { font-size: 0.78rem; font-weight: 600; }
+      .bal .amt { font-size: 0.88rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+      .bal .plus { color: var(--ok); }
+      .bal .minus { color: #e8a0a0; }
+      .sim-empty { margin: 4px 0 2px; color: var(--text-muted); font-size: 0.78rem; }
+      .warn-card {
+        border: 1px solid #4a2a2a;
+        background: #1a1416;
+        border-radius: var(--radius);
+        padding: 12px 14px;
+        margin-bottom: 10px;
+      }
+      .warn-card .warn-title {
+        margin: 0;
+        font-size: 0.78rem;
+        font-weight: 650;
+        color: #e8a0a0;
+      }
+      .warn-card .warn-reason {
+        margin: 4px 0 0;
+        font-size: 0.72rem;
+        color: #c9a0a0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .fee-card {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        padding: 10px 12px 8px;
+        margin-bottom: 8px;
+      }
+      .fee-card h3 {
+        margin: 0 0 4px;
+        font-size: 0.64rem;
+        color: var(--text-dim);
+        font-weight: 600;
+      }
+      .fee-total {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .fee-total .n { font-size: 1.05rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+      .fee-total .u { font-size: 0.68rem; color: var(--text-muted); }
+      .fee-hint {
+        margin: 0;
+        font-size: 0.62rem;
+        color: var(--text-dim);
+        text-align: right;
+      }
+      details.tx-detail {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+      details.tx-detail > summary {
+        cursor: pointer;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 34px;
+        padding: 6px 10px;
+        font-size: 0.74rem;
+        font-weight: 600;
+      }
+      details.tx-detail > summary::-webkit-details-marker { display: none; }
+      details.tx-detail > summary:hover { background: var(--fill); }
+      details.tx-detail[open] > summary { border-bottom: 1px solid var(--stroke-soft); }
+      .chev {
+        flex-shrink: 0;
+        width: 16px;
+        height: 16px;
+        color: var(--text-muted);
+        transition: transform 0.12s ease;
+      }
+      .chev svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+      details.tx-detail[open] > summary .chev { transform: rotate(90deg); color: var(--text); }
+      .hint {
+        margin-left: auto;
+        font-size: 0.62rem;
+        font-weight: 500;
+        color: var(--text-dim);
+      }
+      details.tx-detail[open] > summary .hint { display: none; }
+      .tx-detail-body { padding: 4px 0 8px; }
+      .ix {
+        padding: 8px 12px 10px;
+        border-top: 1px solid var(--stroke-soft);
+      }
+      .ix:first-child { border-top: 0; }
+      .ix-prog {
+        font-size: 0.62rem;
+        color: var(--text-dim);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .ix-name {
+        margin: 1px 0 6px;
+        font-size: 0.78rem;
+        font-weight: 650;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .kv {
+        display: grid;
+        grid-template-columns: 72px 1fr;
+        gap: 2px 8px;
+        align-items: baseline;
+      }
+      .kv .k {
+        font-size: 0.62rem;
+        color: var(--text-dim);
+        white-space: nowrap;
+      }
+      .kv .v {
+        min-width: 0;
+        font-size: 0.7rem;
+        font-family: var(--mono);
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .kv .v.plain { font-family: inherit; color: var(--text); }
+      .ix-data {
+        margin: 6px 0 0;
+        font-family: var(--mono);
+        font-size: 0.62rem;
+        line-height: 1.4;
+        color: var(--text-dim);
+        word-break: break-all;
+      }
+      .payer {
+        margin: 8px 12px 0;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+      }
+      .review {
+        margin: 32px 0 0;
+        padding: 0;
+        max-width: 54rem;
+        color: var(--text-muted);
+        font-size: 0.88rem;
+      }
+      .review li { margin: 6px 0; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>簽署交易 · 指令解讀</h1>
+      <p class="lede">
+        概念稿。主舞台仍是預期變動。展開交易明細才看靜態解讀（System、Compute Budget、Token、Token-2022、ATA、Memo）。解不開的那一條退回 hex。
+        預期變動列尾圖示開 Solana Explorer Inspector，把目前交易 message 放進 URL。
+      </p>
+      <p class="note">
+        示範站 <code>https://swap.example.test</code>。第一個畫面的 Inspector 連結是真的，可點開。
+      </p>
+
+      <div class="grid">
+        <!-- 1 解讀展開 -->
+        <div>
+          <div class="cap">未簽 · <strong>明細展開 · 已解讀</strong></div>
+          <div class="phone">
+            <div class="top">
+              <div class="bar-wallet">
+                <span class="avatar" aria-hidden="true">主</span>
+                <span class="bar-wallet-text">
+                  <span class="bar-wallet-name">主要</span>
+                  <span class="bar-wallet-addr">4aF1…pda4</span>
+                </span>
+              </div>
+              <button class="icon-btn" type="button" title="複製" aria-label="複製">
+                <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+            </div>
+            <div class="body">
+              <p class="page-title">簽署交易</p>
+              <div class="site-line">
+                <span class="site-k">站點</span>
+                <span class="site-code">https://swap.example.test</span>
+              </div>
+              <div class="sim-stage">
+                <div class="sim-head">
+                  <h3>預期變動</h3>
+                  <div class="sim-tools">
+                    <button class="icon-btn" type="button" title="重試模擬" aria-label="重試模擬">
+                      <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+                    </button>
+                    <a
+                      class="icon-btn explorer"
+                      href="https://explorer.solana.com/tx/inspector?cluster=devnet&amp;message=gAIAAQQdf%2BNF4vaC7NoLOfzcE%2FqE5VaEtHGRPaRHkQIpHbFzJBiGoZBmybh97HYucJ3h5FxehAi%2BzKz9%2BN2LjsQggSAN3t52AycOon%2BY8xHl8rpwvxTrDs5dy3xRkY%2F97p1yuMIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGQJEKSTjgRBFfbR%2FWefwt9Cy6op9qTr%2BVIZmphqOakVAQMCAQIMAgAAAADKmjsAAAAAAA%3D%3D"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="在 Explorer 模擬"
+                      aria-label="在 Explorer 模擬"
+                    >
+                      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </a>
+                  </div>
+                </div>
+                <ul class="bal">
+                  <li><span class="tok">SOL</span><span class="amt minus">−1.000005</span></li>
+                </ul>
+              </div>
+              <div class="fee-card">
+                <h3>交易費</h3>
+                <div class="fee-total"><span class="n">0.000015</span><span class="u">SOL</span></div>
+                <p class="fee-hint">簽名費 · CU</p>
+              </div>
+              <details class="tx-detail" open>
+                <summary>
+                  <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span>交易明細</span>
+                  <span class="hint">3 條已解讀</span>
+                </summary>
+                <div class="tx-detail-body">
+                  <div class="ix">
+                    <div class="ix-prog">Compute Budget</div>
+                    <div class="ix-name">設定計算單位上限</div>
+                    <div class="kv">
+                      <span class="k">單位</span><span class="v plain">400000</span>
+                    </div>
+                  </div>
+                  <div class="ix">
+                    <div class="ix-prog">Compute Budget</div>
+                    <div class="ix-name">設定優先費單價</div>
+                    <div class="kv">
+                      <span class="k">單價</span><span class="v plain">25000</span>
+                    </div>
+                  </div>
+                  <div class="ix">
+                    <div class="ix-prog">System Program</div>
+                    <div class="ix-name">轉移 SOL</div>
+                    <div class="kv">
+                      <span class="k">來源</span><span class="v">4aF1…pda4</span>
+                      <span class="k">收款</span><span class="v">FzzF…vgR</span>
+                      <span class="k">lamports</span><span class="v plain">1000000000</span>
+                    </div>
+                  </div>
+                  <p class="payer">費用付款人 4aF1…pda4</p>
+                </div>
+              </details>
+            </div>
+            <div class="dock">
+              <button class="ghost" type="button">拒絕</button>
+              <button class="primary" type="button">批准</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 混合 hex -->
+        <div>
+          <div class="cap">未簽 · <strong>常見已解 · 其餘 hex</strong></div>
+          <div class="phone">
+            <div class="top">
+              <div class="bar-wallet">
+                <span class="avatar" aria-hidden="true">主</span>
+                <span class="bar-wallet-text">
+                  <span class="bar-wallet-name">主要</span>
+                  <span class="bar-wallet-addr">4aF1…pda4</span>
+                </span>
+              </div>
+              <button class="icon-btn" type="button" title="複製" aria-label="複製">
+                <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+            </div>
+            <div class="body">
+              <p class="page-title">簽署交易</p>
+              <div class="site-line">
+                <span class="site-k">站點</span>
+                <span class="site-code">https://swap.example.test</span>
+              </div>
+              <div class="sim-stage">
+                <div class="sim-head">
+                  <h3>預期變動</h3>
+                  <div class="sim-tools">
+                    <button class="icon-btn" type="button" title="重試模擬" aria-label="重試模擬">
+                      <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+                    </button>
+                    <a class="icon-btn explorer" href="https://explorer.solana.com/tx/inspector" target="_blank" rel="noopener noreferrer" title="在 Explorer 模擬" aria-label="在 Explorer 模擬">
+                      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </a>
+                  </div>
+                </div>
+                <ul class="bal">
+                  <li><span class="tok">SOL</span><span class="amt minus">−0.0124</span></li>
+                  <li><span class="tok">USDC</span><span class="amt plus">+2.10</span></li>
+                </ul>
+              </div>
+              <div class="fee-card">
+                <h3>交易費</h3>
+                <div class="fee-total"><span class="n">0.000015</span><span class="u">SOL</span></div>
+                <p class="fee-hint">簽名費 · CU</p>
+              </div>
+              <details class="tx-detail" open>
+                <summary>
+                  <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span>交易明細</span>
+                  <span class="hint">指令</span>
+                </summary>
+                <div class="tx-detail-body">
+                  <div class="ix">
+                    <div class="ix-prog">Associated Token Account</div>
+                    <div class="ix-name">建立關聯代幣帳戶</div>
+                    <div class="kv">
+                      <span class="k">付款</span><span class="v">4aF1…pda4</span>
+                      <span class="k">帳戶</span><span class="v">8kLm…n2Qx</span>
+                      <span class="k">錢包</span><span class="v">4aF1…pda4</span>
+                      <span class="k">mint</span><span class="v">EPjF…Dt1v</span>
+                    </div>
+                  </div>
+                  <div class="ix">
+                    <div class="ix-prog">JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4</div>
+                    <div class="ix-name">JUP6…aV4</div>
+                    <div class="kv">
+                      <span class="k">帳戶</span><span class="v">4aF1…pda4</span>
+                      <span class="k">帳戶</span><span class="v">8kLm…n2Qx</span>
+                      <span class="k">帳戶</span><span class="v">Tokenk…Q5DA</span>
+                    </div>
+                    <p class="ix-data">e445a52e51cb9a1d4398574d691fe17d00010002a086010000000000</p>
+                  </div>
+                  <p class="payer">費用付款人 4aF1…pda4</p>
+                </div>
+              </details>
+            </div>
+            <div class="dock">
+              <button class="ghost" type="button">拒絕</button>
+              <button class="primary" type="button">批准</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 收合 -->
+        <div>
+          <div class="cap">未簽 · <strong>明細收合</strong></div>
+          <div class="phone">
+            <div class="top">
+              <div class="bar-wallet">
+                <span class="avatar" aria-hidden="true">主</span>
+                <span class="bar-wallet-text">
+                  <span class="bar-wallet-name">主要</span>
+                  <span class="bar-wallet-addr">4aF1…pda4</span>
+                </span>
+              </div>
+              <button class="icon-btn" type="button" title="複製" aria-label="複製">
+                <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+            </div>
+            <div class="body">
+              <p class="page-title">簽署交易</p>
+              <div class="site-line">
+                <span class="site-k">站點</span>
+                <span class="site-code">https://swap.example.test</span>
+              </div>
+              <div class="sim-stage">
+                <div class="sim-head">
+                  <h3>預期變動</h3>
+                  <div class="sim-tools">
+                    <button class="icon-btn" type="button" title="重試模擬" aria-label="重試模擬">
+                      <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+                    </button>
+                    <a class="icon-btn explorer" href="https://explorer.solana.com/tx/inspector" target="_blank" rel="noopener noreferrer" title="在 Explorer 模擬" aria-label="在 Explorer 模擬">
+                      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </a>
+                  </div>
+                </div>
+                <ul class="bal">
+                  <li><span class="tok">SOL</span><span class="amt minus">−1.000005</span></li>
+                </ul>
+              </div>
+              <div class="fee-card">
+                <h3>交易費</h3>
+                <div class="fee-total"><span class="n">0.000015</span><span class="u">SOL</span></div>
+                <p class="fee-hint">簽名費 · CU</p>
+              </div>
+              <details class="tx-detail">
+                <summary>
+                  <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span>交易明細</span>
+                  <span class="hint">指令</span>
+                </summary>
+                <div class="tx-detail-body"></div>
+              </details>
+            </div>
+            <div class="dock">
+              <button class="ghost" type="button">拒絕</button>
+              <button class="primary" type="button">批准</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 無法解析 -->
+        <div>
+          <div class="cap">無法解析 · <strong>無 Explorer</strong></div>
+          <div class="phone">
+            <div class="top">
+              <div class="bar-wallet">
+                <span class="avatar" aria-hidden="true">主</span>
+                <span class="bar-wallet-text">
+                  <span class="bar-wallet-name">主要</span>
+                  <span class="bar-wallet-addr">4aF1…pda4</span>
+                </span>
+              </div>
+              <button class="icon-btn" type="button" title="複製" aria-label="複製">
+                <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+            </div>
+            <div class="body">
+              <p class="page-title">簽署交易</p>
+              <div class="site-line">
+                <span class="site-k">站點</span>
+                <span class="site-code">https://swap.example.test</span>
+              </div>
+              <div class="warn-card">
+                <p class="warn-title">無法模擬</p>
+                <p class="warn-reason">交易無法解析</p>
+              </div>
+              <div class="sim-stage">
+                <div class="sim-head">
+                  <h3>預期變動</h3>
+                  <div class="sim-tools">
+                    <button class="icon-btn" type="button" title="重試模擬" aria-label="重試模擬">
+                      <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <p class="sim-empty">無法估計變動</p>
+              </div>
+              <div class="fee-card">
+                <h3>交易費</h3>
+                <div class="fee-total"><span class="n">未知</span></div>
+                <p class="fee-hint">簽名費 · CU</p>
+              </div>
+              <details class="tx-detail" open>
+                <summary>
+                  <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+                  <span>交易明細</span>
+                  <span class="hint">指令</span>
+                </summary>
+                <div class="tx-detail-body">
+                  <p class="sim-empty" style="padding: 8px 12px;">無法列出指令</p>
+                </div>
+              </details>
+            </div>
+            <div class="dock">
+              <button class="ghost" type="button">拒絕</button>
+              <button class="primary disabled" type="button">批准</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ul class="review">
+        <li>Explorer 圖示只在<strong>預期變動</strong>列尾，與重試並列；不是整張卡可點。tooltip「在 Explorer 模擬」。兩者都是有底有框的 34px 鈕；Explorer 用 accent 描邊，重試用一般 fill。</li>
+        <li>bytes 組進 URL 由錢包做；畫面不展示 base64。無法 deserialize 時不畫這顆圖示。</li>
+        <li>解讀後不畫該條 hex。未知 program 才保留帳戶縮寫＋ hex。</li>
+        <li>欄位標籤單行、值 ellipsis。不在 384px 裡展開 Anchor IDL。</li>
+        <li>解讀失敗不擋批准（無法解析整筆交易除外，沿用既有規則）。</li>
+      </ul>
+    </div>
+  </body>
+</html>

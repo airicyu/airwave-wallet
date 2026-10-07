@@ -258,6 +258,7 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
       requestId,
       Uint8Array.from(transaction),
       signerPubkey,
+      settings.cluster,
       settings.defaultCuPrice,
       { cuLimit: payload.cuLimit, cuPrice: payload.cuPrice },
     );
