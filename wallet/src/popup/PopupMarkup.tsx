@@ -12,6 +12,13 @@ import {
 import { ApprovalHost } from "./components/ApprovalHost";
 import { HomeActivityList } from "./components/HomeActivityList";
 import { HomeTokenList, TokenDetailView } from "./components/HomeTokenList";
+import {
+  CloseEmptyConfirmScreen,
+  CloseEmptyPickScreen,
+  CloseEmptyRecycleButton,
+  CloseEmptyResultScreen,
+  CloseEmptySendingScreen,
+} from "./close-empty/CloseEmptyFeature";
 import { LegalDoc } from "./components/LegalDoc";
 import { IconBack, IconCopy, IconLock, IconMenu, IconRefresh } from "./components/StrokeIcon";
 import { WalletWidget } from "./components/WalletWidget";
@@ -44,9 +51,18 @@ import { usePopupContext } from "./state/PopupContext";
 import { useDock } from "./state/dock";
 
 function ErrorToast(): JSX.Element {
-  const { toast, clearError } = usePopupContext();
+  const { toast, toastVariant, clearError } = usePopupContext();
+  const className =
+    toastVariant === "warn" ? "toast-banner toast-warn" : "error toast-error";
   return (
-    <p id="error" className="error toast-error" hidden={!toast} onClick={() => clearError()}>
+    <p
+      id="error"
+      className={className}
+      role="status"
+      aria-live="polite"
+      hidden={!toast}
+      onClick={() => clearError()}
+    >
       {toast}
     </p>
   );
@@ -88,6 +104,17 @@ export function PopupMarkup(): JSX.Element {
     navigateTo,
     handleBack,
     refresh,
+    closeEmptyEntries,
+    setCloseEmptyEntries,
+    closeEmptyPlan,
+    setCloseEmptyPlan,
+    closeEmptyResult,
+    setCloseEmptyResult,
+    closeEmptyStaleError,
+    setCloseEmptyStaleError,
+    setCloseEmptySending,
+    showError,
+    resetCloseEmptyFlow,
   } = usePopupContext();
   const { dock } = useDock();
 
@@ -233,8 +260,20 @@ export function PopupMarkup(): JSX.Element {
         <main className="screen-body">
           {currentView === "home-token" ? (
             <section id="screen-home-token" className="screen">
-              <div className="section-head">
+              <div className="section-head section-head-tokens">
                 <h3>Tokens</h3>
+                <div className="section-head-actions">
+                <CloseEmptyRecycleButton
+                  wallet={wallet}
+                  onOpen={async () => {
+                    const res = await sendExtensionRequest("wallet.listClosableTokenAccounts", {});
+                    if (res.ok) {
+                      const body = res.result as { entries?: import("../shared/close-empty-types").ClosableEntry[] };
+                      setCloseEmptyEntries(body.entries ?? []);
+                    }
+                    navigateTo("close-empty-pick");
+                  }}
+                />
                 <button
                   type="button"
                   className="icon-btn ghost-inline"
@@ -245,6 +284,7 @@ export function PopupMarkup(): JSX.Element {
                 >
                   <IconRefresh />
                 </button>
+                </div>
               </div>
               <HomeTokenList
                 wallet={wallet}
@@ -280,6 +320,71 @@ export function PopupMarkup(): JSX.Element {
           {currentView === "send-approval" && activeWalletSendRequestId ? (
             <section id="screen-send-approval" className="screen approval-shell-host">
               <ApprovalHost key={activeWalletSendRequestId} requestId={activeWalletSendRequestId} />
+            </section>
+          ) : null}
+
+          {currentView === "close-empty-pick" ? (
+            <section className="screen">
+              <CloseEmptyPickScreen
+                wallet={wallet}
+                initialEntries={closeEmptyEntries}
+                onNext={(selected, plan) => {
+                  setCloseEmptyPlan(plan);
+                  navigateTo("close-empty-confirm");
+                }}
+              />
+            </section>
+          ) : null}
+
+          {currentView === "close-empty-confirm" && closeEmptyPlan ? (
+            <section className="screen">
+              <CloseEmptyConfirmScreen
+                wallet={wallet}
+                plan={closeEmptyPlan}
+                staleError={closeEmptyStaleError}
+                onConfirm={() => {
+                  void (async () => {
+                    setCloseEmptyStaleError(null);
+                    setCloseEmptySending(true);
+                    navigateTo("close-empty-sending");
+                    const res = await sendExtensionRequest("wallet.commitCloseEmpty", {
+                      planId: closeEmptyPlan.planId,
+                    });
+                    setCloseEmptySending(false);
+                    if (!res.ok) {
+                      if (res.error?.code === "STALE_LIST") {
+                        setCloseEmptyStaleError(res.error.message ?? "清單已過期");
+                        navigateTo("close-empty-confirm");
+                        return;
+                      }
+                      showError(res.error?.message ?? "送出失敗");
+                      navigateTo("close-empty-confirm");
+                      return;
+                    }
+                    setCloseEmptyResult(res.result as import("../shared/close-empty-types").CloseEmptyCommitResult);
+                    navigateTo("close-empty-result");
+                  })();
+                }}
+              />
+            </section>
+          ) : null}
+
+          {currentView === "close-empty-sending" ? (
+            <section className="screen">
+              <CloseEmptySendingScreen />
+            </section>
+          ) : null}
+
+          {currentView === "close-empty-result" && closeEmptyResult ? (
+            <section className="screen">
+              <CloseEmptyResultScreen
+                result={closeEmptyResult}
+                onDone={() => {
+                  resetCloseEmptyFlow();
+                  setHomeAssetsForce(true);
+                  navigateTo("home-token");
+                }}
+              />
             </section>
           ) : null}
 
@@ -425,6 +530,7 @@ export function PopupMarkup(): JSX.Element {
         </main>
 
         <footer id="shell-dock" className="shell-dock" hidden={!dock}>
+          {dock?.meta ? <p className="shell-dock-meta">{dock.meta}</p> : null}
           <button
             type="button"
             className="primary-btn"

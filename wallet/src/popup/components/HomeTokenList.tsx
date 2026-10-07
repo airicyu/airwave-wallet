@@ -1,7 +1,11 @@
 import type { JSX } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { isCombinedAccount } from "../../shared/accounts";
 import { sendExtensionRequest } from "../../shared/ext-api";
+import {
+  friendlyErrorMessage,
+  shouldUseRpcTransientToast,
+} from "../../shared/friendly-error-message";
 import { accountKind } from "../../shared/storage-keys";
 import { NATIVE_SOL_ID, shortMint, type HomeTokenRow } from "../home/home-tokens";
 import { shortAddr } from "../lib/format";
@@ -24,38 +28,62 @@ export function HomeTokenList({ wallet, currentView, onOpenDetail }: Props): JSX
     setExpandedTokenRowIds,
     homeAssetsForce,
     setHomeAssetsForce,
+    bumpClosableScan,
+    showToast,
   } = usePopupContext();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const rowsLen = homeTokenRows.length;
+  const homeTokenRowsLenRef = useRef(homeTokenRows.length);
+  homeTokenRowsLenRef.current = homeTokenRows.length;
 
   const active = wallet.accounts.find((a) => a.id === wallet.activeAccountId);
   const activeIsCombined = active != null && isCombinedAccount(active);
 
+  const reportAssetsIssue = useCallback(
+    (raw: string | null | undefined) => {
+      if (!raw?.trim()) {
+        setError(null);
+        return;
+      }
+      const friendly = friendlyErrorMessage(raw, "無法載入持倉");
+      if (shouldUseRpcTransientToast(raw)) {
+        showToast(friendly, "warn");
+        setError(null);
+        return;
+      }
+      setError(friendly);
+    },
+    [showToast],
+  );
+
   const load = useCallback(
     async (force = false) => {
       if (currentView !== "home-token" || !wallet.activeAccountId) return;
-      setLoading((prev) => prev || rowsLen === 0);
+      setLoading((prev) => prev || homeTokenRowsLenRef.current === 0);
       const gen = ++homeTokensGen;
       try {
         const res = await sendExtensionRequest("wallet.getHomeTokens", force ? { force: true } : {});
         if (gen !== homeTokensGen) return;
         if (!res.ok) {
-          setError(res.error?.message ?? "無法載入持倉");
+          reportAssetsIssue(res.error?.message ?? "無法載入持倉");
           return;
         }
         const payload = res.result as { rows?: HomeTokenRow[]; error?: string };
         const next = payload.rows ?? [];
         setHomeTokenRows(next);
-        setError(payload.error ?? null);
+        reportAssetsIssue(payload.error ?? null);
+        if (force) {
+          await sendExtensionRequest("wallet.listClosableTokenAccounts", { force: true });
+          bumpClosableScan();
+        }
       } catch (e) {
         if (gen !== homeTokensGen) return;
-        setError(e instanceof Error ? e.message : "無法載入持倉");
+        reportAssetsIssue(e instanceof Error ? e.message : "無法載入持倉");
       } finally {
         if (gen === homeTokensGen) setLoading(false);
       }
     },
-    [currentView, wallet.activeAccountId, rowsLen, setHomeTokenRows],
+    [currentView, wallet.activeAccountId, setHomeTokenRows, bumpClosableScan, reportAssetsIssue],
   );
 
   useEffect(() => {

@@ -87,6 +87,7 @@ Icon 用現有 stroke SVG 風格（約 16–18px、2px stroke），按鈕熱區�
 - 欄位只要 **標籤 + 輸入**；placeholder 最多幾個字（「留空＝不用」）。欄位下方不要再跟一段 hint。
 - 區塊標題只要名詞（「RPC」「Helius」），不要括號裡的教學（「選填」「清單互不共用」）。
 - 錯誤才用短句；空狀態才解釋下一步。平時畫面保持安靜。
+- **RPC／Helius 限流（429、Kit `#8100002` 等）：** 用底部 **toast**（沿用 `#error`／`.toast-error`，約 4 秒自動消失、可點關閉），文案如「RPC 速率限制，請稍後再試」。**禁止**在持倉列表下顯示 `npx @solana/errors decode` 或整段 base64。有快取持倉時列表照常顯示。概念稿：[`design-demos/rpc-rate-limit-toast-ux.html`](design-demos/rpc-rate-limit-toast-ux.html)。
 
 ---
 

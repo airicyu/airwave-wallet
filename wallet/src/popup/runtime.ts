@@ -29,6 +29,10 @@ export const BACK_PARENT: Partial<Record<View, View>> = {
   "home-activity": "home-token",
   "send-approval": "token-send",
   "token-send": "token-detail",
+  "close-empty-pick": "home-token",
+  "close-empty-confirm": "close-empty-pick",
+  "close-empty-sending": "close-empty-confirm",
+  "close-empty-result": "close-empty-confirm",
 };
 
 export const ENTER_RESET_VIEWS = new Set<View>([

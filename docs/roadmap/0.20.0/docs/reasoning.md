@@ -26,7 +26,7 @@ Wallet Standard inject 只登記帳戶與把 bytes 丟進擴充。Kit client／R
 
 ## 為何不在本版做清空 token account
 
-那是產品功能（[backlog/close-empty-token-accounts.md](../../backlog/close-empty-token-accounts.md)）。本版只換組 ix 的庫；清空帳戶仍須獨立 INDEX（CU 常數、分批、聚合數字）。遷完 Kit 之後做會比較順，但不綁在 0.20.0。
+那是產品功能（後續 [0.21.0](../../0.21.0/INDEX.md)）。本版只換組 ix 的庫；清空帳戶仍須獨立 INDEX（CU 常數、分批、聚合數字）。遷完 Kit 之後做會比較順，但不綁在 0.20.0。
 
 ## 隨機帳戶仍從 bytes 建（不改 vault）
 

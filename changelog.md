@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.21.0 — 2026-10-08
+
+Home Tokens 可掃描並關閉餘額為 0 的 token account，收回 rent 為 SOL。流程在 popup 內勾選→確認→一次送出；命令 `wallet.listClosableTokenAccounts`、`wallet.planCloseEmpty`、`wallet.commitCloseEmpty`；Kit 估 CU、plan executor 並發送出（`@solana/kit-plugin-rpc`）。無 popout、無新 pending kind、不改 `walletSend`。持倉 RPC 限流或 Kit 技術錯誤改底部 warn toast（約 4 秒、可點關），不再在列表下顯示 decode 長文；刷新時合併 token account 掃描、避免重複背景 refresh。
+
 ## 0.20.0 — 2026-10-07
 
 `wallet/` 與 `test-web/` 的 Solana 客戶端自 `@solana/web3.js` v1 全轉 `@solana/kit` 與 `@solana-program/*`（system、token、token-2022、compute-budget）。RPC、編解碼、session signer、簽交易、模擬、CU 改寫、錢包自組送出、inject 地址驗證與 test-web 組 tx 皆走 Kit；vault 仍 bs58 64-byte secrets；`signMessage` 仍 tweetnacl detached。使用者可見流程、pending／storage／Wallet Standard 能力表與 0.19.0 相同。直接依賴不再含 web3.js 與 `@solana/compat`。

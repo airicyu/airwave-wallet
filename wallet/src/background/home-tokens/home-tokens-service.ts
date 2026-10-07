@@ -4,8 +4,8 @@ import { solanaRpcForUrl } from "../../shared/solana-rpc";
 import {
   NATIVE_SOL_ID,
   WRAPPED_SOL_MINT,
+  buildHomeTokenRowsFromOwnerParsed,
   fetchNativeAndWrappedSolRows,
-  fetchRpcHomeTokenRows,
   formatUsdLabel,
   iconLetterForSymbol,
   shortMint,
@@ -14,6 +14,13 @@ import {
   type HomeTokenRow,
   type TokenProgramKind,
 } from "../../shared/home-tokens";
+import {
+  fetchParsedTokenAccountsForOwner,
+  tokenProgramByMintFromParsed,
+  type ParsedOwnerTokenAccount,
+} from "../../shared/parsed-token-accounts";
+import { friendlyErrorMessage } from "../../shared/friendly-error-message";
+import { setOwnerParsedTokenAccounts } from "./owner-parsed-token-cache";
 
 export type GetHomeTokensResult = {
   rows: HomeTokenRow[];
@@ -22,6 +29,8 @@ export type GetHomeTokensResult = {
 };
 
 const TTL_MS = 45_000;
+/** 快取仍很新時不再排背景 refresh（避免 force 刷新後 list 讀快取又打第二輪 RPC）。 */
+const BACKGROUND_REFRESH_MIN_CACHE_AGE_MS = 10_000;
 const WALLET_BALANCES_LIMIT = 100;
 const PAGE_DELAY_MS = 500;
 const WALLET_API_ORIGIN = "https://api.helius.xyz";
@@ -67,7 +76,7 @@ function scheduleBackgroundRefresh(
     });
 }
 
-function cacheFingerprint(owners: string[], settings: Settings): string {
+export function homeTokensCacheFingerprint(owners: string[], settings: Settings): string {
   const ownersJoin = owners.join("\u001f");
   const rpc = `${settings.rpcByCluster.devnet.active}:${settings.rpcByCluster.devnet.urls.join(",")}|${settings.rpcByCluster.mainnet.active}:${settings.rpcByCluster.mainnet.urls.join(",")}`;
   return `${ownersJoin}|${settings.cluster}|${rpc}|${settings.heliusApiUrl}|${settings.rpcUrl}|${settings.jupiterApiKey}`;
@@ -333,55 +342,11 @@ function mergeWalletBalances(pages: WalletTokenBalance[][]): HomeTokenRow[] {
   return rows;
 }
 
-const LEGACY_TOKEN_PROGRAM = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
-const TOKEN_2022_PROGRAM = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
-
-async function attachTokenProgramsForOwner(
-  rpcUrl: string,
-  owner: string,
+function attachTokenProgramsFromParsed(
   rows: HomeTokenRow[],
-  signal: AbortSignal,
-): Promise<HomeTokenRow[]> {
-  const needsProgram = rows.some((r) => r.id !== NATIVE_SOL_ID && r.tokenProgram == null);
-  if (!needsProgram) return rows;
-  const rpc = solanaRpcForUrl(rpcUrl);
-  const pk = address(owner);
-  const [legacy, token2022] = await Promise.all([
-    rpc
-      .getTokenAccountsByOwner(
-        pk,
-        { programId: address(LEGACY_TOKEN_PROGRAM) },
-        { encoding: "jsonParsed", commitment: "confirmed" },
-      )
-      .send(),
-    rpc
-      .getTokenAccountsByOwner(
-        pk,
-        { programId: address(TOKEN_2022_PROGRAM) },
-        { encoding: "jsonParsed", commitment: "confirmed" },
-      )
-      .send(),
-  ]);
-  if (signal.aborted) throw new DOMException("Aborted", "AbortError");
-  const byMint = new Map<string, TokenProgramKind>();
-  for (const { account } of legacy.value as unknown as {
-    account: { data: { parsed?: { type?: string; info?: { mint?: string } } } };
-  }[]) {
-    const parsed = account.data.parsed;
-    if (parsed?.type !== "account") continue;
-    const mint = (parsed.info as { mint?: string })?.mint;
-    if (!mint || byMint.has(mint)) continue;
-    byMint.set(mint, "spl-token");
-  }
-  for (const { account } of token2022.value as unknown as {
-    account: { data: { parsed?: { type?: string; info?: { mint?: string } } } };
-  }[]) {
-    const parsed = account.data.parsed;
-    if (parsed?.type !== "account") continue;
-    const mint = (parsed.info as { mint?: string })?.mint;
-    if (!mint || byMint.has(mint)) continue;
-    byMint.set(mint, "token-2022");
-  }
+  parsed: ParsedOwnerTokenAccount[],
+): HomeTokenRow[] {
+  const byMint = tokenProgramByMintFromParsed(parsed);
   return rows.map((row) => {
     if (row.id === NATIVE_SOL_ID) return row;
     if (row.tokenProgram) return row;
@@ -623,11 +588,11 @@ function mergeMultiOwnerRows(
   return sortHomeTokenRows(merged);
 }
 
-async function fetchSingleOwnerRows(
+async function fetchSingleOwnerRowsWithParsed(
   owner: string,
   settings: Settings,
   signal: AbortSignal,
-): Promise<HomeTokenRow[]> {
+): Promise<{ rows: HomeTokenRow[]; parsed: ParsedOwnerTokenAccount[] }> {
   const apiKey = extractHeliusApiKey(settings.heliusApiUrl);
   if (apiKey && settings.cluster === "mainnet") {
     const [walletRows, solRows] = await Promise.all([
@@ -637,9 +602,23 @@ async function fetchSingleOwnerRows(
     const rest = walletRows.filter(
       (r) => r.id !== NATIVE_SOL_ID && r.id !== WRAPPED_SOL_MINT,
     );
-    return sortHomeTokenRows([...solRows, ...rest]);
+    let rows = sortHomeTokenRows([...solRows, ...rest]);
+    const parsed = await fetchParsedTokenAccountsForOwner(settings.rpcUrl, owner);
+    if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+    rows = attachTokenProgramsFromParsed(rows, parsed);
+    return { rows, parsed };
   }
-  return fetchRpcHomeTokenRows(settings.rpcUrl, owner, signal);
+
+  const rpc = solanaRpcForUrl(settings.rpcUrl);
+  const pk = address(owner);
+  const lamports = Number(
+    (await rpc.getBalance(pk, { commitment: "confirmed" }).send()).value,
+  );
+  if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+  const parsed = await fetchParsedTokenAccountsForOwner(settings.rpcUrl, owner);
+  if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+  const rows = buildHomeTokenRowsFromOwnerParsed(lamports, parsed);
+  return { rows, parsed };
 }
 
 async function runRefresh(
@@ -657,8 +636,8 @@ async function runRefresh(
   try {
     const perOwner: { owner: string; rows: HomeTokenRow[] }[] = [];
     for (const owner of owners) {
-      let rows = await fetchSingleOwnerRows(owner, settings, signal);
-      rows = await attachTokenProgramsForOwner(settings.rpcUrl, owner, rows, signal);
+      const { rows, parsed } = await fetchSingleOwnerRowsWithParsed(owner, settings, signal);
+      setOwnerParsedTokenAccounts(fingerprint, owner, parsed);
       perOwner.push({ owner, rows });
     }
 
@@ -672,10 +651,10 @@ async function runRefresh(
         rows = sortHomeTokenRows(jup.rows);
         if (jup.error) {
           memoryCache = { fingerprint, rows, fetchedAt: Date.now() };
-          return { rows, error: jup.error };
+          return { rows, error: friendlyErrorMessage(jup.error, jup.error) };
         }
       } catch (e) {
-        const msg = e instanceof Error ? e.message : "Jupiter 資料更新失敗";
+        const msg = friendlyErrorMessage(e, "Jupiter 資料更新失敗");
         rows = sortHomeTokenRows(rows);
         memoryCache = { fingerprint, rows, fetchedAt: Date.now() };
         return { rows, error: msg };
@@ -690,7 +669,7 @@ async function runRefresh(
       if (cached) return { rows: cached, error: "已取消" };
       return { rows: [], error: "已取消" };
     }
-    const msg = e instanceof Error ? e.message : "無法載入持倉";
+    const msg = friendlyErrorMessage(e, "無法載入持倉");
     if (cached?.length) {
       return { rows: cached, error: msg };
     }
@@ -705,7 +684,7 @@ export async function getHomeTokensForOwners(
 ): Promise<GetHomeTokensResult> {
   if (owners.length === 0) return { rows: [] };
 
-  const fingerprint = cacheFingerprint(owners, settings);
+  const fingerprint = homeTokensCacheFingerprint(owners, settings);
   const force = options?.force === true;
   const withMembers = options?.withMembers === true;
 
@@ -715,7 +694,10 @@ export async function getHomeTokensForOwners(
     memoryCache.fingerprint === fingerprint &&
     Date.now() - memoryCache.fetchedAt < TTL_MS
   ) {
-    scheduleBackgroundRefresh(owners, settings, fingerprint, withMembers);
+    const cacheAgeMs = Date.now() - memoryCache.fetchedAt;
+    if (cacheAgeMs >= BACKGROUND_REFRESH_MIN_CACHE_AGE_MS) {
+      scheduleBackgroundRefresh(owners, settings, fingerprint, withMembers);
+    }
     return { rows: memoryCache.rows, fromCache: true };
   }
 

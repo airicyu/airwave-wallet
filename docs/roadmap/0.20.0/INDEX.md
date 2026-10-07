@@ -3,7 +3,7 @@
 - **狀態：** `shipped`
 - **上游版本：** [0.19.0](../0.19.0/INDEX.md)。本版只把 Solana 客戶端從 `@solana/web3.js` **v1** 換成官方 Kit 棧。**不改**使用者可見流程、文案、pending／custody／storage／Wallet Standard 能力表、模擬差額公式、CU 規則、0.19 靜態解讀變體表
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
-- **構想來源：** 規劃對話（2026-10-07）。官方文件 [Kit getting started](https://www.solanakit.com/docs/getting-started)、[Upgrade guide](https://www.solanakit.com/docs/upgrade-guide)。**不是**清空 token account（仍 [backlog](../backlog/close-empty-token-accounts.md)）
+- **構想來源：** 規劃對話（2026-10-07）。官方文件 [Kit getting started](https://www.solanakit.com/docs/getting-started)、[Upgrade guide](https://www.solanakit.com/docs/upgrade-guide)。**不是**清空 token account（見 [0.21.0](../0.21.0/INDEX.md)）
 - **畫面：** 不改。沿用 [`docs/design-principles.md`](../../design-principles.md) 與 0.19.0 已出貨畫面
 - **秘密欄位：** 無新密碼欄；vault blob **不**改 schema
 

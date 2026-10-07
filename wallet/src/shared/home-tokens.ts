@@ -1,4 +1,6 @@
 import { address } from "@solana/kit";
+import type { ParsedOwnerTokenAccount } from "./parsed-token-accounts";
+import { fetchParsedTokenAccountsForOwner } from "./parsed-token-accounts";
 import { solanaRpcForUrl } from "./solana-rpc";
 
 export const WRAPPED_SOL_MINT = "So11111111111111111111111111111111111111112";
@@ -184,6 +186,70 @@ export function buildHomeTokenRows(
   return rows;
 }
 
+/** 由單次 GTAO 掃描結果組持倉列（非零餘額）。 */
+export function buildHomeTokenRowsFromOwnerParsed(
+  lamports: number,
+  parsed: ParsedOwnerTokenAccount[],
+): HomeTokenRow[] {
+  const solAmount = lamports / 1e9;
+  const rows: HomeTokenRow[] = [
+    {
+      id: NATIVE_SOL_ID,
+      name: "Solana",
+      symbol: "SOL",
+      uiAmount: solAmount,
+      uiAmountLabel: solAmount.toLocaleString(undefined, { maximumFractionDigits: 9 }),
+      usdLabel: "—",
+      iconLetter: "SO",
+      decimals: 9,
+    },
+  ];
+
+  const byMint = new Map<
+    string,
+    { decimals: number; raw: bigint; tokenProgram: TokenProgramKind }
+  >();
+
+  for (const row of parsed) {
+    const raw = BigInt(row.amount);
+    if (raw === 0n) continue;
+    if (row.decimals === 0) continue;
+    const prev = byMint.get(row.mint);
+    if (prev) {
+      prev.raw += raw;
+    } else {
+      byMint.set(row.mint, {
+        decimals: row.decimals,
+        raw,
+        tokenProgram: row.program,
+      });
+    }
+  }
+
+  for (const [mint, { decimals, raw, tokenProgram }] of byMint) {
+    const ui = decimals > 0 ? Number(raw) / 10 ** decimals : Number(raw);
+    if (ui === 0) continue;
+    const isWrappedSol = mint === WRAPPED_SOL_MINT;
+    const symbol = isWrappedSol ? "wSOL" : shortMint(mint);
+    const name = isWrappedSol ? "Wrapped SOL" : symbol;
+    rows.push({
+      id: mint,
+      name,
+      symbol,
+      uiAmount: ui,
+      uiAmountLabel: ui.toLocaleString(undefined, {
+        maximumFractionDigits: Math.min(decimals, 9),
+      }),
+      usdLabel: "—",
+      iconLetter: iconLetterForSymbol(symbol),
+      decimals,
+      tokenProgram,
+    });
+  }
+
+  return sortHomeTokenRows(rows);
+}
+
 function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
 }
@@ -228,34 +294,11 @@ export async function fetchRpcHomeTokenRows(
   throwIfAborted(signal);
   const lamports = Number((await withAbort(rpc.getBalance(owner, { commitment: "confirmed" }).send(), signal)).value);
   throwIfAborted(signal);
-  const [legacy, token2022] = await Promise.all([
-    withAbort(
-      rpc
-        .getTokenAccountsByOwner(
-          owner,
-          { programId: address(TOKEN_PROGRAM_ID) },
-          { encoding: "jsonParsed", commitment: "confirmed" },
-        )
-        .send(),
-      signal,
-    ),
-    withAbort(
-      rpc
-        .getTokenAccountsByOwner(
-          owner,
-          { programId: address(TOKEN_2022_PROGRAM_ID) },
-          { encoding: "jsonParsed", commitment: "confirmed" },
-        )
-        .send(),
-      signal,
-    ),
-  ]);
-  return sortHomeTokenRows(
-    buildHomeTokenRows(lamports, [
-      ...mapParsedTokenAccounts(legacy.value),
-      ...mapParsedTokenAccounts(token2022.value),
-    ]),
+  const parsed = await withAbort(
+    fetchParsedTokenAccountsForOwner(rpcUrl, ownerPublicKeyBase58),
+    signal,
   );
+  return buildHomeTokenRowsFromOwnerParsed(lamports, parsed);
 }
 
 /** Wallet API 路徑用來拆 native／wSOL。wSOL 在 legacy Token program，用 mint 過濾即可。 */

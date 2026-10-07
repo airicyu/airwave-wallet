@@ -467,9 +467,9 @@
       <ul class="decisions">
         <li>入口在 Tokens 標題列右側，跟重新整理並排。有空帳戶時圖示是綠色回收標，數字在右下角。沒有可收回時同一顆圖示變暗，不顯示 0，也不能點。頂欄右側留空。</li>
         <li>勾選頁有全選。可以選超過一批；殼底寫已選幾個、會拆成幾筆交易。沒勾任何一筆不能下一步。</li>
-        <li>確認後一次簽完，同時最多 5 筆在送。某一筆失敗或過期不取消其餘。全部到達已確認或已過期才出結果。</li>
+        <li>確認後一次簽完再送。同時在飛幾筆交給 Kit executor 預設，不自寫上限。某一筆失敗或過期不取消其餘。全部到達已確認或已過期才出結果。</li>
         <li>結果分三數：已確認（上鏈且成功）、鏈上失敗（已確認但 err，租金沒收回）、已過期（沒上鏈）。不中途停下來重送。</li>
-        <li>手續費在組好每一筆 message 之後就算死：每筆簽名費 5,000 lamports × 簽名數，加上 ceil(CU limit × Default CU price / 1,000,000) lamports。畫面是各筆加總。不呼叫 getFeeForMessage，也不用模擬回傳的 fee。</li>
+        <li>手續費在確認頁就算死：CU limit 用 Kit 對該筆的資源估算，CU price 用 Settings 的 Default CU price。每筆簽名費 5,000 lamports × 簽名數，加上 ceil(CU limit × price / 1,000,000) lamports。畫面是各筆加總。不呼叫 getFeeForMessage，也不用模擬回傳的 fee 欄。送出時不再改這組 limit／price。</li>
       </ul>
     </div>
   </body>

@@ -1,5 +1,6 @@
 import { sendExtensionRequest } from "../../shared/ext-api";
 import type { WalletSendSettledNotice } from "../../shared/commands";
+import type { ClosableEntry, CloseEmptyCommitResult, CloseEmptyPlanResult } from "../../shared/close-empty-types";
 import type { HomeTokenRow } from "../home/home-tokens";
 import { abortWalletSendOnPopupUnload, syncWalletSendAbortId } from "../components/ApprovalHost";
 import { BACK_PARENT } from "../runtime";
@@ -37,11 +38,20 @@ export function usePopupAppState() {
   const [focusAccountId, setFocusAccountId] = useState<string | null>(null);
   const [expandedTokenRowIds, setExpandedTokenRowIds] = useState<Set<string>>(() => new Set());
   const [homeAssetsForce, setHomeAssetsForce] = useState(false);
+  const [closableScanGen, setClosableScanGen] = useState(0);
+  const bumpClosableScan = useCallback(() => setClosableScanGen((g) => g + 1), []);
   const [toast, setToast] = useState("");
+  const [toastVariant, setToastVariant] = useState<"error" | "warn">("error");
   const [menuOpen, setMenuOpen] = useState(false);
   const [navSeq, setNavSeq] = useState(0);
   const [pendingSendFormError, setPendingSendFormError] = useState<string | null>(null);
   const [titleOverride, setTitleOverride] = useState<string | null>(null);
+  const [closeEmptyEntries, setCloseEmptyEntries] = useState<ClosableEntry[]>([]);
+  const [closeEmptySelected, setCloseEmptySelected] = useState<Set<string>>(() => new Set());
+  const [closeEmptyPlan, setCloseEmptyPlan] = useState<CloseEmptyPlanResult | null>(null);
+  const [closeEmptyResult, setCloseEmptyResult] = useState<CloseEmptyCommitResult | null>(null);
+  const [closeEmptyStaleError, setCloseEmptyStaleError] = useState<string | null>(null);
+  const [closeEmptySending, setCloseEmptySending] = useState(false);
 
   const errorHideTimer = useRef<number | null>(null);
   const lastActiveAccountId = useRef<string | null>(null);
@@ -66,19 +76,24 @@ export function usePopupAppState() {
       errorHideTimer.current = null;
     }
     setToast("");
+    setToastVariant("error");
   }, []);
 
-  const showError = useCallback((msg: string) => {
+  const showToast = useCallback((msg: string, variant: "error" | "warn" = "error") => {
     if (errorHideTimer.current != null) {
       window.clearTimeout(errorHideTimer.current);
       errorHideTimer.current = null;
     }
+    setToastVariant(variant);
     setToast(msg);
     errorHideTimer.current = window.setTimeout(() => {
       errorHideTimer.current = null;
       setToast("");
+      setToastVariant("error");
     }, 4000);
   }, []);
+
+  const showError = useCallback((msg: string) => showToast(msg, "error"), [showToast]);
 
   const refresh = useCallback(async (): Promise<State> => {
     const res = await sendExtensionRequest("wallet.getState");
@@ -124,9 +139,29 @@ export function usePopupAppState() {
     setTitleOverride(null);
   }, [clearError]);
 
+  const clearCloseEmptyDraft = useCallback(() => {
+    setCloseEmptyPlan(null);
+    setCloseEmptyResult(null);
+    setCloseEmptyStaleError(null);
+    setCloseEmptySending(false);
+  }, []);
+
+  const resetCloseEmptyFlow = useCallback(() => {
+    clearCloseEmptyDraft();
+    setCloseEmptySelected(new Set());
+    setCloseEmptyEntries([]);
+  }, [clearCloseEmptyDraft]);
+
   const handleBack = useCallback(() => {
     if (backOverrideRef.current?.()) return;
     const view = bagRef.current.currentView;
+    if (view === "close-empty-sending") return;
+    if (view === "close-empty-pick") {
+      resetCloseEmptyFlow();
+    }
+    if (view === "close-empty-confirm") {
+      clearCloseEmptyDraft();
+    }
     if (view === "token-detail") {
       setDetailTokenId(null);
       navigateTo("home-token");
@@ -161,12 +196,19 @@ export function usePopupAppState() {
       setExpandedTokenRowIds(new Set());
       setDetailTokenId(null);
       setPendingSendFormError(null);
+      resetCloseEmptyFlow();
       const view = bagRef.current.currentView;
       if (view === "token-send" || view === "token-detail") {
         navigateTo("home-token");
       }
+      if (view.startsWith("close-empty")) {
+        navigateTo("home-token");
+      }
     }
-  }, [mirror.wallet, navigateTo]);
+    if (state.vaultExists && !state.unlocked) {
+      clearCloseEmptyDraft();
+    }
+  }, [mirror.wallet, navigateTo, clearCloseEmptyDraft]);
 
   useEffect(() => {
     const onChanged = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
@@ -227,7 +269,11 @@ export function usePopupAppState() {
       setExpandedTokenRowIds,
       homeAssetsForce,
       setHomeAssetsForce,
+      closableScanGen,
+      bumpClosableScan,
       toast,
+      toastVariant,
+      showToast,
       menuOpen,
       setMenuOpen,
       navSeq,
@@ -242,6 +288,20 @@ export function usePopupAppState() {
       showError,
       clearError,
       setBackOverride,
+      closeEmptyEntries,
+      setCloseEmptyEntries,
+      closeEmptySelected,
+      setCloseEmptySelected,
+      closeEmptyPlan,
+      setCloseEmptyPlan,
+      closeEmptyResult,
+      setCloseEmptyResult,
+      closeEmptyStaleError,
+      setCloseEmptyStaleError,
+      closeEmptySending,
+      setCloseEmptySending,
+      clearCloseEmptyDraft,
+      resetCloseEmptyFlow,
     }),
     [
       mirror.wallet,
@@ -252,7 +312,11 @@ export function usePopupAppState() {
       focusAccountId,
       expandedTokenRowIds,
       homeAssetsForce,
+      closableScanGen,
+      bumpClosableScan,
       toast,
+      toastVariant,
+      showToast,
       menuOpen,
       navSeq,
       titleOverride,
@@ -265,6 +329,14 @@ export function usePopupAppState() {
       clearError,
       setBackOverride,
       setActiveWalletSendRequestIdTracked,
+      closeEmptyEntries,
+      closeEmptyPlan,
+      closeEmptyResult,
+      closeEmptyStaleError,
+      closeEmptySending,
+      clearCloseEmptyDraft,
+      resetCloseEmptyFlow,
+      closeEmptySelected,
     ],
   );
 }

@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — RPC 速率限制提示（概念稿）</title>
+    <!--
+      非正式契約。衝突時以某版 INDEX／HOW 與 design-principles.md 為準。
+      情境：持倉／RPC 被 429 或 Helius 代理限流時，使用者不應看到 Kit「Solana error #8100002 + npx decode」。
+    -->
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --danger: #f07178;
+        --warn: #e8b84a;
+        --ok: #4ecb8d;
+        --popup-w: 384px;
+        --popup-h: 600px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1200px; margin: 0 auto; padding: 28px 20px 64px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 20px; max-width: 52rem; font-size: 0.92rem; }
+      .spec {
+        background: var(--bg-elevated);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        padding: 16px 18px;
+        margin-bottom: 28px;
+        font-size: 0.88rem;
+      }
+      .spec h2 { font-size: 0.95rem; margin: 0 0 10px; }
+      .spec ul { margin: 0; padding-left: 1.2rem; color: var(--text-muted); }
+      .spec li { margin: 6px 0; }
+      .spec strong { color: var(--text); }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(var(--popup-w), 1fr));
+        gap: 28px;
+        align-items: start;
+      }
+      .cap {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        margin-bottom: 8px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .cap.bad strong { color: var(--danger); }
+      .cap.good strong { color: var(--ok); }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        flex-shrink: 0;
+      }
+      .bar-wallet {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 12px 5px 5px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+        font-size: 0.82rem;
+      }
+      .avatar {
+        width: 28px; height: 28px; border-radius: 50%;
+        background: var(--accent); color: #fff; font-weight: 700; font-size: 0.7rem;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .top-gap { flex: 1; }
+      .icon-btn {
+        width: 32px; height: 32px; border: none; border-radius: var(--radius-sm);
+        background: transparent; color: var(--text-muted); cursor: default;
+      }
+      .scroll {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 12px 14px 8px;
+      }
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .section-head h3 { margin: 0; font-size: 0.95rem; font-weight: 600; }
+      .token-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--stroke-soft);
+      }
+      .token-icon {
+        width: 36px; height: 36px; border-radius: 50%;
+        background: var(--fill); display: flex; align-items: center; justify-content: center;
+        font-size: 0.7rem; font-weight: 700; color: var(--text-muted);
+      }
+      .token-main { flex: 1; min-width: 0; }
+      .token-sym { font-weight: 600; font-size: 0.9rem; }
+      .token-qty { font-size: 0.8rem; color: var(--text-muted); }
+      .token-usd { font-size: 0.85rem; text-align: right; }
+      .inline-bad {
+        margin-top: 12px;
+        color: var(--danger);
+        font-size: 0.78rem;
+        line-height: 1.35;
+        word-break: break-all;
+      }
+      .bottom-tabs {
+        display: flex;
+        border-top: 1px solid var(--stroke-soft);
+        flex-shrink: 0;
+        background: var(--bg-elevated);
+      }
+      .bottom-tabs button {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        border-bottom: 2px solid transparent;
+      }
+      .bottom-tabs button.on {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+      /* —— 現有產品 toast 定位（對齊 wallet popup .toast-error） —— */
+      .toast {
+        position: absolute;
+        left: 14px;
+        right: 14px;
+        bottom: 52px;
+        z-index: 30;
+        margin: 0;
+        padding: 10px 12px 10px 36px;
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        line-height: 1.35;
+        animation: toast-in 0.22s ease-out;
+      }
+      .toast.warn {
+        color: #f5e6c8;
+        background: rgba(42, 34, 18, 0.94);
+        border: 1px solid rgba(232, 184, 74, 0.45);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      }
+      .toast::before {
+        content: "";
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid var(--warn);
+        box-sizing: border-box;
+      }
+      .toast::after {
+        content: "!";
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 16px;
+        text-align: center;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: var(--warn);
+        line-height: 16px;
+      }
+      .toast.dim { opacity: 0.55; }
+      @keyframes toast-in {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .fade-note {
+        position: absolute;
+        left: 14px;
+        right: 14px;
+        bottom: 108px;
+        text-align: center;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>RPC 速率限制 — 提示方式（概念稿）</h1>
+      <p class="lede">
+        持倉刷新若被 RPC／Helius 代理限流（HTTP 429、Kit <code>#8100002</code> 等），
+        <strong>禁止</strong>在代幣列表下方顯示整段技術錯誤。
+        改為底部浮層短句，約 <strong>4 秒</strong>自動消失；可點一下立刻關閉。
+        若仍有快取持倉，列表照常顯示，不清空。
+      </p>
+
+      <div class="spec">
+        <h2>實作對照（給工程）</h2>
+        <ul>
+          <li><strong>文案（繁中）：</strong>「RPC 速率限制，請稍後再試」；Jupiter／Helius HTTP 429 可沿用各自已有短句，同樣走 toast。</li>
+          <li><strong>容器：</strong>沿用 popup <code>#error</code> + <code>.toast-error</code> 定位（底欄 Token／Activity 上方）。不加新 popout。</li>
+          <li><strong>語意：</strong>限流／可重試的 RPC 失敗 → toast only；<code>#home-assets-error</code> 不顯示 Kit decode 字串。</li>
+          <li><strong>部分成功：</strong><code>rows</code> 有資料 + 背景刷新失敗 → 保留列表 + toast（右下概念）。</li>
+          <li><strong>全失敗且無快取：</strong>仍 toast；列表區可為空或「載入中」結束後無列，<strong>不要</strong>長段紅字。</li>
+          <li><strong>偵測：</strong>訊息含 <code>8100002</code>、<code>429</code>、<code>rate limit</code>、「速率限制」等 → 視為同一類（見 <code>friendly-error-message.ts</code>）。</li>
+        </ul>
+      </div>
+
+      <div class="grid">
+        <div>
+          <p class="cap bad"><strong>不要</strong> — 現況（列表下紅字）</p>
+          <div class="phone" aria-label="錯誤示範">
+            <div class="top">
+              <div class="bar-wallet">
+                <span class="avatar">I</span>
+                Imported 3 · gLdH…CLCx
+              </div>
+              <span class="top-gap"></span>
+              <button type="button" class="icon-btn" aria-hidden="true">↻</button>
+            </div>
+            <div class="scroll">
+              <div class="section-head"><h3>Tokens</h3></div>
+              <div class="token-card">
+                <div class="token-icon">SO</div>
+                <div class="token-main">
+                  <div class="token-sym">Solana</div>
+                  <div class="token-qty">0.00203928 SOL</div>
+                </div>
+                <div class="token-usd">$0.24</div>
+              </div>
+              <div class="token-card">
+                <div class="token-icon">TU</div>
+                <div class="token-main">
+                  <div class="token-sym">TUMBUK</div>
+                  <div class="token-qty">200 TUMBUK</div>
+                </div>
+                <div class="token-usd">—</div>
+              </div>
+              <p class="inline-bad">
+                Solana error #8100002; Decode this error by running npx @solana/errors decode -- 8100002
+                'X19jb2RIPTgxMDAwMDImaGVhZGVycy00INUJvYmplY3QIMjBIZWFkZXI+…'
+              </p>
+            </div>
+            <div class="bottom-tabs">
+              <button type="button" class="on">Token</button>
+              <button type="button">Activity</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p class="cap good"><strong>要</strong> — 限流 toast（4s 自動消失）</p>
+          <div class="phone" aria-label="建議：限流 toast">
+            <div class="top">
+              <div class="bar-wallet">
+                <span class="avatar">I</span>
+                Imported 3 · gLdH…CLCx
+              </div>
+              <span class="top-gap"></span>
+              <button type="button" class="icon-btn" aria-hidden="true">↻</button>
+            </div>
+            <div class="scroll">
+              <div class="section-head"><h3>Tokens</h3></div>
+              <div class="token-card">
+                <div class="token-icon">SO</div>
+                <div class="token-main">
+                  <div class="token-sym">Solana</div>
+                  <div class="token-qty">0.00203928 SOL</div>
+                </div>
+                <div class="token-usd">$0.24</div>
+              </div>
+              <div class="token-card">
+                <div class="token-icon">TU</div>
+                <div class="token-main">
+                  <div class="token-sym">TUMBUK</div>
+                  <div class="token-qty">200 TUMBUK</div>
+                </div>
+                <div class="token-usd">—</div>
+              </div>
+            </div>
+            <p class="toast warn" role="status">RPC 速率限制，請稍後再試</p>
+            <div class="bottom-tabs">
+              <button type="button" class="on">Token</button>
+              <button type="button">Activity</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p class="cap good"><strong>要</strong> — 淡出前（可點關閉）</p>
+          <div class="phone" aria-label="toast 即將消失">
+            <div class="top">
+              <div class="bar-wallet">
+                <span class="avatar">I</span>
+                Imported 3 · gLdH…CLCx
+              </div>
+              <span class="top-gap"></span>
+            </div>
+            <div class="scroll">
+              <div class="section-head"><h3>Tokens</h3></div>
+              <div class="token-card">
+                <div class="token-icon">SO</div>
+                <div class="token-main">
+                  <div class="token-sym">Solana</div>
+                  <div class="token-qty">0.00203928 SOL</div>
+                </div>
+                <div class="token-usd">$0.24</div>
+              </div>
+            </div>
+            <p class="toast warn dim" role="status">RPC 速率限制，請稍後再試</p>
+            <span class="fade-note">約 4 秒後自動消失 · 點一下可關</span>
+            <div class="bottom-tabs">
+              <button type="button" class="on">Token</button>
+              <button type="button">Activity</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

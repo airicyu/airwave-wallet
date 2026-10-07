@@ -21,6 +21,10 @@ export type View =
   | "token-detail"
   | "token-send"
   | "send-approval"
+  | "close-empty-pick"
+  | "close-empty-confirm"
+  | "close-empty-sending"
+  | "close-empty-result"
   | "accounts"
   | "add-account"
   | "add-generate"
@@ -70,6 +74,10 @@ export const SUBPAGE_TITLES: Record<Exclude<View, "home-token" | "home-activity"
   "token-detail": "代幣詳情",
   "token-send": "送出",
   "send-approval": "確認送出",
+  "close-empty-pick": "收回租金",
+  "close-empty-confirm": "確認收回",
+  "close-empty-sending": "確認中",
+  "close-empty-result": "結果",
 };
 
 export type CombinedCreateState = {

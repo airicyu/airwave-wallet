@@ -1,4 +1,9 @@
 import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
+import {
+  handleCommitCloseEmpty,
+  handleListClosableTokenAccounts,
+  handlePlanCloseEmpty,
+} from "../close-empty";
 import { handleGetHomeActivity } from "../home-activity";
 import { handleGetHomeTokens } from "../home-tokens";
 import { respond } from "../messaging";
@@ -52,6 +57,9 @@ export async function handleWalletCommand(req: ExtensionRequest): Promise<Extens
   if (req.command === "wallet.disconnectAllOrigins") return handleDisconnectAllOrigins(req);
   if (req.command === "wallet.beginSend") return handleBeginSend(req);
   if (req.command === "wallet.getHomeTokens") return handleGetHomeTokens(req);
+  if (req.command === "wallet.listClosableTokenAccounts") return handleListClosableTokenAccounts(req);
+  if (req.command === "wallet.planCloseEmpty") return handlePlanCloseEmpty(req);
+  if (req.command === "wallet.commitCloseEmpty") return handleCommitCloseEmpty(req);
   if (req.command === "wallet.getHomeActivity") return handleGetHomeActivity(req);
   if (req.command === "storage.patchSettings") return handlePatchSettings(req);
   return respond({
