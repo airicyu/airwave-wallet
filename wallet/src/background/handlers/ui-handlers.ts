@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { parsePublicKeyBase58 } from "../../shared/accounts";
 import type {
   ExtensionRequest,
   ExtensionResponse,
@@ -239,10 +239,8 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
       });
     }
     const pubkeyStr = getExposedPublicKey(meta);
-    let signerPubkey: PublicKey;
-    try {
-      signerPubkey = new PublicKey(pubkeyStr);
-    } catch {
+    const signerPubkey = parsePublicKeyBase58(pubkeyStr);
+    if (!signerPubkey) {
       return respond({
         kind: "airwave-ext-res",
         requestId: req.requestId,

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 收回空帳戶租金（概念稿）</title>
+    <!--
+      非正式。不是版本契約。
+      頂欄右側回收圖示，數字是偵測到的空 token account 數。
+      勾選後可超過單筆上限；確認頁依交易分組。費用用簽名費＋優先費加總，不向鏈詢價。
+    -->
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --danger: #c75050;
+        --ok: #4ecb8d;
+        --popup-w: 384px;
+        --popup-h: 600px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1280px; margin: 0 auto; padding: 28px 20px 64px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 8px; max-width: 54rem; font-size: 0.92rem; }
+      .note { color: var(--text-dim); font-size: 0.82rem; margin: 0 0 24px; max-width: 54rem; }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(var(--popup-w), 1fr));
+        gap: 28px;
+        align-items: start;
+      }
+      .cap {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        margin-bottom: 8px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .cap strong { color: var(--text-muted); font-weight: 600; text-transform: none; letter-spacing: 0; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 10px 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+      .bar-wallet {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        flex: 0 1 auto;
+        padding: 5px 12px 5px 5px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+      }
+      .top-gap { flex: 1; min-width: 8px; }
+      .avatar {
+        width: 28px; height: 28px; border-radius: 50%;
+        background: var(--accent); color: #fff; font-weight: 700; font-size: 0.75rem;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      }
+      .avatar.mark {
+        width: 34px; height: 34px; font-size: 8px; letter-spacing: -0.06em; line-height: 1;
+        overflow: hidden; white-space: nowrap;
+      }
+      .bar-wallet-text { min-width: 0; }
+      .bar-wallet-name {
+        font-size: 0.82rem; font-weight: 600;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .bar-wallet-addr { font-size: 0.68rem; color: var(--text-dim); font-family: var(--mono); }
+      .icon-btn {
+        width: 34px; height: 34px; border-radius: var(--radius-sm);
+        border: 1px solid transparent; background: transparent; color: var(--text-muted);
+        display: grid; place-items: center; flex-shrink: 0; padding: 0; position: relative;
+      }
+      .icon-btn.edge { border-color: var(--stroke); background: var(--bg); color: var(--text); }
+      .icon-btn.recycle {
+        width: 36px;
+        height: 36px;
+        color: #3ddc84;
+      }
+      .icon-btn.recycle.idle {
+        color: #3ddc84;
+        opacity: 0.32;
+        cursor: default;
+      }
+      .icon-btn.recycle svg { width: 22px; height: 22px; display: block; }
+      .icon-btn.reload {
+        width: 36px;
+        height: 36px;
+        color: var(--text);
+      }
+      .icon-btn.reload svg { width: 22px; height: 22px; display: block; }
+      .recycle-n {
+        position: absolute;
+        right: -1px;
+        bottom: -1px;
+        min-width: 14px;
+        height: 14px;
+        padding: 0 3px;
+        border-radius: 999px;
+        border: 1px solid #1a3d2c;
+        background: #10261b;
+        display: grid;
+        place-items: center;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: #d8ffe8;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+        pointer-events: none;
+      }
+      .title {
+        flex: 1; min-width: 0; text-align: center;
+        font-weight: 600; font-size: 0.92rem;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .body { flex: 1; min-height: 0; overflow: auto; padding: 4px 14px 8px; }
+      .body.center {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; padding: 28px 20px;
+      }
+      .section-head { display: flex; align-items: center; justify-content: space-between; margin: 10px 0 4px; }
+      .section-head h3 { margin: 0; font-size: 0.88rem; font-weight: 600; }
+      .section-tools { display: flex; align-items: center; gap: 2px; }
+      .section-tools .icon-btn { width: 30px; height: 30px; }
+      .section-tools .icon-btn.recycle,
+      .section-tools .icon-btn.reload { width: 36px; height: 36px; }
+      .token {
+        display: flex; align-items: center; gap: 10px;
+        padding: 11px 0; border-bottom: 1px solid var(--stroke-soft);
+      }
+      .dot {
+        width: 32px; height: 32px; border-radius: 50%; background: var(--fill);
+        display: grid; place-items: center; font-size: 0.62rem; font-weight: 700;
+        color: var(--text-muted); flex-shrink: 0;
+      }
+      .token-name { font-size: 0.86rem; font-weight: 600; }
+      .token-sub { font-size: 0.75rem; color: var(--text-dim); }
+      .pick {
+        display: flex; align-items: center; gap: 10px;
+        padding: 9px 0; border-bottom: 1px solid var(--stroke-soft);
+        font-size: 0.84rem;
+      }
+      .pick.all { border-bottom-color: var(--stroke); }
+      .box {
+        width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0;
+        border: 1.5px solid var(--accent); background: var(--accent);
+        display: grid; place-items: center; color: #061018;
+      }
+      .box.off { background: transparent; border-color: var(--text-dim); }
+      .pick .name { font-weight: 600; white-space: nowrap; }
+      .pick .acct {
+        flex: 1; min-width: 0; color: var(--text-dim); font-family: var(--mono); font-size: 0.75rem;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .pick .rent { color: var(--text-muted); font-variant-numeric: tabular-nums; font-size: 0.78rem; white-space: nowrap; }
+      .hero { padding: 10px 0 12px; }
+      .hero-amt {
+        margin: 0; font-size: 1.35rem; font-weight: 650; letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums; color: var(--ok);
+      }
+      .hero-sub { margin: 2px 0 0; color: var(--text-muted); font-size: 0.82rem; }
+      .kv { margin: 0 0 8px; border: 1px solid var(--stroke-soft); border-radius: var(--radius); background: var(--bg-elevated); }
+      .kv div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 12px; font-size: 0.82rem; }
+      .kv div + div { border-top: 1px solid var(--stroke-soft); }
+      .kv dt { color: var(--text-muted); }
+      .kv dd { margin: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+      .batch {
+        margin: 10px 0 2px; font-size: 0.75rem; color: var(--text-dim);
+      }
+      .row {
+        display: flex; align-items: baseline; gap: 8px;
+        padding: 8px 0; border-bottom: 1px solid var(--stroke-soft); font-size: 0.82rem;
+      }
+      .row .name { font-weight: 600; white-space: nowrap; }
+      .row .acct {
+        flex: 1; min-width: 0; color: var(--text-dim); font-family: var(--mono); font-size: 0.75rem;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .row .rent { color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 0.78rem; }
+      .dock {
+        flex-shrink: 0; padding: 8px 12px 12px;
+        border-top: 1px solid var(--stroke-soft); background: var(--bg-elevated);
+      }
+      .dock-meta {
+        margin: 0 0 8px; text-align: center; color: var(--text-muted); font-size: 0.78rem;
+      }
+      .primary {
+        width: 100%; border: 0; background: var(--accent); color: #061018;
+        font-weight: 700; font-size: 0.88rem; font-family: inherit;
+        border-radius: 10px; padding: 11px;
+      }
+      .tab-bar { display: flex; flex-shrink: 0; border-top: 1px solid var(--stroke-soft); background: var(--bg-elevated); }
+      .tab-bar span {
+        flex: 1; text-align: center; padding: 12px 8px; font-size: 0.8rem;
+        color: var(--text-dim); border-top: 2px solid transparent;
+      }
+      .tab-bar span.on { color: var(--accent); border-top-color: var(--accent); font-weight: 600; }
+      .status-title { margin: 18px 0 6px; font-size: 1.28rem; font-weight: 600; }
+      .status-lead { margin: 0; font-size: 0.84rem; color: var(--text-muted); }
+      .err { margin: 0; color: var(--danger); font-size: 0.84rem; }
+      .trace { width: 112px; height: 112px; display: block; }
+      .check {
+        width: 72px; height: 72px; border-radius: 50%;
+        border: 2px solid var(--ok); color: var(--ok); display: grid; place-items: center;
+      }
+      .decisions { margin: 28px 0 0; padding: 0; max-width: 54rem; color: var(--text-muted); font-size: 0.88rem; }
+      .decisions li { margin: 6px 0; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>收回空帳戶租金</h1>
+      <p class="lede">
+        概念稿。回收圖示在 Tokens 標題列，和重新整理並排。有空帳戶時為綠色，數字在右下角；沒有可收回時圖示變暗，不顯示 0。頂欄右側留空。
+      </p>
+      <p class="note">
+        沒有可收回時仍留著這顆圖示，只是變暗、不顯示 0，也不能點進去。稿上每筆交易最多 8 個帳戶，只為了看出分批；實作時 N 以塞得進交易大小上限為準。費用數字用下面的算法算死，不是向鏈詢價。
+      </p>
+
+      <div class="grid">
+        <div>
+          <div class="cap">Home · <strong>回收與重新整理同一列</strong></div>
+          <div class="phone">
+            <header class="top">
+              <div class="bar-wallet">
+                <div class="avatar mark" aria-hidden="true">Impo</div>
+                <div class="bar-wallet-text">
+                  <div class="bar-wallet-name">Imported 3</div>
+                  <div class="bar-wallet-addr">gLdH…CLCx</div>
+                </div>
+              </div>
+              <div class="top-gap"></div>
+              <span class="icon-btn" title="鎖定" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+              </span>
+              <span class="icon-btn" title="選單" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+              </span>
+            </header>
+            <div class="body">
+              <div class="section-head">
+                <h3>Tokens</h3>
+                <div class="section-tools">
+                  <button class="icon-btn recycle" type="button" title="收回租金" aria-label="收回租金，12 個空帳戶">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/>
+                      <path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12"/>
+                      <path d="m14 16-3 3 3 3"/>
+                      <path d="M8.293 13.596 7.196 9.5 3.1 10.598"/>
+                      <path d="m9.344 5.811 1.093-1.892A1.83 1.83 0 0 1 11.985 3a1.784 1.784 0 0 1 1.546.888l3.943 6.843"/>
+                      <path d="m13.378 9.633 4.096 1.098 1.097-4.096"/>
+                    </svg>
+                    <span class="recycle-n">12</span>
+                  </button>
+                  <span class="icon-btn reload" title="重新查詢" aria-label="重新查詢">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.2-5.8"/><path d="M21 3v6h-6"/></svg>
+                  </span>
+                </div>
+              </div>
+              <div class="token"><div class="dot">SOL</div><div><div class="token-name">SOL</div><div class="token-sub">1.842</div></div></div>
+              <div class="token"><div class="dot">US</div><div><div class="token-name">USDC</div><div class="token-sub">240.5</div></div></div>
+              <div class="token"><div class="dot">JU</div><div><div class="token-name">JUP</div><div class="token-sub">18</div></div></div>
+            </div>
+            <div class="tab-bar"><span class="on">Tokens</span><span>Activity</span></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="cap">Home · <strong>沒有可收回</strong></div>
+          <div class="phone">
+            <header class="top">
+              <div class="bar-wallet">
+                <div class="avatar mark" aria-hidden="true">Impo</div>
+                <div class="bar-wallet-text">
+                  <div class="bar-wallet-name">Imported 3</div>
+                  <div class="bar-wallet-addr">gLdH…CLCx</div>
+                </div>
+              </div>
+              <div class="top-gap"></div>
+              <span class="icon-btn" title="鎖定" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+              </span>
+              <span class="icon-btn" title="選單" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+              </span>
+            </header>
+            <div class="body">
+              <div class="section-head">
+                <h3>Tokens</h3>
+                <div class="section-tools">
+                  <span class="icon-btn recycle idle" title="沒有可收回的空帳戶" aria-label="沒有可收回的空帳戶" aria-disabled="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/>
+                      <path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12"/>
+                      <path d="m14 16-3 3 3 3"/>
+                      <path d="M8.293 13.596 7.196 9.5 3.1 10.598"/>
+                      <path d="m9.344 5.811 1.093-1.892A1.83 1.83 0 0 1 11.985 3a1.784 1.784 0 0 1 1.546.888l3.943 6.843"/>
+                      <path d="m13.378 9.633 4.096 1.098 1.097-4.096"/>
+                    </svg>
+                  </span>
+                  <span class="icon-btn reload" title="重新查詢" aria-label="重新查詢">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.2-5.8"/><path d="M21 3v6h-6"/></svg>
+                  </span>
+                </div>
+              </div>
+              <div class="token"><div class="dot">SOL</div><div><div class="token-name">SOL</div><div class="token-sub">1.842</div></div></div>
+              <div class="token"><div class="dot">US</div><div><div class="token-name">USDC</div><div class="token-sub">240.5</div></div></div>
+            </div>
+            <div class="tab-bar"><span class="on">Tokens</span><span>Activity</span></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="cap">勾選 · <strong>全選，可超過一批</strong></div>
+          <div class="phone">
+            <header class="top">
+              <span class="icon-btn edge" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></span>
+              <div class="title">收回租金</div>
+              <span class="icon-btn edge" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+            </header>
+            <div class="body">
+              <div class="pick all">
+                <span class="box" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12.5l4.2 4.2L19 7.5"/></svg></span>
+                <span class="name">全選</span>
+              </div>
+              <div class="pick"><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12.5l4.2 4.2L19 7.5"/></svg></span><span class="name">USDC</span><span class="acct">Ata1…9kLm</span><span class="rent">0.002039</span></div>
+              <div class="pick"><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12.5l4.2 4.2L19 7.5"/></svg></span><span class="name">BONK</span><span class="acct">Bnk2…4pQs</span><span class="rent">0.002039</span></div>
+              <div class="pick"><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12.5l4.2 4.2L19 7.5"/></svg></span><span class="name">wSOL</span><span class="acct">Wso3…8nTr</span><span class="rent">0.002039</span></div>
+              <div class="pick"><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12.5l4.2 4.2L19 7.5"/></svg></span><span class="name">JUP</span><span class="acct">Jup4…1cVe</span><span class="rent">0.002039</span></div>
+              <div class="pick"><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12.5l4.2 4.2L19 7.5"/></svg></span><span class="name">RAY</span><span class="acct">Ray5…2mWx</span><span class="rent">0.002039</span></div>
+              <div class="pick"><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12.5l4.2 4.2L19 7.5"/></svg></span><span class="name">ORCA</span><span class="acct">Orc6…7kYp</span><span class="rent">0.002039</span></div>
+              <div class="pick"><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12.5l4.2 4.2L19 7.5"/></svg></span><span class="name">MNDE</span><span class="acct">Mnd7…3qLs</span><span class="rent">0.002039</span></div>
+              <div class="pick"><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12.5l4.2 4.2L19 7.5"/></svg></span><span class="name">HNT</span><span class="acct">Hnt8…5vBc</span><span class="rent">0.002039</span></div>
+              <div class="pick"><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12.5l4.2 4.2L19 7.5"/></svg></span><span class="name">PYTH</span><span class="acct">Pyt9…1aSd</span><span class="rent">0.002039</span></div>
+              <div class="pick"><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12.5l4.2 4.2L19 7.5"/></svg></span><span class="name">WIF</span><span class="acct">Wif0…6eFg</span><span class="rent">0.002039</span></div>
+              <div class="pick"><span class="box off"></span><span class="name">MEW</span><span class="acct">Mew1…8hIj</span><span class="rent">0.002039</span></div>
+              <div class="pick"><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12.5l4.2 4.2L19 7.5"/></svg></span><span class="name">BOME</span><span class="acct">Bom2…3kLm</span><span class="rent">0.002039</span></div>
+            </div>
+            <div class="dock">
+              <p class="dock-meta">已選 11 · 2 筆交易</p>
+              <button class="primary" type="button">下一步</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="cap">確認 · <strong>依交易分組，費用算死</strong></div>
+          <div class="phone">
+            <header class="top">
+              <span class="icon-btn edge" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></span>
+              <div class="title">確認收回</div>
+              <span class="icon-btn edge" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+            </header>
+            <div class="body">
+              <div class="hero">
+                <p class="hero-amt">+0.022432 SOL</p>
+                <p class="hero-sub">11 個帳戶 · 2 筆交易</p>
+              </div>
+              <dl class="kv">
+                <div><dt>手續費</dt><dd>0.000020 SOL</dd></div>
+                <div><dt>簽名費</dt><dd>0.000010</dd></div>
+                <div><dt>優先費</dt><dd>0.000010</dd></div>
+              </dl>
+              <p class="batch">交易 1 · 8</p>
+              <div class="row"><span class="name">USDC</span><span class="acct">Ata1…9kLm</span><span class="rent">0.002039</span></div>
+              <div class="row"><span class="name">BONK</span><span class="acct">Bnk2…4pQs</span><span class="rent">0.002039</span></div>
+              <div class="row"><span class="name">wSOL</span><span class="acct">Wso3…8nTr</span><span class="rent">0.002039</span></div>
+              <div class="row"><span class="name">JUP</span><span class="acct">Jup4…1cVe</span><span class="rent">0.002039</span></div>
+              <div class="row"><span class="name">RAY</span><span class="acct">Ray5…2mWx</span><span class="rent">0.002039</span></div>
+              <div class="row"><span class="name">ORCA</span><span class="acct">Orc6…7kYp</span><span class="rent">0.002039</span></div>
+              <div class="row"><span class="name">MNDE</span><span class="acct">Mnd7…3qLs</span><span class="rent">0.002039</span></div>
+              <div class="row"><span class="name">HNT</span><span class="acct">Hnt8…5vBc</span><span class="rent">0.002039</span></div>
+              <p class="batch">交易 2 · 3</p>
+              <div class="row"><span class="name">PYTH</span><span class="acct">Pyt9…1aSd</span><span class="rent">0.002039</span></div>
+              <div class="row"><span class="name">WIF</span><span class="acct">Wif0…6eFg</span><span class="rent">0.002039</span></div>
+              <div class="row"><span class="name">BOME</span><span class="acct">Bom2…3kLm</span><span class="rent">0.002039</span></div>
+            </div>
+            <div class="dock"><button class="primary" type="button">確認</button></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="cap">送出 · <strong>同時在飛，不等逐筆</strong></div>
+          <div class="phone">
+            <header class="top">
+              <span class="icon-btn edge" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></span>
+              <div class="title">確認收回</div>
+              <span class="icon-btn edge" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+            </header>
+            <div class="body center">
+              <svg class="trace" viewBox="0 0 24 24" fill="none" role="status" aria-label="確認中">
+                <circle cx="12" cy="12" r="9.5" stroke="#9945FF" opacity="0.18" stroke-width="3" />
+                <circle cx="12" cy="12" r="9.5" stroke="#14F195" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 150">
+                  <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="4s" repeatCount="indefinite" />
+                  <animate attributeName="stroke-dasharray" values="0 150;32 150;32 150" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+                  <animate attributeName="stroke-dashoffset" values="0;-16;-59" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite" />
+                </circle>
+              </svg>
+              <p class="status-title">確認中</p>
+              <p class="status-lead">等待這一波結束</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="cap">結束 · <strong>成功、鏈上失敗、過期</strong></div>
+          <div class="phone">
+            <header class="top">
+              <span class="icon-btn edge" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></span>
+              <div class="title">收回結果</div>
+              <span class="icon-btn edge" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span>
+            </header>
+            <div class="body">
+              <div class="hero">
+                <p class="hero-amt">+0.016314 SOL</p>
+                <p class="hero-sub">6 筆交易</p>
+              </div>
+              <dl class="kv">
+                <div><dt>已確認</dt><dd>4</dd></div>
+                <div><dt>鏈上失敗</dt><dd>1</dd></div>
+                <div><dt>已過期</dt><dd>1</dd></div>
+              </dl>
+            </div>
+            <div class="dock"><button class="primary" type="button">完成</button></div>
+          </div>
+        </div>
+      </div>
+
+      <ul class="decisions">
+        <li>入口在 Tokens 標題列右側，跟重新整理並排。有空帳戶時圖示是綠色回收標，數字在右下角。沒有可收回時同一顆圖示變暗，不顯示 0，也不能點。頂欄右側留空。</li>
+        <li>勾選頁有全選。可以選超過一批；殼底寫已選幾個、會拆成幾筆交易。沒勾任何一筆不能下一步。</li>
+        <li>確認後一次簽完，同時最多 5 筆在送。某一筆失敗或過期不取消其餘。全部到達已確認或已過期才出結果。</li>
+        <li>結果分三數：已確認（上鏈且成功）、鏈上失敗（已確認但 err，租金沒收回）、已過期（沒上鏈）。不中途停下來重送。</li>
+        <li>手續費在組好每一筆 message 之後就算死：每筆簽名費 5,000 lamports × 簽名數，加上 ceil(CU limit × Default CU price / 1,000,000) lamports。畫面是各筆加總。不呼叫 getFeeForMessage，也不用模擬回傳的 fee。</li>
+      </ul>
+    </div>
+  </body>
+</html>

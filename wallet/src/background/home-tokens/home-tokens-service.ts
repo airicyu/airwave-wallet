@@ -1,5 +1,6 @@
+import { address } from "@solana/kit";
 import type { Settings } from "../../shared/storage-keys";
-import { Connection, PublicKey } from "@solana/web3.js";
+import { solanaRpcForUrl } from "../../shared/solana-rpc";
 import {
   NATIVE_SOL_ID,
   WRAPPED_SOL_MINT,
@@ -332,10 +333,8 @@ function mergeWalletBalances(pages: WalletTokenBalance[][]): HomeTokenRow[] {
   return rows;
 }
 
-const LEGACY_TOKEN_PROGRAM = new PublicKey(
-  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-);
-const TOKEN_2022_PROGRAM = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
+const LEGACY_TOKEN_PROGRAM = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+const TOKEN_2022_PROGRAM = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
 
 async function attachTokenProgramsForOwner(
   rpcUrl: string,
@@ -345,22 +344,38 @@ async function attachTokenProgramsForOwner(
 ): Promise<HomeTokenRow[]> {
   const needsProgram = rows.some((r) => r.id !== NATIVE_SOL_ID && r.tokenProgram == null);
   if (!needsProgram) return rows;
-  const conn = new Connection(rpcUrl, "confirmed");
-  const pk = new PublicKey(owner);
+  const rpc = solanaRpcForUrl(rpcUrl);
+  const pk = address(owner);
   const [legacy, token2022] = await Promise.all([
-    conn.getParsedTokenAccountsByOwner(pk, { programId: LEGACY_TOKEN_PROGRAM }),
-    conn.getParsedTokenAccountsByOwner(pk, { programId: TOKEN_2022_PROGRAM }),
+    rpc
+      .getTokenAccountsByOwner(
+        pk,
+        { programId: address(LEGACY_TOKEN_PROGRAM) },
+        { encoding: "jsonParsed", commitment: "confirmed" },
+      )
+      .send(),
+    rpc
+      .getTokenAccountsByOwner(
+        pk,
+        { programId: address(TOKEN_2022_PROGRAM) },
+        { encoding: "jsonParsed", commitment: "confirmed" },
+      )
+      .send(),
   ]);
   if (signal.aborted) throw new DOMException("Aborted", "AbortError");
   const byMint = new Map<string, TokenProgramKind>();
-  for (const { account } of legacy.value) {
+  for (const { account } of legacy.value as unknown as {
+    account: { data: { parsed?: { type?: string; info?: { mint?: string } } } };
+  }[]) {
     const parsed = account.data.parsed;
     if (parsed?.type !== "account") continue;
     const mint = (parsed.info as { mint?: string })?.mint;
     if (!mint || byMint.has(mint)) continue;
     byMint.set(mint, "spl-token");
   }
-  for (const { account } of token2022.value) {
+  for (const { account } of token2022.value as unknown as {
+    account: { data: { parsed?: { type?: string; info?: { mint?: string } } } };
+  }[]) {
     const parsed = account.data.parsed;
     if (parsed?.type !== "account") continue;
     const mint = (parsed.info as { mint?: string })?.mint;

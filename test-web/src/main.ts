@@ -18,16 +18,29 @@ import {
 import type { Wallet } from "@wallet-standard/base";
 import bs58 from "bs58";
 import {
-  Connection,
-  Keypair,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  SystemProgram,
-  TransactionMessage,
-  VersionedTransaction,
-} from "@solana/web3.js";
+  address,
+  appendTransactionMessageInstruction,
+  compileTransaction,
+  compileTransactionMessage,
+  createSolanaRpc,
+  createTransactionMessage,
+  getAddressFromPublicKey,
+  getBase64EncodedWireTransaction,
+  getCompiledTransactionMessageEncoder,
+  getTransactionDecoder,
+  getTransactionEncoder,
+  lamports,
+  pipe,
+  setTransactionMessageFeePayer,
+  setTransactionMessageLifetimeUsingBlockhash,
+  type Blockhash,
+  type Signature,
+} from "@solana/kit";
+import { createKeyPairFromPrivateKeyBytes } from "@solana/keys";
+import { getTransferSolInstruction } from "@solana-program/system";
 
 const DEVNET_RPC = "https://api.devnet.solana.com";
+const LAMPORTS_PER_SOL = 1_000_000_000n;
 
 const logEl = document.getElementById("log")!;
 const statusEl = document.getElementById("status")!;
@@ -52,14 +65,18 @@ function setStatus(text: string): void {
   statusEl.textContent = text;
 }
 
+function rpc() {
+  return createSolanaRpc(DEVNET_RPC);
+}
+
 function findAirwave(): Wallet | undefined {
   return getWallets()
     .get()
     .find((w) => w.name === "Airwave");
 }
 
-function enableSigning(address: string | undefined): void {
-  const ok = Boolean(address);
+function enableSigning(addressStr: string | undefined): void {
+  const ok = Boolean(addressStr);
   btnSignMsg.disabled = !ok;
   btnSignMsgBinary.disabled = !ok;
   btnSignMsgTx.disabled = !ok;
@@ -68,7 +85,7 @@ function enableSigning(address: string | undefined): void {
   btnSignAndSendTxStd.disabled = !ok;
   btnSignTxFail.disabled = !ok;
   btnAirdrop.disabled = !ok;
-  if (address) setStatus(`已連線：${address}`);
+  if (addressStr) setStatus(`已連線：${addressStr}`);
 }
 
 let changeSubscribed = false;
@@ -79,9 +96,9 @@ function subscribeChange(wallet: Wallet): void {
     | StandardEventsFeature[typeof StandardEvents]
     | undefined;
   events?.on("change", (props) => {
-    const address = props.accounts?.[0]?.address;
-    log("account change:", address ?? "(empty)");
-    enableSigning(address);
+    const addr = props.accounts?.[0]?.address;
+    log("account change:", addr ?? "(empty)");
+    enableSigning(addr);
   });
   changeSubscribed = true;
 }
@@ -104,6 +121,85 @@ function waitForAirwave(timeoutMs = 5000): Promise<Wallet> {
       }
     });
   });
+}
+
+async function randomAddress(): Promise<ReturnType<typeof address>> {
+  const seed = crypto.getRandomValues(new Uint8Array(32));
+  const keyPair = await createKeyPairFromPrivateKeyBytes(seed, true);
+  return address(await getAddressFromPublicKey(keyPair.publicKey));
+}
+
+async function buildSelfTransferTx(
+  fromAddress: ReturnType<typeof address>,
+  lamportsAmount: bigint,
+): Promise<Uint8Array> {
+  const latest = await rpc().getLatestBlockhash({ commitment: "confirmed" }).send();
+  const txMessage = pipe(
+    createTransactionMessage({ version: 0 }),
+    (m) => setTransactionMessageFeePayer(fromAddress, m),
+    (m) =>
+      setTransactionMessageLifetimeUsingBlockhash(
+        {
+          blockhash: latest.value.blockhash,
+          lastValidBlockHeight: latest.value.lastValidBlockHeight,
+        },
+        m,
+      ),
+    (m) =>
+      appendTransactionMessageInstruction(
+        getTransferSolInstruction({
+          source: fromAddress,
+          destination: fromAddress,
+          amount: lamportsAmount,
+        } as unknown as Parameters<typeof getTransferSolInstruction>[0]),
+        m,
+      ),
+  );
+  const tx = compileTransaction(txMessage);
+  return new Uint8Array(getTransactionEncoder().encode(tx));
+}
+
+async function syntheticTxMessageBytes(): Promise<Uint8Array> {
+  const payer = await randomAddress();
+  const compiled = compileTransactionMessage(
+    pipe(
+      createTransactionMessage({ version: 0 }),
+      (m) => setTransactionMessageFeePayer(payer, m),
+      (m) =>
+        setTransactionMessageLifetimeUsingBlockhash(
+          {
+            blockhash: "11111111111111111111111111111111" as Blockhash,
+            lastValidBlockHeight: 0n,
+          },
+          m,
+        ),
+      (m) =>
+        appendTransactionMessageInstruction(
+          getTransferSolInstruction({
+            source: payer,
+            destination: payer,
+            amount: 0n,
+          } as unknown as Parameters<typeof getTransferSolInstruction>[0]),
+          m,
+        ),
+    ),
+  );
+  return new Uint8Array(getCompiledTransactionMessageEncoder().encode(compiled));
+}
+
+async function confirmSignature(signature: string): Promise<void> {
+  const client = rpc();
+  const start = Date.now();
+  while (Date.now() - start < 60_000) {
+    const st = await client
+      .getSignatureStatuses([signature as Signature], { searchTransactionHistory: true })
+      .send();
+    const val = st.value[0];
+    if (val?.confirmationStatus === "confirmed" || val?.confirmationStatus === "finalized") return;
+    if (val?.err) throw new Error("confirmation failed");
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  throw new Error("confirmation timeout");
 }
 
 btnDisconnect.addEventListener("click", async () => {
@@ -137,9 +233,9 @@ btnConnect.addEventListener("click", async () => {
       return;
     }
     const { accounts } = await connect.connect();
-    const address = accounts[0]?.address;
-    log("Connected:", address);
-    enableSigning(address);
+    const addr = accounts[0]?.address;
+    log("Connected:", addr);
+    enableSigning(addr);
   } catch (e) {
     log("Connect error:", e instanceof Error ? e.message : e);
   }
@@ -189,22 +285,6 @@ btnSignMsgBinary.addEventListener("click", async () => {
   }
 });
 
-function syntheticTxMessageBytes(): Uint8Array {
-  const payer = Keypair.generate();
-  const msg = new TransactionMessage({
-    payerKey: payer.publicKey,
-    recentBlockhash: "11111111111111111111111111111111",
-    instructions: [
-      SystemProgram.transfer({
-        fromPubkey: payer.publicKey,
-        toPubkey: payer.publicKey,
-        lamports: 0,
-      }),
-    ],
-  }).compileToV0Message();
-  return msg.serialize();
-}
-
 btnSignMsgTx.addEventListener("click", async () => {
   try {
     const wallet = await waitForAirwave();
@@ -218,7 +298,7 @@ btnSignMsgTx.addEventListener("click", async () => {
     const { accounts } = await connect.connect({ silent: true });
     const account = accounts[0];
     if (!account) throw new Error("no account");
-    const message = syntheticTxMessageBytes();
+    const message = await syntheticTxMessageBytes();
     await signMessage.signMessage({ account, message });
     log("Unexpected: tx-as-message should not succeed");
   } catch (e) {
@@ -241,21 +321,17 @@ btnAirdrop.addEventListener("click", async () => {
     if (!account) throw new Error("no account");
     connectedAddress = account.address;
 
-    const connection = new Connection(DEVNET_RPC);
-    const pubkey = new PublicKey(account.address);
-    const before = await connection.getBalance(pubkey);
+    const client = rpc();
+    const owner = address(account.address);
+    const before = await client.getBalance(owner, { commitment: "confirmed" }).send();
     log("Requesting devnet airdrop (1 SOL) to", account.address);
-    const signature = await connection.requestAirdrop(pubkey, LAMPORTS_PER_SOL);
+    const signature = await client.requestAirdrop(owner, lamports(LAMPORTS_PER_SOL)).send();
     log("Airdrop signature:", signature);
-    const latest = await connection.getLatestBlockhash();
-    await connection.confirmTransaction(
-      { signature, ...latest },
-      "confirmed",
-    );
-    const after = await connection.getBalance(pubkey);
+    await confirmSignature(signature);
+    const after = await client.getBalance(owner, { commitment: "confirmed" }).send();
     log(
       "Balance:",
-      `${before / LAMPORTS_PER_SOL} → ${after / LAMPORTS_PER_SOL} SOL`,
+      `${Number(before.value) / Number(LAMPORTS_PER_SOL)} → ${Number(after.value) / Number(LAMPORTS_PER_SOL)} SOL`,
     );
   } catch (e) {
     log(
@@ -283,26 +359,11 @@ btnSignTxFail.addEventListener("click", async () => {
     const account = accounts[0];
     if (!account) throw new Error("no account");
 
-    const connection = new Connection(DEVNET_RPC);
-    const from = new PublicKey(account.address);
-    const { blockhash } = await connection.getLatestBlockhash();
-    const drainTo = Keypair.generate().publicKey;
-    const msg = new TransactionMessage({
-      payerKey: from,
-      recentBlockhash: blockhash,
-      instructions: [
-        SystemProgram.transfer({
-          fromPubkey: from,
-          toPubkey: drainTo,
-          lamports: 10 * LAMPORTS_PER_SOL,
-        }),
-      ],
-    }).compileToV0Message();
-    const tx = new VersionedTransaction(msg);
+    const tx = await buildSelfTransferTx(address(account.address), 10n * LAMPORTS_PER_SOL);
 
     const [out] = await signTx.signTransaction({
       account,
-      transaction: tx.serialize(),
+      transaction: tx,
     });
     log("Signed fail-case tx base58:", bs58.encode(out.signedTransaction));
   } catch (e) {
@@ -325,25 +386,11 @@ btnSignTx.addEventListener("click", async () => {
     const account = accounts[0];
     if (!account) throw new Error("no account");
 
-    const connection = new Connection(DEVNET_RPC);
-    const from = new PublicKey(account.address);
-    const { blockhash } = await connection.getLatestBlockhash();
-    const msg = new TransactionMessage({
-      payerKey: from,
-      recentBlockhash: blockhash,
-      instructions: [
-        SystemProgram.transfer({
-          fromPubkey: from,
-          toPubkey: from,
-          lamports: 0,
-        }),
-      ],
-    }).compileToV0Message();
-    const tx = new VersionedTransaction(msg);
+    const tx = await buildSelfTransferTx(address(account.address), 0n);
 
     const [out] = await signTx.signTransaction({
       account,
-      transaction: tx.serialize(),
+      transaction: tx,
     });
     log("Signed tx base58:", bs58.encode(out.signedTransaction));
   } catch (e) {
@@ -366,32 +413,26 @@ btnSignAndSendTx.addEventListener("click", async () => {
     const account = accounts[0];
     if (!account) throw new Error("no account");
 
-    const connection = new Connection(DEVNET_RPC);
-    const from = new PublicKey(account.address);
-    const latest = await connection.getLatestBlockhash();
-    const msg = new TransactionMessage({
-      payerKey: from,
-      recentBlockhash: latest.blockhash,
-      instructions: [
-        SystemProgram.transfer({
-          fromPubkey: from,
-          toPubkey: from,
-          lamports: 0,
-        }),
-      ],
-    }).compileToV0Message();
-    const tx = new VersionedTransaction(msg);
+    const tx = await buildSelfTransferTx(address(account.address), 0n);
 
     const [out] = await signTx.signTransaction({
       account,
-      transaction: tx.serialize(),
+      transaction: tx,
     });
     log("Signed for send, broadcasting…");
-    const signature = await connection.sendRawTransaction(out.signedTransaction, {
-      skipPreflight: false,
-    });
+    const client = rpc();
+    const wire = getBase64EncodedWireTransaction(
+      getTransactionDecoder().decode(out.signedTransaction),
+    );
+    const signature = await client
+      .sendTransaction(wire, {
+        encoding: "base64",
+        skipPreflight: false,
+        preflightCommitment: "confirmed",
+      })
+      .send();
     log("Broadcast signature:", signature);
-    await connection.confirmTransaction({ signature, ...latest }, "confirmed");
+    await confirmSignature(signature);
     log("Confirmed:", signature);
   } catch (e) {
     log("Sign and send error:", e instanceof Error ? e.message : e);
@@ -416,26 +457,12 @@ btnSignAndSendTxStd.addEventListener("click", async () => {
     const account = accounts[0];
     if (!account) throw new Error("no account");
 
-    const connection = new Connection(DEVNET_RPC);
-    const from = new PublicKey(account.address);
-    const { blockhash } = await connection.getLatestBlockhash();
-    const msg = new TransactionMessage({
-      payerKey: from,
-      recentBlockhash: blockhash,
-      instructions: [
-        SystemProgram.transfer({
-          fromPubkey: from,
-          toPubkey: from,
-          lamports: 0,
-        }),
-      ],
-    }).compileToV0Message();
-    const tx = new VersionedTransaction(msg);
+    const tx = await buildSelfTransferTx(address(account.address), 0n);
 
     const [out] = await signAndSend.signAndSendTransaction({
       account,
       chain: "solana:devnet",
-      transaction: tx.serialize(),
+      transaction: tx,
     });
     log("signAndSendTransaction ok:", bs58.encode(out.signature));
   } catch (e) {

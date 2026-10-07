@@ -18,3 +18,7 @@
 | [簽署交易 Anchor IDL 解析](./sign-transaction-ix-decode.md) | 靜態 common parser 已於 [0.19.0](../0.19.0/INDEX.md) 出貨；鏈上／metadata IDL 層仍未排程 |
 | [地址複製回饋](./address-copy-feedback.md) | 頂欄地址複製圖示成功寫入剪貼簿後，按鈕短暫顯示已複製 |
 | [持倉刷新按鈕硬冷卻](./token-balance-refresh-cooldown.md) | Tokens 刷新鈕按完後 disabled 3 秒，避免同一錢包連按打太多 RPC；切頁或切帳戶可清掉 |
+| [Kit 估算 compute units](./estimate-cu-via-kit.md) | 簽署交易 phase 1 改用 Kit `estimateResourceLimitsFactory` 讀實際消耗；建議 limit 公式仍是 0.11.0 |
+| [簽署交易 Durable Nonce 提醒](./sign-tx-durable-nonce-alert.md) | 審批時若第一條是 System `AdvanceNonceAccount`，提醒這筆用了 durable nonce；不擋批准 |
+| [簽署交易 AI 安全評估](./sign-tx-ai-security-eval.md) | 簽名前：decode＋規則／批次查詢 → OpenRouter Decisions（等級＋tags）→ 中高風險再 chat；暫不做 harness |
+| [Home 顯示 Devnet 或 Mainnet](./home-cluster-indicator.md) | 持倉與 Activity 不用進 Settings 就看得出目前 cluster；Devnet 更醒目；Home 不另做切換 |

@@ -31,6 +31,7 @@
 | [0.17.0](./0.17.0/INDEX.md) | shipped | Wallet Standard `solana:signAndSendTransaction`；popout 確認中→已確認 1s |
 | [0.18.0](./0.18.0/INDEX.md) | shipped | Home Activity：最近 20 筆；列尾開 Solscan |
 | [0.19.0](./0.19.0/INDEX.md) | shipped | 簽署明細靜態解讀；預期變動開 Explorer Inspector |
+| [0.20.0](./0.20.0/INDEX.md) | shipped | 全轉 `@solana/kit`；行為與 0.19.0 相同 |
 
 **版本號：** `x.y.z` 的 **patch**（例如 **0.3.1**）留給該 minor 的 **bugfix**，不排新功能。新功能走下一個 **minor**（0.3.0 → 0.4.0 → 0.5.0）。
 

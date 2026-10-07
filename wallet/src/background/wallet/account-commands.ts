@@ -1,8 +1,12 @@
-import { Keypair, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
 import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
-import { getExposedPublicKey } from "../../shared/accounts";
+import { getExposedPublicKey, parsePublicKeyBase58 } from "../../shared/accounts";
 import { decryptVault } from "../../shared/crypto-vault";
+import {
+  generateRandomLoadedAccount,
+  loadedAccountFromSecretBytes,
+  type LoadedAccountKeys,
+} from "../../shared/keypair-bytes";
 import {
   createEnglishMnemonic12,
   keypairFromMnemonic,
@@ -47,8 +51,8 @@ export async function handleGenerateSeedAccount(req: ExtensionRequest): Promise<
   const { label } = (req.payload ?? {}) as { label?: string };
   const accounts = await readAccounts();
   const mnemonic = createEnglishMnemonic12();
-  const kp = keypairFromMnemonic(mnemonic, "phantom", 0);
-  const publicKeyBase58 = kp.publicKey.toBase58();
+  const kp = await keypairFromMnemonic(mnemonic, "phantom", 0);
+  const publicKeyBase58 = kp.address;
   if (pubkeyExists(accounts, publicKeyBase58)) {
     return respond({
       kind: "airwave-ext-res",
@@ -60,7 +64,7 @@ export async function handleGenerateSeedAccount(req: ExtensionRequest): Promise<
   const id = newAccountId();
   const secrets = session.getVaultSecrets() ?? { secrets: {} };
   secrets.secrets[id] = secretToStored(kp);
-  session.setVaultSecrets(secrets);
+  await session.setVaultSecrets(secrets);
   await persistVaultFromSession();
   const meta: AccountMeta = {
     id,
@@ -89,8 +93,8 @@ export async function handleGenerateAccount(req: ExtensionRequest): Promise<Exte
   }
   const { label } = (req.payload ?? {}) as { label?: string };
   const accounts = await readAccounts();
-  const kp = Keypair.generate();
-  const publicKeyBase58 = kp.publicKey.toBase58();
+  const kp = await generateRandomLoadedAccount();
+  const publicKeyBase58 = kp.address;
   if (pubkeyExists(accounts, publicKeyBase58)) {
     return respond({
       kind: "airwave-ext-res",
@@ -102,7 +106,7 @@ export async function handleGenerateAccount(req: ExtensionRequest): Promise<Exte
   const id = newAccountId();
   const secrets = session.getVaultSecrets() ?? { secrets: {} };
   secrets.secrets[id] = secretToStored(kp);
-  session.setVaultSecrets(secrets);
+  await session.setVaultSecrets(secrets);
   await persistVaultFromSession();
   const meta: AccountMeta = {
     id,
@@ -120,22 +124,7 @@ export async function handleGenerateAccount(req: ExtensionRequest): Promise<Exte
   });
 }
 
-export async function handleImportAccount(req: ExtensionRequest): Promise<ExtensionResponse> {
-  if (!session.isUnlocked()) {
-    return respond({
-      kind: "airwave-ext-res",
-      requestId: req.requestId,
-      ok: false,
-      error: { code: "WALLET_LOCKED", message: "請先解鎖錢包" },
-    });
-  }
-  const { secret, secretBase58, label } = req.payload as {
-    secret?: string;
-    secretBase58?: string;
-    label?: string;
-  };
-  const secretRaw = (secret ?? secretBase58 ?? "").trim();
-  let kp: Keypair;
+async function loadedFromSecretRaw(secretRaw: string): Promise<LoadedAccountKeys | null> {
   try {
     let bytes: Uint8Array;
     if (secretRaw.startsWith("[")) {
@@ -151,8 +140,29 @@ export async function handleImportAccount(req: ExtensionRequest): Promise<Extens
     } else {
       bytes = bs58.decode(secretRaw);
     }
-    kp = Keypair.fromSecretKey(bytes);
+    return await loadedAccountFromSecretBytes(bytes);
   } catch {
+    return null;
+  }
+}
+
+export async function handleImportAccount(req: ExtensionRequest): Promise<ExtensionResponse> {
+  if (!session.isUnlocked()) {
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: { code: "WALLET_LOCKED", message: "請先解鎖錢包" },
+    });
+  }
+  const { secret, secretBase58, label } = req.payload as {
+    secret?: string;
+    secretBase58?: string;
+    label?: string;
+  };
+  const secretRaw = (secret ?? secretBase58 ?? "").trim();
+  const kp = await loadedFromSecretRaw(secretRaw);
+  if (!kp) {
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
@@ -161,7 +171,7 @@ export async function handleImportAccount(req: ExtensionRequest): Promise<Extens
     });
   }
   const accounts = await readAccounts();
-  const publicKeyBase58 = kp.publicKey.toBase58();
+  const publicKeyBase58 = kp.address;
   if (pubkeyExists(accounts, publicKeyBase58)) {
     return respond({
       kind: "airwave-ext-res",
@@ -173,7 +183,7 @@ export async function handleImportAccount(req: ExtensionRequest): Promise<Extens
   const id = newAccountId();
   const secrets = session.getVaultSecrets() ?? { secrets: {} };
   secrets.secrets[id] = secretToStored(kp);
-  session.setVaultSecrets(secrets);
+  await session.setVaultSecrets(secrets);
   await persistVaultFromSession();
   const meta: AccountMeta = {
     id,
@@ -228,10 +238,12 @@ export async function handlePreviewSeedAccounts(req: ExtensionRequest): Promise<
       },
     });
   }
-  const accounts = Array.from({ length: SEED_PREVIEW_COUNT }, (_, index) => {
-    const kp = keypairFromMnemonic(phrase, kind, index, customPath);
-    return { index, publicKeyBase58: kp.publicKey.toBase58() };
-  });
+  const accounts = await Promise.all(
+    Array.from({ length: SEED_PREVIEW_COUNT }, async (_, index) => {
+      const kp = await keypairFromMnemonic(phrase, kind, index, customPath);
+      return { index, publicKeyBase58: kp.address };
+    }),
+  );
   return respond({
     kind: "airwave-ext-res",
     requestId: req.requestId,
@@ -264,11 +276,11 @@ export async function handleImportSeedAccount(req: ExtensionRequest): Promise<Ex
       error: { code: "BAD_INDEX", message: "請選帳戶" },
     });
   }
-  let kp: Keypair;
+  let kp: LoadedAccountKeys;
   try {
     const phrase = parseMnemonic(mnemonic ?? "");
     const kind = pathKind ?? "phantom";
-    kp = keypairFromMnemonic(phrase, kind, index as number, customPath);
+    kp = await keypairFromMnemonic(phrase, kind, index as number, customPath);
   } catch (e) {
     const code = e instanceof Error && (e.message === "INVALID_MNEMONIC" || e.message === "INVALID_PATH")
       ? e.message
@@ -284,7 +296,7 @@ export async function handleImportSeedAccount(req: ExtensionRequest): Promise<Ex
     });
   }
   const accounts = await readAccounts();
-  const publicKeyBase58 = kp.publicKey.toBase58();
+  const publicKeyBase58 = kp.address;
   if (pubkeyExists(accounts, publicKeyBase58)) {
     return respond({
       kind: "airwave-ext-res",
@@ -296,7 +308,7 @@ export async function handleImportSeedAccount(req: ExtensionRequest): Promise<Ex
   const id = newAccountId();
   const secrets = session.getVaultSecrets() ?? { secrets: {} };
   secrets.secrets[id] = secretToStored(kp);
-  session.setVaultSecrets(secrets);
+  await session.setVaultSecrets(secrets);
   await persistVaultFromSession();
   const meta: AccountMeta = {
     id,
@@ -445,11 +457,8 @@ export async function handleAddReadOnlyAccount(req: ExtensionRequest): Promise<E
     publicKeyBase58: string;
     label?: string;
   };
-  const trimmed = rawPk?.trim() ?? "";
-  let pk: PublicKey;
-  try {
-    pk = new PublicKey(trimmed);
-  } catch {
+  const publicKeyBase58 = parsePublicKeyBase58(rawPk?.trim() ?? "");
+  if (!publicKeyBase58) {
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
@@ -457,7 +466,6 @@ export async function handleAddReadOnlyAccount(req: ExtensionRequest): Promise<E
       error: { code: "INVALID_PUBLIC_KEY", message: "Invalid public key" },
     });
   }
-  const publicKeyBase58 = pk.toBase58();
   const accounts = await readAccounts();
   if (pubkeyExists(accounts, publicKeyBase58)) {
     return respond({
@@ -526,7 +534,7 @@ export async function handleDeleteAccount(req: ExtensionRequest): Promise<Extens
     const secrets = session.getVaultSecrets();
     if (secrets) {
       delete secrets.secrets[accountId];
-      session.setVaultSecrets(secrets);
+      await session.setVaultSecrets(secrets);
       await persistVaultFromSession();
     }
   }
@@ -552,4 +560,3 @@ export async function handleDeleteAccount(req: ExtensionRequest): Promise<Extens
     result: { deleted: true },
   });
 }
-

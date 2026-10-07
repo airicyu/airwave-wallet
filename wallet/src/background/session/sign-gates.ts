@@ -1,5 +1,5 @@
-import { Keypair } from "@solana/web3.js";
 import { getExposedPublicKey, resolvePubkey, signingWatchPubkeyExists } from "../../shared/accounts";
+import type { LoadedAccountKeys } from "../../shared/keypair-bytes";
 import type { AccountMeta } from "../../shared/storage-keys";
 import { getActiveAccountMeta } from "./active-account";
 import { readAccounts } from "../storage";
@@ -47,7 +47,7 @@ export async function signMessageEnqueueGateError(): Promise<SignGateError | nul
   return null;
 }
 
-export async function keypairForAccountId(accountId: string): Promise<Keypair | null> {
+export async function loadedAccountForAccountId(accountId: string): Promise<LoadedAccountKeys | null> {
   if (!session.isUnlocked()) return null;
   const accounts = await readAccounts();
   const meta = accounts.find((a) => a.id === accountId);
@@ -56,7 +56,7 @@ export async function keypairForAccountId(accountId: string): Promise<Keypair | 
   const gatePubkey = getExposedPublicKey(meta);
   const resolved = resolvePubkey(accounts, secrets, gatePubkey);
   if (resolved.role !== "signing") return null;
-  return session.getKeypair(resolved.accountId) ?? null;
+  return session.getLoadedAccount(resolved.accountId) ?? null;
 }
 
 export async function signingErrorForAccountId(accountId: string): Promise<SignGateError | null> {
@@ -71,14 +71,14 @@ export async function signingErrorForAccountId(accountId: string): Promise<SignG
   if (resolved.role === "readOnly") {
     return { code: "ACCOUNT_READ_ONLY", message: "Read-only account cannot sign" };
   }
-  const kp = session.getKeypair(resolved.accountId);
-  if (!kp) {
+  const loaded = session.getLoadedAccount(resolved.accountId);
+  if (!loaded) {
     return { code: "NO_KEY", message: "Missing key" };
   }
   return null;
 }
 
-export async function keypairForActiveSigning(): Promise<Keypair | null> {
+export async function loadedAccountForActiveSigning(): Promise<LoadedAccountKeys | null> {
   const active = await getActiveAccountMeta();
   if (!active || !session.isUnlocked()) return null;
   const accounts = await readAccounts();
@@ -86,5 +86,15 @@ export async function keypairForActiveSigning(): Promise<Keypair | null> {
   const gatePubkey = getExposedPublicKey(active);
   const resolved = resolvePubkey(accounts, secrets, gatePubkey);
   if (resolved.role !== "signing") return null;
-  return session.getKeypair(resolved.accountId) ?? null;
+  return session.getLoadedAccount(resolved.accountId) ?? null;
+}
+
+/** @deprecated use loadedAccountForAccountId */
+export async function keypairForAccountId(accountId: string): Promise<LoadedAccountKeys | null> {
+  return loadedAccountForAccountId(accountId);
+}
+
+/** @deprecated use loadedAccountForActiveSigning */
+export async function keypairForActiveSigning(): Promise<LoadedAccountKeys | null> {
+  return loadedAccountForActiveSigning();
 }

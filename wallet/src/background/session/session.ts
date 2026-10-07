@@ -1,10 +1,10 @@
-import { Keypair } from "@solana/web3.js";
-import bs58 from "bs58";
 import {
   exportVaultKeyRaw,
   importVaultKeyRaw,
   type VaultSecrets,
 } from "../../shared/crypto-vault";
+import type { LoadedAccountKeys } from "../../shared/keypair-bytes";
+import { loadedAccountFromStoredSecret } from "../../shared/keypair-bytes";
 import { SESSION_UNLOCKED } from "../../shared/storage-keys";
 import { readVaultBlob } from "../storage";
 
@@ -19,7 +19,7 @@ let unlocked = false;
 let vaultSecrets: VaultSecrets | null = null;
 let vaultKey: CryptoKey | null = null;
 let vaultSaltB64: string | null = null;
-const keypairs = new Map<string, Keypair>();
+const accountsById = new Map<string, LoadedAccountKeys>();
 let hydratePromise: Promise<void> | null = null;
 
 export function setVaultCrypto(key: CryptoKey, saltB64: string): void {
@@ -41,31 +41,35 @@ export async function lock(): Promise<void> {
   vaultSecrets = null;
   vaultKey = null;
   vaultSaltB64 = null;
-  keypairs.clear();
+  accountsById.clear();
   await chrome.storage.session.remove(SESSION_UNLOCKED);
 }
 
-export function loadSecrets(secrets: VaultSecrets): void {
+export async function loadSecrets(secrets: VaultSecrets): Promise<void> {
   vaultSecrets = secrets;
-  keypairs.clear();
-  for (const [id, stored] of Object.entries(secrets.secrets)) {
-    const kp = Keypair.fromSecretKey(bs58.decode(stored));
-    keypairs.set(id, kp);
-  }
+  accountsById.clear();
+  unlocked = false;
+  const entries = Object.entries(secrets.secrets);
+  await Promise.all(
+    entries.map(async ([id, stored]) => {
+      const loaded = await loadedAccountFromStoredSecret(stored);
+      accountsById.set(id, loaded);
+    }),
+  );
   unlocked = true;
 }
 
-export function getKeypair(accountId: string): Keypair | undefined {
-  return keypairs.get(accountId);
+export function getLoadedAccount(accountId: string): LoadedAccountKeys | undefined {
+  return accountsById.get(accountId);
 }
 
 export function getVaultSecrets(): VaultSecrets | null {
   return vaultSecrets;
 }
 
-export function setVaultSecrets(secrets: VaultSecrets): void {
+export async function setVaultSecrets(secrets: VaultSecrets): Promise<void> {
   vaultSecrets = secrets;
-  loadSecrets(secrets);
+  await loadSecrets(secrets);
 }
 
 export async function persistUnlockedSession(): Promise<void> {
@@ -94,7 +98,7 @@ async function hydrateFromSessionStore(): Promise<void> {
   try {
     const key = await importVaultKeyRaw(raw.keyRawB64);
     setVaultCrypto(key, raw.saltB64);
-    loadSecrets(raw.secrets);
+    await loadSecrets(raw.secrets);
   } catch {
     await chrome.storage.session.remove(SESSION_UNLOCKED);
   }

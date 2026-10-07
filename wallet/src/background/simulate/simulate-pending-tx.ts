@@ -1,15 +1,25 @@
 import {
-  AddressLookupTableAccount,
-  Connection,
-  PublicKey,
-  VersionedMessage,
-  VersionedTransaction,
-} from "@solana/web3.js";
+  address,
+  type AddressesByLookupTableAddress,
+  type Address,
+  type CompiledTransactionMessage,
+  type CompiledTransactionMessageWithLifetime,
+  fetchAddressesForLookupTables,
+  getCompiledTransactionMessageDecoder,
+  type Transaction,
+} from "@solana/kit";
 import type {
   SimulatePendingTxResult,
   SimulateTxDelta,
   SimulateTxInstruction,
 } from "../../shared/simulate-pending-tx-types";
+import {
+  compiledAddressTableLookups,
+  messageBytesToUint8Array,
+  normalizedCompiledInstructions,
+} from "../../shared/compiled-message";
+import { solanaRpcForUrl } from "../../shared/solana-rpc";
+import { decodeWireTransaction, encodeWireTransaction } from "../../shared/tx-wire";
 import { decodeCompiledIx } from "./decode-compiled-ix";
 import type { Cluster } from "../../shared/storage-keys";
 
@@ -53,14 +63,19 @@ type RpcSimulateValue = {
   loadedAddresses?: RpcLoadedAddresses | null;
 };
 
-function shortPk(pk: PublicKey | string): string {
-  const s = typeof pk === "string" ? pk : pk.toBase58();
-  if (s.length <= 8) return s;
-  return `${s.slice(0, 4)}…${s.slice(-4)}`;
+type CompiledMessage = CompiledTransactionMessage & CompiledTransactionMessageWithLifetime;
+
+function decodeCompiledMessage(bytes: Uint8Array): CompiledMessage {
+  return getCompiledTransactionMessageDecoder().decode(bytes) as CompiledMessage;
 }
 
-function programLabel(programId: PublicKey): string {
-  return PROGRAM_NAMES[programId.toBase58()] ?? shortPk(programId);
+function shortPk(pk: string): string {
+  if (pk.length <= 8) return pk;
+  return `${pk.slice(0, 4)}…${pk.slice(-4)}`;
+}
+
+function programLabel(programId: string): string {
+  return PROGRAM_NAMES[programId] ?? shortPk(programId);
 }
 
 function bytesToHex(bytes: Uint8Array): string {
@@ -68,7 +83,7 @@ function bytesToHex(bytes: Uint8Array): string {
 }
 
 function ixAccounts(
-  accountKeys: (PublicKey | undefined)[],
+  accountKeys: (string | undefined)[],
   indexes: number[],
 ): { short: string; unresolved?: boolean }[] {
   return indexes.map((i) => {
@@ -127,7 +142,7 @@ function formatAmount(amount: bigint, decimals: number): string {
   const base = 10n ** BigInt(decimals);
   const whole = amount / base;
   const frac = amount % base;
-  let fracStr = frac.toString().padStart(decimals, "0").replace(/0+$/, "");
+  const fracStr = frac.toString().padStart(decimals, "0").replace(/0+$/, "");
   return fracStr ? `${whole}.${fracStr}` : whole.toString();
 }
 
@@ -140,29 +155,31 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
-export function buildInspectorUrl(message: VersionedMessage, cluster: Cluster): string {
+export function buildInspectorUrl(messageBytes: Uint8Array, cluster: Cluster): string {
   const clusterParam = cluster === "devnet" ? "devnet" : "mainnet-beta";
-  const b64 = bytesToBase64(message.serialize());
+  const b64 = bytesToBase64(messageBytes);
   return `https://explorer.solana.com/tx/inspector?cluster=${clusterParam}&message=${encodeURIComponent(b64)}`;
 }
 
 function buildInstructions(
-  message: VersionedMessage,
-  accountKeys: (PublicKey | undefined)[],
+  message: CompiledMessage,
+  accountKeys: (string | undefined)[],
 ): SimulateTxInstruction[] {
   const out: SimulateTxInstruction[] = [];
-  for (const ix of message.compiledInstructions) {
-    const programId = accountKeys[ix.programIdIndex];
+  for (const ix of normalizedCompiledInstructions(message)) {
+    const programId = accountKeys[ix.programAddressIndex];
+    const accountKeyIndexes = ix.accountIndices;
+    const data = ix.data;
     if (!programId) {
       out.push({
         program: "?",
         unresolved: true,
-        accounts: ixAccounts(accountKeys, ix.accountKeyIndexes),
-        dataHex: bytesToHex(ix.data),
+        accounts: ixAccounts(accountKeys, accountKeyIndexes),
+        dataHex: bytesToHex(data),
       });
       continue;
     }
-    const decoded = decodeCompiledIx(programId, ix.data, accountKeys, ix.accountKeyIndexes);
+    const decoded = decodeCompiledIx(programId, data, accountKeys, accountKeyIndexes);
     if (decoded.decoded) {
       out.push({
         program: programLabel(programId),
@@ -172,66 +189,80 @@ function buildInstructions(
       });
       continue;
     }
-    const unresolved = ix.accountKeyIndexes.some((i) => accountKeys[i] === undefined);
+    const unresolved = accountKeyIndexes.some((i) => accountKeys[i] === undefined);
     out.push({
       program: programLabel(programId),
       unresolved: unresolved || undefined,
-      accounts: ixAccounts(accountKeys, ix.accountKeyIndexes),
-      dataHex: bytesToHex(ix.data),
+      accounts: ixAccounts(accountKeys, accountKeyIndexes),
+      dataHex: bytesToHex(data),
     });
   }
   return out;
 }
 
 function keysFromLoaded(
-  message: VersionedMessage,
+  message: CompiledMessage,
   loaded: RpcLoadedAddresses | null | undefined,
-): PublicKey[] {
-  const staticKeys = message.staticAccountKeys.slice();
+): (string | undefined)[] {
+  const staticKeys = [...message.staticAccounts];
   if (message.version === "legacy") return staticKeys;
-  const writable = (loaded?.writable ?? []).map((s) => new PublicKey(s));
-  const readonly = (loaded?.readonly ?? []).map((s) => new PublicKey(s));
+  const writable = loaded?.writable ?? [];
+  const readonly = loaded?.readonly ?? [];
   return [...staticKeys, ...writable, ...readonly];
 }
 
-function v0LookupCount(message: VersionedMessage): number {
+function v0LookupCount(message: CompiledMessage): number {
   if (message.version === "legacy") return 0;
   let n = 0;
-  for (const lu of message.addressTableLookups) {
+  for (const lu of compiledAddressTableLookups(message)) {
     n += lu.writableIndexes.length + lu.readonlyIndexes.length;
   }
   return n;
 }
 
-async function loadLookupTables(
-  connection: Connection,
-  message: VersionedMessage,
-): Promise<AddressLookupTableAccount[] | null> {
-  if (message.version === "legacy") return [];
-  const tables: AddressLookupTableAccount[] = [];
-  for (const lookup of message.addressTableLookups) {
-    const res = await connection.getAddressLookupTable(lookup.accountKey);
-    if (!res.value) return null;
-    tables.push(res.value);
+function expandV0AccountKeys(
+  message: CompiledMessage,
+  byTable: AddressesByLookupTableAddress,
+): Address[] | null {
+  if (message.version === "legacy") return [...message.staticAccounts];
+  const keys = [...message.staticAccounts];
+  for (const lookup of compiledAddressTableLookups(message)) {
+    const addrs = byTable[lookup.lookupTableAddress as Address];
+    if (!addrs) return null;
+    for (const i of lookup.writableIndexes) {
+      if (i >= addrs.length) return null;
+      keys.push(addrs[i]);
+    }
+    for (const i of lookup.readonlyIndexes) {
+      if (i >= addrs.length) return null;
+      keys.push(addrs[i]);
+    }
   }
-  return tables;
+  return keys;
 }
 
 async function resolveAccountKeysFromTables(
-  connection: Connection,
-  message: VersionedMessage,
+  rpcUrl: string,
+  message: CompiledMessage,
   deadline: SimDeadline,
-): Promise<(PublicKey | undefined)[] | "rpc" | "timeout"> {
+): Promise<(Address | undefined)[] | "rpc" | "timeout"> {
   if (message.version === "legacy") {
-    return message.staticAccountKeys.slice();
+    return [...message.staticAccounts];
   }
   try {
-    const tables = await deadline.run(() => loadLookupTables(connection, message));
-    if (!tables) return "rpc";
-    const keys = message.getAccountKeys({ addressLookupTableAccounts: tables });
-    const lookups = keys.accountKeysFromLookups;
-    const fromLu = lookups ? [...lookups.writable, ...lookups.readonly] : [];
-    return [...keys.staticAccountKeys, ...fromLu];
+    const lookupAddrs = compiledAddressTableLookups(message).map((l) => l.lookupTableAddress);
+    const byTable =
+      lookupAddrs.length > 0
+        ? await deadline.run(() =>
+            fetchAddressesForLookupTables(
+              lookupAddrs as Address[],
+              solanaRpcForUrl(rpcUrl),
+            ),
+          )
+        : {};
+    const keys = expandV0AccountKeys(message, byTable);
+    if (!keys) return "rpc";
+    return keys;
   } catch (e) {
     if (e instanceof Error && e.message === "SIM_TIMEOUT") return "timeout";
     return "rpc";
@@ -240,10 +271,10 @@ async function resolveAccountKeysFromTables(
 
 export async function simulateTransactionRpc(
   rpcUrl: string,
-  tx: VersionedTransaction,
+  tx: Transaction,
   deadline: SimDeadline,
 ): Promise<RpcSimulateValue> {
-  const encoded = bytesToBase64(tx.serialize());
+  const encoded = bytesToBase64(encodeWireTransaction(tx));
   const payload = {
     jsonrpc: "2.0",
     id: 1,
@@ -297,8 +328,8 @@ function tokenDecimals(row: RpcTokenBalance | undefined): number {
 }
 
 function buildDeltas(
-  signer: PublicKey,
-  accountKeys: (PublicKey | undefined)[],
+  signer: string,
+  accountKeys: (string | undefined)[],
   value: RpcSimulateValue,
 ): SimulateTxDelta[] | "incomplete" {
   const preB = value.preBalances;
@@ -306,12 +337,12 @@ function buildDeltas(
   if (!Array.isArray(preB) || !Array.isArray(postB)) return "incomplete";
   if (preB.length === 0 && accountKeys.length > 0) return "incomplete";
 
-  const signer58 = signer.toBase58();
+  const signer58 = signer;
   let nativeDiff = 0;
   const n = Math.min(preB.length, postB.length, accountKeys.length);
   for (let i = 0; i < n; i++) {
     const key = accountKeys[i];
-    if (!key || !key.equals(signer)) continue;
+    if (!key || key !== signer58) continue;
     nativeDiff += (postB[i] ?? 0) - (preB[i] ?? 0);
   }
 
@@ -366,27 +397,26 @@ function buildDeltas(
 
 export type Phase2SimContext = {
   rpcUrl: string;
-  connection: Connection;
 };
 
 function withInspector(
   result: SimulatePendingTxResult,
-  message: VersionedMessage | null,
+  messageBytes: Uint8Array | null,
   cluster: Cluster,
 ): SimulatePendingTxResult {
-  if (!message) return result;
-  return { ...result, inspectorUrl: buildInspectorUrl(message, cluster) };
+  if (!messageBytes) return result;
+  return { ...result, inspectorUrl: buildInspectorUrl(messageBytes, cluster) };
 }
 
 export async function runPhase2Simulation(
   ctx: Phase2SimContext,
   txBytes: Uint8Array,
-  signerPubkey: PublicKey,
+  signerPubkey: string,
   cluster: Cluster,
 ): Promise<SimulatePendingTxResult> {
-  let tx: VersionedTransaction;
+  let tx: Transaction;
   try {
-    tx = VersionedTransaction.deserialize(txBytes);
+    tx = decodeWireTransaction(txBytes);
   } catch {
     return {
       outcome: "unparseable",
@@ -395,10 +425,9 @@ export async function runPhase2Simulation(
     };
   }
 
-  const connection = ctx.connection;
-  const message = tx.message;
+  const message = decodeCompiledMessage(messageBytesToUint8Array(tx.messageBytes));
   const deadline = new SimDeadline();
-  const feePayer = message.staticAccountKeys[0];
+  const feePayer = message.staticAccounts[0];
   const feePayerShort = feePayer ? shortPk(feePayer) : undefined;
 
   let value: RpcSimulateValue;
@@ -407,28 +436,28 @@ export async function runPhase2Simulation(
   } catch (e) {
     const reason = e instanceof Error && e.message === "SIM_TIMEOUT" ? "逾時" : "RPC 錯誤";
     let instructions: SimulateTxInstruction[] | undefined;
-    const keysResult = await resolveAccountKeysFromTables(connection, message, deadline);
+    const keysResult = await resolveAccountKeysFromTables(ctx.rpcUrl, message, deadline);
     if (keysResult !== "rpc" && keysResult !== "timeout") {
       instructions = buildInstructions(message, keysResult);
     }
     return withInspector(
       { outcome: "rpc", reason, instructions, feePayerShort },
-      message,
+      messageBytesToUint8Array(tx.messageBytes),
       cluster,
     );
   }
 
   const logs = tailLogs(value.logs ?? undefined);
-  let accountKeys: (PublicKey | undefined)[] = keysFromLoaded(message, value.loadedAddresses);
+  let accountKeys: (string | undefined)[] = keysFromLoaded(message, value.loadedAddresses);
   const needLu = v0LookupCount(message);
   const haveLu =
     (value.loadedAddresses?.writable?.length ?? 0) + (value.loadedAddresses?.readonly?.length ?? 0);
   if (needLu > 0 && haveLu < needLu) {
-    const keysResult = await resolveAccountKeysFromTables(connection, message, deadline);
+    const keysResult = await resolveAccountKeysFromTables(ctx.rpcUrl, message, deadline);
     if (keysResult === "timeout") {
       return withInspector(
         { outcome: "rpc", reason: "逾時", feePayerShort },
-        message,
+        messageBytesToUint8Array(tx.messageBytes),
         cluster,
       );
     }
@@ -439,7 +468,7 @@ export async function runPhase2Simulation(
           reason: "無法載入 address lookup table",
           feePayerShort,
         },
-        message,
+        messageBytesToUint8Array(tx.messageBytes),
         cluster,
       );
     }
@@ -459,7 +488,7 @@ export async function runPhase2Simulation(
         instructions,
         feePayerShort,
       },
-      message,
+      messageBytesToUint8Array(tx.messageBytes),
       cluster,
     );
   }
@@ -475,7 +504,7 @@ export async function runPhase2Simulation(
         instructions,
         feePayerShort,
       },
-      message,
+      messageBytesToUint8Array(tx.messageBytes),
       cluster,
     );
   }
@@ -487,7 +516,7 @@ export async function runPhase2Simulation(
       instructions,
       feePayerShort,
     },
-    message,
+    messageBytesToUint8Array(tx.messageBytes),
     cluster,
   );
 }

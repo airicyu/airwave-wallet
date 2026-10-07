@@ -1,7 +1,8 @@
-import { Keypair } from "@solana/web3.js";
 import { generateMnemonic, mnemonicToSeedSync, validateMnemonic } from "@scure/bip39";
 import { wordlist } from "@scure/bip39/wordlists/english.js";
 import { derivePath } from "ed25519-hd-key";
+import type { LoadedAccountKeys } from "./keypair-bytes";
+import { loadedAccountFromPrivateSeed } from "./keypair-bytes";
 
 export type SeedPathKind = "phantom" | "cli" | "change" | "custom";
 
@@ -45,18 +46,18 @@ export function pathForIndex(kind: SeedPathKind, index: number, customPath?: str
   return pathTemplate(kind, customPath).replaceAll("{n}", String(index));
 }
 
-export function keypairFromMnemonic(
+export async function keypairFromMnemonic(
   mnemonic: string,
   kind: SeedPathKind,
   index: number,
   customPath?: string,
-): Keypair {
+): Promise<LoadedAccountKeys> {
   const path = pathForIndex(kind, index, customPath);
   try {
     const seed = mnemonicToSeedSync(mnemonic);
     const hex = Array.from(seed, (b) => b.toString(16).padStart(2, "0")).join("");
     const { key } = derivePath(path, hex);
-    return Keypair.fromSeed(Uint8Array.from(key));
+    return loadedAccountFromPrivateSeed(Uint8Array.from(key));
   } catch {
     throw new Error("INVALID_PATH");
   }

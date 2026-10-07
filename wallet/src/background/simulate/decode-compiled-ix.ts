@@ -1,5 +1,3 @@
-import { PublicKey } from "@solana/web3.js";
-
 const SYSTEM_PROGRAM_ID = "11111111111111111111111111111111";
 const COMPUTE_BUDGET_PROGRAM_ID = "ComputeBudget111111111111111111111111111111";
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
@@ -13,14 +11,14 @@ export type DecodeCompiledIxResult =
   | { decoded: true; name: string; fields: DecodedIxField[] }
   | { decoded: false };
 
-function shortPk(pk: PublicKey): string {
-  const s = pk.toBase58();
+function shortPk(pk: string): string {
+  const s = pk;
   if (s.length <= 8) return s;
   return `${s.slice(0, 4)}…${s.slice(-4)}`;
 }
 
 function accountValue(
-  accountKeys: (PublicKey | undefined)[],
+  accountKeys: (string | undefined)[],
   accountKeyIndexes: number[],
   index: number,
 ): string {
@@ -42,7 +40,7 @@ function readU64LE(data: Uint8Array, offset: number): bigint {
 }
 
 function extraAccountFields(
-  accountKeys: (PublicKey | undefined)[],
+  accountKeys: (string | undefined)[],
   accountKeyIndexes: number[],
   fromIndex: number,
 ): DecodedIxField[] {
@@ -57,12 +55,12 @@ function extraAccountFields(
  * 靜態解讀單條 compiled ix（0.19.0 變體表）。不吻合 → `{ decoded: false }`。
  */
 export function decodeCompiledIx(
-  programId: PublicKey,
+  programId: string,
   data: Uint8Array,
-  accountKeys: (PublicKey | undefined)[],
+  accountKeys: (string | undefined)[],
   accountKeyIndexes: number[],
 ): DecodeCompiledIxResult {
-  const pid = programId.toBase58();
+  const pid = programId;
 
   if (pid === SYSTEM_PROGRAM_ID) {
     if (data.length !== 12) return { decoded: false };

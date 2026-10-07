@@ -1,6 +1,11 @@
 import bs58 from "bs58";
-import { Connection, Keypair, VersionedTransaction } from "@solana/web3.js";
+import { getBase64EncodedWireTransaction } from "@solana/kit";
+import type { Signature } from "@solana/keys";
+import type { KeyPairSigner } from "@solana/signers";
 import type { SignTransactionPayload } from "../../shared/commands";
+import { solanaRpcForUrl } from "../../shared/solana-rpc";
+import { decodeWireTransaction, partiallySignWireTransaction } from "../../shared/tx-wire";
+import type { LoadedAccountKeys } from "../../shared/keypair-bytes";
 import { getWorkingTx } from "../pending";
 import { getPending, removePending } from "../pending";
 import { clearWalletSendState, getWalletSendState } from "./wallet-send-state";
@@ -17,7 +22,7 @@ export type WalletSendNotify = {
 export async function runWalletSendAfterApprove(
   requestId: string,
   rpcUrl: string,
-  keypair: Keypair,
+  loaded: LoadedAccountKeys,
   notify: WalletSendNotify,
 ): Promise<void> {
   const pending = getPending(requestId);
@@ -35,25 +40,36 @@ export async function runWalletSendAfterApprove(
 
   const { transaction } = pending.payload as SignTransactionPayload;
   const txBytes = Uint8Array.from(getWorkingTx(requestId) ?? transaction);
-  let tx: VersionedTransaction;
   try {
-    tx = VersionedTransaction.deserialize(txBytes);
+    decodeWireTransaction(txBytes);
   } catch {
     notify.progress(requestId, "交易無效");
     return;
   }
 
-  tx.sign([keypair]);
-  const raw = tx.serialize();
-
-  const conn = new Connection(rpcUrl, "confirmed");
+  let signedBytes: Uint8Array;
   try {
-    const sig = await conn.sendRawTransaction(raw, { skipPreflight: false });
+    signedBytes = await partiallySignWireTransaction(txBytes, loaded.signer as KeyPairSigner);
+  } catch {
+    notify.progress(requestId, "交易無效");
+    return;
+  }
+
+  const rpc = solanaRpcForUrl(rpcUrl);
+  const wire = getBase64EncodedWireTransaction(decodeWireTransaction(signedBytes));
+
+  try {
+    const sig = await rpc
+      .sendTransaction(wire, {
+        encoding: "base64",
+        skipPreflight: false,
+        preflightCommitment: "confirmed",
+      })
+      .send();
     ws.broadcastSig = sig;
     await waitConfirmOnly(requestId, rpcUrl, sig, notify);
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "送出失敗";
-    notify.progress(requestId, msg);
+    notify.progress(requestId, rpcUserMessage(e, "送出失敗"));
   }
 }
 
@@ -63,13 +79,15 @@ async function waitConfirmOnly(
   signature: string,
   notify: WalletSendNotify,
 ): Promise<void> {
-  const conn = new Connection(rpcUrl, "confirmed");
+  const rpc = solanaRpcForUrl(rpcUrl);
   const ws = getWalletSendState(requestId);
   try {
     const start = Date.now();
     while (Date.now() - start < CONFIRM_MS) {
       if (!getPending(requestId)) return;
-      const st = await conn.getSignatureStatuses([signature]);
+      const st = await rpc
+        .getSignatureStatuses([signature as Signature], { searchTransactionHistory: true })
+        .send();
       const val = st.value[0];
       if (val?.confirmationStatus === "confirmed" || val?.confirmationStatus === "finalized") {
         const p = getPending(requestId);
@@ -95,19 +113,26 @@ async function waitConfirmOnly(
       await sleep(1500);
     }
     if (ws.lastValidBlockHeight != null) {
-      const slot = await conn.getSlot("confirmed");
-      if (slot > ws.lastValidBlockHeight) {
+      const slot = await rpc.getSlot({ commitment: "confirmed" }).send();
+      if (Number(slot) > ws.lastValidBlockHeight) {
         notify.progress(requestId, "Blockhash 已過期，請拒絕後重試");
         return;
       }
     }
     notify.progress(requestId, "確認逾時，可再按批准重試");
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "確認失敗";
-    notify.progress(requestId, msg);
+    notify.progress(requestId, rpcUserMessage(e, "確認失敗"));
   }
 }
 
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+function rpcUserMessage(e: unknown, fallback: string): string {
+  const msg = e instanceof Error ? e.message : "";
+  if (!msg || msg.includes("npx @solana/errors") || msg.startsWith("Solana error #")) {
+    return fallback;
+  }
+  return msg;
 }

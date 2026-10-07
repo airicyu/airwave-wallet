@@ -1,7 +1,10 @@
-import { Keypair } from "@solana/web3.js";
 import bs58 from "bs58";
 import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
 import { decryptVault, encryptVault } from "../../shared/crypto-vault";
+import {
+  generateRandomLoadedAccount,
+  loadedAccountFromSecretBytes,
+} from "../../shared/keypair-bytes";
 import { SESSION_UNLOCKED, type AccountMeta } from "../../shared/storage-keys";
 import { respond } from "../messaging";
 import {
@@ -73,7 +76,7 @@ export async function handleUnlock(req: ExtensionRequest): Promise<ExtensionResp
   try {
     const { secrets, key } = await decryptVault(password, blob);
     session.setVaultCrypto(key, blob.kdfParams.salt);
-    session.loadSecrets(secrets);
+    await session.loadSecrets(secrets);
     await session.persistUnlockedSession();
     return respond({
       kind: "airwave-ext-res",
@@ -142,7 +145,7 @@ export async function handleChangeVaultPassword(req: ExtensionRequest): Promise<
       await chrome.storage.session.remove(SESSION_UNLOCKED);
       await writeVaultBlob(newBlob);
       session.setVaultCrypto(newKey, newBlob.kdfParams.salt);
-      session.loadSecrets(secrets);
+      await session.loadSecrets(secrets);
       await session.persistUnlockedSession();
       return respond({
         kind: "airwave-ext-res",
@@ -191,7 +194,7 @@ export async function handleCreateVault(req: ExtensionRequest): Promise<Extensio
     await runVaultWrite(async () => {
       await writeVaultBlob(blob);
       session.setVaultCrypto(key, blob.kdfParams.salt);
-      session.loadSecrets(secrets);
+      await session.loadSecrets(secrets);
       await session.persistUnlockedSession();
     });
     await writeSettings(await readSettings());
@@ -202,10 +205,10 @@ export async function handleCreateVault(req: ExtensionRequest): Promise<Extensio
       result: { account: null },
     });
   }
-  let kp: Keypair;
+  let kp;
   if (secretBase58?.trim()) {
     try {
-      kp = Keypair.fromSecretKey(bs58.decode(secretBase58.trim()));
+      kp = await loadedAccountFromSecretBytes(bs58.decode(secretBase58.trim()));
     } catch {
       return respond({
         kind: "airwave-ext-res",
@@ -215,9 +218,9 @@ export async function handleCreateVault(req: ExtensionRequest): Promise<Extensio
       });
     }
   } else {
-    kp = Keypair.generate();
+    kp = await generateRandomLoadedAccount();
   }
-  const publicKeyBase58 = kp.publicKey.toBase58();
+  const publicKeyBase58 = kp.address;
   if (pubkeyExists(existingAccounts, publicKeyBase58)) {
     return respond({
       kind: "airwave-ext-res",
@@ -238,7 +241,7 @@ export async function handleCreateVault(req: ExtensionRequest): Promise<Extensio
   await runVaultWrite(async () => {
     await writeVaultBlob(blob);
     session.setVaultCrypto(key, blob.kdfParams.salt);
-    session.loadSecrets(secrets);
+    await session.loadSecrets(secrets);
     await session.persistUnlockedSession();
   });
   await writeAccounts([...existingAccounts, meta]);
@@ -251,4 +254,3 @@ export async function handleCreateVault(req: ExtensionRequest): Promise<Extensio
     result: { account: meta },
   });
 }
-

@@ -1,12 +1,28 @@
+import { fetchEncodedAccount } from "@solana/accounts";
 import {
-  Connection,
-  Keypair,
-  PublicKey,
-  SystemProgram,
-  TransactionInstruction,
-  TransactionMessage,
-  VersionedTransaction,
-} from "@solana/web3.js";
+  address,
+  appendTransactionMessageInstructions,
+  compileTransaction,
+  createTransactionMessage,
+  pipe,
+  setTransactionMessageFeePayer,
+  setTransactionMessageLifetimeUsingBlockhash,
+} from "@solana/kit";
+import { getTransferSolInstruction } from "@solana-program/system";
+import {
+  findAssociatedTokenPda,
+  getCreateAssociatedTokenIdempotentInstructionAsync,
+  getTransferCheckedInstruction,
+  TOKEN_PROGRAM_ADDRESS,
+} from "@solana-program/token";
+import {
+  getCreateAssociatedTokenIdempotentInstructionAsync as getCreateAssociatedTokenIdempotentInstructionAsync2022,
+  getTransferCheckedInstruction as getTransferCheckedInstruction2022,
+  TOKEN_2022_PROGRAM_ADDRESS,
+} from "@solana-program/token-2022";
+import type { Instruction } from "@solana/instructions";
+import { parsePublicKeyBase58 } from "../../shared/accounts";
+import type { LoadedAccountKeys } from "../../shared/keypair-bytes";
 import {
   NATIVE_SOL_ID,
   type HomeTokenRow,
@@ -14,14 +30,9 @@ import {
 } from "../../shared/home-tokens";
 import { parseAmountUiToRaw, solReserveLamports } from "../../shared/wallet-send-amount";
 import type { Settings } from "../../shared/storage-keys";
+import { solanaRpcForUrl } from "../../shared/solana-rpc";
+import { encodeWireTransaction } from "../../shared/tx-wire";
 import { getWalletSendState } from "./wallet-send-state";
-
-const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
-const TOKEN_2022_PROGRAM_ID = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
-const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
-  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
-);
-const SYSVAR_RENT_PUBKEY = new PublicKey("SysvarRent111111111111111111111111111111111");
 
 export type BeginSendPayload = {
   tokenId: string;
@@ -37,20 +48,8 @@ export type BeginSendErrorCode =
   | "INSUFFICIENT_FUNDS"
   | "INVALID_ADDRESS";
 
-function tokenProgramId(kind: TokenProgramKind): PublicKey {
-  return kind === "token-2022" ? TOKEN_2022_PROGRAM_ID : TOKEN_PROGRAM_ID;
-}
-
-function getAssociatedTokenAddress(
-  mint: PublicKey,
-  owner: PublicKey,
-  tokenProgram: PublicKey,
-): PublicKey {
-  const [addr] = PublicKey.findProgramAddressSync(
-    [owner.toBuffer(), tokenProgram.toBuffer(), mint.toBuffer()],
-    ASSOCIATED_TOKEN_PROGRAM_ID,
-  );
-  return addr;
+function tokenProgramAddress(kind: TokenProgramKind): typeof TOKEN_PROGRAM_ADDRESS | typeof TOKEN_2022_PROGRAM_ADDRESS {
+  return kind === "token-2022" ? TOKEN_2022_PROGRAM_ADDRESS : TOKEN_PROGRAM_ADDRESS;
 }
 
 function readTokenAccountAmount(data: Uint8Array): bigint | null {
@@ -60,66 +59,15 @@ function readTokenAccountAmount(data: Uint8Array): bigint | null {
 }
 
 async function tokenAccountRentLamports(
-  conn: Connection,
-  mint: PublicKey,
-  tokenProgram: PublicKey,
+  rpc: ReturnType<typeof solanaRpcForUrl>,
+  tokenProgram: typeof TOKEN_PROGRAM_ADDRESS | typeof TOKEN_2022_PROGRAM_ADDRESS,
 ): Promise<bigint | null> {
-  let accountDataLen = 165;
-  if (tokenProgram.equals(TOKEN_2022_PROGRAM_ID)) {
-    const mintInfo = await conn.getAccountInfo(mint);
-    if (!mintInfo) return null;
-    accountDataLen = 165;
+  const accountDataLen = 165;
+  if (tokenProgram === TOKEN_2022_PROGRAM_ADDRESS) {
+    /* mint fetch not required for rent size — same 165-byte layout for standard token account */
   }
-  const rent = await conn.getMinimumBalanceForRentExemption(accountDataLen);
-  return BigInt(rent);
-}
-
-function createAssociatedTokenAccountIdempotent(
-  payer: PublicKey,
-  associatedToken: PublicKey,
-  owner: PublicKey,
-  mint: PublicKey,
-  tokenProgram: PublicKey,
-): TransactionInstruction {
-  return {
-    programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-    keys: [
-      { pubkey: payer, isSigner: true, isWritable: true },
-      { pubkey: associatedToken, isSigner: false, isWritable: true },
-      { pubkey: owner, isSigner: false, isWritable: false },
-      { pubkey: mint, isSigner: false, isWritable: false },
-      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-      { pubkey: tokenProgram, isSigner: false, isWritable: false },
-      { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-    ],
-    data: Uint8Array.from([1]),
-  } as TransactionInstruction;
-}
-
-function transferCheckedIx(
-  source: PublicKey,
-  mint: PublicKey,
-  destination: PublicKey,
-  owner: PublicKey,
-  amount: bigint,
-  decimals: number,
-  tokenProgram: PublicKey,
-): TransactionInstruction {
-  const data = new Uint8Array(10);
-  data[0] = 12;
-  const view = new DataView(data.buffer);
-  view.setBigUint64(1, amount, true);
-  data[9] = decimals;
-  return {
-    programId: tokenProgram,
-    keys: [
-      { pubkey: source, isSigner: false, isWritable: true },
-      { pubkey: mint, isSigner: false, isWritable: false },
-      { pubkey: destination, isSigner: false, isWritable: true },
-      { pubkey: owner, isSigner: true, isWritable: false },
-    ],
-    data,
-  } as TransactionInstruction;
+  const rent = await rpc.getMinimumBalanceForRentExemption(BigInt(accountDataLen)).send();
+  return rent;
 }
 
 function findTokenRow(rows: HomeTokenRow[], tokenId: string): HomeTokenRow | undefined {
@@ -128,21 +76,17 @@ function findTokenRow(rows: HomeTokenRow[], tokenId: string): HomeTokenRow | und
 
 export async function buildWalletSendTransaction(
   settings: Settings,
-  signer: Keypair,
+  signer: LoadedAccountKeys,
   row: HomeTokenRow,
   amountUi: string,
   recipientBase58: string,
   requestId: string,
 ): Promise<{ txBytes: Uint8Array } | { code: BeginSendErrorCode }> {
-  let recipientPk: PublicKey;
-  try {
-    recipientPk = new PublicKey(recipientBase58);
-  } catch {
+  const recipientParsed = parsePublicKeyBase58(recipientBase58);
+  if (!recipientParsed) {
     return { code: "INVALID_ADDRESS" };
   }
-  if (recipientPk.toBytes().length !== 32) {
-    return { code: "INVALID_ADDRESS" };
-  }
+  const recipient = address(recipientParsed);
 
   if (row.decimals == null || !Number.isInteger(row.decimals)) {
     return { code: "INVALID_PAYLOAD" };
@@ -150,73 +94,109 @@ export async function buildWalletSendTransaction(
   const amountRaw = parseAmountUiToRaw(amountUi, row.decimals);
   if (amountRaw == null) return { code: "INVALID_PAYLOAD" };
 
-  const conn = new Connection(settings.rpcUrl, "confirmed");
-  const fromPk = signer.publicKey;
+  const rpc = solanaRpcForUrl(settings.rpcUrl);
+  const fromAddress = address(signer.address);
   const reserve = solReserveLamports(settings.defaultCuPrice);
-  const instructions: TransactionInstruction[] = [];
+  const instructions: Instruction[] = [];
 
   if (row.id === NATIVE_SOL_ID) {
-    const balance = BigInt(await conn.getBalance(fromPk));
+    const balance = BigInt((await rpc.getBalance(fromAddress, { commitment: "confirmed" }).send()).value);
     if (amountRaw + reserve > balance) return { code: "INSUFFICIENT_FUNDS" };
     instructions.push(
-      SystemProgram.transfer({
-        fromPubkey: fromPk,
-        toPubkey: recipientPk,
-        lamports: amountRaw,
+      getTransferSolInstruction({
+        source: signer.signer,
+        destination: recipient,
+        amount: amountRaw,
       }),
     );
   } else {
     if (!row.tokenProgram) return { code: "INVALID_PAYLOAD" };
-    const mint = new PublicKey(row.id);
-    const programId = tokenProgramId(row.tokenProgram);
-    const sourceAta = getAssociatedTokenAddress(mint, fromPk, programId);
-    const sourceInfo = await conn.getAccountInfo(sourceAta);
-    if (!sourceInfo || !sourceInfo.owner.equals(programId)) {
+    const mint = address(row.id);
+    const programId = tokenProgramAddress(row.tokenProgram);
+    const [sourceAta] = await findAssociatedTokenPda({
+      owner: fromAddress,
+      mint,
+      tokenProgram: programId,
+    });
+    const sourceInfo = await fetchEncodedAccount(rpc, sourceAta, { commitment: "confirmed" });
+    if (!sourceInfo.exists || sourceInfo.programAddress !== programId) {
       return { code: "INSUFFICIENT_FUNDS" };
     }
     const onChain = readTokenAccountAmount(sourceInfo.data);
     if (onChain == null || amountRaw > onChain) return { code: "INSUFFICIENT_FUNDS" };
 
-    const destAta = getAssociatedTokenAddress(mint, recipientPk, programId);
-    const destInfo = await conn.getAccountInfo(destAta);
+    const [destAta] = await findAssociatedTokenPda({
+      owner: recipient,
+      mint,
+      tokenProgram: programId,
+    });
+    const destInfo = await fetchEncodedAccount(rpc, destAta, { commitment: "confirmed" });
     let extraRent = 0n;
-    if (!destInfo) {
-      const rent = await tokenAccountRentLamports(conn, mint, programId);
+    if (!destInfo.exists) {
+      const rent = await tokenAccountRentLamports(rpc, programId);
       if (rent == null) return { code: "INSUFFICIENT_FUNDS" };
       extraRent = rent;
-      instructions.push(
-        createAssociatedTokenAccountIdempotent(fromPk, destAta, recipientPk, mint, programId),
-      );
+      const createAta =
+        row.tokenProgram === "token-2022"
+          ? await getCreateAssociatedTokenIdempotentInstructionAsync2022({
+              payer: signer.signer,
+              owner: recipient,
+              mint,
+              tokenProgram: programId,
+            })
+          : await getCreateAssociatedTokenIdempotentInstructionAsync({
+              payer: signer.signer,
+              owner: recipient,
+              mint,
+              tokenProgram: programId,
+            });
+      instructions.push(createAta);
     }
 
-    const solBalance = BigInt(await conn.getBalance(fromPk));
+    const solBalance = BigInt((await rpc.getBalance(fromAddress, { commitment: "confirmed" }).send()).value);
     if (solBalance < reserve + extraRent) return { code: "INSUFFICIENT_FUNDS" };
 
-    instructions.push(
-      transferCheckedIx(
-        sourceAta,
-        mint,
-        destAta,
-        fromPk,
-        amountRaw,
-        row.decimals,
-        programId,
-      ),
-    );
+    const transferIx =
+      row.tokenProgram === "token-2022"
+        ? getTransferCheckedInstruction2022({
+            source: sourceAta,
+            mint,
+            destination: destAta,
+            authority: signer.signer,
+            amount: amountRaw,
+            decimals: row.decimals,
+          })
+        : getTransferCheckedInstruction({
+            source: sourceAta,
+            mint,
+            destination: destAta,
+            authority: signer.signer,
+            amount: amountRaw,
+            decimals: row.decimals,
+          });
+    instructions.push(transferIx);
   }
 
-  const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash();
+  const latest = await rpc.getLatestBlockhash({ commitment: "confirmed" }).send();
   const ws = getWalletSendState(requestId);
-  ws.lastValidBlockHeight = lastValidBlockHeight;
+  ws.lastValidBlockHeight = Number(latest.value.lastValidBlockHeight);
 
-  const message = new TransactionMessage({
-    payerKey: fromPk,
-    recentBlockhash: blockhash,
-    instructions,
-  }).compileToV0Message();
+  const txMessage = pipe(
+    createTransactionMessage({ version: 0 }),
+    (m) => setTransactionMessageFeePayer(fromAddress, m),
+    (m) =>
+      setTransactionMessageLifetimeUsingBlockhash(
+        {
+          blockhash: latest.value.blockhash,
+          lastValidBlockHeight: latest.value.lastValidBlockHeight,
+        },
+        m,
+      ),
+    (m) => appendTransactionMessageInstructions(instructions, m),
+  );
 
-  const tx = new VersionedTransaction(message);
-  return { txBytes: tx.serialize() };
+  const tx = compileTransaction(txMessage);
+  return { txBytes: encodeWireTransaction(tx) };
 }
 
 export async function resolveHomeTokenRowForSend(

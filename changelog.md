@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.20.0 — 2026-10-07
+
+`wallet/` 與 `test-web/` 的 Solana 客戶端自 `@solana/web3.js` v1 全轉 `@solana/kit` 與 `@solana-program/*`（system、token、token-2022、compute-budget）。RPC、編解碼、session signer、簽交易、模擬、CU 改寫、錢包自組送出、inject 地址驗證與 test-web 組 tx 皆走 Kit；vault 仍 bs58 64-byte secrets；`signMessage` 仍 tweetnacl detached。使用者可見流程、pending／storage／Wallet Standard 能力表與 0.19.0 相同。直接依賴不再含 web3.js 與 `@solana/compat`。
+
 ## 0.19.0 — 2026-10-07
 
 簽署交易審批：常見 program 靜態解讀指令名與欄位（System Transfer、Compute Budget limit／price、Token／Token-2022 Transfer 與 TransferChecked、ATA Create、Memo UTF-8）；其餘仍帳戶縮寫＋ hex。預期變動列新增 Solana Explorer Transaction Inspector 外連（message base64、`cluster` 依設定）；34px 有底重試與 Explorer 鈕。解讀與 URL 僅在 service worker、不進 `chrome.storage`；未加套件。

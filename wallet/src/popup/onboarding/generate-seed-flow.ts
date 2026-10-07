@@ -8,13 +8,13 @@ export type GenerateSeedDraft = {
   err: string;
 };
 
-export function createGenerateSeedDraft(): GenerateSeedDraft {
+export async function createGenerateSeedDraft(): Promise<GenerateSeedDraft> {
   try {
     const mnemonic = createEnglishMnemonic12();
-    const kp = keypairFromMnemonic(mnemonic, "phantom", 0);
+    const kp = await keypairFromMnemonic(mnemonic, "phantom", 0);
     return {
       words: mnemonic.split(" "),
-      pk: kp.publicKey.toBase58(),
+      pk: kp.address,
       busy: false,
       label: "",
       err: "",

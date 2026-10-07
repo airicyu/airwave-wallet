@@ -1,4 +1,4 @@
-import { Connection, PublicKey, VersionedTransaction } from "@solana/web3.js";
+import { getCompiledTransactionMessageDecoder } from "@solana/kit";
 import {
   CU_LIMIT_MAX,
   estimateCuLimitFromCompiledIxs,
@@ -7,6 +7,7 @@ import {
   isValidCuLimit,
   isValidCuPrice,
   parseCuFromMessage,
+  parseCuFromTxBytes,
   suggestedLimitFromPhase1,
   writeCuToTransactionBytes,
   type WriteCuResult,
@@ -25,6 +26,8 @@ import {
 } from "../pending";
 import type { SimulatePendingTxResult } from "../../shared/simulate-pending-tx-types";
 import type { Cluster } from "../../shared/storage-keys";
+import { messageBytesToUint8Array } from "../../shared/compiled-message";
+import { decodeWireTransaction } from "../../shared/tx-wire";
 
 const CU_WRITE_FAIL_MSG = "無法寫入計算預算";
 
@@ -43,15 +46,23 @@ function priorityFeeLamports(cuLimit: number, cuPrice: number): number {
   return Number((micro + 999_999n) / 1_000_000n);
 }
 
+function compiledMessageFromTxBytes(txBytes: Uint8Array) {
+  const tx = decodeWireTransaction(txBytes);
+  return getCompiledTransactionMessageDecoder().decode(
+    messageBytesToUint8Array(tx.messageBytes),
+  );
+}
+
 function attachFees(
   result: SimulatePendingTxResult,
-  tx: VersionedTransaction,
+  txBytes: Uint8Array,
   cuLimit: number | null,
   cuPrice: number | null,
   cuEditable: boolean,
   cuWriteError?: string,
 ): SimulatePendingTxResult {
-  const sigFee = 5_000 * tx.message.header.numRequiredSignatures;
+  const message = compiledMessageFromTxBytes(txBytes);
+  const sigFee = 5_000 * message.header.numSignerAccounts;
   const priority =
     cuLimit != null && cuPrice != null ? priorityFeeLamports(cuLimit, cuPrice) : null;
   const total = priority != null ? sigFee + priority : null;
@@ -77,25 +88,26 @@ async function simulatePhase1ForLimit(
   txBytes: Uint8Array,
   originalLimit: number | null,
 ): Promise<number> {
-  let baseMsg: VersionedTransaction;
+  let baseMsg;
   try {
-    baseMsg = VersionedTransaction.deserialize(txBytes);
+    baseMsg = compiledMessageFromTxBytes(txBytes);
   } catch {
     return originalLimit ?? CU_LIMIT_MAX;
   }
 
-  const probe = await writeCuToTransactionBytes(txBytes, CU_LIMIT_MAX, 0, ctx.connection);
+  const probe = await writeCuToTransactionBytes(txBytes, CU_LIMIT_MAX, 0, ctx.rpcUrl);
   const probeBytes = probe.ok ? probe.bytes : txBytes;
-  let probeMsg: VersionedTransaction;
+  let probeMsg;
   try {
-    probeMsg = VersionedTransaction.deserialize(probeBytes);
+    probeMsg = compiledMessageFromTxBytes(probeBytes);
   } catch {
-    return originalLimit ?? estimateCuLimitFromCompiledIxs(baseMsg.message);
+    return originalLimit ?? estimateCuLimitFromCompiledIxs(baseMsg);
   }
 
   const deadline = new SimDeadline();
   try {
-    const value = await simulateTransactionRpc(ctx.rpcUrl, probeMsg, deadline);
+    const probeTx = decodeWireTransaction(probeBytes);
+    const value = await simulateTransactionRpc(ctx.rpcUrl, probeTx, deadline);
     if (!value.err && typeof value.unitsConsumed === "number") {
       return suggestedLimitFromPhase1(value.unitsConsumed, originalLimit);
     }
@@ -104,22 +116,21 @@ async function simulatePhase1ForLimit(
   }
 
   if (originalLimit != null) return originalLimit;
-  return estimateCuLimitFromCompiledIxs(probeMsg.message);
+  return estimateCuLimitFromCompiledIxs(probeMsg);
 }
 
 async function runPhase2WithFees(
   ctx: Phase2SimContext,
   txBytes: Uint8Array,
-  signer: PublicKey,
+  signer: string,
   cluster: Cluster,
   cuLimit: number | null,
   cuPrice: number | null,
   cuEditable: boolean,
   cuWriteError?: string,
 ): Promise<SimulatePendingTxResult> {
-  let tx: VersionedTransaction;
   try {
-    tx = VersionedTransaction.deserialize(txBytes);
+    decodeWireTransaction(txBytes);
   } catch {
     return {
       outcome: "unparseable",
@@ -134,25 +145,24 @@ async function runPhase2WithFees(
     };
   }
   const base = await runPhase2Simulation(ctx, txBytes, signer, cluster);
-  return attachFees(base, tx, cuLimit, cuPrice, cuEditable, cuWriteError);
+  return attachFees(base, txBytes, cuLimit, cuPrice, cuEditable, cuWriteError);
 }
 
 export async function simulateSignTransaction(
   rpcUrl: string,
   requestId: string,
   originalBytes: Uint8Array,
-  signerPubkey: PublicKey,
+  signerPubkey: string,
   cluster: Cluster,
   defaultCuPrice: number,
   payload: SimulateSignTxPayload,
 ): Promise<SimulateSignTxOutcome> {
   const seq = acceptSimulateRequest(requestId);
-  const connection = new Connection(rpcUrl, "confirmed");
-  const ctx: Phase2SimContext = { rpcUrl, connection };
+  const ctx: Phase2SimContext = { rpcUrl };
 
-  let tx: VersionedTransaction;
+  let compiledMessage;
   try {
-    tx = VersionedTransaction.deserialize(originalBytes);
+    compiledMessage = compiledMessageFromTxBytes(originalBytes);
   } catch {
     const result: SimulatePendingTxResult = {
       outcome: "unparseable",
@@ -165,8 +175,8 @@ export async function simulateSignTransaction(
     return { ok: true, result, seq };
   }
 
-  const signed = isTransactionSigned(tx);
-  const parsedOriginal = parseCuFromMessage(tx.message);
+  const signed = isTransactionSigned(originalBytes);
+  const parsedOriginal = parseCuFromMessage(compiledMessage);
 
   if (signed) {
     const result = await runPhase2WithFees(
@@ -193,7 +203,7 @@ export async function simulateSignTransaction(
     if (!isValidCuLimit(limit) || !isValidCuPrice(price)) {
       return { ok: false, code: "INVALID_PAYLOAD", message: "CU out of bounds" };
     }
-    if (hasDuplicateCbDisc(tx.message)) {
+    if (hasDuplicateCbDisc(compiledMessage)) {
       const result = await runPhase2WithFees(
         ctx,
         originalBytes,
@@ -206,7 +216,7 @@ export async function simulateSignTransaction(
       );
       return { ok: true, result, seq };
     }
-    const written = await writeCuToTransactionBytes(originalBytes, limit, price, connection);
+    const written = await writeCuToTransactionBytes(originalBytes, limit, price, rpcUrl);
     const cuErr = writeErrorFromResult(written);
     const simBytes = written.ok ? written.bytes : originalBytes;
     if (written.ok) {
@@ -227,9 +237,8 @@ export async function simulateSignTransaction(
 
   if (hasWorkingTx(requestId)) {
     const working = getWorkingTx(requestId)!;
-    let wtx: VersionedTransaction;
     try {
-      wtx = VersionedTransaction.deserialize(working);
+      decodeWireTransaction(working);
     } catch {
       const result = await runPhase2WithFees(
         ctx,
@@ -242,7 +251,7 @@ export async function simulateSignTransaction(
       );
       return { ok: true, result, seq };
     }
-    const parsed = parseCuFromMessage(wtx.message);
+    const parsed = parseCuFromTxBytes(working);
     const result = await runPhase2WithFees(
       ctx,
       working,
@@ -259,7 +268,7 @@ export async function simulateSignTransaction(
   const suggestedLimit = await simulatePhase1ForLimit(ctx, originalBytes, originalLimit);
   const price = defaultCuPrice;
 
-  if (hasDuplicateCbDisc(tx.message)) {
+  if (hasDuplicateCbDisc(compiledMessage)) {
     const result = await runPhase2WithFees(
       ctx,
       originalBytes,
@@ -277,7 +286,7 @@ export async function simulateSignTransaction(
     originalBytes,
     suggestedLimit,
     price,
-    connection,
+    rpcUrl,
   );
   const cuErr = writeErrorFromResult(written);
   const simBytes = written.ok ? written.bytes : originalBytes;

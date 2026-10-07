@@ -15,12 +15,13 @@ import {
   type StandardEventsFeature,
 } from "@wallet-standard/features";
 import type { Wallet, WalletAccount } from "@wallet-standard/base";
+import bs58 from "bs58";
 import { bridgeRequest } from "./bridge-client";
-import { PublicKey } from "@solana/web3.js";
 
 const AIRWAVE_CHAINS = ["solana:mainnet", "solana:devnet"] as const;
 
-let currentPublicKey: PublicKey | null = null;
+let currentPublicKeyBase58: string | null = null;
+let currentPublicKeyBytes: Uint8Array | null = null;
 let currentCluster: "devnet" | "mainnet" = "devnet";
 const listeners = new Set<(e: { accounts: readonly WalletAccount[] }) => void>();
 
@@ -32,29 +33,57 @@ function applyCluster(cluster: unknown): void {
   if (cluster === "mainnet" || cluster === "devnet") currentCluster = cluster;
 }
 
-function accountFromPublicKey(pk: PublicKey): WalletAccount {
+function parsePublicKeyBase58(raw: string): { base58: string; bytes: Uint8Array } | null {
+  const trimmed = raw?.trim() ?? "";
+  if (!trimmed) return null;
+  try {
+    const bytes = bs58.decode(trimmed);
+    if (bytes.length !== 32) return null;
+    return { base58: trimmed, bytes };
+  } catch {
+    return null;
+  }
+}
+
+function setCurrentPublicKey(base58: string | null): void {
+  if (!base58) {
+    currentPublicKeyBase58 = null;
+    currentPublicKeyBytes = null;
+    return;
+  }
+  const parsed = parsePublicKeyBase58(base58);
+  if (!parsed) {
+    currentPublicKeyBase58 = null;
+    currentPublicKeyBytes = null;
+    return;
+  }
+  currentPublicKeyBase58 = parsed.base58;
+  currentPublicKeyBytes = parsed.bytes;
+}
+
+function accountFromPublicKey(): WalletAccount {
   return {
-    address: pk.toBase58(),
-    publicKey: pk.toBytes(),
+    address: currentPublicKeyBase58!,
+    publicKey: currentPublicKeyBytes!,
     chains: [activeChain()],
     features: [SolanaSignMessage, SolanaSignTransaction, SolanaSignAndSendTransaction],
   };
 }
 
 function emitChange(): void {
-  const accounts = currentPublicKey ? [accountFromPublicKey(currentPublicKey)] : [];
+  const accounts = currentPublicKeyBase58 ? [accountFromPublicKey()] : [];
   for (const fn of listeners) fn({ accounts });
 }
 
 window.addEventListener("airwave-account-changed", ((ev: CustomEvent) => {
   const pk = ev.detail.publicKeyBase58 as string;
   applyCluster(ev.detail.cluster);
-  currentPublicKey = new PublicKey(pk);
+  setCurrentPublicKey(pk);
   emitChange();
 }) as EventListener);
 
 window.addEventListener("airwave-disconnected", () => {
-  currentPublicKey = null;
+  setCurrentPublicKey(null);
   emitChange();
 });
 
@@ -64,7 +93,7 @@ export const airwaveWallet: Wallet = {
   icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
   chains: [...AIRWAVE_CHAINS],
   get accounts(): readonly WalletAccount[] {
-    return currentPublicKey ? [accountFromPublicKey(currentPublicKey)] : [];
+    return currentPublicKeyBase58 ? [accountFromPublicKey()] : [];
   },
   features: {
     [StandardConnect]: {
@@ -76,20 +105,20 @@ export const airwaveWallet: Wallet = {
           publicKey: string;
           cluster?: "devnet" | "mainnet";
         };
-        const prevPk = currentPublicKey?.toBase58() ?? null;
+        const prevPk = currentPublicKeyBase58;
         const prevCluster = currentCluster;
         applyCluster(result.cluster);
-        currentPublicKey = new PublicKey(result.publicKey);
-        const nextPk = currentPublicKey.toBase58();
+        setCurrentPublicKey(result.publicKey);
+        const nextPk = currentPublicKeyBase58;
         if (prevPk !== nextPk || prevCluster !== currentCluster) emitChange();
-        return { accounts: [accountFromPublicKey(currentPublicKey)] };
+        return { accounts: currentPublicKeyBase58 ? [accountFromPublicKey()] : [] };
       },
     } satisfies StandardConnectFeature[typeof StandardConnect],
     [StandardDisconnect]: {
       version: "1.0.0",
       disconnect: async () => {
         await bridgeRequest("dapp.disconnect", {});
-        currentPublicKey = null;
+        setCurrentPublicKey(null);
         emitChange();
       },
     } satisfies StandardDisconnectFeature[typeof StandardDisconnect],

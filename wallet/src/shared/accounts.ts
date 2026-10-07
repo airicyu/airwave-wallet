@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { address, isAddress } from "@solana/kit";
 import type { AccountMeta, CombinedAccountMeta, SigningOrWatchMeta } from "./storage-keys";
 
 export type ResolvedPubkey =
@@ -30,8 +30,9 @@ export function signingWatchPubkeyExists(
 export function parsePublicKeyBase58(raw: string): string | null {
   const trimmed = raw?.trim() ?? "";
   if (!trimmed) return null;
+  if (!isAddress(trimmed)) return null;
   try {
-    return new PublicKey(trimmed).toBase58();
+    return address(trimmed);
   } catch {
     return null;
   }

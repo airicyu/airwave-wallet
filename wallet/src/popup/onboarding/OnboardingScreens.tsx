@@ -20,7 +20,7 @@ import {
   withImportSeedCapacity,
   type ImportSeedDraft,
 } from "./import-seed-flow";
-import { createGenerateSeedDraft } from "./generate-seed-flow";
+import { createGenerateSeedDraft, type GenerateSeedDraft } from "./generate-seed-flow";
 
 export function AddAccountChooser(): JSX.Element {
   const { navigateTo } = usePopupContext();
@@ -317,7 +317,16 @@ function ImportSeedPick({
 
 export function GenerateSeedScreen(): JSX.Element {
   const { clearError, refresh, navigateTo, wallet } = usePopupContext();
-  const [draft, setDraft] = useState(createGenerateSeedDraft);
+  const [draft, setDraft] = useState<GenerateSeedDraft>(() => ({
+    words: null,
+    pk: null,
+    busy: false,
+    label: "",
+    err: "",
+  }));
+  useEffect(() => {
+    void createGenerateSeedDraft().then(setDraft);
+  }, []);
 
   const onPrimary = useCallback(async () => {
     if (!draft.words) return;

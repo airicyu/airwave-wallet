@@ -1,4 +1,4 @@
-import { Connection, PublicKey } from "@solana/web3.js";
+import { address, isAddress } from "@solana/kit";
 import {
   homeActivityLimit,
   rowFromSignature,
@@ -6,6 +6,7 @@ import {
   type HomeActivityRow,
 } from "../../shared/home-activity";
 import type { Settings } from "../../shared/storage-keys";
+import { solanaRpcForUrl } from "../../shared/solana-rpc";
 import { extractHeliusApiKey } from "../home-tokens";
 
 const HELIUS_TX_ORIGIN = "https://api.helius.xyz";
@@ -42,10 +43,10 @@ async function fetchEnhanced(
 }
 
 async function fetchSignatures(owner: string, settings: Settings): Promise<HomeActivityRow[]> {
-  const conn = new Connection(settings.rpcUrl, "confirmed");
-  const sigs = await conn.getSignaturesForAddress(new PublicKey(owner), {
-    limit: homeActivityLimit(),
-  });
+  const rpc = solanaRpcForUrl(settings.rpcUrl);
+  const sigs = await rpc
+    .getSignaturesForAddress(address(owner), { limit: homeActivityLimit() })
+    .send();
   return sigs.slice(0, homeActivityLimit()).map((sig) =>
     rowFromSignature(
       sig.signature,
@@ -57,9 +58,7 @@ async function fetchSignatures(owner: string, settings: Settings): Promise<HomeA
 }
 
 export async function getHomeActivity(owner: string, settings: Settings): Promise<HomeActivityResult> {
-  try {
-    new PublicKey(owner);
-  } catch {
+  if (!isAddress(owner)) {
     return { rows: [], error: "unavailable" };
   }
   try {

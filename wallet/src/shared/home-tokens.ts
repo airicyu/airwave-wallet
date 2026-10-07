@@ -1,17 +1,14 @@
-import { Connection, PublicKey } from "@solana/web3.js";
+import { address } from "@solana/kit";
+import { solanaRpcForUrl } from "./solana-rpc";
 
 export const WRAPPED_SOL_MINT = "So11111111111111111111111111111111111111112";
 export const NATIVE_SOL_ID = "native-sol";
 
 export type TokenProgramKind = "spl-token" | "token-2022";
 
-const TOKEN_PROGRAM_ID = new PublicKey(
-  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-);
+const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
-const TOKEN_2022_PROGRAM_ID = new PublicKey(
-  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-);
+const TOKEN_2022_PROGRAM_ID = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
 
 export type HomeTokenMemberShare = {
   pubkey: string;
@@ -89,21 +86,22 @@ type ParsedTokenAmount = {
   decimals: number;
 };
 
-function programKindFromOwner(owner: PublicKey | string): TokenProgramKind | undefined {
-  const s = typeof owner === "string" ? owner : owner.toBase58();
-  if (s === TOKEN_PROGRAM_ID.toBase58()) return "spl-token";
-  if (s === TOKEN_2022_PROGRAM_ID.toBase58()) return "token-2022";
+function programKindFromOwner(owner: string): TokenProgramKind | undefined {
+  if (owner === TOKEN_PROGRAM_ID) return "spl-token";
+  if (owner === TOKEN_2022_PROGRAM_ID) return "token-2022";
   return undefined;
 }
 
+type ParsedTokenAccountEntry = {
+  account: {
+    owner?: string;
+    data: { parsed?: { type?: string; info?: Record<string, unknown> } };
+  };
+};
+
 export function buildHomeTokenRows(
   lamports: number,
-  parsedAccounts: {
-    account: {
-      owner?: PublicKey | string;
-      data: { parsed?: { type?: string; info?: Record<string, unknown> } };
-    };
-  }[],
+  parsedAccounts: ParsedTokenAccountEntry[],
   usdByMint?: Map<string, number>,
 ): HomeTokenRow[] {
   const solAmount = lamports / 1e9;
@@ -211,28 +209,52 @@ async function withAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<
   });
 }
 
+function mapParsedTokenAccounts(
+  value: readonly {
+    pubkey: string;
+    account: ParsedTokenAccountEntry["account"] & { owner: string };
+  }[],
+): ParsedTokenAccountEntry[] {
+  return value.map(({ account }) => ({ account }));
+}
+
 export async function fetchRpcHomeTokenRows(
   rpcUrl: string,
   ownerPublicKeyBase58: string,
   signal?: AbortSignal,
 ): Promise<HomeTokenRow[]> {
-  const conn = new Connection(rpcUrl, "confirmed");
-  const pk = new PublicKey(ownerPublicKeyBase58);
+  const rpc = solanaRpcForUrl(rpcUrl);
+  const owner = address(ownerPublicKeyBase58);
   throwIfAborted(signal);
-  const lamports = await withAbort(conn.getBalance(pk), signal);
+  const lamports = Number((await withAbort(rpc.getBalance(owner, { commitment: "confirmed" }).send(), signal)).value);
   throwIfAborted(signal);
   const [legacy, token2022] = await Promise.all([
     withAbort(
-      conn.getParsedTokenAccountsByOwner(pk, { programId: TOKEN_PROGRAM_ID }),
+      rpc
+        .getTokenAccountsByOwner(
+          owner,
+          { programId: address(TOKEN_PROGRAM_ID) },
+          { encoding: "jsonParsed", commitment: "confirmed" },
+        )
+        .send(),
       signal,
     ),
     withAbort(
-      conn.getParsedTokenAccountsByOwner(pk, { programId: TOKEN_2022_PROGRAM_ID }),
+      rpc
+        .getTokenAccountsByOwner(
+          owner,
+          { programId: address(TOKEN_2022_PROGRAM_ID) },
+          { encoding: "jsonParsed", commitment: "confirmed" },
+        )
+        .send(),
       signal,
     ),
   ]);
   return sortHomeTokenRows(
-    buildHomeTokenRows(lamports, [...legacy.value, ...token2022.value]),
+    buildHomeTokenRows(lamports, [
+      ...mapParsedTokenAccounts(legacy.value),
+      ...mapParsedTokenAccounts(token2022.value),
+    ]),
   );
 }
 
@@ -242,15 +264,20 @@ export async function fetchNativeAndWrappedSolRows(
   ownerPublicKeyBase58: string,
   signal?: AbortSignal,
 ): Promise<HomeTokenRow[]> {
-  const conn = new Connection(rpcUrl, "confirmed");
-  const pk = new PublicKey(ownerPublicKeyBase58);
-  const wrappedMint = new PublicKey(WRAPPED_SOL_MINT);
+  const rpc = solanaRpcForUrl(rpcUrl);
+  const owner = address(ownerPublicKeyBase58);
   throwIfAborted(signal);
-  const lamports = await withAbort(conn.getBalance(pk), signal);
+  const lamports = Number((await withAbort(rpc.getBalance(owner, { commitment: "confirmed" }).send(), signal)).value);
   throwIfAborted(signal);
   const wrapped = await withAbort(
-    conn.getParsedTokenAccountsByOwner(pk, { mint: wrappedMint }),
+    rpc
+      .getTokenAccountsByOwner(
+        owner,
+        { mint: address(WRAPPED_SOL_MINT) },
+        { encoding: "jsonParsed", commitment: "confirmed" },
+      )
+      .send(),
     signal,
   );
-  return sortHomeTokenRows(buildHomeTokenRows(lamports, wrapped.value));
+  return sortHomeTokenRows(buildHomeTokenRows(lamports, mapParsedTokenAccounts(wrapped.value)));
 }

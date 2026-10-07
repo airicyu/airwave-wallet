@@ -1,4 +1,3 @@
-import { VersionedTransaction } from "@solana/web3.js";
 import nacl from "tweetnacl";
 import type { SignMessagePayload, SignTransactionPayload } from "../../shared/commands";
 import { messageLooksLikeTransactionMessage } from "../../shared/sign-message-tx";
@@ -6,7 +5,8 @@ import { getActivePublicKey, readActiveAccountId, readSettings } from "../storag
 import { takePending } from "./pending";
 import { getWorkingTx } from "./sign-tx-pending-state";
 import { sendBridgeResult, rememberConnectedTab } from "../messaging";
-import { keypairForAccountId, signingErrorForAccountId } from "../session";
+import { loadedAccountForAccountId, signingErrorForAccountId } from "../session";
+import { partiallySignWireTransaction } from "../../shared/tx-wire";
 import * as session from "../session";
 
 export async function finishConnect(
@@ -118,8 +118,8 @@ export async function finishSignMessage(
     return;
   }
 
-  const kp = await keypairForAccountId(signAccountId);
-  if (!kp) {
+  const loaded = await loadedAccountForAccountId(signAccountId);
+  if (!loaded) {
     await sendBridgeResult(tabId, {
       type: "airwave-bridge-result",
       requestId,
@@ -129,7 +129,7 @@ export async function finishSignMessage(
     return;
   }
 
-  const signature = nacl.sign.detached(msgBytes, kp.secretKey);
+  const signature = nacl.sign.detached(msgBytes, loaded.secretKeyBytes);
 
   await sendBridgeResult(tabId, {
     type: "airwave-bridge-result",
@@ -192,9 +192,21 @@ export async function finishSignTransaction(
 
   const { transaction } = pending.payload as SignTransactionPayload;
   const txBytes = Uint8Array.from(workingBytes ?? transaction);
-  let tx: VersionedTransaction;
+
+  const loaded = await loadedAccountForAccountId(signAccountId);
+  if (!loaded) {
+    await sendBridgeResult(tabId, {
+      type: "airwave-bridge-result",
+      requestId,
+      ok: false,
+      error: { code: "NO_KEY", message: "Missing key" },
+    });
+    return;
+  }
+
+  let signedBytes: Uint8Array;
   try {
-    tx = VersionedTransaction.deserialize(txBytes);
+    signedBytes = await partiallySignWireTransaction(txBytes, loaded.signer);
   } catch {
     await sendBridgeResult(tabId, {
       type: "airwave-bridge-result",
@@ -205,23 +217,10 @@ export async function finishSignTransaction(
     return;
   }
 
-  const kp = await keypairForAccountId(signAccountId);
-  if (!kp) {
-    await sendBridgeResult(tabId, {
-      type: "airwave-bridge-result",
-      requestId,
-      ok: false,
-      error: { code: "NO_KEY", message: "Missing key" },
-    });
-    return;
-  }
-
-  tx.sign([kp]);
-
   await sendBridgeResult(tabId, {
     type: "airwave-bridge-result",
     requestId,
     ok: true,
-    result: { signedTransaction: Array.from(tx.serialize()) },
+    result: { signedTransaction: Array.from(signedBytes) },
   });
 }
