@@ -12,7 +12,7 @@
 ## 文件地圖
 
 1. 本檔
-2. [DOMAIN.md](../DOMAIN.md)（用語：成員地址／目前錢包；下文 sub／main 為 alias）
+2. [DOMAIN.md](../../DOMAIN.md)（用語：成員地址／目前錢包；下文 sub／main 為 alias）
 3. [docs/combined-how.md](./docs/combined-how.md)
 4. [docs/reasoning.md](./docs/reasoning.md)
 5. 上游：[0.4.0 token-data-how](../0.4.0/docs/token-data-how.md)（`owners[]` pipe）、[0.3.0 popup-shell-how](../0.3.0/docs/popup-shell-how.md)、[0.2.0 accounts-home-how](../0.2.0/docs/accounts-home-how.md)、[0.2.0 disconnect-how](../0.2.0/docs/disconnect-how.md)

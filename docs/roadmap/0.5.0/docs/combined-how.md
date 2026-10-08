@@ -1,6 +1,6 @@
 # HOW — Combined wallet account（0.5.0）
 
-繼承 0.2.0 帳戶／連線、0.3.0 `HomeTokenRow` 與方案 A 畫面、0.4.0 `owners[]` pipe。用語見 [DOMAIN.md](../../DOMAIN.md)。本檔寫聚合帳戶增量。產品上 **sub＝成員地址、main＝目前錢包**；command 欄位名用 `subPubkeys`／`mainPubkey`。
+繼承 0.2.0 帳戶／連線、0.3.0 `HomeTokenRow` 與方案 A 畫面、0.4.0 `owners[]` pipe。用語見 [DOMAIN.md](../../../DOMAIN.md)。本檔寫聚合帳戶增量。產品上 **sub＝成員地址、main＝目前錢包**；command 欄位名用 `subPubkeys`／`mainPubkey`。
 
 ## Meta（覆寫 0.2.0 `AccountMeta`）
 

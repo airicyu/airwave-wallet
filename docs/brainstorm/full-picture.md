@@ -4,11 +4,10 @@
 > 這是 **方向文件**，不是實作規格定稿。  
 >
 > 相關：
-> - [../README.md](../README.md) / [../AGENTS.md](../AGENTS.md) — 倉庫說明與 agent 指引  
-> - [remake-feature-wishlist.md](./remake-feature-wishlist.md) — 錢包功能意向清單  
+> - [../../README.md](../../README.md) / [../../AGENTS.md](../../AGENTS.md) — 倉庫說明與 agent 指引  
 > - [lessons-from-solibra-wallet.md](./lessons-from-solibra-wallet.md) — Solibra 教訓  
-> - [solibra-feature-summary.md](./solibra-feature-summary.md) — Legacy 功能梳理  
-> - [research/extension-message-flow.html](./research/extension-message-flow.html) — 多 runtime 訊息流  
+> - [../research/extension-message-flow.html](../research/extension-message-flow.html) — 多 runtime 訊息流  
+> - [../roadmap/backlog/INDEX.md](../roadmap/backlog/INDEX.md) — 尚未排進某版的構想  
 
 ---
 
@@ -16,14 +15,15 @@
 
 ```text
 airwave-wallet/
-├── wallet/        # Chrome extension（錢包本體）
-├── test-web/      # 最小 Solana dApp，測連線／簽名
-├── brainstorm/    # 本檔等方向文件（非版本契約）
-└── docs/roadmap/  # 按 X.Y.Z 的實作契約
+├── wallet/              # Chrome extension（錢包本體）
+├── test-web/            # 最小 Solana dApp，測連線／簽名
+└── docs/
+    ├── brainstorm/      # 本檔等方向文件（非版本契約）
+    └── roadmap/         # 按 X.Y.Z 的實作契約
 ```
 
 之後可選：`agent-harness/`（roadmap ② 的 JS library）。  
-舊專案對照：`../solibra-wallet`（唯讀，預設不改）。
+舊專案對照：本倉庫根的上一層 `../solibra-wallet`（唯讀，預設不改）。
 
 ---
 
@@ -52,7 +52,7 @@ airwave-wallet/
 
 ### ① Minimal wallet MVP
 
-先做出「能用的最小錢包」，對齊 wishlist 的核心垂直切片，例如：
+先做出「能用的最小錢包」，核心垂直切片例如：
 
 - 多 runtime **message flow**（SW = pending hub；訊息簡單，**不做** Solibra 式 RSA 結果加密）
 - **Secure storage + settings** 層
@@ -63,7 +63,7 @@ airwave-wallet/
 - Wallet Standard 註冊
 - Sign message / Approve transaction
 
-細節與約束見 [remake-feature-wishlist.md](./remake-feature-wishlist.md)。
+尚未排進某版的構想見 [../roadmap/backlog/INDEX.md](../roadmap/backlog/INDEX.md)。
 
 **原則：** 擴充本體壓低 3rd-party；信任靠分層與協定，不靠訊息層加解密劇場。
 
@@ -260,4 +260,4 @@ Chrome 也不保證 offscreen 永生；用假 reason 硬撐常駐還可能審核
 
 > **先做一個夠瘦、夠安全的 Solana 擴充錢包；再做能在瀏覽器限制裡跑的 agent harness；最後把 agent 關在無 `chrome.*` 的 sandbox，只做解讀類 query——context 靠固定 prompt 重載，不靠背景長生，更不靠碰私鑰。**
 
-切版本時：從本檔抽 Phase，功能細節對 wishlist，坑對 lessons，訊息形狀對 message-flow research。
+切版本時：從本檔抽 Phase，尚未排程的構想對 [roadmap backlog](../roadmap/backlog/INDEX.md)，坑對 [lessons](./lessons-from-solibra-wallet.md)，訊息形狀對 [message-flow](../research/extension-message-flow.html)。

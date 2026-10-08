@@ -1,12 +1,10 @@
 # Solibra Wallet 反省筆記
 
-> 來源專案：`../solibra-wallet`（已失敗的 Solana Chrome Extension 錢包嘗試）  
+> 來源專案：本倉庫根的上一層 `../solibra-wallet`（已失敗的 Solana Chrome Extension 錢包嘗試）  
 > 目的：在 `airwave-wallet` 重做之前，先把踩過的坑寫清楚，避免重蹈覆轍。  
 > 相關文件：
 > - [full-picture.md](./full-picture.md)（整盤產品／架構總覽）
-> - [remake-feature-wishlist.md](./remake-feature-wishlist.md)（Airwave 重做意向功能）
-> - [solibra-feature-summary.md](./solibra-feature-summary.md)（當時做出了哪些功能）
-> - [research/extension-message-flow.html](./research/extension-message-flow.html)（多 runtime 訊息流）
+> - [../research/extension-message-flow.html](../research/extension-message-flow.html)（多 runtime 訊息流）
 
 ---
 
@@ -69,7 +67,7 @@ background ──result（只回原 tab）──► content ──► inject ─
 4. Content 校驗 `origin`；不要只信 `postMessage` 的 `from` 欄位
 5. 謹慎 `all_frames: true`（每個 iframe 都注入會放大混亂）
 
-詳見：[extension-message-flow.html](./research/extension-message-flow.html)
+詳見：[extension-message-flow.html](../research/extension-message-flow.html)
 
 ---
 

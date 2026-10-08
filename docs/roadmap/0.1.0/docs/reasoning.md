@@ -2,7 +2,7 @@
 
 ## 為何 SW 簽名、popout 只審批
 
-[extension-message-flow.html](../../../../brainstorm/research/extension-message-flow.html) 明確：popout 只展示本次請求並回傳 approve／reject；**不在 popout 解密私鑰**。使用者確認後，**service worker** 用已解鎖、僅存於 SW 記憶體的金鑰材料簽名，再沿 `requestId` 回原 tab。
+[extension-message-flow.html](../../../research/extension-message-flow.html) 明確：popout 只展示本次請求並回傳 approve／reject；**不在 popout 解密私鑰**。使用者確認後，**service worker** 用已解鎖、僅存於 SW 記憶體的金鑰材料簽名，再沿 `requestId` 回原 tab。
 
 這仍符合 GUIDELINES「簽名不在 page script」：inject 永遠拿不到私鑰 bytes。若改為 popout 內簽名，須另寫 INDEX 推翻條並處理 popout 與 vault 的 IPC；本版不採。
 

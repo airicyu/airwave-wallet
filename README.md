@@ -7,7 +7,7 @@ Solana **Chrome Extension** 錢包（重做）。
 |------|------|
 | 目前版本號 | 見 [`version.md`](version.md) |
 | Changelog | [`changelog.md`](changelog.md) |
-| 方向文件 | [`brainstorm/full-picture.md`](brainstorm/full-picture.md) |
+| 方向文件 | [`docs/brainstorm/full-picture.md`](docs/brainstorm/full-picture.md) |
 | 版本契約 | [`docs/roadmap/`](docs/roadmap/) |
 
 ---
@@ -16,11 +16,16 @@ Solana **Chrome Extension** 錢包（重做）。
 
 ```text
 airwave-wallet/
-├── wallet/           # Chrome extension 子專案（錢包本體）
-├── test-web/         # 最小 Solana web3 dApp，供錢包手測／回歸
-├── brainstorm/       # 重做前研究與意向（非某版契約）
-├── docs/roadmap/     # 按版本號的實作契約（INDEX / Track / 驗收）
-├── AGENTS.md         # 給 coding agent 的倉庫指引
+├── wallet/                 # Chrome extension 子專案（錢包本體）
+├── test-web/               # 最小 Solana web3 dApp，供錢包手測／回歸
+├── docs/                   # 文件地圖見 docs/README.md
+│   ├── roadmap/            # 按版本號的實作契約（INDEX / Track / 驗收）
+│   ├── brainstorm/         # 重做前方向與教訓（非某版契約）
+│   ├── design-principles.md
+│   ├── design-demos/
+│   ├── legal/
+│   └── research/
+├── AGENTS.md               # 給 coding agent 的倉庫指引
 ├── version.md
 └── changelog.md
 ```
@@ -37,7 +42,7 @@ airwave-wallet/
 2. **Agent harness library** — 無 local files／shell 的 JS harness（storage blocks、loop、少量 tools、MCP client）。  
 3. **Isolated agent in wallet** — sandbox 內跑 harness；只做解讀類 query；不依賴「背景永遠活著」，靠固定 system prompt 重載上下文。
 
-功能意向清單：[`brainstorm/remake-feature-wishlist.md`](brainstorm/remake-feature-wishlist.md)。
+尚未排進某版的構想：[`docs/roadmap/backlog/INDEX.md`](docs/roadmap/backlog/INDEX.md)。
 
 ---
 
@@ -50,7 +55,7 @@ airwave-wallet/
 - 訊息通道保持簡單——不做 Solibra 那套 per-request RSA 加解密。  
 - Agent（若有）永遠不碰 vault。
 
-完整教訓：[`brainstorm/lessons-from-solibra-wallet.md`](brainstorm/lessons-from-solibra-wallet.md)。
+完整教訓：[`docs/brainstorm/lessons-from-solibra-wallet.md`](docs/brainstorm/lessons-from-solibra-wallet.md)。
 
 ---
 
@@ -76,9 +81,9 @@ cd test-web && npm install && npm run dev
 | 文件 | 給誰 | 內容 |
 |------|------|------|
 | [AGENTS.md](AGENTS.md) | Coding agents | 語言、路徑、架構禁區、roadmap 技能 |
-| [brainstorm/full-picture.md](brainstorm/full-picture.md) | 人／agent | 整盤構想 |
-| [brainstorm/remake-feature-wishlist.md](brainstorm/remake-feature-wishlist.md) | 人／agent | 功能 wishlist |
-| [brainstorm/solibra-feature-summary.md](brainstorm/solibra-feature-summary.md) | 人／agent | Legacy 做過什麼 |
+| [docs/README.md](docs/README.md) | 人／agent | `docs/` 各目錄的角色 |
+| [docs/brainstorm/full-picture.md](docs/brainstorm/full-picture.md) | 人／agent | 整盤構想 |
+| [docs/roadmap/backlog/INDEX.md](docs/roadmap/backlog/INDEX.md) | 人／agent | 尚未排進某版的構想 |
 | [docs/roadmap/README.md](docs/roadmap/README.md) | 人／agent | 版本契約怎麼用 |
 | [docs/roadmap/GUIDELINES.md](docs/roadmap/GUIDELINES.md) | 寫 roadmap 的人／agent | 自足契約與禁區 |
 | [docs/roadmap/agent-workflow.md](docs/roadmap/agent-workflow.md) | Agent | 設計審查閘門 → Track 實作 |

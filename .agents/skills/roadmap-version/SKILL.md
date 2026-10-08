@@ -25,7 +25,7 @@ disable-model-invocation: true
 
 使用者須給出版本（`0.1.0`）或目錄（`docs/roadmap/0.1.0/`）。未給則問一次，勿猜。
 
-工作目錄：`docs/roadmap/<VER>/`。必讀：`INDEX.md`；有則讀 `docs/*`、`HANDOFF.md`。對照上一版 INDEX、相關 `backlog/*.md`（構想，**不得覆寫本版已定案**）。`brainstorm/` 只是背景，不是本版契約。
+工作目錄：`docs/roadmap/<VER>/`。必讀：`INDEX.md`；有則讀 `docs/*`、`HANDOFF.md`。對照上一版 INDEX、相關 `backlog/*.md`（構想，**不得覆寫本版已定案**）。`docs/brainstorm/` 只是背景，不是本版契約。
 
 ## 角色分工（強制）
 
@@ -66,7 +66,7 @@ disable-model-invocation: true
 
 - 勿把定案只留在 chat
 - 勿把助記詞、私鑰、密碼、個人地址、生產 RPC 秘密寫進 INDEX／docs／reasoning／HANDOFF／審查報告
-- 勿把 `brainstorm/` 或 Solibra 原始碼當成已定案。INDEX 與 brainstorm 衝突時以 INDEX 為準
+- 勿把 `docs/brainstorm/` 或 Solibra 原始碼當成已定案。INDEX 與 `docs/brainstorm/` 衝突時以 INDEX 為準
 - 主路徑不得用：operation store hydrate 找請求、預設廣播全 tab、手寫 rehydrate 當主同步、硬編碼或明文持久密碼、inject 持有長期私鑰、宣告未實作的 Wallet Standard 方法
 - 倉庫尚無整包測試指令。該版 INDEX 必須寫明手驗或測試指令；**禁止**假設 `bun test`
 - 實作範圍限本倉庫

@@ -21,7 +21,7 @@
 5. 該版 INDEX 連結的 docs（HOW／reasoning）與 HANDOFF.md（若存在）
 6. INDEX 標的上一版 INDEX、相關 backlog（構想，不是本版契約）
 7. INDEX 錨點程式：抽樣現碼是否與提案衝突（現碼未實作本版 ≠ 設計 HIGH）
-8. brainstorm/ 僅在 INDEX 點名時當背景；不得把 brainstorm 或 ../solibra-wallet 當成已定案
+8. docs/brainstorm/ 僅在 INDEX 點名時當背景；不得把 docs/brainstorm/ 或 ../solibra-wallet 當成已定案
 
 產品硬契約（違反＝HIGH；INDEX 未明確推翻前有效，見 GUIDELINES）：
 - service worker 是 pending 唯一權威；popout 只帶 requestId

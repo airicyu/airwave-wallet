@@ -7,8 +7,8 @@
 
 本倉庫是 **Airwave**：Solana Chrome Extension 錢包重做（吸取 `../solibra-wallet` 教訓），中長期會加 **無鑰、query-only** 的隔離 agent 解讀能力。
 
-整盤構想：[`brainstorm/full-picture.md`](brainstorm/full-picture.md)。  
-功能意向：[`brainstorm/remake-feature-wishlist.md`](brainstorm/remake-feature-wishlist.md)。
+整盤構想：[`docs/brainstorm/full-picture.md`](docs/brainstorm/full-picture.md)。  
+功能意向：[`docs/roadmap/backlog/INDEX.md`](docs/roadmap/backlog/INDEX.md)。
 
 ---
 
@@ -18,7 +18,8 @@
 |------|------|
 | [`wallet/`](wallet/) | Chrome extension 子專案（錢包本體） |
 | [`test-web/`](test-web/) | 最小 Solana web3 dApp，專供連線／簽名手測與回歸 |
-| [`brainstorm/`](brainstorm/) | 重做前背景與方向；**不是**某版契約 |
+| [`docs/`](docs/README.md) | 文件地圖：契約、畫面原則、法律文案、方向 |
+| [`docs/brainstorm/`](docs/brainstorm/full-picture.md) | 重做前背景與方向；**不是**某版契約 |
 | [`docs/roadmap/`](docs/roadmap/) | 版本契約（INDEX／Track／驗收）；跨 agent 開工以這裡為準 |
 | [`changelog.md`](changelog.md)／[`version.md`](version.md) | 出貨紀錄與目前版本號 |
 | 之後可選：`agent-harness/`（或同等 package） | 瀏覽器友善的 minimal agent harness library（roadmap ②） |
@@ -35,11 +36,11 @@
 | 實作某個已排程版本 | 該版 `docs/roadmap/X.Y.Z/INDEX.md` 及其連結；遵守 [`docs/roadmap/GUIDELINES.md`](docs/roadmap/GUIDELINES.md)、[`docs/roadmap/agent-workflow.md`](docs/roadmap/agent-workflow.md)；畫面互動另守 [`docs/design-principles.md`](docs/design-principles.md)（INDEX 有明文則以 INDEX 為準） |
 | 使用者點名版本／`/roadmap-version` | 技能 [`.agents/skills/roadmap-version/SKILL.md`](.agents/skills/roadmap-version/SKILL.md) |
 | Popup 怎麼操作才一致 | [`docs/design-principles.md`](docs/design-principles.md) |
-| 方向／為何這樣設計 | `brainstorm/full-picture.md`、`lessons-from-solibra-wallet.md` |
-| 舊產品做過什麼 | `brainstorm/solibra-feature-summary.md` |
+| 帳戶、地址、聚合等用詞 | [`docs/DOMAIN.md`](docs/DOMAIN.md)（該版 INDEX 明文覆寫時以 INDEX 為準，並回寫 DOMAIN） |
+| 方向／為何這樣設計 | [`docs/brainstorm/full-picture.md`](docs/brainstorm/full-picture.md)、[`docs/brainstorm/lessons-from-solibra-wallet.md`](docs/brainstorm/lessons-from-solibra-wallet.md) |
 
-**優先級：** 某版 INDEX 已定案 ＞ GUIDELINES 架構禁區 ＞ [`docs/design-principles.md`](docs/design-principles.md)（僅畫面）＞ brainstorm。  
-`brainstorm/` 與 INDEX 衝突時，以 **INDEX** 為準。
+**優先級：** 某版 INDEX 已定案 ＞ GUIDELINES 架構禁區 ＞ [`docs/design-principles.md`](docs/design-principles.md)（僅畫面）＞ `docs/brainstorm/`。  
+`docs/brainstorm/` 與 INDEX 衝突時，以 **INDEX** 為準。
 
 ---
 
@@ -87,8 +88,9 @@
 | 文件 | 用途 |
 |------|------|
 | [README.md](README.md) | 給人看的專案說明 |
-| [brainstorm/full-picture.md](brainstorm/full-picture.md) | 整盤構想 |
+| [docs/README.md](docs/README.md) | 文件怎麼擺 |
+| [docs/brainstorm/full-picture.md](docs/brainstorm/full-picture.md) | 整盤構想 |
 | [docs/roadmap/README.md](docs/roadmap/README.md) | Roadmap 入口 |
-| [docs/roadmap/DOMAIN.md](docs/roadmap/DOMAIN.md) | 領域用語（帳戶／地址／聚合） |
+| [docs/DOMAIN.md](docs/DOMAIN.md) | 領域用語（帳戶／地址／聚合） |
 | [docs/roadmap/GUIDELINES.md](docs/roadmap/GUIDELINES.md) | 怎麼寫自足版本契約 |
 | [docs/roadmap/agent-workflow.md](docs/roadmap/agent-workflow.md) | 審查閘門與 Track 流程 |

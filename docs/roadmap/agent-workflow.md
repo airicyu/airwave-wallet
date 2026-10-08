@@ -174,4 +174,4 @@ Starter prompt 最低要素：
 - **整包測試指令：** 尚無。禁止假設 `bun test`。第一個引入測試的版本必須在該版已定案寫明指令與 cwd，並回寫 [GUIDELINES.md](./GUIDELINES.md)「出貨檔案」表。在那之前，Track 與出貨以該版 INDEX 的手驗／窄測為準。  
 - **version／changelog：** 倉庫根 `CHANGELOG.md`（第一個 shipped 版建立）。日後若有 `package.json`，`version` 與目錄 `X.Y.Z` 對齊。  
 - **契約／AGENTS：** 倉庫根 `AGENTS.md`（只規定回應語言）。架構禁區在 `docs/roadmap/GUIDELINES.md`。訊息、storage、custody、Wallet Standard 能力表尚無全域契約檔，由引入的版本建立並在 INDEX 掛路徑。  
-- **其他禁區：** 不改 `../solibra-wallet`；不把 `brainstorm/` 當已定案；roadmap 與審查報告不寫助記詞、私鑰、密碼、個人地址、生產 RPC 秘密。工作目錄是 **airwave-wallet 倉庫根**。  
+- **其他禁區：** 不改 `../solibra-wallet`；不把 `docs/brainstorm/` 當已定案；roadmap 與審查報告不寫助記詞、私鑰、密碼、個人地址、生產 RPC 秘密。工作目錄是 **airwave-wallet 倉庫根**。  

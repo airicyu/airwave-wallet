@@ -110,7 +110,7 @@ Rough INDEX 允許暫時簡短，但 **進入實作前必須升格為自足稿**
 | 檔 | 職責 |
 |----|------|
 | **INDEX.md** | 做什麼、不做什麼、軌道、驗收（**WHAT**） |
-| **DOMAIN.md** | 跨版領域用語；與 INDEX 衝突時以 **該版 INDEX** 為準並應回寫 DOMAIN |
+| **docs/DOMAIN.md** | 跨版領域用語；與 INDEX 衝突時以 **該版 INDEX** 為準並應回寫 DOMAIN |
 | **docs/\*.md** | 路徑、訊息表、storage schema、UI 契約（**HOW**） |
 | **docs/reasoning.md** | 為何這樣定、反例、否決過的方案（**WHY**） |
 
@@ -165,7 +165,7 @@ Detail briefing 之後，若定案對後續判斷有影響，**應寫 reasoning*
 - [ ] 非顯設計取捨 → 已有 reasoning（或 INDEX 內等長 WHY）
 - [ ] 無「待拍板」殘留（否則仍為 planned）
 - [ ] **無真實助記詞、私鑰、密碼、個人地址**
-- [ ] 沒有把 `brainstorm/` 或 Solibra 原始碼當成已定案
+- [ ] 沒有把 `docs/brainstorm/` 或 Solibra 原始碼當成已定案
 
 ---
 
@@ -180,7 +180,7 @@ Detail briefing 之後，若定案對後續判斷有影響，**應寫 reasoning*
 
 ## 本專案補充
 
-Airwave Wallet 是重做中的 **Solana Chrome 擴充錢包**。倉庫目前幾乎只有 brainstorm 與本 roadmap；**沒有**可執行的擴充、**沒有**已選定的測試指令、**沒有** `package.json`。
+Airwave Wallet 是重做中的 **Solana Chrome 擴充錢包**。產品碼在 `wallet/`，手測 dApp 在 `test-web/`。版本契約在 `docs/roadmap/`；方向文件在 `docs/brainstorm/`，不是契約。
 
 ### 背景，不是契約
 
@@ -188,11 +188,9 @@ Airwave Wallet 是重做中的 **Solana Chrome 擴充錢包**。倉庫目前幾�
 |------|------|
 | `wallet/` | Chrome extension 子專案（產品碼主戰場） |
 | `test-web/` | 最小測試用 Solana dApp |
-| `brainstorm/full-picture.md` | 整盤構想與三步 roadmap。寫版本時可引用，不可代替 INDEX |
-| `brainstorm/lessons-from-solibra-wallet.md` | 架構教訓與 Do / Don't。寫版本時可引用，不可代替 INDEX |
-| `brainstorm/solibra-feature-summary.md` | 舊產品做了什麼。用來決定繼承意圖或明確不做 |
-| `brainstorm/remake-feature-wishlist.md` | 功能意向。排進某版後以該版 INDEX 為準 |
-| `brainstorm/research/extension-message-flow.html` | 多 runtime 訊息流圖 |
+| `docs/brainstorm/full-picture.md` | 整盤構想與三步 roadmap。寫版本時可引用，不可代替 INDEX |
+| `docs/brainstorm/lessons-from-solibra-wallet.md` | 架構教訓與 Do / Don't。寫版本時可引用，不可代替 INDEX |
+| `docs/research/extension-message-flow.html` | 多 runtime 訊息流圖 |
 | `../solibra-wallet` | 已失敗的舊碼，**另一個 git 倉庫**。本專案版本不得改它，除非該版 INDEX 寫明要讀哪幾個檔當對照 |
 
 ### 架構禁區（INDEX 未明確推翻前一律有效）

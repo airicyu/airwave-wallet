@@ -1,6 +1,6 @@
 # HOW — 多 runtime 訊息
 
-對照圖：[extension-message-flow.html](../../../../brainstorm/research/extension-message-flow.html)。
+對照圖：[extension-message-flow.html](../../../research/extension-message-flow.html)。
 
 ## Runtime 職責
 
