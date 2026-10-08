@@ -26,6 +26,7 @@ export type View =
   | "token-detail"
   | "token-send"
   | "send-approval"
+  | "dapp-approval"
   | "close-empty-pick"
   | "close-empty-confirm"
   | "close-empty-sending"
@@ -81,6 +82,7 @@ export const SUBPAGE_TITLE_KEYS: Record<Exclude<View, "home-token" | "home-activ
   "token-detail": "nav.tokenDetail",
   "token-send": "nav.tokenSend",
   "send-approval": "nav.sendApproval",
+  "dapp-approval": "nav.sendApproval",
   "close-empty-pick": "nav.closeEmptyPick",
   "close-empty-confirm": "nav.closeEmptyConfirm",
   "close-empty-sending": "nav.closeEmptySending",

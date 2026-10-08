@@ -83,6 +83,24 @@ export function IconRename({ size = 16 }: { size?: number }): JSX.Element {
   );
 }
 
+export function IconSidebar({ size = 18 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M9 4v16" />
+    </StrokeIcon>
+  );
+}
+
+export function IconAppWindow({ size = 18 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M7 9h10M7 12h6" />
+    </StrokeIcon>
+  );
+}
+
 export function IconLock({ size = 18 }: { size?: number }): JSX.Element {
   return (
     <StrokeIcon size={size}>

@@ -10,6 +10,7 @@ import type {
   SignTransactionPayload,
 } from "../../shared/commands";
 import { getExposedPublicKey } from "../../shared/accounts";
+import { finishConnect, finishSignMessage, finishSignTransaction } from "../pending";
 import { getPending, unbindPopoutByRequest } from "../pending";
 import { readAccounts, readSettings } from "../storage";
 import { respond } from "../messaging";
@@ -20,7 +21,6 @@ import {
   finishWalletSendUserAbort,
   runWalletSendAfterApprove,
 } from "../send";
-import { finishConnect, finishSignMessage, finishSignTransaction } from "../pending";
 import { keypairForAccountId, signingErrorForAccountId } from "../session";
 import { simulateSignTransaction } from "../simulate";
 import * as session from "../session";
@@ -197,10 +197,21 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
     const { requestId } = (req.payload ?? {}) as { requestId: string };
     if (requestId) {
       const p = getPending(requestId);
-      if (p?.kind === "signAndSendTransaction") {
+      if (!p) {
+        /* no-op */
+      } else if (p.kind === "signAndSendTransaction") {
         await finishSignAndSendWindowClosed(requestId);
-      } else {
+      } else if (p.kind === "walletSend") {
         finishWalletSendUserAbort(requestId, broadcastWalletSendSettled);
+      } else if (p.kind === "connect") {
+        unbindPopoutByRequest(requestId);
+        await finishConnect(requestId, p.tabId, p.origin, false);
+      } else if (p.kind === "signMessage") {
+        unbindPopoutByRequest(requestId);
+        await finishSignMessage(requestId, p.tabId, false);
+      } else if (p.kind === "signTransaction") {
+        unbindPopoutByRequest(requestId);
+        await finishSignTransaction(requestId, p.tabId, false);
       }
     }
     return respond({

@@ -44,6 +44,8 @@ const entries = {
   "menu.back": triple("返回", "返回", "Back"),
   "menu.menu": triple("選單", "菜单", "Menu"),
   "menu.lockWallet": triple("鎖定錢包", "锁定钱包", "Lock wallet"),
+  "shell.toSidebar": triple("改到側欄", "改到侧栏", "Move to sidebar"),
+  "shell.toWindow": triple("改到工具列", "改到工具栏", "Move to toolbar"),
   "settings.hub.language": triple("語言", "语言", "Language"),
   "settings.locale.title": triple("語言", "语言", "Language"),
   "settings.hub.network": triple("網路", "网络", "Network"),

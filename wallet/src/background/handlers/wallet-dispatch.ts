@@ -37,7 +37,16 @@ import {
   handleUnlock,
 } from "../wallet";
 
-export async function handleWalletCommand(req: ExtensionRequest): Promise<ExtensionResponse> {
+import {
+  handleShellGetLastNormalWindowId,
+  handleShellGetSidebarDappApproval,
+  handleShellSwitchToWindow,
+} from "../shell";
+
+export async function handleWalletCommand(
+  req: ExtensionRequest,
+  sender: chrome.runtime.MessageSender,
+): Promise<ExtensionResponse> {
   if (req.command === "wallet.getState") return handleGetState(req);
   if (req.command === "wallet.lock") return handleLock(req);
   if (req.command === "wallet.unlock") return handleUnlock(req);
@@ -59,7 +68,10 @@ export async function handleWalletCommand(req: ExtensionRequest): Promise<Extens
   if (req.command === "wallet.deleteAccount") return handleDeleteAccount(req);
   if (req.command === "wallet.disconnectOrigin") return handleDisconnectOrigin(req);
   if (req.command === "wallet.disconnectAllOrigins") return handleDisconnectAllOrigins(req);
-  if (req.command === "wallet.beginSend") return handleBeginSend(req);
+  if (req.command === "wallet.beginSend") return handleBeginSend(req, sender);
+  if (req.command === "shell.getLastNormalWindowId") return handleShellGetLastNormalWindowId(req);
+  if (req.command === "shell.getSidebarDappApproval") return handleShellGetSidebarDappApproval(req);
+  if (req.command === "shell.switchToWindow") return handleShellSwitchToWindow(req);
   if (req.command === "wallet.getHomeTokens") return handleGetHomeTokens(req);
   if (req.command === "wallet.listClosableTokenAccounts") return handleListClosableTokenAccounts(req);
   if (req.command === "wallet.planCloseEmpty") return handlePlanCloseEmpty(req);

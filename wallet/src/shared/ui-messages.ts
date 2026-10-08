@@ -191,6 +191,16 @@ const messages = {
     "zh-Hans": "锁定钱包",
     "en": "Lock wallet",
   },
+  "shell.toSidebar": {
+    "zh-Hant": "改到側欄",
+    "zh-Hans": "改到侧栏",
+    "en": "Move to sidebar",
+  },
+  "shell.toWindow": {
+    "zh-Hant": "改到工具列",
+    "zh-Hans": "改到工具栏",
+    "en": "Move to toolbar",
+  },
   "settings.hub.language": {
     "zh-Hant": "語言",
     "zh-Hans": "语言",

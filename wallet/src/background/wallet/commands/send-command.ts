@@ -17,7 +17,18 @@ import { getActiveAccountMeta, keypairForAccountId } from "../../session";
 import * as session from "../../session";
 import { readSettings } from "../../storage";
 
-export async function handleBeginSend(req: ExtensionRequest): Promise<ExtensionResponse> {
+import { walletShellSurfaceFromHref } from "../../../shared/shell-constants";
+
+function uiHostFromSender(sender: chrome.runtime.MessageSender): "window" | "sidebar" {
+  const url = sender.url ?? sender.tab?.url ?? "";
+  const surface = walletShellSurfaceFromHref(url);
+  return surface === "sidebar" ? "sidebar" : "window";
+}
+
+export async function handleBeginSend(
+  req: ExtensionRequest,
+  sender: chrome.runtime.MessageSender,
+): Promise<ExtensionResponse> {
   if (!session.isUnlocked()) {
     return respond({
       kind: "airwave-ext-res",
@@ -93,7 +104,7 @@ export async function handleBeginSend(req: ExtensionRequest): Promise<ExtensionR
     payload: { transaction: Array.from(built.txBytes) },
     createdAt: Date.now(),
     signAccountId: active.id,
-    uiHost: "popup",
+    uiHost: uiHostFromSender(sender),
   });
   schedulePendingTimeout(requestId, pendingTimeoutHandlers);
   return respond({

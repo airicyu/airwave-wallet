@@ -3,11 +3,13 @@ import { memo, useEffect, useMemo, useRef } from "react";
 import { mountApprovalShell } from "../../approval/shell";
 import { brandIconUrl } from "../../shared/brand-icon";
 import { sendExtensionRequest } from "../../shared/ext-api";
+import type { UiHost } from "../../shared/commands";
+import { walletShellSurfaceFromHref } from "../../shared/shell-constants";
 import type { MessageKey } from "../../shared/ui-messages";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
 
-/** Markup matches today's popup #approval-root; mountApprovalShell queries these ids. */
+/** Markup matches popup #approval-root; mountApprovalShell queries these ids. */
 export function buildApprovalRootHtml(t: (key: MessageKey) => string): string {
   return `
               <section id="appr-view-unlock" class="unlock-screen" hidden>
@@ -63,6 +65,11 @@ export function buildApprovalRootHtml(t: (key: MessageKey) => string): string {
 `;
 }
 
+function inShellHostFromPage(): UiHost {
+  const surface = walletShellSurfaceFromHref(window.location.href);
+  return surface === "sidebar" ? "sidebar" : "window";
+}
+
 let abortRequestId: string | null = null;
 
 export function syncWalletSendAbortId(id: string | null): void {
@@ -90,7 +97,7 @@ export const ApprovalHost = memo(function ApprovalHost({ requestId }: { requestI
     const dispose = mountApprovalShell(
       {
         requestId,
-        host: "popup",
+        host: inShellHostFromPage(),
         elementIdPrefix: "appr-",
         callbacks: {
           onClose: () => apiRef.current.navigateTo("token-send"),

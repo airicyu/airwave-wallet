@@ -8,8 +8,10 @@
 
 | 項目 | 說明 |
 |------|------|
-| [Sidebar 模式](./sidebar-mode.md) | Settings 改在 Chrome 側欄顯示錢包殼，取代 popup |
+| [Sidebar 模式](./sidebar-mode.md) | 已排 [0.25.0](../0.25.0/INDEX.md)：Home 頂欄在錢包視窗與 Chrome 側欄之間切換 |
 | [帳戶卡片拖曳排序](./account-card-drag-order.md) | 卡片主區懸停出陰影與虛點，游標改為可拖曳，用來拉次序 |
+| [錢包帳戶類型圖示](./account-kind-visual.md) | 可簽單一、唯讀單一、聚合各一圖一色；widget 與 Accounts 列表同一套 |
+| [解鎖畫面預設聚焦密碼欄](./unlock-password-autofocus.md) | 解鎖畫面出現時焦點在密碼欄，可直接打字 |
 | [版本升級與 storage 遷移](./storage-migration.md) | 擴充更新時依 schema 世代搬 local 資料；金庫改格式須等解鎖 |
 | [聚合錢包帳戶送出代幣](./send-token-combined.md) | 從目前可簽成員送；可動用≠加總；不含歸集。單一可簽送出已於 [0.12.0](../0.12.0/INDEX.md) 出貨 |
 | [錢包地址簿](./address-book.md) | 名稱＋地址白名單；送出可選，仍可手貼 |

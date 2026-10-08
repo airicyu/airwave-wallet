@@ -39,6 +39,15 @@ body,
   overflow: hidden;
 }
 
+html.wallet-shell-surface,
+html.wallet-shell-surface body,
+html.wallet-shell-surface #root,
+html.wallet-shell-surface #app {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+}
+
 html,
 body {
   margin: 0;

@@ -36,6 +36,7 @@
 | [0.22.0](./0.22.0/INDEX.md) | shipped | Home pill／Devnet 徽章／複製回饋／刷新冷卻／Activity Orb／收回租金確認中／Kit 估 CU |
 | [0.23.0](./0.23.0/INDEX.md) | shipped | Wallet UI 多語言（繁中／簡中／英文）＋系統雙字體（方案 B） |
 | [0.24.0](./0.24.0/INDEX.md) | in progress | 原始檔職責分檔（命令／模擬／收回租金）；行為與 0.23.0 相同 |
+| [0.25.0](./0.25.0/INDEX.md) | planned | 錢包視窗與 Chrome 側欄；Home 頂欄互切；內容寬 360px |
 
 **版本號：** `x.y.z` 的 **patch**（例如 **0.3.1**）留給該 minor 的 **bugfix**，不排新功能。新功能走下一個 **minor**（0.3.0 → 0.4.0 → 0.5.0）。
 

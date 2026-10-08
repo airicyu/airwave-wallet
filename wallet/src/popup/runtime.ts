@@ -34,6 +34,7 @@ export const BACK_PARENT: Partial<Record<View, View>> = {
   accounts: "home-token",
   "home-activity": "home-token",
   "send-approval": "token-send",
+  "dapp-approval": "home-token",
   "token-send": "token-detail",
   "close-empty-pick": "home-token",
   "close-empty-confirm": "close-empty-pick",

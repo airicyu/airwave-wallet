@@ -10,7 +10,7 @@
 
 ## 1. 表面與密度
 
-- 主表面是 Chrome **popup**：寬約 **384px**、高約 **600–640px**。所有列、按鈕、輸入必須在此寬度內可掃、可點，**禁止**為了完整字串把列折成兩行當主顯示。
+- 主表面是 Chrome **工具列 action popup**（`default_popup`，寬約 **422px**、高約 **600px**）或 **Chrome 側欄**（內容 **寬高 100%** 跟面板）。**不要**用 `chrome.windows.create` 另開錢包獨立窗當主殼。審批 popout（網站簽名獨立窗）仍約 **420×640**，不算主表面。所有列、按鈕、輸入須在當下主表面寬度內可掃、可點；側欄拉寬時內容跟著拉滿，**禁止** 422px 置中固定欄。
 - 一屏只做一件事。第一層是 **選項列表**（Accounts 的 Add、Settings 的分區）；選了再進 **操作頁或展開列**。禁止把產生／匯入／觀察／Combined 的表單全攤在同一頁。
 - 頂欄沿用方案 A：Home 為 widget；子頁為 **Back + 標題 + Menu**。Bottom Token／Activity **只**在 Home。
 - 色票與圓角對齊 [`design-demos/wallet-030-ui-concepts.html`](design-demos/wallet-030-ui-concepts.html) 的 CSS 變數（`--bg`、`--fill`、`--accent` 等）。不要另開一套高對比主題。

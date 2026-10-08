@@ -15,6 +15,9 @@ export const SESSION_UNLOCKED = "airwave.unlocked.session.v1";
 
 export type UiLocale = "zh-Hant" | "zh-Hans" | "en";
 
+/** 錢包主殼：獨立視窗或 Chrome 側欄（見 roadmap 0.25.0） */
+export type ShellMode = "window" | "sidebar";
+
 export type Cluster = "devnet" | "mainnet";
 
 export type ClusterRpcConfig = {
@@ -34,6 +37,7 @@ export type Settings = {
   /** micro-lamports per CU；未簽 signTransaction 預設 CU price */
   defaultCuPrice: number;
   locale: UiLocale;
+  shell: ShellMode;
 };
 
 export type AccountKind = "signing" | "readOnly";
@@ -79,12 +83,17 @@ export const DEFAULT_SETTINGS: Settings = {
   jupiterApiKey: "",
   defaultCuPrice: 25_000,
   locale: "zh-Hant",
+  shell: "window",
 };
 
 export const PUBLIC_RPC_BY_CLUSTER: Record<Cluster, string> = {
   devnet: "https://api.devnet.solana.com",
   mainnet: "https://api.mainnet-beta.solana.com",
 };
+
+export function normalizeShellMode(raw: unknown): ShellMode {
+  return raw === "sidebar" ? "sidebar" : "window";
+}
 
 export function isPublicClusterRpc(url: string): boolean {
   const u = url.trim();

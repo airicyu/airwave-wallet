@@ -10,6 +10,7 @@ import {
   RevealScreen,
 } from "./accounts/AccountsScreens";
 import { ApprovalHost } from "./components/ApprovalHost";
+import { DappApprovalHost } from "./components/DappApprovalHost";
 import { HomeActivityList } from "./components/HomeActivityList";
 import { HomeTokenList, TokenDetailView } from "./components/HomeTokenList";
 import {
@@ -22,7 +23,9 @@ import {
 import { LegalDoc } from "./components/LegalDoc";
 import { CopyPkButton } from "./components/CopyPkButton";
 import { RefreshAssetsButton } from "./components/RefreshAssetsButton";
-import { IconBack, IconLock, IconMenu } from "./components/StrokeIcon";
+import { IconAppWindow, IconBack, IconLock, IconMenu, IconSidebar } from "./components/StrokeIcon";
+import { hydrateLastNormalWindowId } from "./shell/shell-bridge";
+import { isSidePanelSurface, isWalletWindowSurface, switchToSidebar, switchToWindow } from "./shell/shell-switch";
 import { WalletWidget } from "./components/WalletWidget";
 import { getExposedPublicKey } from "../shared/accounts";
 import { sendExtensionRequest } from "../shared/ext-api";
@@ -101,6 +104,7 @@ export function PopupMarkup(): JSX.Element {
     detailTokenId,
     setDetailTokenId,
     activeWalletSendRequestId,
+    activeDappApprovalRequestId,
     homeTokenRows,
     setHomeAssetsForce,
     menuOpen,
@@ -195,6 +199,31 @@ export function PopupMarkup(): JSX.Element {
             </div>
             <div className="bar-spacer" />
             <div className="bar-end">
+              {isWalletWindowSurface() ? (
+                <button
+                  type="button"
+                  className="icon-btn"
+                  id="btn-shell-to-sidebar"
+                  title={t("shell.toSidebar")}
+                  aria-label={t("shell.toSidebar")}
+                  onMouseDown={() => void hydrateLastNormalWindowId()}
+                  onClick={() => switchToSidebar()}
+                >
+                  <IconSidebar />
+                </button>
+              ) : null}
+              {isSidePanelSurface() ? (
+                <button
+                  type="button"
+                  className="icon-btn"
+                  id="btn-shell-to-window"
+                  title={t("shell.toWindow")}
+                  aria-label={t("shell.toWindow")}
+                  onClick={() => switchToWindow()}
+                >
+                  <IconAppWindow />
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="icon-btn"
@@ -324,6 +353,12 @@ export function PopupMarkup(): JSX.Element {
           {currentView === "send-approval" && activeWalletSendRequestId ? (
             <section id="screen-send-approval" className="screen approval-shell-host">
               <ApprovalHost key={activeWalletSendRequestId} requestId={activeWalletSendRequestId} />
+            </section>
+          ) : null}
+
+          {currentView === "dapp-approval" && activeDappApprovalRequestId ? (
+            <section id="screen-dapp-approval" className="screen approval-shell-host">
+              <DappApprovalHost key={activeDappApprovalRequestId} requestId={activeDappApprovalRequestId} />
             </section>
           ) : null}
 

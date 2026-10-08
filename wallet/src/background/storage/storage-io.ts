@@ -12,6 +12,7 @@ import {
   type Cluster,
   type ClusterRpcConfig,
   type ConnectionsMap,
+  normalizeShellMode,
   type Settings,
   type UiLocale,
 } from "../../shared/storage-keys";
@@ -67,6 +68,7 @@ export function normalizeSettings(raw: Partial<Settings> | undefined): Settings 
     jupiterApiKey: typeof raw?.jupiterApiKey === "string" ? raw.jupiterApiKey : "",
     defaultCuPrice: normalizeDefaultCuPrice(raw?.defaultCuPrice),
     locale: normalizeUiLocale(raw?.locale),
+    shell: normalizeShellMode(raw?.shell),
   };
 }
 

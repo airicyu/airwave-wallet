@@ -3,7 +3,7 @@ import { defineManifest } from "@crxjs/vite-plugin";
 export default defineManifest({
   manifest_version: 3,
   name: "Airwave Wallet",
-  version: "0.24.0",
+  version: "0.25.0",
   description: "Airwave Solana wallet (dev preview)",
   action: {
     default_popup: "src/popup/index.html",
@@ -19,7 +19,10 @@ export default defineManifest({
     service_worker: "src/background/index.ts",
     type: "module",
   },
-  permissions: ["storage", "tabs"],
+  permissions: ["storage", "tabs", "sidePanel"],
+  side_panel: {
+    default_path: "src/sidepanel/index.html",
+  },
   host_permissions: ["<all_urls>"],
   content_scripts: [
     {

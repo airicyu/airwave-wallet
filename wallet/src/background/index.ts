@@ -2,19 +2,21 @@
  * Service worker entry: validates senders, hydrates session, routes commands to dapp/UI/wallet handlers, cleans up pendings on window close.
  * Does not embed individual feature handler implementations.
  */
-import type { ExtensionRequest, ExtensionResponse, SignMessagePayload } from "../shared/commands";
-import { messageLooksLikeTransactionMessage } from "../shared/sign-message-tx";
+import type { ExtensionRequest, ExtensionResponse } from "../shared/commands";
 import { handleDappCommand, handleUiCommand, handleWalletCommand } from "./handlers";
-import { respond, sendBridgeResult } from "./messaging";
+import { respond } from "./messaging";
 import {
   finishWalletSendWindowClosed,
   getPending,
-  takePending,
+  rejectOrdinaryDappPending,
   unbindPopoutWindow,
 } from "./pending";
 import { finishSignAndSendWindowClosed } from "./send";
 import { pendingTimeoutHandlers } from "./send";
+import { registerWalletShellListeners } from "./shell";
 import * as session from "./session";
+
+registerWalletShellListeners();
 
 function isExtensionPage(sender: chrome.runtime.MessageSender): boolean {
   const url = sender.url ?? "";
@@ -28,6 +30,7 @@ async function dispatch(
   const isUiOrWallet =
     req.command.startsWith("ui.") ||
     req.command.startsWith("wallet.") ||
+    req.command.startsWith("shell.") ||
     req.command === "storage.patchSettings";
   if (isUiOrWallet && !isExtensionPage(sender)) {
     return respond({
@@ -44,7 +47,7 @@ async function dispatch(
   if (req.command.startsWith("ui.")) {
     return handleUiCommand(req);
   }
-  return handleWalletCommand(req);
+  return handleWalletCommand(req, sender);
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -86,27 +89,5 @@ chrome.windows.onRemoved.addListener((windowId) => {
     return;
   }
 
-  takePending(requestId);
-
-  let error: { code: string; message: string } = {
-    code: "USER_REJECTED",
-    message: "Approval window closed",
-  };
-  if (p.kind === "signMessage") {
-    const { message } = p.payload as SignMessagePayload;
-    const msgBytes = Uint8Array.from(message);
-    if (messageLooksLikeTransactionMessage(msgBytes)) {
-      error = {
-        code: "SIGN_MESSAGE_LOOKS_LIKE_TRANSACTION",
-        message: "Message looks like a transaction",
-      };
-    }
-  }
-
-  void sendBridgeResult(p.tabId, {
-    type: "airwave-bridge-result",
-    requestId,
-    ok: false,
-    error,
-  });
+  void rejectOrdinaryDappPending(requestId);
 });

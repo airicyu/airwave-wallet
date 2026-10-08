@@ -7,16 +7,19 @@ import type {
   ConnectPayload,
   ExtensionRequest,
   ExtensionResponse,
+  PendingRecord,
   SignAndSendTransactionPayload,
   SignMessagePayload,
   SignTransactionPayload,
+  UiHost,
 } from "../../shared/commands";
 import { messageLooksLikeTransactionMessage } from "../../shared/sign-message-tx";
 import { getActivePublicKey, readActiveAccountId, readConnections, readSettings } from "../storage";
-import { addPending } from "../pending";
+import { addPending, rejectOrdinaryDappPending } from "../pending";
 import { schedulePendingTimeout } from "../pending";
 import { respond } from "../messaging";
 import { rememberConnectedTab, removeConnectionAndNotify } from "../messaging";
+import { openDappApprovalInSidebarShell } from "../messaging/open-dapp-in-shell";
 import { openPopout } from "../messaging";
 import { pendingTimeoutHandlers } from "../send";
 import { signMessageEnqueueGateError } from "../session";
@@ -26,6 +29,32 @@ const ACCEPTED_CHAIN_IDS = new Set(["solana:devnet", "solana:mainnet"]);
 
 function settingsChainId(cluster: "devnet" | "mainnet"): string {
   return cluster === "mainnet" ? "solana:mainnet" : "solana:devnet";
+}
+
+async function dappApprovalUiHost(): Promise<UiHost> {
+  const settings = await readSettings();
+  return settings.shell === "sidebar" ? "sidebar" : "popout";
+}
+
+async function presentDappApproval(
+  requestId: string,
+  tabId: number,
+  record: Omit<PendingRecord, "uiHost">,
+): Promise<void> {
+  const uiHost = await dappApprovalUiHost();
+  addPending(requestId, { ...record, uiHost });
+  schedulePendingTimeout(requestId, pendingTimeoutHandlers);
+  if (uiHost === "sidebar") {
+    const presented = await openDappApprovalInSidebarShell(requestId, tabId);
+    if (!presented) {
+      await rejectOrdinaryDappPending(
+        requestId,
+        "Could not open wallet sidebar for approval",
+      );
+    }
+  } else {
+    await openPopout(requestId);
+  }
 }
 
 export async function handleDappCommand(req: ExtensionRequest): Promise<ExtensionResponse> {
@@ -87,18 +116,15 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
     }
 
     const requestId = req.requestId;
-    addPending(requestId, {
+    await presentDappApproval(requestId, tabId, {
       kind: "connect",
       tabId,
       frameId: req.frameId ?? 0,
       origin,
       payload,
       createdAt: Date.now(),
-      uiHost: "popout",
       reconnectWhileLocked: Boolean(trusted),
     });
-    schedulePendingTimeout(requestId, pendingTimeoutHandlers);
-    await openPopout(requestId);
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
@@ -140,7 +166,7 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
     const msgBytes = Uint8Array.from(payload.message);
     const messageLooksLikeTx = messageLooksLikeTransactionMessage(msgBytes);
     const requestId = req.requestId;
-    addPending(requestId, {
+    await presentDappApproval(requestId, tabId, {
       kind: "signMessage",
       tabId,
       frameId: req.frameId ?? 0,
@@ -149,10 +175,7 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
       createdAt: Date.now(),
       signAccountId: activeId,
       messageLooksLikeTx,
-      uiHost: "popout",
     });
-    schedulePendingTimeout(requestId, pendingTimeoutHandlers);
-    await openPopout(requestId);
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
@@ -181,7 +204,7 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
       });
     }
     const requestId = req.requestId;
-    addPending(requestId, {
+    await presentDappApproval(requestId, tabId, {
       kind: "signTransaction",
       tabId,
       frameId: req.frameId ?? 0,
@@ -189,10 +212,7 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
       payload: req.payload as SignTransactionPayload,
       createdAt: Date.now(),
       signAccountId: activeId,
-      uiHost: "popout",
     });
-    schedulePendingTimeout(requestId, pendingTimeoutHandlers);
-    await openPopout(requestId);
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
@@ -243,7 +263,7 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
       });
     }
     const requestId = req.requestId;
-    addPending(requestId, {
+    await presentDappApproval(requestId, tabId, {
       kind: "signAndSendTransaction",
       tabId,
       frameId: req.frameId ?? 0,
@@ -251,10 +271,7 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
       payload: payload as SignAndSendTransactionPayload,
       createdAt: Date.now(),
       signAccountId: activeId,
-      uiHost: "popout",
     });
-    schedulePendingTimeout(requestId, pendingTimeoutHandlers);
-    await openPopout(requestId);
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,

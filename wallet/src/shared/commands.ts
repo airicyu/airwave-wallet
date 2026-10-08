@@ -41,7 +41,10 @@ export type AirwaveCommand =
   | "wallet.getHomeActivity"
   | "wallet.beginSend"
   | "wallet.changeVaultPassword"
-  | "storage.patchSettings";
+  | "storage.patchSettings"
+  | "shell.getLastNormalWindowId"
+  | "shell.getSidebarDappApproval"
+  | "shell.switchToWindow";
 
 export const PENDING_TIMEOUT_MS = 120_000;
 
@@ -70,7 +73,12 @@ export type PendingKind =
   | "signAndSendTransaction"
   | "walletSend";
 
-export type UiHost = "popout" | "popup";
+export type UiHost = "popout" | "popup" | "window" | "sidebar";
+
+/** 0.13 殼內審批宿主（含舊記憶體 `"popup"`） */
+export function isInWalletShellHost(host: UiHost): boolean {
+  return host === "popup" || host === "window" || host === "sidebar";
+}
 
 export type PendingRecord = {
   kind: PendingKind;

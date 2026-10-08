@@ -4,9 +4,20 @@
  */
 import { sendExtensionRequest } from "../../shared/ext-api";
 import type { WalletSendSettledNotice } from "../../shared/commands";
+import {
+  DAPP_APPROVAL_IN_SHELL_MSG,
+  type DappApprovalInShellNotice,
+} from "../../shared/dapp-approval-notice";
+import { rejectDappApprovalIfOpen } from "../components/DappApprovalHost";
+import { walletShellSurfaceFromHref } from "../../shared/shell-constants";
 import type { ClosableEntry, CloseEmptyCommitResult, CloseEmptyPlanResult } from "../../shared/close-empty-types";
 import type { HomeTokenRow } from "../home/home-tokens";
 import { abortWalletSendOnPopupUnload, syncWalletSendAbortId } from "../components/ApprovalHost";
+import {
+  bindLastNormalWindowPush,
+  bindWalletShellFocusHydrate,
+  hydrateLastNormalWindowId,
+} from "../shell/shell-bridge";
 import { BACK_PARENT } from "../runtime";
 import type { State, View } from "../types";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
@@ -38,6 +49,7 @@ export function usePopupAppState() {
   const [currentView, setCurrentView] = useState<View>("home-token");
   const [detailTokenId, setDetailTokenId] = useState<string | null>(null);
   const [activeWalletSendRequestId, setActiveWalletSendRequestId] = useState<string | null>(null);
+  const [activeDappApprovalRequestId, setActiveDappApprovalRequestId] = useState<string | null>(null);
   const [homeTokenRows, setHomeTokenRows] = useState<HomeTokenRow[]>([]);
   const [focusAccountId, setFocusAccountId] = useState<string | null>(null);
   const [expandedTokenRowIds, setExpandedTokenRowIds] = useState<Set<string>>(() => new Set());
@@ -65,12 +77,14 @@ export function usePopupAppState() {
     currentView,
     detailTokenId,
     activeWalletSendRequestId,
+    activeDappApprovalRequestId,
     focusAccountId,
   });
   bagRef.current = {
     currentView,
     detailTokenId,
     activeWalletSendRequestId,
+    activeDappApprovalRequestId,
     focusAccountId,
   };
 
@@ -123,6 +137,11 @@ export function usePopupAppState() {
         abortWalletSendOnPopupUnload();
         bagRef.current.activeWalletSendRequestId = null;
         setActiveWalletSendRequestId(null);
+      }
+      if (current === "dapp-approval" && next !== "dapp-approval" && bagRef.current.activeDappApprovalRequestId) {
+        rejectDappApprovalIfOpen(bagRef.current.activeDappApprovalRequestId);
+        bagRef.current.activeDappApprovalRequestId = null;
+        setActiveDappApprovalRequestId(null);
       }
       if (current === "token-send" && next !== "token-send" && next !== "send-approval") {
         setPendingSendFormError(null);
@@ -239,10 +258,53 @@ export function usePopupAppState() {
       if (wasApproval) navigateTo("token-send");
       setPendingSendFormError(notice.error ?? "CANCELLED");
     };
-    chrome.runtime.onMessage.addListener(onSettled);
+    const openSidebarDappApproval = (requestId: string) => {
+      if (walletShellSurfaceFromHref(window.location.href) !== "sidebar") return;
+      bagRef.current.activeDappApprovalRequestId = requestId;
+      setActiveDappApprovalRequestId(requestId);
+      bagRef.current.currentView = "dapp-approval";
+      setCurrentView("dapp-approval");
+      setMenuOpen(false);
+      setNavSeq((n) => n + 1);
+      setTitleOverride(null);
+    };
 
-    const onUnload = () => abortWalletSendOnPopupUnload();
-    const onPageHide = () => abortWalletSendOnPopupUnload();
+    const onDappApproval = (message: unknown) => {
+      if (!message || typeof message !== "object") return;
+      const notice = message as DappApprovalInShellNotice;
+      if (notice.kind !== DAPP_APPROVAL_IN_SHELL_MSG) return;
+      openSidebarDappApproval(notice.requestId);
+    };
+
+    const hydrateSidebarDappApproval = async () => {
+      if (walletShellSurfaceFromHref(window.location.href) !== "sidebar") return;
+      const res = await sendExtensionRequest("shell.getSidebarDappApproval");
+      if (!res.ok || !res.result || typeof res.result !== "object") return;
+      const requestId = (res.result as { requestId?: string | null }).requestId;
+      if (!requestId) return;
+      openSidebarDappApproval(requestId);
+    };
+
+    chrome.runtime.onMessage.addListener(onSettled);
+    chrome.runtime.onMessage.addListener(onDappApproval);
+
+    const abortDappApprovalOnSidebarUnload = () => {
+      if (walletShellSurfaceFromHref(window.location.href) !== "sidebar") return;
+      const dappId = bagRef.current.activeDappApprovalRequestId;
+      if (!dappId) return;
+      rejectDappApprovalIfOpen(dappId);
+      bagRef.current.activeDappApprovalRequestId = null;
+      setActiveDappApprovalRequestId(null);
+    };
+
+    const onUnload = () => {
+      abortWalletSendOnPopupUnload();
+      abortDappApprovalOnSidebarUnload();
+    };
+    const onPageHide = () => {
+      abortWalletSendOnPopupUnload();
+      abortDappApprovalOnSidebarUnload();
+    };
     window.addEventListener("beforeunload", onUnload);
     window.addEventListener("pagehide", onPageHide);
 
@@ -250,8 +312,16 @@ export function usePopupAppState() {
       showError(String(e));
     });
 
+    void hydrateLastNormalWindowId();
+    void hydrateSidebarDappApproval();
+    const unbindShell = bindLastNormalWindowPush();
+    const unbindFocusHydrate = bindWalletShellFocusHydrate();
+
     return () => {
+      unbindFocusHydrate();
+      unbindShell();
       chrome.runtime.onMessage.removeListener(onSettled);
+      chrome.runtime.onMessage.removeListener(onDappApproval);
       window.removeEventListener("beforeunload", onUnload);
       window.removeEventListener("pagehide", onPageHide);
     };
@@ -265,6 +335,8 @@ export function usePopupAppState() {
       setDetailTokenId,
       activeWalletSendRequestId,
       setActiveWalletSendRequestId: setActiveWalletSendRequestIdTracked,
+      activeDappApprovalRequestId,
+      setActiveDappApprovalRequestId,
       homeTokenRows,
       setHomeTokenRows,
       focusAccountId,
@@ -312,6 +384,7 @@ export function usePopupAppState() {
       currentView,
       detailTokenId,
       activeWalletSendRequestId,
+      activeDappApprovalRequestId,
       homeTokenRows,
       focusAccountId,
       expandedTokenRowIds,
