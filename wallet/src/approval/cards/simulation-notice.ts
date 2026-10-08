@@ -1,3 +1,7 @@
+/**
+ * Builds approval popout notice cards for pending-transaction simulation outcomes (RPC/unparseable/fail/success).
+ * Does not run simulation or call Solana RPC itself.
+ */
 import type { SimulatePendingTxResult } from "../../shared/simulate-pending-tx-types";
 import { messageForErrorCode, t, type UiLocale } from "../../shared/ui-i18n";
 

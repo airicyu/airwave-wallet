@@ -1,6 +1,11 @@
+/**
+ * Thin command wrappers for list, plan, and commit close-empty wallet operations.
+ */
 import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
 import { respond } from "../messaging";
-import { commitCloseEmpty, listClosableTokenAccounts, planCloseEmpty } from "./close-empty-service";
+import { commitCloseEmpty } from "./commit-close-empty";
+import { listClosableTokenAccounts } from "./list-closable";
+import { planCloseEmpty } from "./plan-close-empty";
 
 export async function handleListClosableTokenAccounts(
   req: ExtensionRequest,

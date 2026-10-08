@@ -1,3 +1,7 @@
+/**
+ * Account metadata helpers: combined vs signing accounts, exposed pubkeys, and signing/read-only resolution.
+ * Does not decrypt vault secrets or load keypairs for signing.
+ */
 import { address, isAddress } from "@solana/kit";
 import type { AccountMeta, CombinedAccountMeta, SigningOrWatchMeta } from "./storage-keys";
 

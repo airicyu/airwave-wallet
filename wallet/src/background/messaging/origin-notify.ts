@@ -1,3 +1,7 @@
+/**
+ * Notifies connected dapp tabs with bridge results, account changes, and disconnect events.
+ * Does not accept or enqueue new dapp pending requests.
+ */
 import type {
   AirwaveBridgeAccountChanged,
   AirwaveBridgeDisconnected,

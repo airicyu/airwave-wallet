@@ -1,3 +1,7 @@
+/**
+ * Holds unlocked vault secrets and loaded signing keypairs in the service worker, with session-storage hydrate.
+ * Does not encrypt the vault blob or write long-lived unlock keys to chrome.storage.local.
+ */
 import {
   exportVaultKeyRaw,
   importVaultKeyRaw,

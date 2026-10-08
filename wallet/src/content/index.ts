@@ -1,3 +1,7 @@
+/**
+ * Content script relay between the page postMessage bridge and the extension runtime for allowed dapp commands.
+ * Does not inject the Wallet Standard provider into the page context.
+ */
 import type {
   AirwaveBridgeAccountChanged,
   AirwaveBridgeDisconnected,

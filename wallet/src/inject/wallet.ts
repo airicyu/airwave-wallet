@@ -1,3 +1,7 @@
+/**
+ * Wallet Standard Solana provider in the page, delegating connect and signing to the extension bridge.
+ * Does not access extension APIs or hold decrypted private keys in the page.
+ */
 import {
   SolanaSignAndSendTransaction,
   type SolanaSignAndSendTransactionFeature,

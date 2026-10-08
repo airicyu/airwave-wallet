@@ -1,3 +1,7 @@
+/**
+ * Shared home token row types, sorting, native/wSOL helpers, and RPC-backed balance assembly utilities.
+ * Does not run Helius/Jupiter enrichment caching (see background home-tokens service).
+ */
 import { address } from "@solana/kit";
 import type { ParsedOwnerTokenAccount } from "./parsed-token-accounts";
 import { fetchParsedTokenAccountsForOwner } from "./parsed-token-accounts";

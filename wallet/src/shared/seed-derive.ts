@@ -1,3 +1,7 @@
+/**
+ * BIP39 mnemonic validation and ed25519 HD path derivation for seed preview and import flows.
+ * Does not persist new accounts or unlock the vault.
+ */
 import { generateMnemonic, mnemonicToSeedSync, validateMnemonic } from "@scure/bip39";
 import { wordlist } from "@scure/bip39/wordlists/english.js";
 import { derivePath } from "ed25519-hd-key";

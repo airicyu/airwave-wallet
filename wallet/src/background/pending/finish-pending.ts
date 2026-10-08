@@ -1,3 +1,7 @@
+/**
+ * Completes connect, signMessage, and signTransaction pendings with signing and tab bridge responses.
+ * Does not schedule timeouts or store pendings in chrome.storage.
+ */
 import nacl from "tweetnacl";
 import type { SignMessagePayload, SignTransactionPayload } from "../../shared/commands";
 import { messageLooksLikeTransactionMessage } from "../../shared/sign-message-tx";

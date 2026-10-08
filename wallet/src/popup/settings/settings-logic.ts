@@ -1,3 +1,7 @@
+/**
+ * Settings edit helpers, RPC/settings fingerprints, and patch flows for the popup settings screens.
+ * Does not write chrome.storage directly without typed wallet extension commands.
+ */
 import { sendExtensionRequest } from "../../shared/ext-api";
 import {
   customRpcForCluster,

@@ -1,3 +1,7 @@
+/**
+ * Service worker handlers for popup and approval UI commands (pending read/resolve, simulate, wallet send steps).
+ * Does not route dapp bridge commands or wallet vault lifecycle handlers.
+ */
 import { parsePublicKeyBase58 } from "../../shared/accounts";
 import type {
   ExtensionRequest,

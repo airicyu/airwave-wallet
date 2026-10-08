@@ -1,3 +1,7 @@
+/**
+ * Best-effort decoders for common compiled Solana instructions shown in approval transaction details.
+ * Does not simulate execution or guarantee instruction coverage for every program.
+ */
 const SYSTEM_PROGRAM_ID = "11111111111111111111111111111111";
 const COMPUTE_BUDGET_PROGRAM_ID = "ComputeBudget111111111111111111111111111111";
 const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";

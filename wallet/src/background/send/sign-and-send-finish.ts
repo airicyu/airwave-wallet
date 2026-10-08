@@ -1,3 +1,7 @@
+/**
+ * Cleans up sign-and-send pendings when the user rejects or closes the approval window before broadcast completes.
+ * Does not sign transactions or wait for on-chain confirmation.
+ */
 import { sendBridgeResult } from "../messaging";
 import { cancelPendingTimeout, getPending, takePending, unbindPopoutByRequest } from "../pending";
 import { clearWalletSendState, getWalletSendState } from "./wallet-send-state";

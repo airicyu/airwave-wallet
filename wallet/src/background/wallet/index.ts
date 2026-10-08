@@ -1,11 +1,12 @@
+/**
+ * Re-exports wallet command handlers from the commands folder for wallet-dispatch.
+ */
 export {
   handleChangeVaultPassword,
   handleCreateVault,
   handleGetState,
   handleLock,
   handleUnlock,
-} from "./session-commands";
-export {
   handleAddReadOnlyAccount,
   handleDeleteAccount,
   handleExportAccountSecret,
@@ -16,13 +17,12 @@ export {
   handlePreviewSeedAccounts,
   handleRenameAccount,
   handleSetActiveAccount,
-} from "./account-commands";
-export {
   handleAddCombinedSub,
   handleCreateCombinedAccount,
   handleRemoveCombinedSub,
   handleSetCombinedMain,
-} from "./combined-commands";
-export { handleDisconnectAllOrigins, handleDisconnectOrigin } from "./connection-commands";
-export { handleBeginSend } from "./send-command";
-export { handlePatchSettings } from "./settings-command";
+  handleDisconnectAllOrigins,
+  handleDisconnectOrigin,
+  handleBeginSend,
+  handlePatchSettings,
+} from "./commands";

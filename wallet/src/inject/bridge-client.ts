@@ -1,3 +1,7 @@
+/**
+ * Page-context RPC client over window.postMessage to the content script, with per-command timeouts.
+ * Does not implement Wallet Standard feature methods or touch chrome APIs.
+ */
 import type { AirwaveCommand } from "../shared/commands";
 import { PENDING_TIMEOUT_MS } from "../shared/commands";
 

@@ -1,3 +1,7 @@
+/**
+ * Schedules and fires in-memory pending timeouts, rejecting dapp or wallet-send flows when approval stalls.
+ * Does not perform cryptographic signing or build transactions.
+ */
 import type { PendingRecord } from "../../shared/commands";
 import { PENDING_TIMEOUT_MS } from "../../shared/commands";
 import { getPending, takePending, unbindPopoutByRequest } from "./pending";

@@ -1,3 +1,7 @@
+/**
+ * Fetches recent activity for a wallet owner via Helius enhanced transactions and maps rows for the home screen.
+ * Does not persist history or render popup UI.
+ */
 import { address, isAddress } from "@solana/kit";
 import {
   homeActivityLimit,

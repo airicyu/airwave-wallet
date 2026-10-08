@@ -1,3 +1,7 @@
+/**
+ * Validates in-popup send forms and triggers wallet.beginSend via extension messages.
+ * Does not sign or broadcast transactions inside the popup process.
+ */
 import { parsePublicKeyBase58 } from "../../shared/accounts";
 import { sendExtensionRequest } from "../../shared/ext-api";
 import { apiErrorMessage, type UiLocale } from "../../shared/ui-i18n";

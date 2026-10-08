@@ -1,3 +1,7 @@
+/**
+ * React hook mirroring wallet chrome.storage state, navigation, send/close-empty UI, and storage.onChanged updates.
+ * Does not run in the service worker or handle dapp bridge commands.
+ */
 import { sendExtensionRequest } from "../../shared/ext-api";
 import type { WalletSendSettledNotice } from "../../shared/commands";
 import type { ClosableEntry, CloseEmptyCommitResult, CloseEmptyPlanResult } from "../../shared/close-empty-types";

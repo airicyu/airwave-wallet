@@ -1,3 +1,7 @@
+/**
+ * Assembles unsigned wire transactions that close empty SPL token accounts with compute-budget instructions.
+ * Does not scan the chain for closable accounts or broadcast signed transactions.
+ */
 import {
   address,
   appendTransactionMessageInstructions,

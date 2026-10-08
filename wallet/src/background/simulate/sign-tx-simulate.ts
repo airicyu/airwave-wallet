@@ -1,3 +1,7 @@
+/**
+ * Orchestrates CU limit/price writes and phase-1/phase-2 simulation for sign-tx pending requests.
+ * Does not handle approval UI or vault signing.
+ */
 import { estimateResourceLimitsFactory, getCompiledTransactionMessageDecoder } from "@solana/kit";
 import {
   CU_LIMIT_MAX,
@@ -14,12 +18,9 @@ import {
   type WriteCuResult,
 } from "./compute-budget-tx";
 import { solanaRpcForUrl } from "../../shared/solana-rpc";
-import {
-  runPhase2Simulation,
-  SimDeadline,
-  simulateTransactionRpc,
-  type Phase2SimContext,
-} from "./simulate-pending-tx";
+import { SimDeadline } from "./sim-deadline";
+import { runPhase2Simulation, type Phase2SimContext } from "./phase2-deltas";
+import { simulateTransactionRpc } from "./simulate-rpc";
 import {
   acceptSimulateRequest,
   getWorkingTx,

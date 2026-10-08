@@ -1,3 +1,7 @@
+/**
+ * Password-boxed vault: PBKDF2 key derivation and AES-GCM encrypt/decrypt of account secret payloads.
+ * Does not manage service-worker session unlock lifetime or chrome.storage I/O.
+ */
 const PBKDF2_ITERATIONS = 310_000;
 
 export type VaultSecrets = {

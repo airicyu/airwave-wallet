@@ -1,3 +1,7 @@
+/**
+ * Builds unsigned SOL and SPL transfer transactions for in-wallet send approval.
+ * Does not sign, broadcast, or validate popup form input.
+ */
 import { fetchEncodedAccount } from "@solana/accounts";
 import {
   address,

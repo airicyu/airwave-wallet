@@ -1,3 +1,7 @@
+/**
+ * In-memory pending request registry and popout window bindings for approval flows.
+ * Does not persist pending state to chrome.storage or finish bridge responses.
+ */
 import type { PendingRecord } from "../../shared/commands";
 import { clearSignTxState } from "./sign-tx-pending-state";
 

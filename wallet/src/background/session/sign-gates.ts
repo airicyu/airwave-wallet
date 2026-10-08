@@ -1,3 +1,7 @@
+/**
+ * Pre-enqueue signing gates: active account, read-only role, lock state, and pubkey resolution for dapp requests.
+ * Does not sign messages or transactions.
+ */
 import { getExposedPublicKey, resolvePubkey, signingWatchPubkeyExists } from "../../shared/accounts";
 import type { LoadedAccountKeys } from "../../shared/keypair-bytes";
 import type { AccountMeta } from "../../shared/storage-keys";

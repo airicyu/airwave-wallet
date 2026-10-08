@@ -115,7 +115,7 @@
 | 023-M02 | MEDIUM | **關閉** | 見上 |
 | 023-M03 | MEDIUM | **仍開** | INDEX 三語手驗／422px 英文列；本環境未載入未封裝擴充 |
 | 023-L01 | LOW | **仍開** | `popout/index.html` `<html lang="zh-Hant">`、`<title>Airwave — 審批</title>` 與靜態繁中；JS 啟動後會改 |
-| 023-L02 | LOW | **仍開** | INDEX 未 `shipped`；出貨須使用者同意並清 backlog |
+| 023-L02 | LOW | **關閉** | 2026-10-08 使用者同意出貨：INDEX `shipped`，backlog 列與 `wallet-ui-i18n.md` 已刪 |
 | 023-M04 | MEDIUM | **新／開** | `applyShellLocaleToStaticChrome` 不更新 `#gone-lead` 與 `document.title`。獨立 **popout** 在過期／審批畫面中途切語言：標題鈕會改，說明句與 tab title 可能留舊語。popup 因 locale 重掛較不受影響。建議 `onChanged` 補 `goneLead`／現行 title，或 expired 時再跑 `showGone` 的文案分支。 |
 | 023-M05 | MEDIUM | **新／開** | SW `account-commands.ts`／`session-commands.ts`／`combined-commands.ts` 仍附繁中 `message`（如「密碼錯誤」「請先解鎖錢包」「名稱最多 15 字」「路徑無效」「助記詞無效」「請選帳戶」）。多數畫面已 `apiErrorMessage` **只認 code**，缺 catalog 鍵（`INVALID_LABEL`／`VAULT_MISSING`／`BAD_INDEX`／`INVALID_PATH` 等）時顯示 **code 原文**（契約允許）。`HomeTokenList` command 失敗仍取 `res.error?.message` 再 `friendlyErrorMessage`：若 envelope 帶繁中且非 code 形狀，`en` 會露出。HOW「掃漏網同等中文」未收乾。應改識別字串、補 catalog、持倉失敗走 `apiErrorMessage(locale, res.error, …)`。 |
 
@@ -149,4 +149,4 @@
 
 ## 出貨
 
-（可出貨待使用者同意 `shipped`、本機手驗、commit；backlog 清檔依 INDEX 出貨程序。第 4 輪建議先收 023-M04／M05 或接受為出貨後修。）
+使用者於 2026-10-08 同意 `shipped`。INDEX 狀態已改、驗收已勾、backlog 列與 `wallet-ui-i18n.md` 已刪。023-M03（本環境未載入擴充手驗）、023-M04、023-M05 留在本報告，不擋此次出貨標記。

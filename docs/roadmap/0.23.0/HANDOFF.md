@@ -32,4 +32,4 @@ GUIDELINES pending／custody／不廣播。不改 vault。不新增 command／st
 - [x] 設計審查無未關 HIGH（第 3 輪複審，2026-10-08）
 - [x] INDEX 狀態 `in progress` 後實作 Track 1–3（typecheck＋build 通過；擴充手驗待本機）
 - [x] changelog／version 對齊 `0.23.0`
-- [ ] 出貨後刪 backlog 列與 `wallet-ui-i18n.md`（程式已就緒；`shipped` 須你同意）
+- [x] 使用者同意出貨（2026-10-08）：`shipped`、已刪 `backlog/wallet-ui-i18n.md`

@@ -1,3 +1,7 @@
+/**
+ * Signs approved wallet sends, broadcasts wire transactions, confirms, and notifies popup and dapp listeners.
+ * Does not construct transfer instruction messages from user form fields.
+ */
 import bs58 from "bs58";
 import { getBase64EncodedWireTransaction } from "@solana/kit";
 import type { Signature } from "@solana/keys";

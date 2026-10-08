@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.24.0 — 2026-10-09
+
+重構、行為與 0.23.0 相同：`AGENTS.md` 規定 `wallet/src` 的 `.ts` 少於 50 行可不寫檔首註解、50 行以上必須英文職責註解（≤100 words），並補齊全 tree（不含 `ui-messages.ts`）；400／150 行門檻。`background/wallet` 命令搬入 `commands/` 並分 account／combined／session；`simulate-pending-tx.ts` 與 `close-empty-service.ts` 拆成同層模組並刪除舊檔。不改命令字串、storage、畫面與三語 catalog。
+
 ## 0.23.0 — 2026-10-08
 
 Wallet chrome 三語（繁體／简体／English）：Settings 第一列語言、共用 `ui-messages` catalog 與 `t(locale, key)`；SW 錯誤改穩定 code，UI 再翻譯。popup／popout 字體方案 B；解鎖與確認中標題去掉標題字距 0.02em。產品圖放在解鎖與首次建立密碼（64px）以及關於（40px）。

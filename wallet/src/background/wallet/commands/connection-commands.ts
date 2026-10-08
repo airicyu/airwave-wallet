@@ -1,6 +1,10 @@
-import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
-import { disconnectAllConnections, removeConnectionAndNotify } from "../messaging";
-import { respond } from "../messaging";
+/**
+ * Handles dApp origin disconnect commands for one origin or all connections.
+ * Does not mutate accounts, vault, or pending transactions.
+ */
+import type { ExtensionRequest, ExtensionResponse } from "../../../shared/commands";
+import { disconnectAllConnections, removeConnectionAndNotify } from "../../messaging";
+import { respond } from "../../messaging";
 
 export async function handleDisconnectOrigin(req: ExtensionRequest): Promise<ExtensionResponse> {
   const { origin } = req.payload as { origin: string };
@@ -30,4 +34,3 @@ export async function handleDisconnectAllOrigins(req: ExtensionRequest): Promise
     result: { disconnected: true },
   });
 }
-

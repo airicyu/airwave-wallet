@@ -1,3 +1,7 @@
+/**
+ * Rewrites compiled transactions to set compute unit limit and price for simulation and default fee behavior.
+ * Does not submit transactions or decode individual instructions for display.
+ */
 import {
   type CompiledTransactionMessage,
   type CompiledTransactionMessageWithLifetime,

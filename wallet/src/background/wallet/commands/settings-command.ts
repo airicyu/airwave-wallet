@@ -1,15 +1,19 @@
-import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
-import { notifyAccountChanged } from "../messaging";
-import { respond } from "../messaging";
+/**
+ * Patches persisted wallet settings and notifies connected tabs when the active pubkey changes.
+ * Does not unlock the vault or modify account records.
+ */
+import type { ExtensionRequest, ExtensionResponse } from "../../../shared/commands";
+import { notifyAccountChanged } from "../../messaging";
+import { respond } from "../../messaging";
 import {
   getActivePublicKey,
   normalizeSettings,
   readSettings,
   writeSettings,
-} from "../storage";
+} from "../../storage";
 
 export async function handlePatchSettings(req: ExtensionRequest): Promise<ExtensionResponse> {
-  const patch = req.payload as Partial<import("../../shared/storage-keys").Settings>;
+  const patch = req.payload as Partial<import("../../../shared/storage-keys").Settings>;
   const settings = await readSettings();
   const next = normalizeSettings({ ...settings, ...patch });
   await writeSettings(next);
@@ -22,4 +26,3 @@ export async function handlePatchSettings(req: ExtensionRequest): Promise<Extens
     result: { settings: next },
   });
 }
-

@@ -1,3 +1,7 @@
+/**
+ * Pure helpers to normalize Helius activity payloads into home rows, labels, timestamps, and explorer links.
+ * Does not perform HTTP fetches or update popup React state.
+ */
 import { t, type UiLocale } from "./ui-i18n";
 
 export type HomeActivityKind = "send" | "receive" | "swap" | "tx";

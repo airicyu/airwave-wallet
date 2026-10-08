@@ -1,3 +1,8 @@
+/**
+ * Handles dApp connect, disconnect, and sign requests from a page.
+ * Does not render the approval window or hold vault keys.
+ */
+
 import type {
   ConnectPayload,
   ExtensionRequest,
@@ -60,15 +65,7 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
     const payload = (req.payload ?? {}) as ConnectPayload;
     const connections = await readConnections();
     const trusted = connections[origin];
-    if (trusted) {
-      if (!session.isUnlocked()) {
-        return respond({
-          kind: "airwave-ext-res",
-          requestId: req.requestId,
-          ok: false,
-          error: { code: "WALLET_LOCKED", message: "Unlock wallet in extension popup" },
-        });
-      }
+    if (trusted && session.isUnlocked()) {
       await rememberConnectedTab(origin, tabId, activeId);
       const settings = await readSettings();
       return respond({
@@ -83,7 +80,9 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
         kind: "airwave-ext-res",
         requestId: req.requestId,
         ok: false,
-        error: { code: "NOT_CONNECTED", message: "Origin is not connected" },
+        error: trusted
+          ? { code: "WALLET_LOCKED", message: "Unlock wallet in extension popup" }
+          : { code: "NOT_CONNECTED", message: "Origin is not connected" },
       });
     }
 
@@ -96,6 +95,7 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
       payload,
       createdAt: Date.now(),
       uiHost: "popout",
+      reconnectWhileLocked: Boolean(trusted),
     });
     schedulePendingTimeout(requestId, pendingTimeoutHandlers);
     await openPopout(requestId);

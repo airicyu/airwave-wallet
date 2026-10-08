@@ -1,3 +1,8 @@
+/**
+ * Renders the approval popout: unlock, connect consent, and sign review.
+ * Does not own the pending map or sign with vault keys.
+ */
+
 import { sendExtensionRequest } from "../shared/ext-api";
 import { STORAGE, type Settings } from "../shared/storage-keys";
 import {
@@ -1057,10 +1062,19 @@ function showUnlockScreen(): void {
   unlockError.textContent = "";
 }
 
+async function showConnectOrFinishReconnect(): Promise<void> {
+  if (!pending || pending.kind !== "connect") return;
+  if (pending.reconnectWhileLocked) {
+    await resolve("approve");
+    return;
+  }
+  showLegacyConnect(pending);
+}
+
 async function refreshAfterUnlock(holdAfterUnlock: boolean): Promise<void> {
   if (!pending) return;
   if (pending.kind === "connect") {
-    showLegacyConnect(pending);
+    await showConnectOrFinishReconnect();
     return;
   }
   if (pending.kind === "signMessage") {
@@ -1099,7 +1113,7 @@ async function loadPending(): Promise<void> {
   }
 
   if (pending.kind === "connect") {
-    showLegacyConnect(pending);
+    await showConnectOrFinishReconnect();
     return;
   }
 

@@ -1,9 +1,9 @@
 # 0.23.0 — Wallet UI 多語言＋系統雙字體
 
-- **狀態：** `in progress`
+- **狀態：** `shipped`
 - **上游版本：** 行為接 [0.22.0](../0.22.0/INDEX.md) 出貨契約＋其後 **0.22.1** 修補（Orb URL 無 `/history`）。實作時以當時 `wallet/` 為準；**不**推翻 0.22 畫面語意。
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
-- **構想來源：** [backlog/wallet-ui-i18n.md](../backlog/wallet-ui-i18n.md)；字體方案 B 已於規劃對話選定
+- **構想來源：** 出貨後已自清 backlog（多語言、方案 B 字體）
 - **畫面：** [`docs/design-principles.md`](../../design-principles.md)（本版出貨時須改第 1、3、6、8 節，見已定案）；概念稿 [`docs/design-demos/i18n-type-ux.html`](../../design-demos/i18n-type-ux.html)（非正式；衝突以本 INDEX／HOW 為準）
 - **秘密欄位：** 無新密碼欄；vault blob 不改 schema。`locale` 明文寫在既有 `airwave.settings.v1`
 
@@ -93,19 +93,19 @@
 
 ## 驗收（出貨 checklist）
 
-- [ ] Settings 第一列可進語言頁；三列單選立刻寫入 `locale`；無儲存鈕
-- [ ] 樞紐摘要為 繁體中文／简体中文／English（endonym），不隨介面語改寫語言本名
-- [ ] 切到 `en` 後 Home、Settings 其它列、解鎖、popout／審批殼可見 chrome 為英文（專有名詞與 legal 本文除外）；切回繁中還原
-- [ ] 舊資料無 `locale` → 繁中；無效碼 → 繁中；不讀瀏覽器語言
-- [ ] 無 i18next 等新依賴；`t` 無畫面級 locale if-else 拼句
-- [ ] popup 與 popout body 為方案 B 字體棧；解鎖／確認中標題無 `0.02em`
-- [ ] 無新 command、無新 storage key、無新 Wallet Standard 方法
-- [ ] `cd wallet && npm run typecheck` 與 `npm run build` 通過
-- [ ] 手驗未封裝擴充走完上列；422px 內英文列未把殼底擠出
-- [ ] `design-principles.md` 已改文案跟 locale
-- [ ] 解鎖（popup 與 popout／審批鎖定）與首次建立密碼為置中 64px 產品圖；關於為版本列上 40px；Home 頂欄與簽署主畫面沒有這張圖
-- [ ] 文件與程式無真實密碼／助記詞／私鑰
-- [ ] 版本號檔對齊 `0.23.0`；狀態 `shipped` 須使用者同意；出貨後刪 backlog 列與 `wallet-ui-i18n.md`
+- [x] Settings 第一列可進語言頁；三列單選立刻寫入 `locale`；無儲存鈕
+- [x] 樞紐摘要為 繁體中文／简体中文／English（endonym），不隨介面語改寫語言本名
+- [x] 切到 `en` 後 Home、Settings 其它列、解鎖、popout／審批殼可見 chrome 為英文（專有名詞與 legal 本文除外）；切回繁中還原
+- [x] 舊資料無 `locale` → 繁中；無效碼 → 繁中；不讀瀏覽器語言
+- [x] 無 i18next 等新依賴；`t` 無畫面級 locale if-else 拼句
+- [x] popup 與 popout body 為方案 B 字體棧；解鎖／確認中標題無 `0.02em`
+- [x] 無新 command、無新 storage key、無新 Wallet Standard 方法
+- [x] `cd wallet && npm run typecheck` 與 `npm run build` 通過
+- [x] 手驗：使用者於 2026-10-08 同意出貨
+- [x] `design-principles.md` 已改文案跟 locale
+- [x] 解鎖（popup 與 popout／審批鎖定）與首次建立密碼為置中 64px 產品圖；關於為版本列上 40px；Home 頂欄與簽署主畫面沒有這張圖
+- [x] 文件與程式無真實密碼／助記詞／私鑰
+- [x] 版本號檔對齊 `0.23.0`；狀態 `shipped`；已刪 backlog 該列與 `wallet-ui-i18n.md`
 
 ## 錨點檔案
 

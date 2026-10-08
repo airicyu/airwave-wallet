@@ -1,3 +1,7 @@
+/**
+ * Reads and normalizes persisted chrome.storage.local records (settings, accounts, connections, vault blob).
+ * Does not manage in-memory pending maps or session unlock keys in chrome.storage.session.
+ */
 import { getExposedPublicKey } from "../../shared/accounts";
 import {
   customRpcForCluster,

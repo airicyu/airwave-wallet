@@ -1,17 +1,21 @@
-import type { BeginSendPayload, ExtensionRequest, ExtensionResponse } from "../../shared/commands";
-import { getExposedPublicKey } from "../../shared/accounts";
-import { accountKind } from "../../shared/storage-keys";
-import { getHomeTokensForOwners } from "../home-tokens";
-import { respond } from "../messaging";
-import { addPending, schedulePendingTimeout } from "../pending";
+/**
+ * Starts an in-wallet send by building an unsigned transaction and registering popup pending state.
+ * Does not sign, broadcast, or handle dApp-originated sign requests.
+ */
+import type { BeginSendPayload, ExtensionRequest, ExtensionResponse } from "../../../shared/commands";
+import { getExposedPublicKey } from "../../../shared/accounts";
+import { accountKind } from "../../../shared/storage-keys";
+import { getHomeTokensForOwners } from "../../home-tokens";
+import { respond } from "../../messaging";
+import { addPending, schedulePendingTimeout } from "../../pending";
 import {
   buildWalletSendTransaction,
   pendingTimeoutHandlers,
   resolveHomeTokenRowForSend,
-} from "../send";
-import { getActiveAccountMeta, keypairForAccountId } from "../session";
-import * as session from "../session";
-import { readSettings } from "../storage";
+} from "../../send";
+import { getActiveAccountMeta, keypairForAccountId } from "../../session";
+import * as session from "../../session";
+import { readSettings } from "../../storage";
 
 export async function handleBeginSend(req: ExtensionRequest): Promise<ExtensionResponse> {
   if (!session.isUnlocked()) {
@@ -99,4 +103,3 @@ export async function handleBeginSend(req: ExtensionRequest): Promise<ExtensionR
     result: { requestId },
   });
 }
-

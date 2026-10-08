@@ -1,3 +1,8 @@
+/**
+ * Names extension commands and the in-memory pending record shared by the
+ * service worker and extension pages. Does not dispatch or persist them.
+ */
+
 export type AirwaveCommand =
   | "debug.ping"
   | "dapp.connect"
@@ -79,6 +84,11 @@ export type PendingRecord = {
   signAccountId?: string;
   /** signMessage：enqueue 時 SW 判定（popout 只信此旗標） */
   messageLooksLikeTx?: boolean;
+  /**
+   * 已連線的 origin 在鎖定時再次 connect（非 silent）。
+   * 解鎖後直接完成連線，不再顯示同意連線。
+   */
+  reconnectWhileLocked?: boolean;
 };
 
 export type ConnectPayload = {

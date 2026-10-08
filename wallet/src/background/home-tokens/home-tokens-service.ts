@@ -1,3 +1,7 @@
+/**
+ * Loads and caches home token balances and mint metadata (RPC, Helius wallet API, Jupiter) for popup display.
+ * Does not sign transfers or manage vault encryption.
+ */
 import { address } from "@solana/kit";
 import type { Settings } from "../../shared/storage-keys";
 import { solanaRpcForUrl } from "../../shared/solana-rpc";

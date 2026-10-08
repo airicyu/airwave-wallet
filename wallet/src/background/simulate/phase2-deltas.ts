@@ -1,11 +1,11 @@
+/**
+ * Phase-2 pending tx simulation: instruction decode, balance deltas, and outcomes.
+ * Does not run the first simulateTransaction RPC or rewrite compute budget on bytes.
+ */
 import {
-  address,
-  type AddressesByLookupTableAddress,
-  type Address,
+  getCompiledTransactionMessageDecoder,
   type CompiledTransactionMessage,
   type CompiledTransactionMessageWithLifetime,
-  fetchAddressesForLookupTables,
-  getCompiledTransactionMessageDecoder,
   type Transaction,
 } from "@solana/kit";
 import type {
@@ -14,16 +14,20 @@ import type {
   SimulateTxInstruction,
 } from "../../shared/simulate-pending-tx-types";
 import {
-  compiledAddressTableLookups,
   messageBytesToUint8Array,
   normalizedCompiledInstructions,
 } from "../../shared/compiled-message";
-import { solanaRpcForUrl } from "../../shared/solana-rpc";
-import { decodeWireTransaction, encodeWireTransaction } from "../../shared/tx-wire";
-import { decodeCompiledIx } from "./decode-compiled-ix";
+import { decodeWireTransaction } from "../../shared/tx-wire";
 import type { Cluster } from "../../shared/storage-keys";
-
-const SIM_TIMEOUT_MS = 15_000;
+import { decodeCompiledIx } from "./decode-compiled-ix";
+import { buildInspectorUrl } from "./inspector-url";
+import {
+  keysFromLoaded,
+  resolveAccountKeysFromTables,
+  v0LookupCount,
+} from "./resolve-account-keys";
+import { SimDeadline } from "./sim-deadline";
+import { simulateTransactionRpc, type RpcSimulateValue, type RpcTokenBalance } from "./simulate-rpc";
 
 const PROGRAM_NAMES: Record<string, string> = {
   "11111111111111111111111111111111": "System Program",
@@ -32,35 +36,6 @@ const PROGRAM_NAMES: Record<string, string> = {
   ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL: "Associated Token Account",
   ComputeBudget111111111111111111111111111111: "Compute Budget",
   MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr: "Memo",
-};
-
-type RpcTokenAmount = {
-  amount?: string;
-  decimals?: number;
-};
-
-type RpcTokenBalance = {
-  accountIndex?: number;
-  mint?: string;
-  owner?: string;
-  uiTokenAmount?: RpcTokenAmount;
-};
-
-type RpcLoadedAddresses = {
-  writable?: string[];
-  readonly?: string[];
-};
-
-type RpcSimulateValue = {
-  err?: unknown;
-  logs?: string[] | null;
-  unitsConsumed?: number;
-  fee?: number;
-  preBalances?: number[];
-  postBalances?: number[];
-  preTokenBalances?: RpcTokenBalance[] | null;
-  postTokenBalances?: RpcTokenBalance[] | null;
-  loadedAddresses?: RpcLoadedAddresses | null;
 };
 
 type CompiledMessage = CompiledTransactionMessage & CompiledTransactionMessageWithLifetime;
@@ -91,25 +66,6 @@ function ixAccounts(
     if (!k) return { short: "?", unresolved: true };
     return { short: shortPk(k) };
   });
-}
-
-export class SimDeadline {
-  private readonly endsAt = Date.now() + SIM_TIMEOUT_MS;
-
-  remainingMs(): number {
-    return Math.max(0, this.endsAt - Date.now());
-  }
-
-  async run<T>(work: () => Promise<T>): Promise<T> {
-    const ms = this.remainingMs();
-    if (ms <= 0) throw new Error("SIM_TIMEOUT");
-    return Promise.race([
-      work(),
-      new Promise<T>((_, reject) => {
-        setTimeout(() => reject(new Error("SIM_TIMEOUT")), ms);
-      }),
-    ]);
-  }
 }
 
 function tailLogs(logs: string[] | null | undefined, maxLines = 20): string[] | undefined {
@@ -144,21 +100,6 @@ function formatAmount(amount: bigint, decimals: number): string {
   const frac = amount % base;
   const fracStr = frac.toString().padStart(decimals, "0").replace(/0+$/, "");
   return fracStr ? `${whole}.${fracStr}` : whole.toString();
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  let binary = "";
-  const chunk = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
-  }
-  return btoa(binary);
-}
-
-export function buildInspectorUrl(messageBytes: Uint8Array, cluster: Cluster): string {
-  const clusterParam = cluster === "devnet" ? "devnet" : "mainnet-beta";
-  const b64 = bytesToBase64(messageBytes);
-  return `https://explorer.solana.com/tx/inspector?cluster=${clusterParam}&message=${encodeURIComponent(b64)}`;
 }
 
 function buildInstructions(
@@ -198,118 +139,6 @@ function buildInstructions(
     });
   }
   return out;
-}
-
-function keysFromLoaded(
-  message: CompiledMessage,
-  loaded: RpcLoadedAddresses | null | undefined,
-): (string | undefined)[] {
-  const staticKeys = [...message.staticAccounts];
-  if (message.version === "legacy") return staticKeys;
-  const writable = loaded?.writable ?? [];
-  const readonly = loaded?.readonly ?? [];
-  return [...staticKeys, ...writable, ...readonly];
-}
-
-function v0LookupCount(message: CompiledMessage): number {
-  if (message.version === "legacy") return 0;
-  let n = 0;
-  for (const lu of compiledAddressTableLookups(message)) {
-    n += lu.writableIndexes.length + lu.readonlyIndexes.length;
-  }
-  return n;
-}
-
-function expandV0AccountKeys(
-  message: CompiledMessage,
-  byTable: AddressesByLookupTableAddress,
-): Address[] | null {
-  if (message.version === "legacy") return [...message.staticAccounts];
-  const keys = [...message.staticAccounts];
-  for (const lookup of compiledAddressTableLookups(message)) {
-    const addrs = byTable[lookup.lookupTableAddress as Address];
-    if (!addrs) return null;
-    for (const i of lookup.writableIndexes) {
-      if (i >= addrs.length) return null;
-      keys.push(addrs[i]);
-    }
-    for (const i of lookup.readonlyIndexes) {
-      if (i >= addrs.length) return null;
-      keys.push(addrs[i]);
-    }
-  }
-  return keys;
-}
-
-async function resolveAccountKeysFromTables(
-  rpcUrl: string,
-  message: CompiledMessage,
-  deadline: SimDeadline,
-): Promise<(Address | undefined)[] | "rpc" | "timeout"> {
-  if (message.version === "legacy") {
-    return [...message.staticAccounts];
-  }
-  try {
-    const lookupAddrs = compiledAddressTableLookups(message).map((l) => l.lookupTableAddress);
-    const byTable =
-      lookupAddrs.length > 0
-        ? await deadline.run(() =>
-            fetchAddressesForLookupTables(
-              lookupAddrs as Address[],
-              solanaRpcForUrl(rpcUrl),
-            ),
-          )
-        : {};
-    const keys = expandV0AccountKeys(message, byTable);
-    if (!keys) return "rpc";
-    return keys;
-  } catch (e) {
-    if (e instanceof Error && e.message === "SIM_TIMEOUT") return "timeout";
-    return "rpc";
-  }
-}
-
-export async function simulateTransactionRpc(
-  rpcUrl: string,
-  tx: Transaction,
-  deadline: SimDeadline,
-): Promise<RpcSimulateValue> {
-  const encoded = bytesToBase64(encodeWireTransaction(tx));
-  const payload = {
-    jsonrpc: "2.0",
-    id: 1,
-    method: "simulateTransaction",
-    params: [
-      encoded,
-      {
-        encoding: "base64",
-        sigVerify: false,
-        replaceRecentBlockhash: true,
-        commitment: "confirmed",
-      },
-    ],
-  };
-  const json = (await deadline.run(async () => {
-    const res = await fetch(rpcUrl, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error("RPC_HTTP");
-    return res.json() as Promise<{
-      error?: { message?: string };
-      result?: { value?: RpcSimulateValue };
-    }>;
-  })) as {
-    error?: { message?: string };
-    result?: { value?: RpcSimulateValue };
-  };
-  if (json.error) {
-    throw new Error(json.error.message || "RPC_ERROR");
-  }
-  const value = json.result?.value;
-  if (!value) throw new Error("RPC_EMPTY");
-  return value;
 }
 
 function tokenAmt(row: RpcTokenBalance | undefined): bigint {

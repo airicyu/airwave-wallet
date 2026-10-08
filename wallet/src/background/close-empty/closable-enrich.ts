@@ -1,3 +1,7 @@
+/**
+ * Merges mint symbols and icons into closable token-account entries using home-token and Helius/Jupiter metadata.
+ * Does not discover closable accounts on-chain or commit close transactions.
+ */
 import type { ClosableEntry } from "../../shared/close-empty-types";
 import {
   WRAPPED_SOL_MINT,

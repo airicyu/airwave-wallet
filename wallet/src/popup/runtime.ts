@@ -1,3 +1,7 @@
+/**
+ * Popup navigation helpers: back-stack parents, subpage titles, and home-view detection for the shell.
+ * Does not own React wallet state or chrome.storage mirroring.
+ */
 import { isHomeView } from "./lib/format";
 import type { HomeTokenRow } from "./home/home-tokens";
 import { t, type UiLocale } from "../shared/ui-i18n";

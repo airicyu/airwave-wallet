@@ -1,3 +1,7 @@
+/**
+ * Dispatches wallet.* extension commands to vault, accounts, send, home tokens/activity, and close-empty modules.
+ * Does not implement command business logic beyond routing.
+ */
 import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
 import {
   handleCommitCloseEmpty,

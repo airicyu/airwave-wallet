@@ -1,3 +1,7 @@
+/**
+ * Fetches and parses getTokenAccountsByOwner JSON-RPC results into normalized SPL token account rows.
+ * Does not close accounts, transfer tokens, or enrich mint icons.
+ */
 import { address } from "@solana/kit";
 import type { TokenProgramKind } from "./home-tokens";
 import { solanaRpcForUrl } from "./solana-rpc";

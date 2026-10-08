@@ -1,67 +1,33 @@
+/**
+ * Vault password unlock, initial create, and password change wallet commands.
+ * Does not assemble or sign transactions.
+ */
 import bs58 from "bs58";
-import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
-import { parseOptionalAccountLabel } from "../../shared/account-label";
-import { decryptVault, encryptVault } from "../../shared/crypto-vault";
+import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/commands";
+import { parseOptionalAccountLabel } from "../../../../shared/account-label";
+import { decryptVault, encryptVault } from "../../../../shared/crypto-vault";
 import {
   generateRandomLoadedAccount,
   loadedAccountFromSecretBytes,
-} from "../../shared/keypair-bytes";
-import { SESSION_UNLOCKED, type AccountMeta } from "../../shared/storage-keys";
-import { respond } from "../messaging";
+} from "../../../../shared/keypair-bytes";
+import { SESSION_UNLOCKED, type AccountMeta } from "../../../../shared/storage-keys";
+import { respond } from "../../../messaging";
 import {
   newAccountId,
   pubkeyExists,
   runVaultWrite,
   secretToStored,
-} from "../session";
-import * as session from "../session";
+} from "../../../session";
+import * as session from "../../../session";
 import {
   readAccounts,
-  readActiveAccountId,
-  readConnections,
   readSettings,
   readVaultBlob,
   writeAccounts,
   writeActiveAccountId,
   writeSettings,
   writeVaultBlob,
-} from "../storage";
-
-export async function handleGetState(req: ExtensionRequest): Promise<ExtensionResponse> {
-  const accounts = await readAccounts();
-  const activeAccountId = await readActiveAccountId();
-  const settings = await readSettings();
-  const vaultExists = (await readVaultBlob()) != null;
-  const connections = await readConnections();
-  const connectionsList = Object.entries(connections).map(([origin, rec]) => ({
-    origin,
-    accountId: rec.accountId,
-    connectedAt: rec.connectedAt,
-  }));
-  return respond({
-    kind: "airwave-ext-res",
-    requestId: req.requestId,
-    ok: true,
-    result: {
-      vaultExists,
-      unlocked: session.isUnlocked(),
-      accounts,
-      activeAccountId,
-      settings,
-      connections: connectionsList,
-    },
-  });
-}
-
-export async function handleLock(req: ExtensionRequest): Promise<ExtensionResponse> {
-  await session.lock();
-  return respond({
-    kind: "airwave-ext-res",
-    requestId: req.requestId,
-    ok: true,
-    result: { locked: true },
-  });
-}
+} from "../../../storage";
 
 export async function handleUnlock(req: ExtensionRequest): Promise<ExtensionResponse> {
   const { password } = req.payload as { password: string };

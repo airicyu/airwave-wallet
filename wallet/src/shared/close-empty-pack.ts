@@ -1,3 +1,7 @@
+/**
+ * Greedy packing of close-account instructions into Solana transactions under a byte-size budget.
+ * Does not scan for closable token accounts or assemble full wire transactions in the service worker.
+ */
 import type { TokenProgramKind } from "./home-tokens";
 
 export const CLOSE_EMPTY_MAX_TX_BYTES = 1232;

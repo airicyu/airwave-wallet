@@ -1,3 +1,7 @@
+/**
+ * Locale-aware t() lookups and API error mapping over the ui-messages catalog.
+ * Does not define message strings (see ui-messages.ts).
+ */
 import { messages, type MessageKey } from "./ui-messages";
 import type { UiLocale } from "./storage-keys";
 

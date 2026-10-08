@@ -1,3 +1,7 @@
+/**
+ * Scans parsed token accounts for zero-balance, owner-closable SPL accounts across wallet owners.
+ * Does not enrich display metadata or build unsigned close transactions.
+ */
 import { address } from "@solana/kit";
 import type { ClosableEntry } from "../../shared/close-empty-types";
 import type { ClosableOwnerTarget } from "../../shared/close-empty-owners";

@@ -1,3 +1,7 @@
+/**
+ * chrome.storage key constants and Settings/AccountMeta types with RPC and settings normalization helpers.
+ * Does not read or write storage records (see background storage-io).
+ */
 export const STORAGE = {
   settings: "airwave.settings.v1",
   accounts: "airwave.accounts.v1",

@@ -1,3 +1,7 @@
+/**
+ * Formatting helpers for the approval UI (lamports, truncated keys, hex dumps, pending payload bytes).
+ * Does not approve, reject, or mutate pending requests.
+ */
 import type { PendingRecord, SignMessagePayload, SignTransactionPayload } from "../shared/commands";
 
 export function formatSolFromLamports(lamports: number): string {

@@ -1,3 +1,7 @@
+/**
+ * Converts stored secret encodings into Solana signers and standard 64-byte ed25519 keypair layouts.
+ * Does not encrypt secrets for vault storage or enforce signing policy gates.
+ */
 import { getAddressFromPublicKey } from "@solana/addresses";
 import { createKeyPairFromBytes, createKeyPairFromPrivateKeyBytes } from "@solana/keys";
 import { createKeyPairSignerFromBytes, type KeyPairSigner } from "@solana/signers";

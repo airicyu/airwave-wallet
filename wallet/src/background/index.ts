@@ -1,3 +1,7 @@
+/**
+ * Service worker entry: validates senders, hydrates session, routes commands to dapp/UI/wallet handlers, cleans up pendings on window close.
+ * Does not embed individual feature handler implementations.
+ */
 import type { ExtensionRequest, ExtensionResponse, SignMessagePayload } from "../shared/commands";
 import { messageLooksLikeTransactionMessage } from "../shared/sign-message-tx";
 import { handleDappCommand, handleUiCommand, handleWalletCommand } from "./handlers";
