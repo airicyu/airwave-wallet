@@ -1,3 +1,5 @@
+import { t, type UiLocale } from "./ui-i18n";
+
 export type HomeActivityKind = "send" | "receive" | "swap" | "tx";
 
 export type HomeActivityLead = "fail" | "ok" | null;
@@ -28,40 +30,40 @@ export function homeActivityLimit(): number {
 export function orbTxUrl(signature: string, cluster: "mainnet" | "devnet"): string {
   const sig = encodeURIComponent(signature);
   const q = cluster === "devnet" ? "devnet" : "mainnet-beta";
-  return `https://orb.helius.dev/tx/${sig}/history?cluster=${q}`;
+  return `https://orb.helius.dev/tx/${sig}?cluster=${q}`;
 }
 
 export function isOrbTxUrl(url: string): boolean {
   return url.startsWith("https://orb.helius.dev/tx/");
 }
 
-export function activityWhen(timestampSec: number | null, nowMs = Date.now()): string {
+export function activityWhen(timestampSec: number | null, locale: UiLocale, nowMs = Date.now()): string {
   if (timestampSec == null || !Number.isFinite(timestampSec)) return "";
   const then = timestampSec * 1000;
   const diff = Math.max(0, nowMs - then);
   const min = Math.floor(diff / 60_000);
-  if (min < 1) return "剛剛";
-  if (min < 60) return `${min} 分鐘前`;
+  if (min < 1) return t(locale, "activity.when.justNow");
+  if (min < 60) return t(locale, "activity.when.minutesAgo", { min: String(min) });
   const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr} 小時前`;
+  if (hr < 24) return t(locale, "activity.when.hoursAgo", { hr: String(hr) });
   const startToday = new Date(nowMs);
   startToday.setHours(0, 0, 0, 0);
   const startThen = new Date(then);
   startThen.setHours(0, 0, 0, 0);
   const dayDiff = Math.round((startToday.getTime() - startThen.getTime()) / 86_400_000);
-  if (dayDiff <= 1) return "昨天";
-  if (dayDiff < 7) return `${dayDiff} 天前`;
+  if (dayDiff <= 1) return t(locale, "activity.when.yesterday");
+  if (dayDiff < 7) return t(locale, "activity.when.daysAgo", { days: String(dayDiff) });
   const weeks = Math.floor(dayDiff / 7);
-  if (weeks < 5) return `${weeks} 週前`;
+  if (weeks < 5) return t(locale, "activity.when.weeksAgo", { weeks: String(weeks) });
   const d = new Date(then);
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
-export function kindLabel(kind: HomeActivityKind): string {
-  if (kind === "send") return "送出";
-  if (kind === "receive") return "收到";
-  if (kind === "swap") return "互換";
-  return "交易";
+export function kindLabel(kind: HomeActivityKind, locale: UiLocale): string {
+  if (kind === "send") return t(locale, "activity.kind.send");
+  if (kind === "receive") return t(locale, "activity.kind.receive");
+  if (kind === "swap") return t(locale, "activity.kind.swap");
+  return t(locale, "activity.kind.tx");
 }
 
 function asRecord(raw: unknown): Record<string, unknown> | null {
@@ -108,7 +110,7 @@ function asLamports(raw: unknown): bigint | null {
 
 function displayUiNumber(raw: unknown): string | null {
   if (typeof raw !== "number" || !Number.isFinite(raw)) return null;
-  if (Number.isSafeInteger(raw)) return String(raw);
+  if (Number.isInteger(raw)) return String(raw);
   const s = raw.toFixed(9).replace(/\.?0+$/, "");
   return s || "0";
 }

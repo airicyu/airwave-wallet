@@ -31,7 +31,7 @@ import type { Cluster } from "../../shared/storage-keys";
 import { messageBytesToUint8Array } from "../../shared/compiled-message";
 import { decodeWireTransaction } from "../../shared/tx-wire";
 
-const CU_WRITE_FAIL_MSG = "無法寫入計算預算";
+const CU_WRITE_FAIL_CODE = "CU_WRITE_FAILED";
 
 export type SimulateSignTxPayload = {
   cuLimit?: number;
@@ -82,7 +82,7 @@ function attachFees(
 
 function writeErrorFromResult(w: WriteCuResult): string | undefined {
   if (w.ok) return undefined;
-  return CU_WRITE_FAIL_MSG;
+  return CU_WRITE_FAIL_CODE;
 }
 
 async function simulatePhase1ForLimit(
@@ -108,11 +108,11 @@ async function simulatePhase1ForLimit(
 
   const deadline = new SimDeadline();
   try {
-    const decompiled = await decompileTxMessageFromBytes(probeBytes, ctx.rpcUrl);
-    const estimate = estimateResourceLimitsFactory({ rpc: solanaRpcForUrl(ctx.rpcUrl) });
-    const { computeUnitLimit } = await deadline.run(() =>
-      estimate(decompiled, { commitment: "confirmed" }),
-    );
+    const { computeUnitLimit } = await deadline.run(async () => {
+      const decompiled = await decompileTxMessageFromBytes(probeBytes, ctx.rpcUrl);
+      const estimate = estimateResourceLimitsFactory({ rpc: solanaRpcForUrl(ctx.rpcUrl) });
+      return estimate(decompiled, { commitment: "confirmed" });
+    });
     if (
       typeof computeUnitLimit === "number" &&
       Number.isFinite(computeUnitLimit) &&
@@ -144,7 +144,7 @@ async function runPhase2WithFees(
   } catch {
     return {
       outcome: "unparseable",
-      reason: "無法解析交易",
+      reason: "TX_UNPARSEABLE",
       instructions: [],
       sigFeeLamports: null,
       priorityLamports: null,
@@ -176,7 +176,7 @@ export async function simulateSignTransaction(
   } catch {
     const result: SimulatePendingTxResult = {
       outcome: "unparseable",
-      reason: "無法解析交易",
+      reason: "TX_UNPARSEABLE",
       instructions: [],
       sigFeeLamports: null,
       priorityLamports: null,
@@ -222,7 +222,7 @@ export async function simulateSignTransaction(
         null,
         null,
         true,
-        CU_WRITE_FAIL_MSG,
+        CU_WRITE_FAIL_CODE,
       );
       return { ok: true, result, seq };
     }
@@ -287,7 +287,7 @@ export async function simulateSignTransaction(
       null,
       null,
       true,
-      CU_WRITE_FAIL_MSG,
+      CU_WRITE_FAIL_CODE,
     );
     return { ok: true, result, seq };
   }

@@ -3,8 +3,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { hardenApiKeyInput } from "../lib/password-input";
 import { IconCheck, IconEye, IconPlus, IconTrash } from "../components/StrokeIcon";
 import { WalletPasswordInput } from "../components/WalletPasswordInput";
-import type { Settings } from "../../shared/storage-keys";
+import type { Settings, UiLocale } from "../../shared/storage-keys";
+import { DEFAULT_UI_LOCALE, LOCALE_ENDONYM, UI_LOCALES } from "../../shared/ui-i18n";
 import { usePopupContext } from "../state/PopupContext";
+import { useT } from "../state/useT";
 import { useRegisterDock } from "../state/dock";
 import {
   apiKeysHubSummary,
@@ -25,17 +27,27 @@ import {
 } from "./settings-logic";
 
 function useSettingsIo(): SettingsIo {
-  const { refresh, showError } = usePopupContext();
-  return { refresh, showError };
+  const { refresh, showError, wallet } = usePopupContext();
+  const locale = wallet ? wallet.settings.locale : DEFAULT_UI_LOCALE;
+  return { refresh, showError, locale };
 }
 
 export function SettingsHub({ settings }: { settings: Settings }): JSX.Element {
   const { navigateTo } = usePopupContext();
+  const { t, locale } = useT();
   return (
     <ul className="settings-hub-list" id="settings-hub-list">
       <li>
+        <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-locale")}>
+          <span className="hub-label">{t("settings.hub.language")}</span>
+          <span className="hub-summary" id="hub-summary-locale">
+            {LOCALE_ENDONYM[settings.locale]}
+          </span>
+        </button>
+      </li>
+      <li>
         <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-network")}>
-          <span className="hub-label">網路</span>
+          <span className="hub-label">{t("settings.hub.network")}</span>
           <span className="hub-summary" id="hub-summary-network">
             {settings.cluster === "mainnet" ? "Mainnet" : "Devnet"}
           </span>
@@ -43,7 +55,7 @@ export function SettingsHub({ settings }: { settings: Settings }): JSX.Element {
       </li>
       <li>
         <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-rpc")}>
-          <span className="hub-label">RPC</span>
+          <span className="hub-label">{t("settings.hub.rpc")}</span>
           <span className="hub-summary hub-summary-ellipsis" id="hub-summary-rpc">
             {settings.rpcUrl}
           </span>
@@ -51,15 +63,15 @@ export function SettingsHub({ settings }: { settings: Settings }): JSX.Element {
       </li>
       <li>
         <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-keys")}>
-          <span className="hub-label">API keys</span>
+          <span className="hub-label">{t("settings.hub.apiKeys")}</span>
           <span className="hub-summary" id="hub-summary-keys">
-            {apiKeysHubSummary(settings)}
+            {apiKeysHubSummary(settings, locale)}
           </span>
         </button>
       </li>
       <li>
         <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-cu-price")}>
-          <span className="hub-label">Default CU price</span>
+          <span className="hub-label">{t("settings.hub.cuPrice")}</span>
           <span className="hub-summary" id="hub-summary-cu-price">
             {String(settings.defaultCuPrice)}
           </span>
@@ -67,18 +79,45 @@ export function SettingsHub({ settings }: { settings: Settings }): JSX.Element {
       </li>
       <li>
         <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-password")}>
-          <span className="hub-label">錢包密碼</span>
-          <span className="hub-summary">變更</span>
+          <span className="hub-label">{t("settings.hub.walletPassword")}</span>
+          <span className="hub-summary">{t("settings.hub.changePassword")}</span>
         </button>
       </li>
     </ul>
   );
 }
 
+export function LocaleScreen({ settings }: { settings: Settings }): JSX.Element {
+  const io = useSettingsIo();
+  const { locale, t } = useT();
+  return (
+    <div className="network-pick-list" role="radiogroup" aria-label={t("settings.locale.title")}>
+      {UI_LOCALES.map((loc) => (
+        <label key={loc} className="network-pick-row">
+          <input
+            type="radio"
+            name="settings-locale"
+            value={loc}
+            checked={settings.locale === loc}
+            onChange={() => {
+              if (loc === settings.locale) return;
+              void patchSettingsPartial({ locale: loc as UiLocale }, io, locale);
+            }}
+          />
+          <span className="network-pick-meta">
+            <span className="network-pick-title">{LOCALE_ENDONYM[loc]}</span>
+          </span>
+        </label>
+      ))}
+    </div>
+  );
+}
+
 export function NetworkScreen({ settings }: { settings: Settings }): JSX.Element {
   const io = useSettingsIo();
+  const { locale, t } = useT();
   return (
-    <div className="network-pick-list" role="radiogroup" aria-label="目前網路">
+    <div className="network-pick-list" role="radiogroup" aria-label={t("settings.network.aria")}>
       {(["devnet", "mainnet"] as const).map((cluster) => (
         <label key={cluster} className="network-pick-row">
           <input
@@ -88,7 +127,7 @@ export function NetworkScreen({ settings }: { settings: Settings }): JSX.Element
             checked={settings.cluster === cluster}
             onChange={() => {
               if (cluster === settings.cluster) return;
-              void patchSettingsPartial({ cluster }, io);
+              void patchSettingsPartial({ cluster }, io, locale);
             }}
           />
           <span className="network-pick-meta">
@@ -145,6 +184,7 @@ function RpcClusterCard({
 }): JSX.Element {
   const io = useSettingsIo();
   const { wallet, showError } = usePopupContext();
+  const { locale, t } = useT();
   const cfg = settings.rpcByCluster[cluster];
   const rows: { url: string; isPublic: boolean }[] = [
     { url: PUBLIC_RPC_BY_CLUSTER[cluster], isPublic: true },
@@ -155,7 +195,7 @@ function RpcClusterCard({
       <div className="rpc-cluster-head">
         <h3>{cluster === "mainnet" ? "Mainnet" : "Devnet"}</h3>
         <span className="rpc-cluster-badge" id={`rpc-badge-${cluster}`} hidden={settings.cluster !== cluster}>
-          目前
+          {t("settings.rpc.current")}
         </span>
       </div>
       <div className="settings-card">
@@ -174,7 +214,7 @@ function RpcClusterCard({
                     onChange={() => {
                       const next = cloneRpcByCluster(settings.rpcByCluster);
                       next[cluster] = { ...next[cluster], active: isPublic ? "" : url };
-                      void patchRpcByCluster(next, io);
+                      void patchRpcByCluster(next, io, locale);
                     }}
                   />
                   <button
@@ -188,13 +228,13 @@ function RpcClusterCard({
                     {url}
                   </button>
                   {isPublic ? (
-                    <span className="rpc-badge">內建</span>
+                    <span className="rpc-badge">{t("settings.rpc.builtin")}</span>
                   ) : (
                     <button
                       type="button"
                       className="icon-btn ghost-inline rpc-icon-btn danger"
-                      title="刪除"
-                      aria-label="刪除"
+                      title={t("common.delete")}
+                      aria-label={t("common.delete")}
                       onClick={(ev) => {
                         ev.preventDefault();
                         ev.stopPropagation();
@@ -203,7 +243,7 @@ function RpcClusterCard({
                         const active = next[cluster].active === url ? "" : next[cluster].active;
                         next[cluster] = { urls, active };
                         if (editKey === key) setEditKey(null);
-                        void patchRpcByCluster(next, io);
+                        void patchRpcByCluster(next, io, locale);
                       }}
                     >
                       <IconTrash />
@@ -248,8 +288,8 @@ function RpcClusterCard({
           <button
             type="button"
             className="icon-btn ghost-inline rpc-icon-btn btn-rpc-add"
-            title="加入"
-            aria-label="加入"
+            title={t("common.add")}
+            aria-label={t("common.add")}
             onClick={() => {
               setEditKey(`${cluster}:new`);
               setEditDraft("");
@@ -288,6 +328,7 @@ function RpcEditor({
   showError: (msg: string) => void;
   io: SettingsIo;
 }): JSX.Element {
+  const { locale, t } = useT();
   const confirm = () => {
     if (!walletNeeded) return;
     const result = confirmRpcUrl({
@@ -296,12 +337,13 @@ function RpcEditor({
       isNew,
       draft,
       wallet: walletNeeded,
+      locale,
     });
     if (!result.ok) {
-      showError(result.error);
+      showError(t(result.error));
       return;
     }
-    void patchRpcByCluster(result.next, io).then(() => onSaved(result.nextUrl));
+    void patchRpcByCluster(result.next, io, locale).then(() => onSaved(result.nextUrl));
   };
   return (
     <div className="rpc-edit">
@@ -325,8 +367,8 @@ function RpcEditor({
         <button
           type="button"
           className="icon-btn ghost-inline rpc-icon-btn"
-          title="確認"
-          aria-label="確認"
+          title={t("common.confirm")}
+          aria-label={t("common.confirm")}
           onClick={() => confirm()}
         >
           <IconCheck />
@@ -355,6 +397,7 @@ function KeysField({
   onDraft: (v: string) => void;
   onPersist: () => void;
 }): JSX.Element {
+  const { t } = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (inputRef.current) hardenApiKeyInput(inputRef.current);
@@ -369,7 +412,7 @@ function KeysField({
           id={id}
           type="text"
           autoComplete="off"
-          placeholder="選填"
+          placeholder={t("common.optional")}
           readOnly={!revealed && !!stored}
           value={display}
           onChange={(e) => {
@@ -381,8 +424,8 @@ function KeysField({
         <button
           type="button"
           className="icon-btn ghost-inline keys-reveal-btn"
-          title="顯示"
-          aria-label="顯示"
+          title={t("common.show")}
+          aria-label={t("common.show")}
           onClick={onReveal}
         >
           <IconEye />
@@ -390,8 +433,8 @@ function KeysField({
         <button
           type="button"
           className="icon-btn ghost-inline keys-confirm-btn"
-          title="確認"
-          aria-label="確認"
+          title={t("common.confirm")}
+          aria-label={t("common.confirm")}
           onClick={() => void onPersist()}
         >
           <IconCheck />
@@ -404,6 +447,7 @@ function KeysField({
 export function KeysScreen({ settings }: { settings: Settings }): JSX.Element {
   const { wallet } = usePopupContext();
   const io = useSettingsIo();
+  const { locale } = useT();
   const [heliusRevealed, setHeliusRevealed] = useState(false);
   const [jupiterRevealed, setJupiterRevealed] = useState(false);
   const [heliusDraft, setHeliusDraft] = useState("");
@@ -429,7 +473,7 @@ export function KeysScreen({ settings }: { settings: Settings }): JSX.Element {
         onDraft={setHeliusDraft}
         onPersist={() => {
           if (!wallet) return;
-          void persistHeliusField({ wallet, revealed: heliusRevealed, draft: heliusDraft, io });
+          void persistHeliusField({ wallet, revealed: heliusRevealed, draft: heliusDraft, io, locale });
         }}
       />
       <KeysField
@@ -448,7 +492,7 @@ export function KeysScreen({ settings }: { settings: Settings }): JSX.Element {
         onDraft={setJupiterDraft}
         onPersist={() => {
           if (!wallet) return;
-          void persistJupiterField({ wallet, revealed: jupiterRevealed, draft: jupiterDraft, io });
+          void persistJupiterField({ wallet, revealed: jupiterRevealed, draft: jupiterDraft, io, locale });
         }}
       />
     </>
@@ -457,6 +501,7 @@ export function KeysScreen({ settings }: { settings: Settings }): JSX.Element {
 
 export function CuPriceScreen({ settings }: { settings: Settings }): JSX.Element {
   const io = useSettingsIo();
+  const { locale } = useT();
   const [draft, setDraft] = useState(String(settings.defaultCuPrice));
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -468,9 +513,9 @@ export function CuPriceScreen({ settings }: { settings: Settings }): JSX.Element
         return;
       }
       if (parsed === settings.defaultCuPrice) return;
-      void patchSettingsPartial({ defaultCuPrice: parsed }, io);
+      void patchSettingsPartial({ defaultCuPrice: parsed }, io, locale);
     },
-    [io, settings.defaultCuPrice],
+    [io, locale, settings.defaultCuPrice],
   );
 
   return (
@@ -508,6 +553,7 @@ export function CuPriceScreen({ settings }: { settings: Settings }): JSX.Element
 export function ChangePasswordScreen(): JSX.Element {
   const io = useSettingsIo();
   const { clearError, navigateTo } = usePopupContext();
+  const { locale, t } = useT();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -519,17 +565,18 @@ export function ChangePasswordScreen(): JSX.Element {
       currentPassword: current,
       newPassword: next,
       confirm,
+      locale,
       io,
     });
     if (!result.ok) {
-      if (result.err) setErr(result.err);
+      if (result.err) setErr(t(result.err));
       return;
     }
     navigateTo("settings");
-  }, [clearError, current, next, confirm, io, navigateTo]);
+  }, [clearError, current, next, confirm, io, locale, navigateTo, t]);
 
   useRegisterDock({
-    label: "變更密碼",
+    label: t("settings.password.change"),
     disabled: !changePasswordCanSubmit(current, next, confirm),
     onPrimary,
   });
@@ -537,7 +584,7 @@ export function ChangePasswordScreen(): JSX.Element {
   return (
     <>
       <div className="field">
-        <label htmlFor="change-pwd-current">目前密碼</label>
+        <label htmlFor="change-pwd-current">{t("settings.password.current")}</label>
         <WalletPasswordInput
           id="change-pwd-current"
           value={current}
@@ -548,7 +595,7 @@ export function ChangePasswordScreen(): JSX.Element {
         />
       </div>
       <div className="field">
-        <label htmlFor="change-pwd-new">新密碼</label>
+        <label htmlFor="change-pwd-new">{t("settings.password.new")}</label>
         <WalletPasswordInput
           id="change-pwd-new"
           value={next}
@@ -559,7 +606,7 @@ export function ChangePasswordScreen(): JSX.Element {
         />
       </div>
       <div className="field">
-        <label htmlFor="change-pwd-confirm">再次輸入新密碼</label>
+        <label htmlFor="change-pwd-confirm">{t("settings.password.confirmNew")}</label>
         <WalletPasswordInput
           id="change-pwd-confirm"
           value={confirm}

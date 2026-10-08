@@ -1,12 +1,12 @@
-/** 持倉／RPC 速率限制時給使用者看的短句 */
-export const RPC_RATE_LIMIT_USER_MESSAGE = "RPC 速率限制，請稍後再試";
+import { messageForErrorCode, t, type UiLocale } from "./ui-i18n";
+import type { MessageKey } from "./ui-messages";
 
 export function isLikelyRpcRateLimitMessage(text: string): boolean {
-  const t = text.toLowerCase();
-  if (t.includes("8100002")) return true;
-  if (t.includes("rate limit") || t.includes("rate-limit") || t.includes("ratelimit")) return true;
+  const lower = text.toLowerCase();
+  if (lower.includes("8100002")) return true;
+  if (lower.includes("rate limit") || lower.includes("rate-limit") || lower.includes("ratelimit")) return true;
   if (/\b429\b/.test(text)) return true;
-  if (t.includes("too many requests")) return true;
+  if (lower.includes("too many requests")) return true;
   if (text.includes("速率限制")) return true;
   return false;
 }
@@ -17,13 +17,19 @@ function rawErrorText(raw: unknown): string {
   return "";
 }
 
-/** 將 Kit／Helius 等技術訊息轉成適合畫面的文案；無法辨識則回傳原字串或 fallback。 */
-export function friendlyErrorMessage(raw: unknown, fallback = "發生錯誤，請稍後再試"): string {
+/** UI-only：將 code／raw 轉成使用者短句。 */
+export function friendlyErrorMessage(
+  raw: unknown,
+  locale: UiLocale,
+  fallbackKey: MessageKey = "error.generic",
+): string {
   const text = rawErrorText(raw).trim();
-  if (!text) return fallback;
-  if (isLikelyRpcRateLimitMessage(text)) return RPC_RATE_LIMIT_USER_MESSAGE;
+  if (!text) return t(locale, fallbackKey);
+  const asCode = messageForErrorCode(locale, text);
+  if (asCode !== text) return asCode;
+  if (isLikelyRpcRateLimitMessage(text)) return t(locale, "error.rpcRateLimit");
   if (text.includes("npx @solana/errors decode") || /^Solana error #\d+/.test(text)) {
-    return "RPC 請求失敗，請稍後再試";
+    return t(locale, "error.rpcRequestFailed");
   }
   return text;
 }

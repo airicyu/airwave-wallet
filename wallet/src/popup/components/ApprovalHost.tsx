@@ -1,34 +1,37 @@
 import type { JSX } from "react";
-import { memo, useEffect, useRef } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
 import { mountApprovalShell } from "../../approval/shell";
+import { brandIconUrl } from "../../shared/brand-icon";
 import { sendExtensionRequest } from "../../shared/ext-api";
+import type { MessageKey } from "../../shared/ui-messages";
 import { usePopupContext } from "../state/PopupContext";
+import { useT } from "../state/useT";
 
 /** Markup matches today's popup #approval-root; mountApprovalShell queries these ids. */
-export const APPROVAL_ROOT_HTML = `
+export function buildApprovalRootHtml(t: (key: MessageKey) => string): string {
+  return `
               <section id="appr-view-unlock" class="unlock-screen" hidden>
-                <div class="unlock-mark" aria-hidden="true">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-                </div>
+                <img class="brand-mark" src="${brandIconUrl()}" width="64" height="64" alt="" aria-hidden="true" />
                 <h1>Airwave</h1>
-                <p class="unlock-lead">錢包已鎖定</p>
+                <p class="unlock-lead">${t("unlock.lead")}</p>
                 <div class="unlock-form">
-                  <input id="appr-unlock-password" type="text" class="wallet-pwd-masked" placeholder="密碼" autocomplete="off" />
+                  <input id="appr-unlock-password" type="text" class="wallet-pwd-masked" placeholder="${t("unlock.passwordPlaceholder")}" autocomplete="off" />
                   <p id="appr-unlock-error" class="inline-error" hidden></p>
-                  <button id="appr-btn-unlock" type="button" class="primary-btn">解鎖</button>
+                  <button id="appr-btn-unlock" type="button" class="primary-btn">${t("unlock.submit")}</button>
                 </div>
               </section>
               <section id="appr-view-gone" class="expired-screen" hidden>
-                <p id="appr-gone-lead">這筆請求已不能繼續。</p>
-                <button id="appr-btn-close-expired" type="button" class="primary-btn">返回</button>
+                <h1>${t("approval.expired")}</h1>
+                <p id="appr-gone-lead">${t("approval.goneGeneric")}</p>
+                <button id="appr-btn-close-expired" type="button" class="primary-btn">${t("common.return")}</button>
               </section>
               <div id="appr-view-sign" class="approval-sign-shell" hidden>
                 <div class="approval-sign-scroll">
                   <div class="site-row">
-                    <span class="site-label">站點</span>
+                    <span class="site-label">${t("approval.site")}</span>
                     <span class="site-chip" id="appr-sign-origin"></span>
                   </div>
-                  <h2 class="page-title" id="appr-sign-page-title">簽署交易</h2>
+                  <h2 class="page-title" id="appr-sign-page-title">${t("approval.signTx")}</h2>
                   <div class="bar-wallet-group compact">
                     <div class="bar-wallet static-wallet">
                       <span class="avatar" id="appr-sign-avatar" aria-hidden="true">A</span>
@@ -36,7 +39,7 @@ export const APPROVAL_ROOT_HTML = `
                         <span class="bar-wallet-name" id="appr-sign-label">Account</span>
                         <span class="bar-wallet-addr" id="appr-sign-addr"></span>
                       </span>
-                      <button type="button" class="icon-btn ghost-inline" id="appr-btn-copy-pk" title="複製" aria-label="複製">
+                      <button type="button" class="icon-btn ghost-inline" id="appr-btn-copy-pk" title="${t("common.copy")}" aria-label="${t("common.copy")}">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                       </button>
                     </div>
@@ -45,8 +48,8 @@ export const APPROVAL_ROOT_HTML = `
                   <p id="appr-sign-error" class="inline-error" hidden></p>
                 </div>
                 <footer class="approval-dock" id="appr-sign-dock">
-                  <button id="appr-sign-reject" type="button" class="ghost-btn">拒絕</button>
-                  <button id="appr-sign-approve" type="button" class="primary-btn">批准</button>
+                  <button id="appr-sign-reject" type="button" class="ghost-btn">${t("approval.reject")}</button>
+                  <button id="appr-sign-approve" type="button" class="primary-btn">${t("approval.approve")}</button>
                 </footer>
               </div>
               <section id="appr-view-legacy" class="flow-screen" hidden>
@@ -58,6 +61,7 @@ export const APPROVAL_ROOT_HTML = `
                 <p id="appr-legacy-error" hidden></p>
               </section>
 `;
+}
 
 let abortRequestId: string | null = null;
 
@@ -78,6 +82,8 @@ export const ApprovalHost = memo(function ApprovalHost({ requestId }: { requestI
   const api = usePopupContext();
   const apiRef = useRef(api);
   apiRef.current = api;
+  const { t, locale } = useT();
+  const approvalHtml = useMemo(() => buildApprovalRootHtml(t), [t]);
   useEffect(() => {
     const el = rootRef.current;
     if (!el || !requestId) return;
@@ -105,15 +111,14 @@ export const ApprovalHost = memo(function ApprovalHost({ requestId }: { requestI
       el,
     );
     return dispose;
-  }, [requestId]);
+  }, [requestId, locale]);
 
   return (
     <div
       ref={rootRef}
       id="approval-root"
       className="approval-root"
-      dangerouslySetInnerHTML={{ __html: APPROVAL_ROOT_HTML }}
+      dangerouslySetInnerHTML={{ __html: approvalHtml }}
     />
   );
 });
-

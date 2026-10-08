@@ -1,16 +1,26 @@
 import type { SimulatePendingTxResult } from "../../shared/simulate-pending-tx-types";
+import { messageForErrorCode, t, type UiLocale } from "../../shared/ui-i18n";
 
-export function renderSimulationNotice(sim: SimulatePendingTxResult | null): HTMLElement | null {
+function simReasonText(locale: UiLocale, reason: string | undefined, fallback: string): string {
+  if (!reason) return t(locale, fallback as import("../../shared/ui-messages").MessageKey);
+  const mapped = messageForErrorCode(locale, reason);
+  return mapped !== reason ? mapped : reason;
+}
+
+export function renderSimulationNotice(
+  sim: SimulatePendingTxResult | null,
+  locale: UiLocale,
+): HTMLElement | null {
   if (!sim) return null;
   if (sim.outcome === "unparseable") {
     const card = document.createElement("div");
     card.className = "notice-card warn-neutral";
     const title = document.createElement("p");
     title.className = "notice-title";
-    title.textContent = "無法模擬";
+    title.textContent = t(locale, "sim.cannotSimulate");
     const reason = document.createElement("p");
     reason.className = "notice-reason";
-    reason.textContent = sim.reason ?? "無法解析交易";
+    reason.textContent = simReasonText(locale, sim.reason, "error.code.TX_UNPARSEABLE");
     card.append(title, reason);
     return card;
   }
@@ -19,10 +29,10 @@ export function renderSimulationNotice(sim: SimulatePendingTxResult | null): HTM
     card.className = "notice-card warn-neutral";
     const title = document.createElement("p");
     title.className = "notice-title";
-    title.textContent = "無法模擬";
+    title.textContent = t(locale, "sim.cannotSimulate");
     const reason = document.createElement("p");
     reason.className = "notice-reason";
-    reason.textContent = sim.reason ?? "RPC 錯誤";
+    reason.textContent = simReasonText(locale, sim.reason, "error.code.SIM_RPC");
     card.append(title, reason);
     return card;
   }
@@ -31,7 +41,7 @@ export function renderSimulationNotice(sim: SimulatePendingTxResult | null): HTM
     card.className = "notice-card";
     const title = document.createElement("p");
     title.className = "notice-title";
-    title.textContent = "預計交易失敗";
+    title.textContent = t(locale, "sim.willFail");
     card.append(title);
     if (sim.reason) {
       const reason = document.createElement("p");
@@ -41,7 +51,7 @@ export function renderSimulationNotice(sim: SimulatePendingTxResult | null): HTM
     }
     const details = document.createElement("details");
     const summary = document.createElement("summary");
-    summary.textContent = "失敗詳情";
+    summary.textContent = t(locale, "sim.failDetails");
     const pre = document.createElement("pre");
     pre.style.fontSize = "0.72rem";
     pre.style.maxHeight = "160px";

@@ -19,7 +19,6 @@ import {
   tokenProgramByMintFromParsed,
   type ParsedOwnerTokenAccount,
 } from "../../shared/parsed-token-accounts";
-import { friendlyErrorMessage } from "../../shared/friendly-error-message";
 import { setOwnerParsedTokenAccounts } from "./owner-parsed-token-cache";
 
 export type GetHomeTokensResult = {
@@ -437,7 +436,7 @@ async function applyJupiterTokensV2(
     const url = `${JUPITER_BASE}/tokens/v2/search?query=${encodeURIComponent(batch.join(","))}`;
     const res = await fetchWith429Retry(url, { method: "GET", headers }, signal);
     if (res.status === 401 || res.status === 403) {
-      return { rows, error: `Jupiter 未授權（HTTP ${res.status}）` };
+      return { rows, error: "JUPITER_REFRESH_FAILED" };
     }
     if (!res.ok) {
       if (res.status === 429) throw new Error("Jupiter 速率限制（429）");
@@ -652,13 +651,12 @@ async function runRefresh(
         rows = sortHomeTokenRows(jup.rows);
         if (jup.error) {
           memoryCache = { fingerprint, rows, fetchedAt: Date.now() };
-          return { rows, error: friendlyErrorMessage(jup.error, jup.error) };
+          return { rows, error: "JUPITER_REFRESH_FAILED" };
         }
       } catch (e) {
-        const msg = friendlyErrorMessage(e, "Jupiter 資料更新失敗");
         rows = sortHomeTokenRows(rows);
         memoryCache = { fingerprint, rows, fetchedAt: Date.now() };
-        return { rows, error: msg };
+        return { rows, error: "JUPITER_REFRESH_FAILED" };
       }
     }
 
@@ -667,14 +665,13 @@ async function runRefresh(
     return { rows };
   } catch (e) {
     if (signal.aborted) {
-      if (cached) return { rows: cached, error: "已取消" };
-      return { rows: [], error: "已取消" };
+      if (cached) return { rows: cached, error: "CANCELLED" };
+      return { rows: [], error: "CANCELLED" };
     }
-    const msg = friendlyErrorMessage(e, "無法載入持倉");
     if (cached?.length) {
-      return { rows: cached, error: msg };
+      return { rows: cached, error: "HOLDINGS_LOAD_FAILED" };
     }
-    return { rows: [], error: msg };
+    return { rows: [], error: "HOLDINGS_LOAD_FAILED" };
   }
 }
 

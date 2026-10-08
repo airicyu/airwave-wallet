@@ -5,10 +5,13 @@ import { sendExtensionRequest } from "../../shared/ext-api";
 import { getExposedPublicKey, isSigningOrWatch, parsePublicKeyBase58 } from "../../shared/accounts";
 import type { SeedPathKind } from "../../shared/seed-derive";
 import type { AccountMeta } from "../../shared/storage-keys";
-import { IconCopy, IconLock } from "../components/StrokeIcon";
+import { BrandMark } from "../components/BrandMark";
+import { IconCopy } from "../components/StrokeIcon";
 import { SensitiveTextArea, SensitiveTextInput, WalletPasswordInput } from "../components/WalletPasswordInput";
 import { shortAddr } from "../lib/format";
+import { apiErrorMessage, displayStoredError, messageForErrorCode } from "../../shared/ui-i18n";
 import { usePopupContext } from "../state/PopupContext";
+import { useT } from "../state/useT";
 import { useRegisterDock } from "../state/dock";
 import { detectSecret } from "./import-secret";
 import {
@@ -25,22 +28,23 @@ import { createGenerateSeedDraft, type GenerateSeedDraft } from "./generate-seed
 
 export function AddAccountChooser(): JSX.Element {
   const { navigateTo } = usePopupContext();
+  const { t } = useT();
   return (
     <>
       <button type="button" className="kind-btn" onClick={() => navigateTo("add-generate-seed")}>
-        建立助記詞錢包<span className="kind-chev" aria-hidden="true">›</span>
+        {t("onboarding.createSeedWallet")}<span className="kind-chev" aria-hidden="true">›</span>
       </button>
       <button type="button" className="kind-btn" onClick={() => navigateTo("add-generate")}>
-        建立 Burner 錢包<span className="kind-chev" aria-hidden="true">›</span>
+        {t("onboarding.createBurner")}<span className="kind-chev" aria-hidden="true">›</span>
       </button>
       <button type="button" className="kind-btn" onClick={() => navigateTo("add-import")}>
-        匯入錢包<span className="kind-chev" aria-hidden="true">›</span>
+        {t("onboarding.importWallet")}<span className="kind-chev" aria-hidden="true">›</span>
       </button>
       <button type="button" className="kind-btn" onClick={() => navigateTo("add-watch")}>
-        建立觀察帳戶<span className="kind-chev" aria-hidden="true">›</span>
+        {t("onboarding.createWatch")}<span className="kind-chev" aria-hidden="true">›</span>
       </button>
       <button type="button" className="kind-btn" onClick={() => navigateTo("add-combined")}>
-        建立 Combined<span className="kind-chev" aria-hidden="true">›</span>
+        {t("onboarding.createCombined")}<span className="kind-chev" aria-hidden="true">›</span>
       </button>
     </>
   );
@@ -48,13 +52,14 @@ export function AddAccountChooser(): JSX.Element {
 
 export function AddImportChooser(): JSX.Element {
   const { navigateTo } = usePopupContext();
+  const { t } = useT();
   return (
     <>
       <button type="button" className="kind-btn" onClick={() => navigateTo("add-import-seed")}>
-        助記詞<span className="kind-chev" aria-hidden="true">›</span>
+        {t("onboarding.seedPhrase")}<span className="kind-chev" aria-hidden="true">›</span>
       </button>
       <button type="button" className="kind-btn" onClick={() => navigateTo("add-import-secret")}>
-        密鑰<span className="kind-chev" aria-hidden="true">›</span>
+        {t("onboarding.secretKey")}<span className="kind-chev" aria-hidden="true">›</span>
       </button>
     </>
   );
@@ -62,19 +67,26 @@ export function AddImportChooser(): JSX.Element {
 
 export function ImportSecretScreen(): JSX.Element {
   const { clearError, refresh, navigateTo } = usePopupContext();
+  const { t, locale } = useT();
   const [label, setLabel] = useState("");
   const [secret, setSecret] = useState("");
   const [err, setErr] = useState("");
   const d = detectSecret(secret);
   const fmtClass = d.kind === "empty" ? "fmt" : d.ok ? "fmt ok" : "fmt bad";
   const fmtText =
-    d.kind === "empty" ? "base58 或 [bytes]" : d.ok ? (d.kind === "bytes" ? "位元組陣列" : "base58") : "無法辨識";
+    d.kind === "empty"
+      ? t("onboarding.secretPlaceholder")
+      : d.ok
+        ? d.kind === "bytes"
+          ? t("onboarding.bytesArray")
+          : t("onboarding.base58")
+        : t("error.unrecognizedSecret");
 
   const onPrimary = useCallback(async () => {
     clearError();
     const detected = detectSecret(secret);
     if (!detected.ok) {
-      setErr("無法辨識");
+      setErr(t("error.unrecognizedSecret"));
       return;
     }
     const res = await sendExtensionRequest("wallet.importAccount", {
@@ -82,36 +94,36 @@ export function ImportSecretScreen(): JSX.Element {
       label: label.trim() || undefined,
     });
     if (!res.ok) {
-      setErr(res.error?.message ?? "匯入失敗");
+      setErr(apiErrorMessage(locale, res.error, "error.importFailed"));
       return;
     }
     await refresh();
     navigateTo("accounts");
-  }, [clearError, secret, label, refresh, navigateTo]);
+  }, [clearError, secret, label, refresh, navigateTo, t, locale]);
 
-  useRegisterDock({ label: "匯入", disabled: !d.ok, onPrimary });
+  useRegisterDock({ label: t("common.import"), disabled: !d.ok, onPrimary });
 
   return (
     <>
       <div className="field">
-        <label htmlFor="import-label">名稱</label>
+        <label htmlFor="import-label">{t("common.name")}</label>
         <input
           id="import-label"
           type="text"
           maxLength={ACCOUNT_LABEL_MAX}
-          placeholder="選填"
+          placeholder={t("common.optional")}
           autoComplete="off"
           value={label}
           onChange={(e) => setLabel(e.target.value)}
         />
       </div>
       <div className="field">
-        <label htmlFor="import-secret">密鑰</label>
+        <label htmlFor="import-secret">{t("onboarding.secretKey")}</label>
         <SensitiveTextArea
           id="import-secret"
           className="mono-input"
           rows={4}
-          placeholder={"base58 或 [193, 240, …]"}
+          placeholder={t("onboarding.secretPlaceholderExample")}
           value={secret}
           onChange={(v) => {
             setSecret(v);
@@ -132,12 +144,13 @@ export function ImportSecretScreen(): JSX.Element {
 
 export function ImportSeedScreen(): JSX.Element {
   const { clearError, refresh, navigateTo, setBackOverride, setTitleOverride } = usePopupContext();
+  const { t, locale } = useT();
   const [draft, setDraft] = useState<ImportSeedDraft>(emptyImportSeedDraft);
 
   useEffect(() => {
-    if (draft.step === "pick") setTitleOverride("選帳戶");
+    if (draft.step === "pick") setTitleOverride(t("nav.pickAccounts"));
     else setTitleOverride(null);
-  }, [draft.step, setTitleOverride]);
+  }, [draft.step, setTitleOverride, t]);
 
   useEffect(() => {
     const handler = () => {
@@ -177,18 +190,22 @@ export function ImportSeedScreen(): JSX.Element {
       index: draft.selected,
     });
     if (!res.ok) {
-      setDraft((prev) => ({ ...prev, busy: false, err: res.error?.message ?? "匯入失敗" }));
+      setDraft((prev) => ({
+        ...prev,
+        busy: false,
+        err: apiErrorMessage(locale, res.error, "error.importFailed"),
+      }));
       return;
     }
     await refresh();
     navigateTo("accounts");
-  }, [clearError, draft, runPreview, refresh, navigateTo]);
+  }, [clearError, draft, runPreview, refresh, navigateTo, locale]);
 
   const filled = importSeedFilledCount(draft.words);
   const dock =
     draft.step === "pick"
-      ? { label: "匯入", disabled: draft.busy || draft.selected == null, onPrimary }
-      : { label: "下一步", disabled: draft.busy || !(filled === 12 || filled === 24), onPrimary };
+      ? { label: t("common.import"), disabled: draft.busy || draft.selected == null, onPrimary }
+      : { label: t("common.next"), disabled: draft.busy || !(filled === 12 || filled === 24), onPrimary };
   useRegisterDock(dock);
 
   if (draft.step === "pick") {
@@ -204,6 +221,7 @@ function ImportSeedWords({
   draft: ImportSeedDraft;
   setDraft: Dispatch<SetStateAction<ImportSeedDraft>>;
 }): JSX.Element {
+  const { t, locale } = useT();
   const words = withImportSeedCapacity(draft.words);
   const n = importSeedFilledCount(words);
   const target = importSeedTargetLength(words);
@@ -221,7 +239,7 @@ function ImportSeedWords({
               <span className="word-n">{i + 1}</span>
               <SensitiveTextInput
                 value={w}
-                placeholder="word"
+                placeholder={t("onboarding.seedWordPlaceholder")}
                 onChange={(v) => {
                   setDraft((prev) => {
                     const nextWords = withImportSeedCapacity(
@@ -235,7 +253,7 @@ function ImportSeedWords({
           ))}
         </div>
         <p className="inline-err" id="import-seed-err">
-          {draft.err}
+          {draft.err ? displayStoredError(locale, draft.err) : ""}
         </p>
       </form>
     </div>
@@ -251,10 +269,11 @@ function ImportSeedPick({
   setDraft: Dispatch<SetStateAction<ImportSeedDraft>>;
   runPreview: (snapshot: ImportSeedDraft) => Promise<"ok" | "fail">;
 }): JSX.Element {
+  const { t, locale } = useT();
   const schemes: { id: SeedPathKind; label: string }[] = [
-    { id: "phantom", label: "標準" },
-    { id: "cli", label: "CLI／Ledger" },
-    { id: "custom", label: "自訂" },
+    { id: "phantom", label: t("onboarding.standardPath") },
+    { id: "cli", label: t("onboarding.cliLedger") },
+    { id: "custom", label: t("onboarding.customPath") },
   ];
   return (
     <div id="import-seed-root">
@@ -278,7 +297,7 @@ function ImportSeedPick({
       </div>
       {draft.kind === "custom" ? (
         <div className="field">
-          <label>路徑</label>
+          <label>{t("common.path")}</label>
           <input
             id="import-seed-custom"
             type="text"
@@ -295,7 +314,7 @@ function ImportSeedPick({
       </p>
       <div className="seed-acct-list">
         {draft.preview.length === 0 && draft.busy ? (
-          <p className="muted small">讀取中</p>
+          <p className="muted small">{t("common.loading")}</p>
         ) : (
           draft.preview.map((a) => (
             <button
@@ -311,7 +330,7 @@ function ImportSeedPick({
         )}
       </div>
       <p className="inline-err" id="import-seed-err">
-        {draft.err}
+        {draft.err ? displayStoredError(locale, draft.err) : ""}
       </p>
     </div>
   );
@@ -319,6 +338,7 @@ function ImportSeedPick({
 
 export function GenerateSeedScreen(): JSX.Element {
   const { clearError, refresh, navigateTo, wallet } = usePopupContext();
+  const { t, locale } = useT();
   const [draft, setDraft] = useState<GenerateSeedDraft>(() => ({
     words: null,
     pk: null,
@@ -343,15 +363,19 @@ export function GenerateSeedScreen(): JSX.Element {
       label: label || fallbackLabel,
     });
     if (!res.ok) {
-      setDraft((prev) => ({ ...prev, busy: false, err: res.error?.message ?? "失敗" }));
+      setDraft((prev) => ({
+        ...prev,
+        busy: false,
+        err: apiErrorMessage(locale, res.error, "error.genericFailed"),
+      }));
       return;
     }
     await refresh();
     navigateTo("add-account");
-  }, [draft.words, draft.label, clearError, wallet, refresh, navigateTo]);
+  }, [draft.words, draft.label, clearError, wallet, refresh, navigateTo, locale]);
 
   useRegisterDock({
-    label: "建立",
+    label: t("common.create"),
     disabled: draft.busy || draft.words == null,
     onPrimary,
   });
@@ -359,25 +383,25 @@ export function GenerateSeedScreen(): JSX.Element {
   return (
     <>
       <div className="field">
-        <label htmlFor="generate-seed-label">名稱</label>
+        <label htmlFor="generate-seed-label">{t("common.name")}</label>
         <input
           id="generate-seed-label"
           type="text"
           maxLength={ACCOUNT_LABEL_MAX}
-          placeholder="選填"
+          placeholder={t("common.optional")}
           autoComplete="off"
           value={draft.label}
           onChange={(e) => setDraft((prev) => ({ ...prev, label: e.target.value }))}
         />
       </div>
-      <p className="seed-backup-warn">離開後無法再顯示助記詞</p>
+      <p className="seed-backup-warn">{t("onboarding.seedBackupWarn")}</p>
       <div className="seed-backup-toolbar">
         <button
           type="button"
           className="icon-btn sm-inline"
           id="btn-copy-seed-words"
-          title="複製"
-          aria-label="複製"
+          title={t("common.copy")}
+          aria-label={t("common.copy")}
           onClick={() => {
             if (draft.words) void navigator.clipboard.writeText(draft.words.join(" "));
           }}
@@ -401,8 +425,8 @@ export function GenerateSeedScreen(): JSX.Element {
           type="button"
           className="icon-btn sm-inline"
           id="btn-copy-seed-pk"
-          title="複製"
-          aria-label="複製"
+          title={t("common.copy")}
+          aria-label={t("common.copy")}
           onClick={() => {
             if (draft.pk) void navigator.clipboard.writeText(draft.pk);
           }}
@@ -411,7 +435,7 @@ export function GenerateSeedScreen(): JSX.Element {
         </button>
       </div>
       <p id="generate-seed-err" className="inline-err" aria-live="polite">
-        {draft.err}
+        {draft.err ? displayStoredError(locale, draft.err) : ""}
       </p>
     </>
   );
@@ -419,6 +443,7 @@ export function GenerateSeedScreen(): JSX.Element {
 
 export function GenerateBurnerScreen(): JSX.Element {
   const { clearError, refresh, navigateTo, setBackOverride } = usePopupContext();
+  const { t, locale } = useT();
   const [label, setLabel] = useState("");
   const [err, setErr] = useState("");
   const [successPk, setSuccessPk] = useState<string | null>(null);
@@ -445,17 +470,17 @@ export function GenerateBurnerScreen(): JSX.Element {
       label: label.trim() || undefined,
     });
     if (!res.ok) {
-      setErr(res.error?.message ?? "失敗");
+      setErr(apiErrorMessage(locale, res.error, "error.genericFailed"));
       return;
     }
     const { account } = res.result as { account: AccountMeta };
     const pk = isSigningOrWatch(account) ? account.publicKeyBase58 : getExposedPublicKey(account);
     setSuccessPk(pk);
     await refresh();
-  }, [successPk, label, clearError, navigateTo, refresh]);
+  }, [successPk, label, clearError, navigateTo, refresh, locale]);
 
   useRegisterDock({
-    label: done ? "完成" : "產生",
+    label: done ? t("common.done") : t("onboarding.generate"),
     disabled: false,
     onPrimary,
   });
@@ -478,12 +503,12 @@ export function GenerateBurnerScreen(): JSX.Element {
   return (
     <div id="generate-form">
       <div className="field">
-        <label htmlFor="generate-label">名稱</label>
+        <label htmlFor="generate-label">{t("common.name")}</label>
         <input
           id="generate-label"
           type="text"
           maxLength={ACCOUNT_LABEL_MAX}
-          placeholder="選填"
+          placeholder={t("common.optional")}
           autoComplete="off"
           value={label}
           onChange={(e) => setLabel(e.target.value)}
@@ -498,6 +523,7 @@ export function GenerateBurnerScreen(): JSX.Element {
 
 export function WatchAccountScreen(): JSX.Element {
   const { clearError, refresh, navigateTo, showError } = usePopupContext();
+  const { t, locale } = useT();
   const [label, setLabel] = useState("");
   const [pk, setPk] = useState("");
   const [err, setErr] = useState("");
@@ -508,43 +534,43 @@ export function WatchAccountScreen(): JSX.Element {
     const publicKeyBase58 = pk.trim();
     const name = label.trim();
     if (!parsePublicKeyBase58(publicKeyBase58)) {
-      setErr("地址無效");
+      setErr(t("error.invalidAddress"));
       return;
     }
     const res = await sendExtensionRequest("wallet.addReadOnlyAccount", {
       publicKeyBase58,
       label: name || undefined,
     });
-    if (!res.ok) showError(res.error?.message ?? "新增失敗");
+    if (!res.ok) showError(apiErrorMessage(locale, res.error, "error.addFailed"));
     else {
       await refresh();
       navigateTo("accounts");
     }
-  }, [clearError, pk, label, showError, refresh, navigateTo]);
+  }, [clearError, pk, label, showError, refresh, navigateTo, t, locale]);
 
-  useRegisterDock({ label: "建立", disabled: !parseOk, onPrimary });
+  useRegisterDock({ label: t("common.create"), disabled: !parseOk, onPrimary });
 
   return (
     <>
       <div className="field">
-        <label htmlFor="watch-label">名稱</label>
+        <label htmlFor="watch-label">{t("common.name")}</label>
         <input
           id="watch-label"
           type="text"
           maxLength={ACCOUNT_LABEL_MAX}
-          placeholder="選填"
+          placeholder={t("common.optional")}
           autoComplete="off"
           value={label}
           onChange={(e) => setLabel(e.target.value)}
         />
       </div>
       <div className="field">
-        <label htmlFor="watch-pk">地址</label>
+        <label htmlFor="watch-pk">{t("common.address")}</label>
         <input
           id="watch-pk"
           type="text"
           spellCheck={false}
-          placeholder="Solana 公鑰"
+          placeholder={t("onboarding.solanaPubkey")}
           autoComplete="off"
           value={pk}
           onChange={(e) => {
@@ -562,10 +588,12 @@ export function WatchAccountScreen(): JSX.Element {
 
 export function AboutHub(): JSX.Element {
   const { navigateTo } = usePopupContext();
+  const { t } = useT();
   return (
     <>
+      <BrandMark size="sm" />
       <div className="about-version">
-        <span className="hub-label">版本</span>
+        <span className="hub-label">{t("common.version")}</span>
         <span className="about-version-value" id="about-version">
           {chrome.runtime.getManifest().version}
         </span>
@@ -573,7 +601,7 @@ export function AboutHub(): JSX.Element {
       <ul className="settings-hub-list">
         <li>
           <button type="button" className="settings-hub-row" onClick={() => navigateTo("about-disclaimer")}>
-            <span className="hub-label">免責聲明</span>
+            <span className="hub-label">{t("about.disclaimer")}</span>
             <span className="kind-chev" aria-hidden="true">
               ›
             </span>
@@ -581,7 +609,7 @@ export function AboutHub(): JSX.Element {
         </li>
         <li>
           <button type="button" className="settings-hub-row" onClick={() => navigateTo("about-terms")}>
-            <span className="hub-label">使用條款</span>
+            <span className="hub-label">{t("about.terms")}</span>
             <span className="kind-chev" aria-hidden="true">
               ›
             </span>
@@ -594,49 +622,68 @@ export function AboutHub(): JSX.Element {
 
 export function SetupScreen(): JSX.Element {
   const { clearError, showError, refresh, navigateTo } = usePopupContext();
+  const { t, locale } = useT();
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
 
   return (
-    <section id="setup" className="flow-screen">
+    <section id="setup" className="unlock-screen">
+      <BrandMark />
       <h1>Airwave</h1>
-      <WalletPasswordInput id="setup-password" placeholder="密碼" value={password} onChange={setPassword} />
-      <WalletPasswordInput id="setup-password-2" placeholder="再次輸入" value={password2} onChange={setPassword2} />
-      <button
-        id="btn-create"
-        type="button"
-        onClick={async () => {
-          clearError();
-          if (!password || password.length < 8) {
-            showError("密碼至少 8 字");
-            return;
-          }
-          if (password !== password2) {
-            showError("密碼不一致");
-            return;
-          }
-          const res = await sendExtensionRequest("wallet.createVault", { password, empty: true });
-          if (!res.ok) showError(res.error?.message ?? "建立失敗");
-          else {
-            await refresh();
-            navigateTo("add-account");
-          }
-        }}
-      >
-        開始
-      </button>
+      <div className="unlock-form">
+        <WalletPasswordInput
+          id="setup-password"
+          placeholder={t("unlock.passwordPlaceholder")}
+          value={password}
+          onChange={setPassword}
+        />
+        <WalletPasswordInput
+          id="setup-password-2"
+          placeholder={t("onboarding.passwordAgain")}
+          value={password2}
+          onChange={setPassword2}
+        />
+        <button
+          id="btn-create"
+          className="primary-btn"
+          type="button"
+          onClick={async () => {
+            clearError();
+            if (!password || password.length < 8) {
+              showError(t("error.passwordTooShort"));
+              return;
+            }
+            if (password !== password2) {
+              showError(t("error.passwordMismatch"));
+              return;
+            }
+            const res = await sendExtensionRequest("wallet.createVault", { password, empty: true });
+            if (!res.ok) showError(apiErrorMessage(locale, res.error, "error.createFailed"));
+            else {
+              await refresh();
+              navigateTo("add-account");
+            }
+          }}
+        >
+          {t("onboarding.start")}
+        </button>
+      </div>
     </section>
   );
 }
 
 export function LockedScreen(): JSX.Element {
   const { clearError, showError, refresh } = usePopupContext();
+  const { t, locale } = useT();
   const [password, setPassword] = useState("");
 
   const submit = async () => {
     clearError();
     const res = await sendExtensionRequest("wallet.unlock", { password });
-    if (!res.ok) showError(res.error?.message ?? "解鎖失敗");
+    if (!res.ok) {
+      const code = res.error?.code;
+      showError(code ? messageForErrorCode(locale, code) : t("error.unlockFailed"));
+    }
     else {
       await refresh();
     }
@@ -644,15 +691,13 @@ export function LockedScreen(): JSX.Element {
 
   return (
     <section id="locked" className="unlock-screen">
-      <div className="unlock-mark" aria-hidden="true">
-        <IconLock size={22} />
-      </div>
+      <BrandMark />
       <h1>Airwave</h1>
-      <p className="unlock-lead">錢包已鎖定</p>
+      <p className="unlock-lead">{t("unlock.lead")}</p>
       <div className="unlock-form">
         <WalletPasswordInput
           id="unlock-password"
-          placeholder="密碼"
+          placeholder={t("unlock.passwordPlaceholder")}
           value={password}
           onChange={setPassword}
           onKeyDown={(ev) => {
@@ -663,7 +708,7 @@ export function LockedScreen(): JSX.Element {
           }}
         />
         <button id="btn-unlock" className="primary-btn" type="button" onClick={() => void submit()}>
-          解鎖
+          {t("unlock.submit")}
         </button>
       </div>
     </section>

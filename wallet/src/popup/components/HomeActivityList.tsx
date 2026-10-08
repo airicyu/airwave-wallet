@@ -8,6 +8,7 @@ import {
 } from "../../shared/home-activity";
 import { sendExtensionRequest } from "../../shared/ext-api";
 import type { State, View } from "../types";
+import { useT } from "../state/useT";
 import { IconExternal } from "./StrokeIcon";
 
 type Phase = "loading" | "empty" | "error" | "list";
@@ -24,6 +25,7 @@ function openOrb(url: string, event: MouseEvent<HTMLAnchorElement>): void {
 }
 
 export function HomeActivityList({ wallet, currentView }: Props): JSX.Element {
+  const { locale, t } = useT();
   const [phase, setPhase] = useState<Phase>("loading");
   const [rows, setRows] = useState<HomeActivityRow[]>([]);
   const activeId = wallet.activeAccountId ?? "";
@@ -67,30 +69,30 @@ export function HomeActivityList({ wallet, currentView }: Props): JSX.Element {
       id="screen-home-activity"
       className={phase === "list" ? "screen" : "screen activity-screen"}
     >
-      <h3 className="activity-head">活動</h3>
-      {phase === "loading" ? <p className="activity-quiet">載入中</p> : null}
-      {phase === "empty" ? <p className="activity-quiet">尚無交易</p> : null}
-      {phase === "error" ? <p className="activity-quiet activity-quiet-err">活動暫時無法載入</p> : null}
+      <h3 className="activity-head">{t("common.activity")}</h3>
+      {phase === "loading" ? <p className="activity-quiet">{t("common.loading")}</p> : null}
+      {phase === "empty" ? <p className="activity-quiet">{t("activity.empty")}</p> : null}
+      {phase === "error" ? <p className="activity-quiet activity-quiet-err">{t("error.activityLoad")}</p> : null}
       {phase === "list" ? (
         <ul className="activity-feed">
           {rows.map((row) => (
             <li key={row.signature} className="activity-row">
               <div className="activity-main">
                 <div className="activity-top">
-                  <span className="activity-kind">{kindLabel(row.kind)}</span>
+                  <span className="activity-kind">{kindLabel(row.kind, locale)}</span>
                   {row.timestampSec != null ? (
-                    <span className="activity-when">{activityWhen(row.timestampSec)}</span>
+                    <span className="activity-when">{activityWhen(row.timestampSec, locale)}</span>
                   ) : null}
                 </div>
-                <ActivityDetail lead={row.lead} detail={row.detail} />
+                <ActivityDetail lead={row.lead} detail={row.detail} t={t} />
               </div>
               <a
                 className="activity-ext"
                 href={row.orbUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                title="在 Orb 開啟"
-                aria-label="在 Orb 開啟"
+                title={t("activity.openOrb")}
+                aria-label={t("activity.openOrb")}
                 onClick={(event) => openOrb(row.orbUrl, event)}
               >
                 <IconExternal />
@@ -106,20 +108,27 @@ export function HomeActivityList({ wallet, currentView }: Props): JSX.Element {
 function ActivityDetail({
   lead,
   detail,
+  t,
 }: {
   lead: HomeActivityRow["lead"];
   detail: string;
+  t: (key: import("../../shared/ui-messages").MessageKey, vars?: Record<string, string>) => string;
 }): JSX.Element {
   if (lead === "fail") {
     return (
       <div className="activity-detail">
-        <span className="activity-fail">失敗</span>
+        <span className="activity-fail">{t("activity.fail")}</span>
         {detail ? ` · ${detail}` : null}
       </div>
     );
   }
   if (lead === "ok") {
-    return <div className="activity-detail">成功{detail ? ` · ${detail}` : ""}</div>;
+    return (
+      <div className="activity-detail">
+        {t("activity.success")}
+        {detail ? ` · ${detail}` : ""}
+      </div>
+    );
   }
   return <div className="activity-detail">{detail}</div>;
 }

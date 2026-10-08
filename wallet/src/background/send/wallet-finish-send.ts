@@ -43,7 +43,7 @@ export async function runWalletSendAfterApprove(
   try {
     decodeWireTransaction(txBytes);
   } catch {
-    notify.progress(requestId, "交易無效");
+    notify.progress(requestId, "SEND_TX_INVALID");
     return;
   }
 
@@ -51,7 +51,7 @@ export async function runWalletSendAfterApprove(
   try {
     signedBytes = await partiallySignWireTransaction(txBytes, loaded.signer as KeyPairSigner);
   } catch {
-    notify.progress(requestId, "交易無效");
+    notify.progress(requestId, "SEND_TX_INVALID");
     return;
   }
 
@@ -69,7 +69,7 @@ export async function runWalletSendAfterApprove(
     ws.broadcastSig = sig;
     await waitConfirmOnly(requestId, rpcUrl, sig, notify);
   } catch (e) {
-    notify.progress(requestId, rpcUserMessage(e, "送出失敗"));
+    notify.progress(requestId, rpcUserCode(e, "SEND_BROADCAST_FAILED"));
   }
 }
 
@@ -107,7 +107,7 @@ async function waitConfirmOnly(
         return;
       }
       if (val?.err) {
-        notify.progress(requestId, "鏈上確認失敗");
+        notify.progress(requestId, "SEND_CHAIN_FAILED");
         return;
       }
       await sleep(1500);
@@ -115,13 +115,13 @@ async function waitConfirmOnly(
     if (ws.lastValidBlockHeight != null) {
       const slot = await rpc.getSlot({ commitment: "confirmed" }).send();
       if (Number(slot) > ws.lastValidBlockHeight) {
-        notify.progress(requestId, "Blockhash 已過期，請拒絕後重試");
+        notify.progress(requestId, "SEND_BLOCKHASH_EXPIRED");
         return;
       }
     }
-    notify.progress(requestId, "確認逾時，可再按批准重試");
+    notify.progress(requestId, "SEND_CONFIRM_TIMEOUT");
   } catch (e) {
-    notify.progress(requestId, rpcUserMessage(e, "確認失敗"));
+    notify.progress(requestId, rpcUserCode(e, "SEND_CONFIRM_FAILED"));
   }
 }
 
@@ -129,7 +129,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-function rpcUserMessage(e: unknown, fallback: string): string {
+function rpcUserCode(e: unknown, fallback: string): string {
   const msg = e instanceof Error ? e.message : "";
   if (!msg || msg.includes("npx @solana/errors") || msg.startsWith("Solana error #")) {
     return fallback;

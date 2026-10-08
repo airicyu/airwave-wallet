@@ -1,3 +1,5 @@
+import { t, type UiLocale } from "./ui-i18n";
+
 const COPY_OK_MS = 1600;
 
 const COPY_SVG =
@@ -8,7 +10,11 @@ const CHECK_SVG =
 
 const timers = new WeakMap<HTMLElement, number>();
 
-export async function copyPublicKeyWithFeedback(btn: HTMLElement, text: string): Promise<void> {
+export async function copyPublicKeyWithFeedback(
+  btn: HTMLElement,
+  text: string,
+  locale: UiLocale,
+): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);
   } catch {
@@ -17,14 +23,16 @@ export async function copyPublicKeyWithFeedback(btn: HTMLElement, text: string):
   const prev = timers.get(btn);
   if (prev != null) window.clearTimeout(prev);
   btn.classList.add("copy-ok");
-  btn.title = "已複製";
-  btn.setAttribute("aria-label", "已複製");
+  const copied = t(locale, "copy.copied");
+  const copyLabel = t(locale, "common.copy");
+  btn.title = copied;
+  btn.setAttribute("aria-label", copied);
   btn.innerHTML = CHECK_SVG;
   const id = window.setTimeout(() => {
     timers.delete(btn);
     btn.classList.remove("copy-ok");
-    btn.title = "複製";
-    btn.setAttribute("aria-label", "複製");
+    btn.title = copyLabel;
+    btn.setAttribute("aria-label", copyLabel);
     btn.innerHTML = COPY_SVG;
   }, COPY_OK_MS);
   timers.set(btn, id);

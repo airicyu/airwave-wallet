@@ -10,6 +10,8 @@ import { accountKind } from "../../shared/storage-keys";
 import { NATIVE_SOL_ID, shortMint, type HomeTokenRow } from "../home/home-tokens";
 import { shortAddr } from "../lib/format";
 import { usePopupContext } from "../state/PopupContext";
+import { t as translate } from "../../shared/ui-i18n";
+import { useT } from "../state/useT";
 import type { State, View } from "../types";
 
 let homeTokensGen = 0;
@@ -31,6 +33,7 @@ export function HomeTokenList({ wallet, currentView, onOpenDetail }: Props): JSX
     bumpClosableScan,
     showToast,
   } = usePopupContext();
+  const { locale, t } = useT();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const homeTokenRowsLenRef = useRef(homeTokenRows.length);
@@ -45,7 +48,7 @@ export function HomeTokenList({ wallet, currentView, onOpenDetail }: Props): JSX
         setError(null);
         return;
       }
-      const friendly = friendlyErrorMessage(raw, "無法載入持倉");
+      const friendly = friendlyErrorMessage(raw, locale, "error.code.HOLDINGS_LOAD_FAILED");
       if (shouldUseRpcTransientToast(raw)) {
         showToast(friendly, "warn");
         setError(null);
@@ -53,7 +56,7 @@ export function HomeTokenList({ wallet, currentView, onOpenDetail }: Props): JSX
       }
       setError(friendly);
     },
-    [showToast],
+    [locale, showToast],
   );
 
   const load = useCallback(
@@ -65,7 +68,7 @@ export function HomeTokenList({ wallet, currentView, onOpenDetail }: Props): JSX
         const res = await sendExtensionRequest("wallet.getHomeTokens", force ? { force: true } : {});
         if (gen !== homeTokensGen) return;
         if (!res.ok) {
-          reportAssetsIssue(res.error?.message ?? "無法載入持倉");
+          reportAssetsIssue(res.error?.message ?? translate(locale, "error.code.HOLDINGS_LOAD_FAILED"));
           return;
         }
         const payload = res.result as { rows?: HomeTokenRow[]; error?: string };
@@ -78,7 +81,7 @@ export function HomeTokenList({ wallet, currentView, onOpenDetail }: Props): JSX
         }
       } catch (e) {
         if (gen !== homeTokensGen) return;
-        reportAssetsIssue(e instanceof Error ? e.message : "無法載入持倉");
+        reportAssetsIssue(e instanceof Error ? e.message : translate(locale, "error.code.HOLDINGS_LOAD_FAILED"));
       } finally {
         if (gen === homeTokensGen) setLoading(false);
       }
@@ -100,7 +103,7 @@ export function HomeTokenList({ wallet, currentView, onOpenDetail }: Props): JSX
     return (
       <>
         <ul id="home-tokens" className="token-list">
-          <li className="muted">載入中…</li>
+          <li className="muted">{t("common.loadingEllipsis")}</li>
         </ul>
         <p id="home-assets-error" className="error" hidden />
       </>
@@ -152,6 +155,7 @@ function TokenRow({
   onOpenDetail: (id: string) => void;
   onToggleExpand: () => void;
 }): JSX.Element {
+  const { t } = useT();
   return (
     <>
       <li
@@ -171,7 +175,7 @@ function TokenRow({
           <div className="token-name-row">
             <div className="token-sym">{row.name || row.symbol}</div>
             {row.isVerified ? (
-              <span className="token-verified" title="Jupiter verified" aria-label="verified">
+              <span className="token-verified" title={t("token.verified")} aria-label={t("token.verified")}>
                 ✓
               </span>
             ) : null}
@@ -238,11 +242,12 @@ export function TokenDetailView({
   onSend: () => void;
 }): JSX.Element {
   const { homeTokenRows } = usePopupContext();
+  const { t } = useT();
   const row = homeTokenRows.find((r) => r.id === tokenId);
   if (!row) {
     return (
       <div id="token-detail-root" className="token-detail">
-        <p className="muted">找不到此代幣，請返回重試。</p>
+        <p className="muted">{t("error.tokenNotFound")}</p>
       </div>
     );
   }
@@ -256,20 +261,20 @@ export function TokenDetailView({
         <h3 className="token-detail-name">{row.name || row.symbol}</h3>
         {canSend ? (
           <button type="button" className="token-detail-send-btn" onClick={onSend}>
-            送出
+            {t("send.action")}
           </button>
         ) : null}
       </div>
       <div className="token-detail-meta">
         <div className="token-detail-row">
-          <span className="label">數量</span>
+          <span className="label">{t("send.amount")}</span>
           <span>
             {row.uiAmountLabel} {row.symbol}
           </span>
         </div>
         <div className="token-detail-row">
-          <span className="label">Mint</span>
-          <span>{row.id === NATIVE_SOL_ID ? "原生" : shortMint(row.id)}</span>
+          <span className="label">{t("token.mint")}</span>
+          <span>{row.id === NATIVE_SOL_ID ? t("token.native") : shortMint(row.id)}</span>
         </div>
       </div>
     </div>

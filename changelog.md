@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.23.0 — 2026-10-08
+
+Wallet chrome 三語（繁體／简体／English）：Settings 第一列語言、共用 `ui-messages` catalog 與 `t(locale, key)`；SW 錯誤改穩定 code，UI 再翻譯。popup／popout 字體方案 B；解鎖與確認中標題去掉標題字距 0.02em。產品圖放在解鎖與首次建立密碼（64px）以及關於（40px）。
+
+## 0.22.1 — 2026-10-08
+
+Activity 列尾 Orb 網址去掉 `/history`（`https://orb.helius.dev/tx/{sig}?cluster=…`）。帶 `/history` 的頁面不存在。
+
+## 0.22.0 — 2026-10-08
+
+Home 頂欄 pill 貼內容（圓形兩字頭像｜名稱置中｜複製靠右、不顯示地址縮寫）；僅 Devnet 在 pill 外右側橙黃徽章。複製地址成功後勾與「已複製」約 1.6 秒。持倉手動刷新 3 秒冷卻弧。Activity 列尾改開 Helius Orb。收回租金確認中藏頂欄、與簽署送出同一 dash-ring。簽署交易 phase 1 改 Kit `estimateResourceLimitsFactory`，建議 CU limit 公式仍為 0.11.0。
+
 ## 0.21.1 — 2026-10-08
 
 Close-empty 修補：`planCloseEmpty` 對 Kit 估出的 CU 加 margin（×1.25、Compute Budget 兩條 ix headroom、最低 10k），避免 preflight `ComputationalBudgetExceeded`。`commitCloseEmpty` 在 WebSocket 確認失敗時以 HTTP 輪詢 `getSignatureStatuses`，避免鏈上已成功卻顯示「鏈上失敗」。回收勾選清單補 SYMBOL 與 icon（持倉 → mainnet Helius 零餘額 balances → Jupiter）。

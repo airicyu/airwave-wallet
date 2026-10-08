@@ -28,6 +28,16 @@ export async function finishConnect(
     return;
   }
 
+  if (!session.isUnlocked()) {
+    await sendBridgeResult(tabId, {
+      type: "airwave-bridge-result",
+      requestId,
+      ok: false,
+      error: { code: "WALLET_LOCKED", message: "Unlock wallet in extension popup" },
+    });
+    return;
+  }
+
   const activeId = await readActiveAccountId();
   const pubkey = await getActivePublicKey();
   if (!activeId || !pubkey) {

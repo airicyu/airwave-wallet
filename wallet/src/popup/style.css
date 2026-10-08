@@ -45,7 +45,7 @@ body {
 }
 
 body {
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: "Segoe UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif;
   background: var(--bg);
   color: var(--text);
   line-height: 1.45;
@@ -85,24 +85,29 @@ body {
     var(--bg);
 }
 
-.unlock-mark {
-  width: 52px;
-  height: 52px;
+.brand-mark {
+  display: block;
+  width: 64px;
+  height: 64px;
   margin: 0 auto 18px;
-  display: grid;
-  place-items: center;
-  border-radius: 16px;
-  color: var(--accent);
-  background: var(--bg-elevated);
-  border: 1px solid var(--stroke);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
+  border-radius: 18px;
+}
+
+.brand-mark-sm {
+  width: 40px;
+  height: 40px;
+  margin: 2px auto 16px;
+  border-radius: 12px;
+}
+
+.unlock-screen h1 + .unlock-form {
+  margin-top: 16px;
 }
 
 .unlock-screen h1 {
   text-align: center;
   font-size: 1.28rem;
   font-weight: 650;
-  letter-spacing: 0.02em;
   margin: 0 0 6px;
 }
 

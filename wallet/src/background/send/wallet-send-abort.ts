@@ -14,7 +14,7 @@ export function finishWalletSendUserAbort(
   clearWalletSendState(requestId);
   unbindPopoutByRequest(requestId);
   if (ws.broadcastSig) {
-    broadcastSettled(requestId, false, "已送出、確認未知");
+    broadcastSettled(requestId, false, "BROADCAST_UNCONFIRMED");
   } else {
     broadcastSettled(requestId, false);
   }

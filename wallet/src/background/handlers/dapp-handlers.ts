@@ -15,6 +15,7 @@ import { rememberConnectedTab, removeConnectionAndNotify } from "../messaging";
 import { openPopout } from "../messaging";
 import { pendingTimeoutHandlers } from "../send";
 import { signMessageEnqueueGateError } from "../session";
+import * as session from "../session";
 
 const ACCEPTED_CHAIN_IDS = new Set(["solana:devnet", "solana:mainnet"]);
 
@@ -60,6 +61,14 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
     const connections = await readConnections();
     const trusted = connections[origin];
     if (trusted) {
+      if (!session.isUnlocked()) {
+        return respond({
+          kind: "airwave-ext-res",
+          requestId: req.requestId,
+          ok: false,
+          error: { code: "WALLET_LOCKED", message: "Unlock wallet in extension popup" },
+        });
+      }
       await rememberConnectedTab(origin, tabId, activeId);
       const settings = await readSettings();
       return respond({

@@ -26,6 +26,7 @@ import { IconBack, IconLock, IconMenu } from "./components/StrokeIcon";
 import { WalletWidget } from "./components/WalletWidget";
 import { getExposedPublicKey } from "../shared/accounts";
 import { sendExtensionRequest } from "../shared/ext-api";
+import { apiErrorMessage } from "../shared/ui-i18n";
 import { isHomeView } from "./lib/format";
 import {
   AboutHub,
@@ -45,11 +46,13 @@ import {
   ChangePasswordScreen,
   CuPriceScreen,
   KeysScreen,
+  LocaleScreen,
   NetworkScreen,
   RpcScreen,
   SettingsHub,
 } from "./settings/SettingsScreens";
 import { usePopupContext } from "./state/PopupContext";
+import { useT } from "./state/useT";
 import { useDock } from "./state/dock";
 
 function ErrorToast(): JSX.Element {
@@ -72,19 +75,20 @@ function ErrorToast(): JSX.Element {
 
 function MenuItems(): JSX.Element {
   const { navigateTo } = usePopupContext();
+  const { t } = useT();
   return (
     <>
       <button type="button" className="menu-item" onClick={() => navigateTo("accounts")}>
-        Wallet accounts
+        {t("menu.walletAccounts")}
       </button>
       <button type="button" className="menu-item" onClick={() => navigateTo("settings")}>
-        Settings
+        {t("menu.settings")}
       </button>
       <button type="button" className="menu-item" onClick={() => navigateTo("connected-sites")}>
-        Connected sites
+        {t("menu.connectedSites")}
       </button>
       <button type="button" className="menu-item" onClick={() => navigateTo("about")}>
-        About this app
+        {t("menu.about")}
       </button>
     </>
   );
@@ -118,6 +122,7 @@ export function PopupMarkup(): JSX.Element {
     showError,
     resetCloseEmptyFlow,
   } = usePopupContext();
+  const { locale, t } = useT();
   const { dock } = useDock();
 
   const vaultExists = wallet?.vaultExists ?? false;
@@ -128,6 +133,7 @@ export function PopupMarkup(): JSX.Element {
   const title =
     titleOverride ??
     subpageTitle({
+      locale: wallet?.settings.locale ?? "zh-Hant",
       currentView,
       detailTokenId,
       homeTokenRows,
@@ -168,7 +174,7 @@ export function PopupMarkup(): JSX.Element {
                   type="button"
                   className="bar-wallet-hit"
                   id="btn-widget-accounts"
-                  title="Wallet accounts"
+                  title={t("menu.walletAccounts")}
                   onClick={() => navigateTo("accounts")}
                 >
                   <WalletWidget wallet={wallet} />
@@ -193,8 +199,8 @@ export function PopupMarkup(): JSX.Element {
                 type="button"
                 className="icon-btn"
                 id="btn-lock-home"
-                title="Lock wallet"
-                aria-label="Lock wallet"
+                title={t("menu.lockWallet")}
+                aria-label={t("menu.lockWallet")}
                 onClick={async () => {
                   await sendExtensionRequest("wallet.lock");
                   await refresh();
@@ -207,8 +213,8 @@ export function PopupMarkup(): JSX.Element {
                   type="button"
                   className="icon-btn"
                   id="btn-menu"
-                  title="Menu"
-                  aria-label="Menu"
+                  title={t("menu.menu")}
+                  aria-label={t("menu.menu")}
                   aria-expanded={menuOpen}
                   onClick={() => setMenuOpen(!menuOpen)}
                 >
@@ -225,8 +231,8 @@ export function PopupMarkup(): JSX.Element {
               type="button"
               className="icon-btn"
               id="btn-back"
-              title="Back"
-              aria-label="Back"
+              title={t("menu.back")}
+              aria-label={t("menu.back")}
               onClick={() => handleBack()}
             >
               <IconBack />
@@ -238,8 +244,8 @@ export function PopupMarkup(): JSX.Element {
               <button
                 type="button"
                 className="icon-btn btn-menu-sub"
-                title="Menu"
-                aria-label="Menu"
+                title={t("menu.menu")}
+                aria-label={t("menu.menu")}
                 aria-expanded={menuOpen}
                 onClick={() => setMenuOpen(!menuOpen)}
               >
@@ -264,7 +270,7 @@ export function PopupMarkup(): JSX.Element {
           {currentView === "home-token" ? (
             <section id="screen-home-token" className="screen">
               <div className="section-head section-head-tokens">
-                <h3>Tokens</h3>
+                <h3>{t("common.tokens")}</h3>
                 <div className="section-head-actions">
                 <CloseEmptyRecycleButton
                   wallet={wallet}
@@ -351,11 +357,11 @@ export function PopupMarkup(): JSX.Element {
                     setCloseEmptySending(false);
                     if (!res.ok) {
                       if (res.error?.code === "STALE_LIST") {
-                        setCloseEmptyStaleError(res.error.message ?? "清單已過期");
+                        setCloseEmptyStaleError(apiErrorMessage(locale, res.error, "error.code.CLOSE_EMPTY_STALE_LIST"));
                         navigateTo("close-empty-confirm");
                         return;
                       }
-                      showError(res.error?.message ?? "送出失敗");
+                      showError(apiErrorMessage(locale, res.error, "error.sendFailed"));
                       navigateTo("close-empty-confirm");
                       return;
                     }
@@ -468,6 +474,12 @@ export function PopupMarkup(): JSX.Element {
             </section>
           ) : null}
 
+          {currentView === "settings-locale" ? (
+            <section id="screen-settings-locale" className="screen">
+              <LocaleScreen settings={wallet.settings} />
+            </section>
+          ) : null}
+
           {currentView === "settings-network" ? (
             <section id="screen-settings-network" className="screen">
               <NetworkScreen settings={wallet.settings} />
@@ -546,14 +558,14 @@ export function PopupMarkup(): JSX.Element {
             className={`tab-btn${currentView === "home-token" ? " active" : ""}`}
             onClick={() => navigateTo("home-token")}
           >
-            Token
+            {t("common.tokens")}
           </button>
           <button
             type="button"
             className={`tab-btn${currentView === "home-activity" ? " active" : ""}`}
             onClick={() => navigateTo("home-activity")}
           >
-            Activity
+            {t("common.activity")}
           </button>
         </nav>
       </div>

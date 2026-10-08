@@ -17,7 +17,7 @@ export async function finishSignAndSendRejected(
       type: "airwave-bridge-result",
       requestId,
       ok: false,
-      error: { code: "BROADCAST_UNCONFIRMED", message: "已送出、確認未知" },
+      error: { code: "BROADCAST_UNCONFIRMED", message: "BROADCAST_UNCONFIRMED" },
     });
     return;
   }
@@ -41,14 +41,14 @@ export async function finishSignAndSendWindowClosed(requestId: string): Promise<
       type: "airwave-bridge-result",
       requestId,
       ok: false,
-      error: { code: "BROADCAST_UNCONFIRMED", message: "已送出、確認未知" },
+      error: { code: "BROADCAST_UNCONFIRMED", message: "BROADCAST_UNCONFIRMED" },
     });
     void chrome.runtime
       .sendMessage({
         kind: "airwave-wallet-send-settled",
         requestId,
         ok: false,
-        error: "已送出、確認未知",
+        error: "BROADCAST_UNCONFIRMED",
       })
       .catch(() => {});
     return;

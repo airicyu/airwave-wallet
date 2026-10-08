@@ -10,13 +10,13 @@ export type SimulateTxIxAccount = {
 };
 
 export type SimulateTxIxField = {
-  label: string;
+  role: string;
   value: string;
 };
 
 export type SimulateTxInstruction = {
   program: string;
-  name?: string;
+  kind?: string;
   decoded?: true;
   fields?: SimulateTxIxField[];
   desc?: string;

@@ -9,6 +9,7 @@ import {
   type ClusterRpcConfig,
   type ConnectionsMap,
   type Settings,
+  type UiLocale,
 } from "../../shared/storage-keys";
 import { normalizeDefaultCuPrice } from "../simulate";
 import type { VaultBlob } from "../../shared/crypto-vault";
@@ -46,6 +47,11 @@ function normalizeRpcByCluster(
   return by;
 }
 
+function normalizeUiLocale(raw: unknown): UiLocale {
+  if (raw === "zh-Hant" || raw === "zh-Hans" || raw === "en") return raw;
+  return "zh-Hant";
+}
+
 export function normalizeSettings(raw: Partial<Settings> | undefined): Settings {
   const cluster = raw?.cluster === "mainnet" ? "mainnet" : "devnet";
   const rpcByCluster = normalizeRpcByCluster(raw, cluster);
@@ -56,6 +62,7 @@ export function normalizeSettings(raw: Partial<Settings> | undefined): Settings 
     heliusApiUrl: typeof raw?.heliusApiUrl === "string" ? raw.heliusApiUrl : "",
     jupiterApiKey: typeof raw?.jupiterApiKey === "string" ? raw.jupiterApiKey : "",
     defaultCuPrice: normalizeDefaultCuPrice(raw?.defaultCuPrice),
+    locale: normalizeUiLocale(raw?.locale),
   };
 }
 

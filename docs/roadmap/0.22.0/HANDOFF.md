@@ -24,12 +24,12 @@ GUIDELINES pending／custody／不廣播。不改 vault。不改 `walletSend` �
 ## Paste-ready starter prompt
 
 ```text
-只認檔案，不認 chat history。先讀 AGENTS.md、docs/roadmap/GUIDELINES.md、docs/design-principles.md、docs/roadmap/0.22.0/HANDOFF.md、INDEX.md、docs/how.md、docs/reasoning.md。跟 Track：Home 緊湊 pill（36px 圓、顯示名稱前 2 字、無地址列、複製在 pill 內 1.6s 勾）；label 寫入最多 15；無名稱顯示公鑰前 4；僅 devnet 於 pill 外右側 Devnet 徽章；刷新按下起算 3s 弧；Activity orbUrl https://orb.helius.dev/tx/{sig}/history?cluster=devnet|mainnet-beta，刪 solscan；close-empty-sending 藏頂欄、共用 SEND_STATUS_AURORA_SVG、「確認中」「等待鏈上確認」，結果頁不變；sign-tx phase 1 探針 1.4M/price0 後 estimateResourceLimitsFactory，讀回傳 computeUnitLimit（勿讀 unitsConsumed），suggestedLimitFromPhase1 不變，禁 estimateAndSetResourceLimitsFactory，不改 computeCloseEmptyUnitLimit。不新增 command／storage。不要改 ../solibra-wallet。INDEX 已定案不要再問。不要 commit。
+只認檔案，不認 chat history。先讀 AGENTS.md、docs/roadmap/GUIDELINES.md、docs/design-principles.md、docs/roadmap/0.22.0/HANDOFF.md、INDEX.md、docs/how.md、docs/reasoning.md。跟 Track：Home 緊湊 pill（36px 圓、顯示名稱前 2 字、無地址列、複製在 pill 內 1.6s 勾）；label 寫入最多 15；無名稱顯示公鑰前 4；僅 devnet 於 pill 外右側 Devnet 徽章；刷新按下起算 3s 弧；Activity orbUrl https://orb.helius.dev/tx/{sig}?cluster=devnet|mainnet-beta（無 /history），刪 solscan；close-empty-sending 藏頂欄、共用 SEND_STATUS_AURORA_SVG、「確認中」「等待鏈上確認」，結果頁不變；sign-tx phase 1 探針 1.4M/price0 後 estimateResourceLimitsFactory，讀回傳 computeUnitLimit（勿讀 unitsConsumed），suggestedLimitFromPhase1 不變，禁 estimateAndSetResourceLimitsFactory，不改 computeCloseEmptyUnitLimit。不新增 command／storage。不要改 ../solibra-wallet。INDEX 已定案不要再問。不要 commit。
 ```
 
 ## 完成檢查
 
 - [x] 設計審查無未關 HIGH
-- [ ] INDEX 狀態 `in progress` 後實作 Track 1–4
-- [ ] changelog／version 對齊 `0.22.0`
-- [ ] 出貨後刪已完成 backlog 列與檔（cluster／copy／refresh／kit-cu）
+- [x] INDEX 狀態 `in progress` 後實作 Track 1–4
+- [x] changelog／version 對齊 `0.22.0`
+- [x] 出貨後刪已完成 backlog 列與檔（cluster／copy／refresh／kit-cu）

@@ -233,7 +233,7 @@ export function usePopupAppState() {
       bagRef.current.activeWalletSendRequestId = null;
       syncWalletSendAbortId(null);
       if (wasApproval) navigateTo("token-send");
-      setPendingSendFormError(notice.error ?? "已取消");
+      setPendingSendFormError(notice.error ?? "CANCELLED");
     };
     chrome.runtime.onMessage.addListener(onSettled);
 

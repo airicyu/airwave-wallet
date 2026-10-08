@@ -164,6 +164,15 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
       });
     }
 
+    if (p.kind === "connect" && approved && !session.isUnlocked()) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "WALLET_LOCKED", message: "Unlock wallet in extension popup" },
+      });
+    }
+
     unbindPopoutByRequest(requestId);
     if (p.kind === "connect") {
       await finishConnect(requestId, p.tabId, p.origin, approved);

@@ -1,4 +1,5 @@
 import type { AccountMeta, Settings } from "../shared/storage-keys";
+import type { MessageKey } from "../shared/ui-messages";
 
 export type ConnectionSummary = {
   origin: string;
@@ -38,6 +39,7 @@ export type View =
   | "account-manage"
   | "account-reveal-key"
   | "settings"
+  | "settings-locale"
   | "settings-network"
   | "settings-rpc"
   | "settings-keys"
@@ -48,36 +50,37 @@ export type View =
   | "about-terms"
   | "connected-sites";
 
-export const SUBPAGE_TITLES: Record<Exclude<View, "home-token" | "home-activity">, string> = {
-  accounts: "Accounts",
-  "add-account": "新增帳戶",
-  "add-generate": "Burner 錢包",
-  "add-generate-seed": "助記詞錢包",
-  "add-import": "匯入錢包",
-  "add-import-secret": "密鑰",
-  "add-import-seed": "助記詞",
-  "add-watch": "觀察帳戶",
-  "add-combined": "New combined",
-  "account-rename": "Rename",
-  "account-manage": "Manage",
-  "account-reveal-key": "Reveal key",
-  settings: "Settings",
-  "settings-network": "網路",
-  "settings-rpc": "RPC",
-  "settings-keys": "API keys",
-  "settings-cu-price": "Default CU price",
-  "settings-password": "錢包密碼",
-  about: "About this app",
-  "about-disclaimer": "免責聲明",
-  "about-terms": "使用條款",
-  "connected-sites": "Connected sites",
-  "token-detail": "代幣詳情",
-  "token-send": "送出",
-  "send-approval": "確認送出",
-  "close-empty-pick": "收回租金",
-  "close-empty-confirm": "確認收回",
-  "close-empty-sending": "確認中",
-  "close-empty-result": "結果",
+export const SUBPAGE_TITLE_KEYS: Record<Exclude<View, "home-token" | "home-activity">, MessageKey> = {
+  accounts: "nav.accounts",
+  "add-account": "nav.addAccount",
+  "add-generate": "nav.addGenerate",
+  "add-generate-seed": "nav.addGenerateSeed",
+  "add-import": "nav.addImport",
+  "add-import-secret": "nav.addImportSecret",
+  "add-import-seed": "nav.addImportSeed",
+  "add-watch": "nav.addWatch",
+  "add-combined": "nav.addCombined",
+  "account-rename": "nav.accountRename",
+  "account-manage": "nav.accountManage",
+  "account-reveal-key": "nav.accountRevealKey",
+  settings: "nav.settings",
+  "settings-locale": "settings.locale.title",
+  "settings-network": "nav.settingsNetwork",
+  "settings-rpc": "nav.settingsRpc",
+  "settings-keys": "nav.settingsKeys",
+  "settings-cu-price": "nav.settingsCuPrice",
+  "settings-password": "nav.settingsPassword",
+  about: "nav.about",
+  "about-disclaimer": "nav.aboutDisclaimer",
+  "about-terms": "nav.aboutTerms",
+  "connected-sites": "nav.connectedSites",
+  "token-detail": "nav.tokenDetail",
+  "token-send": "nav.tokenSend",
+  "send-approval": "nav.sendApproval",
+  "close-empty-pick": "nav.closeEmptyPick",
+  "close-empty-confirm": "nav.closeEmptyConfirm",
+  "close-empty-sending": "nav.closeEmptySending",
+  "close-empty-result": "nav.closeEmptyResult",
 };
 
 export type CombinedCreateState = {

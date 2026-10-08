@@ -88,7 +88,7 @@ function ixAccounts(
 ): { short: string; unresolved?: boolean }[] {
   return indexes.map((i) => {
     const k = accountKeys[i];
-    if (!k) return { short: "未解析", unresolved: true };
+    if (!k) return { short: "?", unresolved: true };
     return { short: shortPk(k) };
   });
 }
@@ -183,7 +183,7 @@ function buildInstructions(
     if (decoded.decoded) {
       out.push({
         program: programLabel(programId),
-        name: decoded.name,
+        kind: decoded.kind,
         decoded: true,
         fields: decoded.fields,
       });
@@ -420,7 +420,7 @@ export async function runPhase2Simulation(
   } catch {
     return {
       outcome: "unparseable",
-      reason: "無法解析交易",
+      reason: "TX_UNPARSEABLE",
       instructions: [],
     };
   }
@@ -434,7 +434,7 @@ export async function runPhase2Simulation(
   try {
     value = await simulateTransactionRpc(ctx.rpcUrl, tx, deadline);
   } catch (e) {
-    const reason = e instanceof Error && e.message === "SIM_TIMEOUT" ? "逾時" : "RPC 錯誤";
+    const reason = e instanceof Error && e.message === "SIM_TIMEOUT" ? "SIM_TIMEOUT" : "SIM_RPC";
     let instructions: SimulateTxInstruction[] | undefined;
     const keysResult = await resolveAccountKeysFromTables(ctx.rpcUrl, message, deadline);
     if (keysResult !== "rpc" && keysResult !== "timeout") {
@@ -456,7 +456,7 @@ export async function runPhase2Simulation(
     const keysResult = await resolveAccountKeysFromTables(ctx.rpcUrl, message, deadline);
     if (keysResult === "timeout") {
       return withInspector(
-        { outcome: "rpc", reason: "逾時", feePayerShort },
+        { outcome: "rpc", reason: "SIM_TIMEOUT", feePayerShort },
         messageBytesToUint8Array(tx.messageBytes),
         cluster,
       );
@@ -465,7 +465,7 @@ export async function runPhase2Simulation(
       return withInspector(
         {
           outcome: "rpc",
-          reason: "無法載入 address lookup table",
+          reason: "ALT_LOAD_FAILED",
           feePayerShort,
         },
         messageBytesToUint8Array(tx.messageBytes),
@@ -484,7 +484,7 @@ export async function runPhase2Simulation(
     return withInspector(
       {
         outcome: "rpc",
-        reason: "模擬結果缺少餘額欄位",
+        reason: "SIM_INCOMPLETE_DELTAS",
         instructions,
         feePayerShort,
       },

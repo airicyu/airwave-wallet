@@ -15,7 +15,9 @@ import {
 import { formatSolFromLamportsString } from "../../shared/format-lamports";
 import { accountKind } from "../../shared/storage-keys";
 import { shortAddr } from "../lib/format";
+import { apiErrorMessage } from "../../shared/ui-i18n";
 import { usePopupContext } from "../state/PopupContext";
+import { useT } from "../state/useT";
 import type { State, View } from "../types";
 
 type ScanState =
@@ -32,6 +34,7 @@ export function CloseEmptyRecycleButton({
   onOpen: () => void;
 }): JSX.Element | null {
   const { closableScanGen } = usePopupContext();
+  const { t } = useT();
   const [scan, setScan] = useState<ScanState>({ phase: "idle" });
 
   const active = wallet.accounts.find((a) => a.id === wallet.activeAccountId);
@@ -92,8 +95,8 @@ export function CloseEmptyRecycleButton({
       type="button"
       className={`icon-btn ghost-inline ${activeClass}`}
       id="btn-close-empty"
-      title="收回租金"
-      aria-label="收回租金"
+      title={t("closeEmpty.title")}
+      aria-label={t("closeEmpty.title")}
       disabled={dimmed}
       onClick={() => {
         if (!dimmed) onOpen();
@@ -132,6 +135,7 @@ export function CloseEmptyPickScreen({
   onNext: (selected: string[], plan: CloseEmptyPlanResult) => void;
 }): JSX.Element {
   const { showError, closeEmptySelected, setCloseEmptySelected } = usePopupContext();
+  const { t, locale } = useT();
   const [entries] = useState(initialEntries);
   const selected = closeEmptySelected;
   const setSelected = setCloseEmptySelected;
@@ -179,19 +183,19 @@ export function CloseEmptyPickScreen({
         tokenAccounts: [...selected],
       });
       if (!res.ok) {
-        showError(res.error?.message ?? "無法建立計畫");
+        showError(apiErrorMessage(locale, res.error, "error.planFailed"));
         return;
       }
       onNext([...selected], res.result as CloseEmptyPlanResult);
     } finally {
       setBusy(false);
     }
-  }, [busy, onNext, selected, showError]);
+  }, [busy, onNext, selected, showError, locale]);
 
   useRegisterDock({
-    label: "下一步",
+    label: t("common.next"),
     disabled: selected.size === 0 || busy,
-    meta: `已選 ${selected.size} · ${txCount} 筆交易`,
+    meta: t("closeEmpty.selectedMeta", { selected: String(selected.size), txCount: String(txCount) }),
     onPrimary: goNext,
   });
 
@@ -201,7 +205,7 @@ export function CloseEmptyPickScreen({
         <li className="close-empty-row select-all">
           <label>
             <input type="checkbox" checked={allSelected} onChange={toggleAll} />
-            <span>全選</span>
+            <span>{t("closeEmpty.selectAll")}</span>
           </label>
         </li>
         {groups.map((g) => (
@@ -251,12 +255,13 @@ export function CloseEmptyConfirmScreen({
   onConfirm: () => void;
   staleError: string | null;
 }): JSX.Element {
+  const { t } = useT();
   const locked = !wallet.unlocked;
   const feeUnknown = false;
   const canConfirm = !locked && !feeUnknown;
 
   useRegisterDock({
-    label: "確認",
+    label: t("closeEmpty.confirm"),
     disabled: !canConfirm,
     onPrimary: onConfirm,
   });
@@ -269,27 +274,30 @@ export function CloseEmptyConfirmScreen({
           {formatSolFromLamportsString(plan.reclaimLamports)}
         </div>
         <p className="muted">
-          {plan.accountCount} 個帳戶 · {plan.txCount} 筆交易
+          {t("closeEmpty.planSummary", {
+            accountCount: String(plan.accountCount),
+            txCount: String(plan.txCount),
+          })}
         </p>
       </div>
       <div className="close-empty-fee-card">
         <div className="close-empty-fee-row">
-          <span>手續費</span>
+          <span>{t("closeEmpty.fee")}</span>
           <span>{formatSolFromLamportsString(plan.fee.totalLamports)}</span>
         </div>
         <div className="close-empty-fee-row">
-          <span>簽名費</span>
+          <span>{t("closeEmpty.sigFee")}</span>
           <span>{formatSolFromLamportsString(plan.fee.signatureLamports)}</span>
         </div>
         <div className="close-empty-fee-row">
-          <span>優先費</span>
+          <span>{t("closeEmpty.priorityFee")}</span>
           <span>{formatSolFromLamportsString(plan.fee.priorityLamports)}</span>
         </div>
       </div>
       <div className="close-empty-tx-groups">
         {plan.txs.map((tx, i) => (
           <div key={i} className="close-empty-tx-group">
-            <div className="close-empty-tx-title">交易 {i + 1}</div>
+            <div className="close-empty-tx-title">{t("closeEmpty.txTitle", { n: String(i + 1) })}</div>
             <ul>
               {tx.accounts.map((a) => (
                 <li key={a.tokenAccount}>
@@ -305,6 +313,7 @@ export function CloseEmptyConfirmScreen({
 }
 
 export function CloseEmptySendingScreen(): JSX.Element {
+  const { t } = useT();
   return (
     <div className="close-empty-screen close-empty-sending send-status-card is-pending">
       <div
@@ -312,8 +321,8 @@ export function CloseEmptySendingScreen(): JSX.Element {
         aria-hidden="true"
         dangerouslySetInnerHTML={{ __html: SEND_STATUS_AURORA_SVG }}
       />
-      <p className="send-status-title">確認中</p>
-      <p className="send-status-lead">等待鏈上確認</p>
+      <p className="send-status-title">{t("closeEmpty.confirmingTitle")}</p>
+      <p className="send-status-lead">{t("closeEmpty.confirmingLead")}</p>
     </div>
   );
 }
@@ -325,8 +334,9 @@ export function CloseEmptyResultScreen({
   result: CloseEmptyCommitResult;
   onDone: () => void;
 }): JSX.Element {
+  const { t } = useT();
   useRegisterDock({
-    label: "完成",
+    label: t("common.done"),
     disabled: false,
     onPrimary: onDone,
   });
@@ -336,15 +346,15 @@ export function CloseEmptyResultScreen({
       <div className="close-empty-result-grid">
         <div>
           <div className="close-empty-result-num">{result.confirmedCount}</div>
-          <div className="muted">已確認</div>
+          <div className="muted">{t("closeEmpty.statusConfirmed")}</div>
         </div>
         <div>
           <div className="close-empty-result-num">{result.failedCount}</div>
-          <div className="muted">鏈上失敗</div>
+          <div className="muted">{t("closeEmpty.statusFailed")}</div>
         </div>
         <div>
           <div className="close-empty-result-num">{result.expiredCount}</div>
-          <div className="muted">已過期</div>
+          <div className="muted">{t("closeEmpty.statusExpired")}</div>
         </div>
       </div>
       <p className="close-empty-confirm-main">

@@ -71,18 +71,13 @@ export async function handleBeginSend(req: ExtensionRequest): Promise<ExtensionR
     requestId,
   );
   if ("code" in built) {
-    const messages: Record<string, string> = {
-      INVALID_ADDRESS: "地址無效",
-      INVALID_PAYLOAD: "數量或代幣資料無效",
-      INSUFFICIENT_FUNDS: "餘額不足",
-    };
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
       ok: false,
       error: {
         code: built.code,
-        message: messages[built.code] ?? built.code,
+        message: built.code,
       },
     });
   }

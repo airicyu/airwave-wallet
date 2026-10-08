@@ -5,7 +5,10 @@ import {
   type Cluster,
   type ClusterRpcConfig,
   type Settings,
+  type UiLocale,
 } from "../../shared/storage-keys";
+import { apiErrorMessage, messageForErrorCode, t } from "../../shared/ui-i18n";
+import type { MessageKey } from "../../shared/ui-messages";
 import type { State } from "../types";
 
 export const MASKED_SECRET_DISPLAY = "••••••";
@@ -13,6 +16,7 @@ export const MASKED_SECRET_DISPLAY = "••••••";
 export type SettingsIo = {
   refresh: () => Promise<State>;
   showError: (msg: string) => void;
+  locale: UiLocale;
 };
 
 export function rpcFingerprint(settings: Settings): string {
@@ -40,15 +44,15 @@ export function cloneRpcByCluster(
   };
 }
 
-export async function patchRpcByCluster(next: Record<Cluster, ClusterRpcConfig>, io: SettingsIo): Promise<void> {
+export async function patchRpcByCluster(next: Record<Cluster, ClusterRpcConfig>, io: SettingsIo, locale: UiLocale): Promise<void> {
   const res = await sendExtensionRequest("storage.patchSettings", { rpcByCluster: next });
-  if (!res.ok) io.showError(res.error?.message ?? "儲存 RPC 失敗");
+  if (!res.ok) io.showError(apiErrorMessage(locale, res.error, "error.saveRpcFailed"));
   else await io.refresh();
 }
 
-export async function patchSettingsPartial(patch: Partial<Settings>, io: SettingsIo): Promise<void> {
+export async function patchSettingsPartial(patch: Partial<Settings>, io: SettingsIo, locale: UiLocale): Promise<void> {
   const res = await sendExtensionRequest("storage.patchSettings", patch);
-  if (!res.ok) io.showError(res.error?.message ?? "儲存設定失敗");
+  if (!res.ok) io.showError(apiErrorMessage(locale, res.error, "error.saveSettingsFailed"));
   else await io.refresh();
 }
 
@@ -60,12 +64,12 @@ export function rpcOptionKey(cluster: Cluster, isPublic: boolean, url: string): 
   return isPublic ? `${cluster}:public` : `${cluster}:${url}`;
 }
 
-export function apiKeysHubSummary(settings: Settings): string {
+export function apiKeysHubSummary(settings: Settings, locale: UiLocale): string {
   const h = settings.heliusApiUrl.trim().length > 0;
   const j = settings.jupiterApiKey.trim().length > 0;
-  if (h && j) return "已設定";
-  if (h || j) return "部分設定";
-  return "未設定";
+  if (h && j) return t(locale, "settings.hub.keysConfigured");
+  if (h || j) return t(locale, "settings.hub.keysPartial");
+  return t(locale, "settings.hub.keysUnset");
 }
 
 export function changePasswordCanSubmit(current: string, next: string, confirm: string): boolean {
@@ -79,14 +83,15 @@ export async function submitChangePassword(args: {
   currentPassword: string;
   newPassword: string;
   confirm: string;
+  locale: UiLocale;
   io: SettingsIo;
-}): Promise<{ ok: true } | { ok: false; err?: string }> {
-  const { currentPassword, newPassword, confirm } = args;
+}): Promise<{ ok: true } | { ok: false; err?: MessageKey }> {
+  const { currentPassword, newPassword, confirm, locale } = args;
   if (newPassword.length < 8) {
-    return { ok: false, err: "新密碼過短" };
+    return { ok: false, err: "error.passwordTooShort" };
   }
   if (newPassword !== confirm) {
-    return { ok: false, err: "新密碼不一致" };
+    return { ok: false, err: "error.passwordNewMismatch" };
   }
   const res = await sendExtensionRequest("wallet.changeVaultPassword", {
     currentPassword,
@@ -94,9 +99,9 @@ export async function submitChangePassword(args: {
   });
   if (!res.ok) {
     const code = res.error?.code;
-    if (code === "INVALID_PASSWORD") return { ok: false, err: "密碼錯誤" };
-    if (code === "WEAK_PASSWORD") return { ok: false, err: "新密碼過短" };
-    args.io.showError(res.error?.message ?? "變更失敗");
+    if (code === "INVALID_PASSWORD") return { ok: false, err: "error.code.INVALID_PASSWORD" };
+    if (code === "WEAK_PASSWORD") return { ok: false, err: "error.code.WEAK_PASSWORD" };
+    args.io.showError(messageForErrorCode(locale, code ?? "") || t(locale, "error.changePasswordFailed"));
     return { ok: false };
   }
   await args.io.refresh();
@@ -104,9 +109,9 @@ export async function submitChangePassword(args: {
 }
 
 export function parseDefaultCuPriceInput(raw: string): number | null {
-  const t = raw.trim();
-  if (!t) return null;
-  const n = Number(t);
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const n = Number(trimmed);
   if (!Number.isFinite(n)) return null;
   const i = Math.trunc(n);
   if (i < 0 || i > 1_000_000_000) return null;
@@ -118,12 +123,13 @@ export async function persistHeliusField(args: {
   revealed: boolean;
   draft: string;
   io: SettingsIo;
+  locale: UiLocale;
 }): Promise<boolean> {
   if (!args.revealed && args.wallet.settings.heliusApiUrl) return false;
   let heliusApiUrl = args.draft.trim();
   if (heliusApiUrl === MASKED_SECRET_DISPLAY) heliusApiUrl = args.wallet.settings.heliusApiUrl;
   if (heliusApiUrl === args.wallet.settings.heliusApiUrl) return false;
-  await patchSettingsPartial({ heliusApiUrl }, args.io);
+  await patchSettingsPartial({ heliusApiUrl }, args.io, args.locale);
   return true;
 }
 
@@ -132,12 +138,13 @@ export async function persistJupiterField(args: {
   revealed: boolean;
   draft: string;
   io: SettingsIo;
+  locale: UiLocale;
 }): Promise<boolean> {
   if (!args.revealed && args.wallet.settings.jupiterApiKey) return false;
   let jupiterApiKey = args.draft.trim();
   if (jupiterApiKey === MASKED_SECRET_DISPLAY) jupiterApiKey = args.wallet.settings.jupiterApiKey;
   if (jupiterApiKey === args.wallet.settings.jupiterApiKey) return false;
-  await patchSettingsPartial({ jupiterApiKey }, args.io);
+  await patchSettingsPartial({ jupiterApiKey }, args.io, args.locale);
   return true;
 }
 
@@ -147,10 +154,11 @@ export function confirmRpcUrl(args: {
   isNew: boolean;
   draft: string;
   wallet: State;
-}): { ok: false; error: string } | { ok: true; next: Record<Cluster, ClusterRpcConfig>; nextUrl: string } {
+  locale: UiLocale;
+}): { ok: false; error: MessageKey } | { ok: true; next: Record<Cluster, ClusterRpcConfig>; nextUrl: string } {
   const nextUrl = customRpcForCluster(args.draft, args.cluster);
   if (!looksHttpUrl(args.draft) || !nextUrl) {
-    return { ok: false, error: "請輸入有效的 https RPC URL" };
+    return { ok: false, error: "error.invalidRpcUrl" };
   }
   const next = cloneRpcByCluster(args.wallet.settings.rpcByCluster);
   if (args.isNew) {

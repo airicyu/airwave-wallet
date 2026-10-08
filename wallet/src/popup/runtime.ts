@@ -1,8 +1,9 @@
 import { isHomeView } from "./lib/format";
 import type { HomeTokenRow } from "./home/home-tokens";
-import { SUBPAGE_TITLES, type View } from "./types";
+import { t, type UiLocale } from "../shared/ui-i18n";
+import { SUBPAGE_TITLE_KEYS, type View } from "./types";
 
-/** Back 父畫面對照表。特殊列（Burner 成功、助記詞 pick、token-detail）不走此表。 */
+/** Parent view for Back navigation. Special cases (burner success, seed pick, token-detail) skip this map. */
 export const BACK_PARENT: Partial<Record<View, View>> = {
   "account-reveal-key": "account-manage",
   "account-rename": "accounts",
@@ -15,6 +16,7 @@ export const BACK_PARENT: Partial<Record<View, View>> = {
   "add-import-secret": "add-import",
   "add-import-seed": "add-import",
   "add-import": "add-account",
+  "settings-locale": "settings",
   "settings-network": "settings",
   "settings-rpc": "settings",
   "settings-keys": "settings",
@@ -50,21 +52,25 @@ export function screenEnterKey(view: View, navSeq: number): string | undefined {
 }
 
 export function subpageTitle(args: {
+  locale: UiLocale;
   currentView: View;
   importSeedStep?: "words" | "pick";
   detailTokenId: string | null;
   homeTokenRows: HomeTokenRow[];
 }): string {
-  const { currentView, importSeedStep, detailTokenId, homeTokenRows } = args;
-  if (currentView === "add-import-seed" && importSeedStep === "pick") return "選帳戶";
+  const { locale, currentView, importSeedStep, detailTokenId, homeTokenRows } = args;
+  if (currentView === "add-import-seed" && importSeedStep === "pick") {
+    return t(locale, "nav.pickAccounts");
+  }
   if (currentView === "token-detail" && detailTokenId) {
     const row = homeTokenRows.find((r) => r.id === detailTokenId);
-    return row ? row.name || row.symbol : SUBPAGE_TITLES["token-detail"];
+    return row ? row.name || row.symbol : t(locale, "nav.tokenDetail");
   }
   if (currentView === "token-send") {
     const row = detailTokenId ? homeTokenRows.find((r) => r.id === detailTokenId) : undefined;
-    return row ? `送出 ${row.symbol}` : SUBPAGE_TITLES["token-send"];
+    return row ? t(locale, "send.titleWithSymbol", { symbol: row.symbol }) : t(locale, "nav.tokenSend");
   }
   if (isHomeView(currentView)) return "";
-  return SUBPAGE_TITLES[currentView as keyof typeof SUBPAGE_TITLES] ?? "";
+  const key = SUBPAGE_TITLE_KEYS[currentView as keyof typeof SUBPAGE_TITLE_KEYS];
+  return key ? t(locale, key) : "";
 }

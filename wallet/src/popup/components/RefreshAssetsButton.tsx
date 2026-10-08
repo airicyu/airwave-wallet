@@ -1,6 +1,7 @@
 import type { JSX } from "react";
 import { useEffect, useRef, useState } from "react";
 import { IconRefresh } from "./StrokeIcon";
+import { useT } from "../state/useT";
 
 const COOLDOWN_MS = 3000;
 
@@ -13,6 +14,7 @@ export function RefreshAssetsButton({
   currentView: string;
   onRefresh: () => void;
 }): JSX.Element {
+  const { t } = useT();
   const [cooling, setCooling] = useState(false);
   const timer = useRef<number | null>(null);
 
@@ -39,8 +41,8 @@ export function RefreshAssetsButton({
       type="button"
       className={`icon-btn ghost-inline refresh-cd${cooling ? " is-cooling" : ""}`}
       id="btn-refresh-assets"
-      title="重新整理"
-      aria-label="重新整理"
+      title={t("common.refresh")}
+      aria-label={t("common.refresh")}
       disabled={cooling}
       onClick={() => {
         onRefresh();

@@ -81,7 +81,7 @@ export async function requestSeedPreview(
         busy: false,
         preview: [],
         pathPreview: "",
-        err: res.error?.message ?? "預覽失敗",
+        err: res.error?.code ? res.error.code : "error.previewFailed",
       },
     };
   }

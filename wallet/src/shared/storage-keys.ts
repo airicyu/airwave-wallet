@@ -9,6 +9,8 @@ export const STORAGE = {
 /** 僅 `chrome.storage.session`：解鎖工作金鑰。關瀏覽器即清。禁止寫入 local。 */
 export const SESSION_UNLOCKED = "airwave.unlocked.session.v1";
 
+export type UiLocale = "zh-Hant" | "zh-Hans" | "en";
+
 export type Cluster = "devnet" | "mainnet";
 
 export type ClusterRpcConfig = {
@@ -27,6 +29,7 @@ export type Settings = {
   jupiterApiKey: string;
   /** micro-lamports per CU；未簽 signTransaction 預設 CU price */
   defaultCuPrice: number;
+  locale: UiLocale;
 };
 
 export type AccountKind = "signing" | "readOnly";
@@ -71,6 +74,7 @@ export const DEFAULT_SETTINGS: Settings = {
   heliusApiUrl: "",
   jupiterApiKey: "",
   defaultCuPrice: 25_000,
+  locale: "zh-Hant",
 };
 
 export const PUBLIC_RPC_BY_CLUSTER: Record<Cluster, string> = {

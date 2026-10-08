@@ -1,7 +1,9 @@
 import type { JSX } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { NATIVE_SOL_ID } from "../home/home-tokens";
+import { messageForErrorCode } from "../../shared/ui-i18n";
 import { usePopupContext } from "../state/PopupContext";
+import { useT } from "../state/useT";
 import { useRegisterDock } from "../state/dock";
 import { solReserveLamports } from "../../shared/wallet-send-amount";
 import type { State } from "../types";
@@ -17,15 +19,16 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
     setActiveWalletSendRequestId,
     navigateTo,
   } = usePopupContext();
+  const { t, locale } = useT();
   const [amount, setAmount] = useState("");
   const [recipient, setRecipient] = useState("");
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
     if (!pendingSendFormError) return;
-    setFormError(pendingSendFormError);
+    setFormError(messageForErrorCode(locale, pendingSendFormError) || pendingSendFormError);
     consumePendingSendFormError();
-  }, [pendingSendFormError, consumePendingSendFormError]);
+  }, [pendingSendFormError, consumePendingSendFormError, locale]);
 
   const row = detailTokenId ? findTokenRowById(homeTokenRows, detailTokenId) : undefined;
   let balance = "—";
@@ -71,6 +74,7 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
       tokenId: detailTokenId,
       amountUi: amount.trim(),
       recipient: recipient.trim(),
+      locale,
     });
     if (!res.ok) {
       setFormError(res.error);
@@ -79,10 +83,10 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
     setActiveWalletSendRequestId(res.requestId);
     syncWalletSendAbortId(res.requestId);
     navigateTo("send-approval");
-  }, [amount, recipient, detailTokenId, homeTokenRows, wallet, setActiveWalletSendRequestId, navigateTo]);
+  }, [amount, recipient, detailTokenId, homeTokenRows, wallet, locale, setActiveWalletSendRequestId, navigateTo]);
 
   useRegisterDock({
-    label: "確認",
+    label: t("send.confirm"),
     disabled: !wallet || !valid,
     onPrimary,
   });
@@ -91,7 +95,7 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
     <div className="token-send-form">
       <div className="token-send-info">
         <p id="send-balance" className="token-send-balance">
-          <span className="token-send-balance-label">餘額:</span>
+          <span className="token-send-balance-label">{t("send.balance")}</span>
           <span id="send-balance-value">{balance}</span>
         </p>
       </div>
@@ -99,7 +103,7 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
       <div className="token-send-fields">
         <div className="token-send-row">
           <label className="token-send-qty-label" htmlFor="send-amount">
-            數量
+            {t("send.amount")}
           </label>
           <input
             type="text"
@@ -135,12 +139,12 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
               if (next != null) setAmount(next);
             }}
           >
-            全部
+            {t("send.max")}
           </button>
         </div>
         <div className="token-send-recipient">
           <label className="field-label" htmlFor="send-recipient">
-            收款地址
+            {t("send.recipient")}
           </label>
           <input
             type="text"
@@ -148,7 +152,7 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
             className="token-send-input mono"
             autoComplete="off"
             spellCheck={false}
-            placeholder="Base58 地址"
+            placeholder={t("send.recipientPlaceholder")}
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
           />

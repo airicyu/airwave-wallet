@@ -20,8 +20,8 @@
   3. **中間內容：** `flex: 1; min-height: 0; overflow: auto`。**漏寫 `min-height: 0` 會讓頂欄／底欄被整頁捲走。這是已知反覆錯誤，開新畫面第一件事核對。**
   4. **殼底主行動**（拒絕／批准、匯入、產生、建立）：`flex-shrink: 0` 釘在視窗底。主按鈕在這列，**不**進內容捲動。
   5. **禁止**用 `position: fixed`／`absolute`／`sticky` 冒充頁殼。沒有頁級主行動的選項列表不畫底列。
-- **鎖定／解鎖全屏：** 無頂欄、無殼底 dock。垂直置中：鎖徽章（`--accent` 描邊圖示、`--bg-elevated` 圓角方塊）＋置中標題 Airwave＋「錢包已鎖定」＋全寬密碼欄＋內容區「解鎖」。背景為中檔 Solana 北極光（左下 `#9945FF` 11%、右上 `#14F195` 8%、中下 `#5B8CFF` 7% 光斑），**不要**正中 `--accent` 光。欄位 `--fill` 底、focus `--accent` 邊框且 `outline: none`。主按鈕 `flex: none; width: 100%`，禁止沿用殼底批准的 `flex: 1`。錢包密碼用類 B 遮罩（`type="text"` + `-webkit-text-security`）。popup／popout／審批鎖定同一套。概念稿：[`design-demos/unlock-aurora-ux.html`](design-demos/unlock-aurora-ux.html)「中檔」。
-- **錢包送出確認中／已確認：** **禁止**帶邊框大卡、也**不要**解鎖頁那種 radial 漸變底。確認中：置中 112px Solana 經典色 dash-ring（頭 `#14F195`、中 `#5B8CFF`、尾 `#9945FF`），dash 從 0 伸長再被 offset 抽走、重來（旋轉 4s、伸縮 2.4s）；標題「確認中」、說明「等待鏈上確認」。已確認：同一位置換成 `--ok` 勾＋「已確認」＋可選簽名前 4…後 4，**停留 1s** 再 auto-exit。語意仍是同一畫面轉換。概念稿：[`design-demos/send-status-spinner-ux.html`](design-demos/send-status-spinner-ux.html) 右側。
+- **鎖定／解鎖全屏：** 無頂欄、無殼底 dock。垂直置中：產品圖（`public/icon128.png`，64px 圓角）＋置中標題 Airwave＋鎖定說明（catalog，如 `unlock.lead`）＋全寬密碼欄＋內容區主按鈕（catalog，如 `unlock.submit`）。首次建立密碼用同一套置中（無鎖定說明）。關於頁在版本列上方放 40px 同一張圖。Home 頂欄與簽署主畫面不放產品圖。解鎖標題與送出／收回租金「確認中」標題 **不要**加 `letter-spacing: 0.02em`（漢字會被拉開）。背景為中檔 Solana 北極光（左下 `#9945FF` 11%、右上 `#14F195` 8%、中下 `#5B8CFF` 7% 光斑），**不要**正中 `--accent` 光。欄位 `--fill` 底、focus `--accent` 邊框且 `outline: none`。主按鈕 `flex: none; width: 100%`，禁止沿用殼底批准的 `flex: 1`。錢包密碼用類 B 遮罩（`type="text"` + `-webkit-text-security`）。popup／popout／審批鎖定同一套。概念稿：[`design-demos/unlock-aurora-ux.html`](design-demos/unlock-aurora-ux.html)「中檔」。
+- **錢包送出確認中／已確認：** **禁止**帶邊框大卡、也**不要**解鎖頁那種 radial 漸變底。確認中：置中 112px Solana 經典色 dash-ring（頭 `#14F195`、中 `#5B8CFF`、尾 `#9945FF`），dash 從 0 伸長再被 offset 抽走、重來（旋轉 4s、伸縮 2.4s）；標題與說明走 catalog（如 `approval.confirming`、`approval.waitingChain`）。已確認：同一位置換成 `--ok` 勾＋catalog 已確認文案＋可選簽名前 4…後 4，**停留 1s** 再 auto-exit。語意仍是同一畫面轉換。概念稿：[`design-demos/send-status-spinner-ux.html`](design-demos/send-status-spinner-ux.html) 右側。
 
 ---
 
@@ -58,7 +58,7 @@
 
 同一頁不要又有文字「加入」又有加號圖示做同一件事。
 
-Icon 用現有 stroke SVG 風格（約 16–18px、2px stroke），按鈕熱區約 **28–34px**。Tooltip 用繁中短語（「加入」「刪除」「複製」）。
+Icon 用現有 stroke SVG 風格（約 16–18px、2px stroke），按鈕熱區約 **28–34px**。Tooltip／`aria-label` 跟目前 `settings.locale`，走 `ui-messages` catalog（如 `common.add`、`common.delete`、`common.copy`）。
 
 ---
 
@@ -82,12 +82,12 @@ Icon 用現有 stroke SVG 風格（約 16–18px、2px stroke），按鈕熱區�
 
 ## 6. 文案：少說話
 
-- UI 用 **繁體中文**；專有名詞可英文（RPC、Helius、Jupiter、Combined、devnet）。
+- Wallet chrome 跟 **`settings.locale`**（`zh-Hant`／`zh-Hans`／`en`），`t(locale, key)` 查 `ui-messages`；專有名詞可英文（RPC、Helius、Jupiter、Combined、Devnet）。
 - **禁止把操作說明寫進畫面。** 能靠版面、狀態、placeholder、icon tooltip 表達的，不要再加一句「互不共用」「失焦即儲存」「點選即生效」。那是設計原則給實作者看的，不是給使用者看的。
 - 欄位只要 **標籤 + 輸入**；placeholder 最多幾個字（「留空＝不用」）。欄位下方不要再跟一段 hint。
 - 區塊標題只要名詞（「RPC」「Helius」），不要括號裡的教學（「選填」「清單互不共用」）。
 - 錯誤才用短句；空狀態才解釋下一步。平時畫面保持安靜。
-- **RPC／Helius 限流（429、Kit `#8100002` 等）：** 用底部 **toast**（沿用 `#error`／`.toast-error`，約 4 秒自動消失、可點關閉），文案如「RPC 速率限制，請稍後再試」。**禁止**在持倉列表下顯示 `npx @solana/errors decode` 或整段 base64。有快取持倉時列表照常顯示。概念稿：[`design-demos/rpc-rate-limit-toast-ux.html`](design-demos/rpc-rate-limit-toast-ux.html)。
+- **RPC／Helius 限流（429、Kit `#8100002` 等）：** 用底部 **toast**（沿用 `#error`／`.toast-error`，約 4 秒自動消失、可點關閉），文案走 catalog（如 `error.rpcRateLimit`）。**禁止**在持倉列表下顯示 `npx @solana/errors decode` 或整段 base64。有快取持倉時列表照常顯示。概念稿：[`design-demos/rpc-rate-limit-toast-ux.html`](design-demos/rpc-rate-limit-toast-ux.html)。
 
 ---
 
@@ -103,7 +103,7 @@ Icon 用現有 stroke SVG 風格（約 16–18px、2px stroke），按鈕熱區�
 
 Settings **第一層是選項列表**，再進子頁。不要一打開就把 Helius URL／Jupiter key 攤在主頁（錄影／demo 會露出秘密）。概念稿：[`design-demos/settings-hub-ux.html`](design-demos/settings-hub-ux.html)。
 
-列表意向（繁中短標）：網路、RPC、API keys、錢包密碼。列上可寫狀態摘要（Mainnet、已設定／未設定），**不**寫出 key 或含 `api-key` 的 URL。
+列表意向（第一列 **語言**，摘要為 endonym；其後）：網路、RPC、API keys、Default CU price、錢包密碼。列上可寫狀態摘要（Mainnet、已設定／未設定），**不**寫出 key 或含 `api-key` 的 URL。語言列摘要永遠是 `繁體中文`／`简体中文`／`English`，不隨介面語改寫語言本名。
 
 - **網路：** 兩列單選（Devnet、Mainnet），圓點表示目前；立刻寫入。**不要**用分段 tab／seg 來選 cluster。
 - **RPC：** 同一頁兩張卡（Devnet、Mainnet）各自編清單；radio + ellipsis URL。目前 cluster 的卡標「目前」。選／加／刪立刻寫入。

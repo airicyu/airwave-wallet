@@ -38,7 +38,7 @@ Home `WalletWidget` 與簽署殼頂欄帳戶 widget 用這兩函式。Accounts �
 export function orbTxUrl(signature: string, cluster: "mainnet" | "devnet"): string {
   const sig = encodeURIComponent(signature);
   const q = cluster === "devnet" ? "devnet" : "mainnet-beta";
-  return `https://orb.helius.dev/tx/${sig}/history?cluster=${q}`;
+  return `https://orb.helius.dev/tx/${sig}?cluster=${q}`;
 }
 export function isOrbTxUrl(url: string): boolean {
   return url.startsWith("https://orb.helius.dev/tx/");

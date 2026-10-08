@@ -124,7 +124,7 @@ export async function listClosableTokenAccounts(options?: {
   }
 
   if (ownerFailures === targets.length) {
-    return { ok: false, code: "RPC_ERROR", message: "掃描失敗" };
+    return { ok: false, code: "RPC_ERROR", message: "CLOSE_EMPTY_SCAN_FAILED" };
   }
 
   entries = await enrichClosableEntries(entries, home.rows, settings);
@@ -152,11 +152,11 @@ export async function planCloseEmpty(
     }
 > {
   if (!Array.isArray(tokenAccounts) || tokenAccounts.length === 0) {
-    return { ok: false, code: "INVALID_PAYLOAD", message: "空清單" };
+    return { ok: false, code: "INVALID_PAYLOAD", message: "INVALID_PAYLOAD" };
   }
   const unique = new Set(tokenAccounts);
   if (unique.size !== tokenAccounts.length) {
-    return { ok: false, code: "INVALID_PAYLOAD", message: "重複地址" };
+    return { ok: false, code: "INVALID_PAYLOAD", message: "INVALID_PAYLOAD" };
   }
 
   const active = await getActiveAccountMeta();
@@ -174,7 +174,7 @@ export async function planCloseEmpty(
   for (const ta of tokenAccounts) {
     const row = listMap.get(ta);
     if (!row) {
-      return { ok: false, code: "INVALID_PAYLOAD", message: "地址不在清單" };
+      return { ok: false, code: "INVALID_PAYLOAD", message: "INVALID_PAYLOAD" };
     }
     selected.push(row);
   }
@@ -234,7 +234,7 @@ export async function planCloseEmpty(
       );
     }
   } catch {
-    return { ok: false, code: "CU_ESTIMATE_FAILED", message: "無法估算 CU" };
+    return { ok: false, code: "CU_ESTIMATE_FAILED", message: "CLOSE_EMPTY_CU_FAILED" };
   }
 
   const planId = randomUUID();
@@ -411,7 +411,7 @@ export async function commitCloseEmpty(planId: string): Promise<
 
   const settings = await readSettings();
   if (!(await assertPlanNotStale(plan, settings))) {
-    return { ok: false, code: "STALE_LIST", message: "清單已過期" };
+    return { ok: false, code: "STALE_LIST", message: "CLOSE_EMPTY_STALE_LIST" };
   }
 
   const rpc = solanaRpcForUrl(settings.rpcUrl);

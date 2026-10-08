@@ -71,7 +71,7 @@ export async function finishWalletSendWindowClosed(
   takePending(requestId);
   clearWalletSendState(requestId);
   if (ws.broadcastSig) {
-    handlers.walletSendSettled(requestId, false, "已送出、確認未知");
+    handlers.walletSendSettled(requestId, false, "BROADCAST_UNCONFIRMED");
   } else {
     handlers.walletSendSettled(requestId, false);
   }

@@ -1,6 +1,7 @@
 import type { JSX } from "react";
 import { useEffect, useRef, useState } from "react";
 import { IconCheck, IconCopy } from "./StrokeIcon";
+import { useT } from "../state/useT";
 
 const COPY_OK_MS = 1600;
 
@@ -20,7 +21,8 @@ export function CopyPkButton({
     };
   }, []);
 
-  const label = copied ? "已複製" : "複製";
+  const { t } = useT();
+  const label = copied ? t("copy.copied") : t("common.copy");
   return (
     <button
       type="button"

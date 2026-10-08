@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 字體與語言（概念稿）</title>
+    <!--
+      非正式。尚未排進某版 INDEX。衝突時以該版 INDEX 為準。
+      產品碼未改。請在瀏覽器直接開啟本檔（Inter／Noto 需要網路）。
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --ok: #4ecb8d;
+        --warn: #e8b84a;
+        --warn-bg: #3a2e14;
+        --popup-w: 422px;
+        --popup-h: 600px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+        --page-font: "Segoe UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--page-font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.5;
+      }
+      button, input { font: inherit; color: inherit; }
+      .page { max-width: 1480px; margin: 0 auto; padding: 28px 20px 80px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; letter-spacing: 0; }
+      h2 { font-size: 1.05rem; font-weight: 600; margin: 36px 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 8px; max-width: 52rem; font-size: 0.92rem; }
+      .note { color: var(--text-dim); font-size: 0.82rem; margin: 0 0 20px; max-width: 52rem; }
+      a { color: var(--accent); }
+      code { font-family: var(--mono); font-size: 0.84em; }
+      .spec {
+        background: var(--bg-elevated);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        padding: 14px 16px;
+        margin: 0 0 8px;
+        font-size: 0.86rem;
+      }
+      .spec ul { margin: 8px 0 0; padding-left: 1.2rem; color: var(--text-muted); }
+      .spec li { margin: 4px 0; }
+      .pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 18px; }
+      .pill {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text-muted);
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        cursor: pointer;
+      }
+      .pill.on { border-color: var(--accent); color: var(--text); background: #1a2838; }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 22px;
+        align-items: start;
+      }
+      @media (max-width: 1280px) {
+        .grid { grid-template-columns: 1fr; }
+      }
+      .choice {
+        border: 1px solid transparent;
+        border-radius: 16px;
+        padding: 8px;
+      }
+      .choice.picked {
+        border-color: var(--accent);
+        background: #121a22;
+      }
+      .cap { font-size: 0.78rem; color: var(--text-dim); margin: 0 0 6px; }
+      .cap strong { color: var(--text); font-weight: 600; }
+      .tag {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 0 6px;
+        border-radius: 999px;
+        border: 1px solid var(--ok);
+        color: var(--ok);
+        font-size: 0.68rem;
+        font-weight: 700;
+        vertical-align: 1px;
+      }
+      .why { margin: 0 0 10px; font-size: 0.8rem; color: var(--text-muted); min-height: 4.6em; }
+      .pick-btn {
+        margin-top: 10px;
+        border: 1px solid var(--stroke);
+        background: var(--fill);
+        border-radius: 999px;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 0.78rem;
+      }
+      .choice.picked .pick-btn { border-color: var(--accent); color: var(--text); background: #1a2838; }
+
+      .phone {
+        width: var(--popup-w);
+        max-width: 100%;
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        letter-spacing: 0;
+      }
+      .specimen.track .sp-title { letter-spacing: 0.02em; }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+      .top h2 {
+        flex: 1;
+        margin: 0;
+        text-align: center;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .wallet {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        max-width: min(240px, 62%);
+        padding: 3px 6px 3px 3px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+        min-width: 0;
+      }
+      .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        font-size: 12px;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        line-height: 1;
+        letter-spacing: 0;
+      }
+      .wname {
+        font-size: 0.82rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+        line-height: 1;
+      }
+      .icon-btn, .copy-in {
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-sm);
+        background: var(--fill);
+        color: var(--text-muted);
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        padding: 0;
+      }
+      .copy-in {
+        width: 28px;
+        height: 28px;
+        border: none;
+        background: transparent;
+        border-radius: 50%;
+      }
+      .cluster {
+        flex-shrink: 0;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0;
+        padding: 1px 6px;
+        border-radius: 999px;
+        line-height: 1.4;
+        border: 1px solid var(--warn);
+        color: var(--warn);
+        background: var(--warn-bg);
+      }
+      .top-spacer { flex: 1; }
+      .body { flex: 1; min-height: 0; overflow: auto; padding: 8px 14px 12px; }
+      .sec {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 6px 0 8px;
+      }
+      .sec h3 { margin: 0; font-size: 0.88rem; font-weight: 600; }
+      .token {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--stroke-soft);
+      }
+      .dot {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--fill);
+        border: 1px solid var(--stroke);
+        display: grid;
+        place-items: center;
+        font-size: 0.62rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        font-family: var(--mono);
+      }
+      .tn { font-size: 0.88rem; font-weight: 600; }
+      .ts { font-size: 0.75rem; color: var(--text-muted); }
+      .amt { margin-left: auto; text-align: right; font-family: var(--mono); font-size: 0.82rem; }
+      .amt span { display: block; color: var(--text-dim); font-size: 0.72rem; }
+      .tabs {
+        display: flex;
+        flex-shrink: 0;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+      }
+      .tabs span { flex: 1; text-align: center; padding: 10px 0; font-size: 0.82rem; color: var(--text-dim); }
+      .tabs span.on { color: var(--text); font-weight: 600; }
+      .specimen {
+        margin-top: 10px;
+        padding: 12px;
+        border: 1px solid var(--stroke);
+        border-radius: 12px;
+        background: var(--bg);
+        letter-spacing: 0;
+      }
+      .specimen .capline {
+        margin: 0 0 8px;
+        font-size: 0.68rem;
+        color: var(--text-dim);
+      }
+      .sp-title { margin: 0 0 4px; font-size: 1.15rem; font-weight: 600; }
+      .sp-mix { margin: 0 0 6px; font-size: 0.92rem; }
+      .sp-mono { margin: 0; font-family: var(--mono); font-size: 0.75rem; color: var(--text-muted); }
+      .stack { margin: 8px 0 0; font-family: var(--mono); font-size: 0.68rem; color: var(--text-dim); line-height: 1.45; }
+
+      .hub {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: var(--bg-elevated);
+      }
+      .hub li { border-bottom: 1px solid var(--stroke-soft); }
+      .hub li:last-child { border-bottom: 0; }
+      .hub button {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 14px;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        text-align: left;
+        font-size: 0.88rem;
+      }
+      .hub button:hover { background: rgba(255, 255, 255, 0.03); }
+      .hub .label { font-weight: 600; }
+      .hub .sum {
+        font-size: 0.78rem;
+        color: var(--text-dim);
+        flex-shrink: 0;
+        max-width: 55%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .hub .sum.mono { font-family: var(--mono); }
+      .pick-list { display: flex; flex-direction: column; gap: 8px; }
+      .pick-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        margin: 0;
+        padding: 12px;
+        border: 1px solid var(--stroke);
+        border-radius: 10px;
+        background: var(--fill);
+        cursor: pointer;
+        text-align: left;
+        font-size: 0.88rem;
+        font-weight: 600;
+      }
+      .pick-row.on { border-color: var(--accent); background: #1a2838; }
+      .pick-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid var(--text-dim);
+        flex-shrink: 0;
+      }
+      .pick-row.on .pick-dot {
+        border-color: var(--accent);
+        background: var(--accent);
+        box-shadow: inset 0 0 0 3px #1a2838;
+      }
+      .screen[hidden] { display: none !important; }
+      .layout-2 {
+        display: grid;
+        grid-template-columns: var(--popup-w) minmax(0, 1fr);
+        gap: 28px;
+        align-items: start;
+      }
+      @media (max-width: 900px) { .layout-2 { grid-template-columns: 1fr; } }
+      .side { font-size: 0.86rem; color: var(--text-muted); }
+      .side h3 { margin: 0 0 8px; color: var(--text); font-size: 0.95rem; }
+      .side ul { margin: 0; padding-left: 1.15rem; }
+      .side li { margin: 6px 0; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>字體與語言</h1>
+      <p class="lede">
+        概念稿，產品還沒改。字體請在三組裡選一組。語言設定沿用現在的「網路」單選列：點了立刻換，沒有儲存鈕。
+      </p>
+      <p class="note">
+        畫面寬 422px（現在 popup 的寬）。金額、地址維持等寬字，不跟著 UI 字體走。專有名詞不翻譯：Devnet、RPC、SOL、API keys、Default CU price、Airwave。
+      </p>
+
+      <div class="spec">
+        <strong>請拍板</strong>
+        <ul>
+          <li>字體已選 <strong>B 系統雙字</strong>：英文 Segoe UI，中文（繁簡同一套）微軟正黑體 UI。Mac 落到蘋方 TC。</li>
+          <li>中文標題字距改 <strong>0</strong>。現況解鎖標題的 <code>0.02em</code> 會把漢字拉開。</li>
+          <li>設定樞紐<strong>第一列</strong>是語言。列名跟著介面語言；右邊摘要永遠寫該語言自己的名字（繁體中文／简体中文／English）。</li>
+          <li>語言頁是三列單選，版式對齊網路頁。不用頂部分段——三個語言名字在 422px 裡會擠，也和「網路」的選法不一致。</li>
+          <li>預設語言固定繁體中文。不跟瀏覽器語言走。</li>
+        </ul>
+      </div>
+
+      <h2>1. 選字體</h2>
+      <p class="lede">
+        三個 popup 是同一畫面。切到简体中文時，B 與 C 的中文字體不變。帳戶名「日常」是使用者自訂的，不翻譯，用來看中英混排。
+      </p>
+      <div class="pills" id="cmp-lang" role="group" aria-label="比較用的介面語言">
+        <button type="button" class="pill on" data-cmp="zh-Hant">繁體中文</button>
+        <button type="button" class="pill" data-cmp="zh-Hans">简体中文</button>
+        <button type="button" class="pill" data-cmp="en">English</button>
+      </div>
+      <div class="grid" id="compare">
+        <article class="choice" data-font="current">
+          <p class="cap"><strong>A · 現況</strong></p>
+          <p class="why">只寫 Segoe UI。漢字靠 Windows 自己去連字，連到哪套不固定。標題還留著 0.02em 字距。</p>
+          <div class="phone track font-current" data-face="current"></div>
+          <button type="button" class="pick-btn">用這組</button>
+        </article>
+        <article class="choice picked" data-font="system">
+          <p class="cap"><strong>B · 系統雙字</strong><span class="tag">已選</span></p>
+          <p class="why">英文 Segoe UI、中文微軟正黑體 UI。繁簡同一套，不切雅黑。Mac 落到蘋方 TC。不打包字型。標題字距 0。</p>
+          <div class="phone font-system" data-face="system"></div>
+          <button type="button" class="pick-btn">用這組</button>
+        </article>
+        <article class="choice" data-font="noto">
+          <p class="cap"><strong>C · Inter + Noto</strong></p>
+          <p class="why">英文 Inter、中文 Noto Sans TC。繁簡同一套。粗細有 600，中英最齊。字型檔大，帳戶名仍要系統字後備。</p>
+          <div class="phone font-noto" data-face="noto"></div>
+          <button type="button" class="pick-btn">用這組</button>
+        </article>
+      </div>
+
+      <h2>2. 語言設定</h2>
+      <p class="lede">用上一節選的字體。點第一列進入語言，點某一列立刻改這顆 popup 的文案。</p>
+      <div class="layout-2">
+        <div>
+          <p class="cap" id="live-cap">目前字體 · <strong>B 系統雙字</strong></p>
+          <div class="phone font-system" id="live">
+            <header class="top">
+              <button type="button" class="icon-btn" id="live-back" hidden aria-label="返回">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <h2 id="live-title">設定</h2>
+              <span class="icon-btn" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+              </span>
+            </header>
+            <div class="body">
+              <div class="screen" id="screen-hub">
+                <ul class="hub">
+                  <li>
+                    <button type="button" id="open-lang">
+                      <span class="label" data-k="language">語言</span>
+                      <span class="sum" id="hub-lang-sum">繁體中文</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button type="button">
+                      <span class="label" data-k="network">網路</span>
+                      <span class="sum">Devnet</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button type="button">
+                      <span class="label">RPC</span>
+                      <span class="sum mono">https://api.devnet.solana.com</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button type="button">
+                      <span class="label">API keys</span>
+                      <span class="sum" data-k="keysSum">未設定</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button type="button">
+                      <span class="label">Default CU price</span>
+                      <span class="sum mono">25000</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button type="button">
+                      <span class="label" data-k="password">錢包密碼</span>
+                      <span class="sum" data-k="passwordSum">變更</span>
+                    </button>
+                  </li>
+                </ul>
+              </div>
+              <div class="screen" id="screen-lang" hidden>
+                <div class="pick-list" role="radiogroup" id="lang-picks" aria-label="語言">
+                  <button type="button" class="pick-row on" data-lang="zh-Hant"><span class="pick-dot"></span>繁體中文</button>
+                  <button type="button" class="pick-row" data-lang="zh-Hans"><span class="pick-dot"></span>简体中文</button>
+                  <button type="button" class="pick-row" data-lang="en"><span class="pick-dot"></span>English</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="side">
+          <h3>這頁在做什麼</h3>
+          <ul>
+            <li>語言名字不跟著介面翻。介面若已是 English，你仍看得到「繁體中文」。</li>
+            <li>沒有說明句、沒有儲存。和網路頁一樣，選了就寫進設定。</li>
+            <li>解鎖頁、簽署頁、popup 讀同一組語言。本稿只畫設定入口；三語文案長度以 422px 單行為準，放不下就省略號，全文放在 <code>title</code>。</li>
+            <li>預設提案是固定繁體中文。若要改成「瀏覽器是簡中或英文就跟著，其餘落繁中」，直接說。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const COPY = {
+        "zh-Hant": {
+          tokens: "代幣",
+          activity: "活動",
+          settings: "設定",
+          language: "語言",
+          network: "網路",
+          keysSum: "未設定",
+          password: "錢包密碼",
+          passwordSum: "變更",
+          confirming: "確認中",
+        },
+        "zh-Hans": {
+          tokens: "代币",
+          activity: "活动",
+          settings: "设置",
+          language: "语言",
+          network: "网络",
+          keysSum: "未设置",
+          password: "钱包密码",
+          passwordSum: "更改",
+          confirming: "确认中",
+        },
+        en: {
+          tokens: "Tokens",
+          activity: "Activity",
+          settings: "Settings",
+          language: "Language",
+          network: "Network",
+          keysSum: "Not set",
+          password: "Wallet password",
+          passwordSum: "Change",
+          confirming: "Confirming",
+        },
+      };
+      const ENDONYM = { "zh-Hant": "繁體中文", "zh-Hans": "简体中文", en: "English" };
+      const FONT_LABEL = { current: "A 現況", system: "B 系統雙字", noto: "C Inter + Noto" };
+      const STACK = {
+        current: "Segoe UI, system-ui, sans-serif",
+        system: '"Segoe UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif',
+        noto: 'Inter, "Noto Sans TC", sans-serif',
+      };
+
+      function faceFamily(face) {
+        return STACK[face];
+      }
+
+      function homeHtml() {
+        return (
+          '<header class="top">' +
+          '<div class="wallet"><div class="avatar">日常</div><div class="wname">日常</div>' +
+          '<span class="copy-in" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5h10"/></svg></span></div>' +
+          '<span class="cluster">Devnet</span><span class="top-spacer"></span>' +
+          '<span class="icon-btn" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>' +
+          "</header>" +
+          '<div class="body"><div class="sec"><h3 data-k="tokens">代幣</h3></div>' +
+          '<div class="token"><div class="dot">◎</div><div><div class="tn">SOL</div><div class="ts">Solana</div></div><div class="amt">1.284091<span>$178.20</span></div></div>' +
+          '<div class="token"><div class="dot">U</div><div><div class="tn">USDC</div><div class="ts">USD Coin</div></div><div class="amt">42.00<span>$42.00</span></div></div>' +
+          "</div>" +
+          '<div class="tabs"><span class="on" data-k="tokens">代幣</span><span data-k="activity">活動</span></div>'
+        );
+      }
+
+      function specimenHtml() {
+        return (
+          '<div class="specimen"><p class="capline">標題與混排標本（不是 popup 裡的一頁）</p>' +
+          '<p class="sp-title" data-k="confirming">確認中</p>' +
+          '<p class="sp-mix">已複製 Copied · 日常 Main</p>' +
+          '<p class="sp-mono">7xKX…9fQa · 1.284091 SOL</p>' +
+          '<p class="stack"></p></div>'
+        );
+      }
+
+      let cmpLang = "zh-Hant";
+      let chosen = "system";
+
+      function paintCompare() {
+        document.querySelectorAll("#compare .phone").forEach((phone) => {
+          const face = phone.dataset.face;
+          const family = faceFamily(face);
+          const specimen = phone.nextElementSibling;
+          if (specimen && phone.dataset.face === "current") specimen.classList.add("track");
+          phone.style.fontFamily = family;
+          if (specimen) specimen.style.fontFamily = family;
+          phone.parentElement.querySelectorAll("[data-k]").forEach((el) => {
+            if (!phone.parentElement.contains(el)) return;
+            el.textContent = COPY[cmpLang][el.dataset.k];
+          });
+          const stack = specimen && specimen.querySelector(".stack");
+          if (stack) stack.textContent = family;
+        });
+      }
+
+      document.querySelectorAll("#compare .phone").forEach((phone) => {
+        phone.innerHTML = homeHtml();
+        phone.insertAdjacentHTML("afterend", specimenHtml());
+      });
+
+      document.getElementById("cmp-lang").addEventListener("click", (ev) => {
+        const btn = ev.target.closest("[data-cmp]");
+        if (!btn) return;
+        cmpLang = btn.dataset.cmp;
+        document.querySelectorAll("#cmp-lang .pill").forEach((p) => p.classList.toggle("on", p === btn));
+        paintCompare();
+      });
+
+      function applyChoice(font) {
+        chosen = font;
+        document.querySelectorAll("#compare .choice").forEach((card) => {
+          card.classList.toggle("picked", card.dataset.font === font);
+        });
+        const live = document.getElementById("live");
+        live.classList.remove("font-current", "font-system", "font-noto", "track");
+        live.classList.add("font-" + font);
+        if (font === "current") live.classList.add("track");
+        live.style.fontFamily = faceFamily(font);
+        document.querySelector("#live-cap strong").textContent = FONT_LABEL[font];
+      }
+
+      document.getElementById("compare").addEventListener("click", (ev) => {
+        const btn = ev.target.closest(".pick-btn");
+        if (!btn) return;
+        applyChoice(btn.closest(".choice").dataset.font);
+      });
+
+      let liveLang = "zh-Hant";
+      const live = document.getElementById("live");
+      const screenHub = document.getElementById("screen-hub");
+      const screenLang = document.getElementById("screen-lang");
+      const liveBack = document.getElementById("live-back");
+      const liveTitle = document.getElementById("live-title");
+
+      function paintLive() {
+        live.style.fontFamily = faceFamily(chosen);
+        live.querySelectorAll("[data-k]").forEach((el) => {
+          el.textContent = COPY[liveLang][el.dataset.k];
+        });
+        document.getElementById("hub-lang-sum").textContent = ENDONYM[liveLang];
+        const onLang = !screenLang.hidden;
+        liveTitle.textContent = onLang ? COPY[liveLang].language : COPY[liveLang].settings;
+        document.querySelectorAll("#lang-picks .pick-row").forEach((row) => {
+          row.classList.toggle("on", row.dataset.lang === liveLang);
+        });
+      }
+
+      function showLang(open) {
+        screenHub.hidden = open;
+        screenLang.hidden = !open;
+        liveBack.hidden = !open;
+        paintLive();
+      }
+
+      document.getElementById("open-lang").addEventListener("click", () => showLang(true));
+      liveBack.addEventListener("click", () => showLang(false));
+      document.getElementById("lang-picks").addEventListener("click", (ev) => {
+        const row = ev.target.closest("[data-lang]");
+        if (!row) return;
+        liveLang = row.dataset.lang;
+        paintLive();
+      });
+
+      paintCompare();
+      paintLive();
+    </script>
+  </body>
+</html>

@@ -1,4 +1,15 @@
 import { sendExtensionRequest } from "../shared/ext-api";
+import { STORAGE, type Settings } from "../shared/storage-keys";
+import {
+  DEFAULT_UI_LOCALE,
+  ixKindLabel,
+  ixRoleLabel,
+  messageForErrorCode,
+  parseUiLocale,
+  t,
+  type UiLocale,
+} from "../shared/ui-i18n";
+import type { MessageKey } from "../shared/ui-messages";
 import {
   PENDING_TIMEOUT_MS,
   type PendingRecord,
@@ -38,13 +49,60 @@ export type ApprovalShellConfig = {
   elementIdPrefix?: string;
 };
 
+let shellLocale: UiLocale = DEFAULT_UI_LOCALE;
+let settingsChangeListener: ((changes: Record<string, chrome.storage.StorageChange>, area: string) => void) | null =
+  null;
+
+function tr(key: MessageKey, vars?: Record<string, string>): string {
+  return t(shellLocale, key, vars);
+}
+
+function progressUserMessage(code: string): string {
+  const mapped = messageForErrorCode(shellLocale, code);
+  return mapped !== code ? mapped : code;
+}
+
+async function loadShellLocale(): Promise<void> {
+  try {
+    const data = await chrome.storage.local.get(STORAGE.settings);
+    const settings = data[STORAGE.settings] as Settings | undefined;
+    shellLocale = parseUiLocale(settings?.locale);
+  } catch {
+    shellLocale = DEFAULT_UI_LOCALE;
+  }
+}
+
+function applyShellLocaleToStaticChrome(): void {
+  if (!shellDomBound) return;
+  const copyLabel = tr("common.copy");
+  btnCopyPk.title = copyLabel;
+  btnCopyPk.setAttribute("aria-label", copyLabel);
+  signReject.textContent = tr("approval.reject");
+  signApprove.textContent = tr("approval.approve");
+  legacyReject.textContent = tr("approval.reject");
+  legacyApprove.textContent = tr("approval.approve");
+  btnCloseExpired.textContent = tr("common.return");
+  goneTitle.textContent = tr("approval.expired");
+  legacyTitle.textContent = tr("approval.legacyTitle");
+  siteLabel.textContent = tr("approval.site");
+  signPageTitle.textContent = tr("approval.signMsg");
+  document.documentElement.lang = shellLocale;
+  const unlockLead = viewUnlock.querySelector(".unlock-lead");
+  if (unlockLead) unlockLead.textContent = tr("unlock.lead");
+  unlockPassword.placeholder = tr("unlock.passwordPlaceholder");
+  btnUnlock.textContent = tr("unlock.submit");
+}
+
 let shellConfig: ApprovalShellConfig | null = null;
 let requestId: string | null = null;
 let mountRoot: ParentNode | null = null;
 
 let viewUnlock!: HTMLElement;
 let viewGone!: HTMLElement;
+let goneTitle!: HTMLElement;
 let goneLead!: HTMLElement;
+let legacyTitle!: HTMLElement;
+let siteLabel!: HTMLElement;
 let viewLegacy!: HTMLElement;
 let viewSign!: HTMLElement;
 let unlockPassword!: HTMLInputElement;
@@ -237,8 +295,8 @@ function enterWalletSendConfirming(): void {
   simGen += 1;
   signDock.hidden = true;
   setSendStatusChrome(true);
-  document.title = "Airwave — 確認中";
-  signPageTitle.textContent = "確認中";
+  document.title = `Airwave — ${tr("approval.confirming")}`;
+  signPageTitle.textContent = tr("approval.confirming");
   signError.hidden = true;
   const card = ensureSendStatusCard();
   card.classList.remove("is-confirmed");
@@ -247,10 +305,10 @@ function enterWalletSendConfirming(): void {
   mark.replaceChildren();
   mark.innerHTML = SEND_STATUS_AURORA_SVG;
   const title = card.querySelector(".send-status-title")!;
-  title.textContent = "確認中";
+  title.textContent = tr("approval.confirming");
   const lead = card.querySelector<HTMLElement>(".send-status-lead")!;
   lead.hidden = false;
-  lead.textContent = "等待鏈上確認";
+  lead.textContent = tr("approval.waitingChain");
   const sigEl = card.querySelector<HTMLElement>(".send-status-sig")!;
   sigEl.hidden = true;
   sigEl.textContent = "";
@@ -260,14 +318,14 @@ function restoreWalletSendReviewAfterError(): void {
   sendStatusPhase = "idle";
   setSendStatusChrome(false);
   signDock.hidden = false;
-  document.title = "Airwave — 簽署交易";
-  signPageTitle.textContent = "簽署交易";
+  document.title = `Airwave — ${tr("approval.signTx")}`;
+  signPageTitle.textContent = tr("approval.signTx");
   if (lastSim) {
     renderSignTransactionBody(lastSim, false);
     applyApproveFromSimulation(lastSim);
   } else {
     renderSignTransactionBody(null, true);
-    setSignButtons({ reject: false, approve: true, approveLabel: "批准" });
+    setSignButtons({ reject: false, approve: true, approveLabel: tr("approval.approve") });
   }
 }
 
@@ -289,8 +347,8 @@ function enterWalletSendConfirmedPage(signature?: string): void {
   setSendStatusChrome(true);
   signDock.hidden = true;
   signError.hidden = true;
-  document.title = "Airwave — 已確認";
-  signPageTitle.textContent = "已確認";
+  document.title = `Airwave — ${tr("approval.approved")}`;
+  signPageTitle.textContent = tr("approval.approved");
   const card = ensureSendStatusCard();
   card.classList.remove("is-pending");
   card.classList.add("is-confirmed");
@@ -301,7 +359,7 @@ function enterWalletSendConfirmedPage(signature?: string): void {
   check.innerHTML = SEND_STATUS_CHECK_SVG;
   mark.append(check);
   const title = card.querySelector(".send-status-title")!;
-  title.textContent = "已確認";
+  title.textContent = tr("approval.approved");
   const lead = card.querySelector<HTMLElement>(".send-status-lead")!;
   lead.hidden = true;
   lead.textContent = "";
@@ -384,15 +442,16 @@ function showGone(): void {
     expiryTimer = null;
   }
   hideAll();
-  document.title = "Airwave — 請求已過期";
+  document.title = `Airwave — ${tr("approval.expired")}`;
+  goneTitle.textContent = tr("approval.expired");
   if (
     pending?.kind === "signTransaction" ||
     pending?.kind === "walletSend" ||
     pending?.kind === "signAndSendTransaction"
   )
-    goneLead.textContent = "這筆交易已不能簽署。";
-  else if (pending?.kind === "signMessage") goneLead.textContent = "這筆訊息已不能簽署。";
-  else goneLead.textContent = "這筆請求已不能繼續。";
+    goneLead.textContent = tr("approval.goneTx");
+  else if (pending?.kind === "signMessage") goneLead.textContent = tr("approval.goneMsg");
+  else goneLead.textContent = tr("approval.goneGeneric");
   viewGone.hidden = false;
 }
 
@@ -408,10 +467,10 @@ function armExpiry(createdAt: number): void {
 
 function showLegacyConnect(p: PendingRecord): void {
   hideAll();
-  document.title = "Airwave — 審批";
+  document.title = `Airwave — ${tr("approval.review")}`;
   viewLegacy.hidden = false;
   legacyOrigin.textContent = p.origin;
-  legacyKind.textContent = "這個網站想連線到你的錢包";
+  legacyKind.textContent = tr("approval.connectLead");
   legacyDetail.hidden = true;
   legacyDetail.textContent = "";
 }
@@ -421,7 +480,7 @@ function renderSignMessageBody(p: PendingRecord, bytes: Uint8Array): void {
   if (p.messageLooksLikeTx) {
     const pEl = document.createElement("p");
     pEl.className = "warn-line";
-    pEl.textContent = "不能把交易當成訊息簽署。";
+    pEl.textContent = tr("approval.cannotSignTxAsMsg");
     signBody.appendChild(pEl);
     setSignButtons({ approve: true });
     return;
@@ -454,7 +513,7 @@ function renderSignMessageBody(p: PendingRecord, bytes: Uint8Array): void {
     const copyBtn = document.createElement("button");
     copyBtn.type = "button";
     copyBtn.className = "copy-btn";
-    copyBtn.textContent = "複製";
+    copyBtn.textContent = tr("common.copy");
     copyBtn.addEventListener("click", () => void copyText(hexCompact(bytes)));
     head.append(rawLabel, copyBtn);
     const hexEl = document.createElement("p");
@@ -474,7 +533,7 @@ function renderSignMessageBody(p: PendingRecord, bytes: Uint8Array): void {
     const copyBtn = document.createElement("button");
     copyBtn.type = "button";
     copyBtn.className = "copy-btn";
-    copyBtn.textContent = "複製";
+    copyBtn.textContent = tr("common.copy");
     copyBtn.addEventListener("click", () => void copyText(hexCompact(bytes)));
     head.append(label, copyBtn);
     const hexEl = document.createElement("p");
@@ -508,14 +567,14 @@ function renderDeltaCard(sim: SimulatePendingTxResult | null, loading: boolean):
   const head = document.createElement("div");
   head.className = "sim-head";
   const label = document.createElement("h3");
-  label.textContent = "預期變動";
+  label.textContent = tr("approval.expectedDelta");
   const tools = document.createElement("div");
   tools.className = "sim-tools";
   const retry = document.createElement("button");
   retry.type = "button";
   retry.className = "icon-btn";
-  retry.title = "重新查詢";
-  retry.setAttribute("aria-label", "重新查詢");
+  retry.title = tr("approval.retrySim");
+  retry.setAttribute("aria-label", tr("approval.retrySim"));
   retry.innerHTML = RETRY_ICON_SVG;
   retry.disabled = simulating || cuDirty || (txCuEditable && !hasCuPair());
   retry.addEventListener("click", () => void runSimulation());
@@ -525,8 +584,8 @@ function renderDeltaCard(sim: SimulatePendingTxResult | null, loading: boolean):
     const explorer = document.createElement("a");
     explorer.className = "icon-btn explorer";
     explorer.href = inspectorUrl;
-    explorer.title = "在 Explorer 模擬";
-    explorer.setAttribute("aria-label", "在 Explorer 模擬");
+    explorer.title = tr("approval.simExplorer");
+    explorer.setAttribute("aria-label", tr("approval.simExplorer"));
     explorer.innerHTML = EXPLORER_ICON_SVG;
     explorer.addEventListener("click", (e) => {
       e.preventDefault();
@@ -540,7 +599,7 @@ function renderDeltaCard(sim: SimulatePendingTxResult | null, loading: boolean):
   if (loading) {
     const p = document.createElement("p");
     p.className = "muted-center";
-    p.textContent = "查詢中";
+    p.textContent = tr("approval.querying");
     card.append(p);
     return card;
   }
@@ -548,7 +607,7 @@ function renderDeltaCard(sim: SimulatePendingTxResult | null, loading: boolean):
   if (!sim || sim.outcome === "unparseable") {
     const p = document.createElement("p");
     p.className = "muted-center";
-    p.textContent = "無法估計變動";
+    p.textContent = tr("approval.cannotEstimateDelta");
     card.append(p);
     return card;
   }
@@ -557,7 +616,7 @@ function renderDeltaCard(sim: SimulatePendingTxResult | null, loading: boolean):
   if (!deltas || (sim.outcome === "rpc" && deltas.length === 0)) {
     const p = document.createElement("p");
     p.className = "muted-center";
-    p.textContent = "無法估計變動";
+    p.textContent = tr("approval.cannotEstimateDelta");
     card.append(p);
     return card;
   }
@@ -565,7 +624,7 @@ function renderDeltaCard(sim: SimulatePendingTxResult | null, loading: boolean):
   if (deltas.length === 0) {
     const p = document.createElement("p");
     p.className = "muted-center";
-    p.textContent = "無餘額變動";
+    p.textContent = tr("approval.noBalanceChange");
     card.append(p);
     return card;
   }
@@ -592,26 +651,26 @@ function renderFeeCard(sim: SimulatePendingTxResult | null, loading: boolean): H
   titleRow.className = "fee-card-head";
   const title = document.createElement("span");
   title.className = "card-label";
-  title.textContent = "交易費";
+  title.textContent = tr("approval.txFee");
   const totalEl = document.createElement("span");
   totalEl.className = "fee-total";
   titleRow.append(title, totalEl);
   card.append(titleRow);
 
   if (loading || (sim == null && txCuEditable)) {
-    totalEl.textContent = "估計中";
+    totalEl.textContent = tr("approval.estimating");
   } else if (sim?.cuWriteError) {
-    totalEl.textContent = sim.cuWriteError;
+    totalEl.textContent = progressUserMessage(sim.cuWriteError);
   } else if (sim?.totalFeeLamports != null) {
     totalEl.textContent = formatSolFromLamports(sim.totalFeeLamports);
   } else {
-    totalEl.textContent = "未知";
+    totalEl.textContent = tr("approval.unknown");
   }
 
   const details = document.createElement("details");
   details.className = "fee-details";
   const summary = document.createElement("summary");
-  summary.textContent = "簽名費 · CU";
+  summary.textContent = tr("approval.sigFeeCu");
   details.append(summary);
 
   const inner = document.createElement("div");
@@ -619,14 +678,14 @@ function renderFeeCard(sim: SimulatePendingTxResult | null, loading: boolean): H
 
   const sigRow = document.createElement("div");
   sigRow.className = "fee-row";
-  sigRow.innerHTML = `<span>簽名費</span><span>${sim?.sigFeeLamports != null ? formatSolFromLamports(sim.sigFeeLamports) : "未知"}</span>`;
+  sigRow.innerHTML = `<span>${tr("approval.sigFee")}</span><span>${sim?.sigFeeLamports != null ? formatSolFromLamports(sim.sigFeeLamports) : tr("approval.unknown")}</span>`;
   inner.append(sigRow);
 
   const priRow = document.createElement("div");
   priRow.className = "fee-row";
   const priVal =
-    sim?.priorityLamports != null ? formatSolFromLamports(sim.priorityLamports) : "未知";
-  priRow.innerHTML = `<span>優先費</span><span>${priVal}</span>`;
+    sim?.priorityLamports != null ? formatSolFromLamports(sim.priorityLamports) : tr("approval.unknown");
+  priRow.innerHTML = `<span>${tr("approval.priorityFee")}</span><span>${priVal}</span>`;
   inner.append(priRow);
 
   const cuGrid = document.createElement("div");
@@ -683,27 +742,27 @@ function renderFeeCard(sim: SimulatePendingTxResult | null, loading: boolean): H
     if (cuApplyBusy) {
       applyBtn.classList.add("busy");
       applyBtn.disabled = true;
-      applyBtn.title = "套用中";
-      applyBtn.setAttribute("aria-label", "套用中");
+      applyBtn.title = tr("approval.cuApplying");
+      applyBtn.setAttribute("aria-label", tr("approval.cuApplying"));
       const spin = document.createElement("span");
       spin.className = "cu-apply-spin";
       applyBtn.append(spin);
     } else if (cuDirty && ok) {
       applyBtn.classList.add("pending");
       applyBtn.disabled = false;
-      applyBtn.title = "套用 CU";
-      applyBtn.setAttribute("aria-label", "套用 CU");
+      applyBtn.title = tr("approval.cuApply");
+      applyBtn.setAttribute("aria-label", tr("approval.cuApply"));
       applyBtn.innerHTML = CU_CHECK_SVG;
     } else if (cuDirty && !ok) {
       applyBtn.classList.add("pending");
       applyBtn.disabled = true;
-      applyBtn.title = "無法套用";
-      applyBtn.setAttribute("aria-label", "無法套用");
+      applyBtn.title = tr("approval.cuCannotApply");
+      applyBtn.setAttribute("aria-label", tr("approval.cuCannotApply"));
       applyBtn.innerHTML = CU_CHECK_SVG;
     } else {
       applyBtn.disabled = true;
-      applyBtn.title = "已套用";
-      applyBtn.setAttribute("aria-label", "已套用");
+      applyBtn.title = tr("approval.cuApplied");
+      applyBtn.setAttribute("aria-label", tr("approval.cuApplied"));
       applyBtn.innerHTML = CU_CHECK_SVG;
     }
     applyApproveFromSimulation(lastSim);
@@ -746,7 +805,7 @@ function renderTxDetails(sim: SimulatePendingTxResult | null): HTMLElement {
   details.className = "tx-details";
   details.open = false;
   const summary = document.createElement("summary");
-  summary.textContent = "交易明細 · 指令";
+  summary.textContent = tr("approval.txDetailsIx");
   details.append(summary);
 
   const inner = document.createElement("div");
@@ -756,7 +815,7 @@ function renderTxDetails(sim: SimulatePendingTxResult | null): HTMLElement {
   if (!instructions.length) {
     const p = document.createElement("p");
     p.className = "muted-center";
-    p.textContent = "無法列出指令";
+    p.textContent = tr("approval.cannotListIx");
     inner.append(p);
   } else {
     instructions.forEach((ix, i) => {
@@ -767,10 +826,10 @@ function renderTxDetails(sim: SimulatePendingTxResult | null): HTMLElement {
       prog.textContent = `${i + 1}. ${ix.program}`;
       row.append(prog);
       if (ix.decoded === true) {
-        if (ix.name) {
+        if (ix.kind) {
           const nameEl = document.createElement("div");
           nameEl.className = "ix-name";
-          nameEl.textContent = ix.name;
+          nameEl.textContent = ixKindLabel(shellLocale, ix.kind);
           row.append(nameEl);
         }
         const fields = ix.fields ?? [];
@@ -780,7 +839,7 @@ function renderTxDetails(sim: SimulatePendingTxResult | null): HTMLElement {
           for (const f of fields) {
             const k = document.createElement("span");
             k.className = "ix-k";
-            k.textContent = f.label;
+            k.textContent = ixRoleLabel(shellLocale, f.role);
             const v = document.createElement("span");
             v.className = "ix-v";
             v.textContent = f.value;
@@ -804,7 +863,7 @@ function renderTxDetails(sim: SimulatePendingTxResult | null): HTMLElement {
         const dataEl = document.createElement("p");
         dataEl.className = "ix-data";
         dataEl.textContent =
-          ix.dataHex != null && ix.dataHex.length > 0 ? ix.dataHex : "（空）";
+          ix.dataHex != null && ix.dataHex.length > 0 ? ix.dataHex : tr("approval.emptyData");
         row.append(dataEl);
       }
       inner.append(row);
@@ -815,14 +874,14 @@ function renderTxDetails(sim: SimulatePendingTxResult | null): HTMLElement {
   if (payer) {
     const feeLine = document.createElement("p");
     feeLine.className = "fee-line";
-    feeLine.textContent = `費用付款人 ${payer}`;
+    feeLine.textContent = tr("approval.feePayer", { payer });
     inner.append(feeLine);
   }
 
   const rawDetails = document.createElement("details");
   rawDetails.className = "raw-details";
   const rawSum = document.createElement("summary");
-  rawSum.textContent = "原始交易";
+  rawSum.textContent = tr("approval.rawTx");
   const hexEl = document.createElement("p");
   hexEl.className = "card-hex";
   hexEl.textContent = txRawHex;
@@ -836,7 +895,7 @@ function renderTxDetails(sim: SimulatePendingTxResult | null): HTMLElement {
 function renderSignTransactionBody(sim: SimulatePendingTxResult | null, loading: boolean): void {
   if (isSendStatusLocked()) return;
   signBody.innerHTML = "";
-  const notice = renderSimulationNotice(sim);
+  const notice = renderSimulationNotice(sim, shellLocale);
   if (notice) signBody.append(notice);
   signBody.append(renderDeltaCard(sim, loading));
   signBody.append(renderFeeCard(sim, loading));
@@ -880,7 +939,7 @@ async function runSimulation(): Promise<void> {
     }
     lastSim = {
       outcome: "rpc",
-      reason: res.error?.message ?? "RPC 錯誤",
+      reason: res.error?.code ?? "SIM_RPC",
       sigFeeLamports: null,
       priorityLamports: null,
       totalFeeLamports: null,
@@ -914,17 +973,18 @@ async function renderSignShell(
   if (isSendStatusLocked() || requestEnded) return;
   hideAll();
   setSendStatusChrome(false);
-  document.title = mode === "signTransaction" ? "Airwave — 簽署交易" : "Airwave — 簽署訊息";
-  signPageTitle.textContent = mode === "signTransaction" ? "簽署交易" : "簽署訊息";
+  const pageTitle = mode === "signTransaction" ? tr("approval.signTx") : tr("approval.signMsg");
+  document.title = `Airwave — ${pageTitle}`;
+  signPageTitle.textContent = pageTitle;
   viewSign.hidden = false;
   signDock.hidden = false;
-  setSignButtons({ approveLabel: "批准" });
+  setSignButtons({ approveLabel: tr("approval.approve") });
 
   if (!stateRes.ok) {
     signBody.innerHTML = "";
     const err = document.createElement("p");
     err.className = "warn-line";
-    err.textContent = "無法載入帳戶";
+    err.textContent = tr("error.code.ACCOUNTS_LOAD_FAILED");
     signBody.appendChild(err);
     setSignButtons({ reject: false, approve: true });
     return;
@@ -946,7 +1006,7 @@ async function renderSignShell(
     signBody.innerHTML = "";
     const err = document.createElement("p");
     err.className = "warn-line";
-    err.textContent = "找不到簽名帳戶";
+    err.textContent = tr("approval.accountMissing");
     signBody.appendChild(err);
     setSignButtons({ reject: false, approve: true });
     return;
@@ -990,7 +1050,7 @@ async function renderSignShell(
 
 function showUnlockScreen(): void {
   hideAll();
-  document.title = "Airwave — 審批";
+  document.title = `Airwave — ${tr("approval.review")}`;
   viewUnlock.hidden = false;
   unlockPassword.value = "";
   unlockError.hidden = true;
@@ -999,6 +1059,10 @@ function showUnlockScreen(): void {
 
 async function refreshAfterUnlock(holdAfterUnlock: boolean): Promise<void> {
   if (!pending) return;
+  if (pending.kind === "connect") {
+    showLegacyConnect(pending);
+    return;
+  }
   if (pending.kind === "signMessage") {
     await renderSignShell(pending, holdAfterUnlock, "signMessage");
   } else if (isSignTxKind(pending.kind)) {
@@ -1022,11 +1086,6 @@ async function loadPending(): Promise<void> {
   armExpiry(pending.createdAt);
   if (isSendStatusLocked() || requestEnded || requestId !== mountedId) return;
 
-  if (pending.kind === "connect") {
-    showLegacyConnect(pending);
-    return;
-  }
-
   const stateRes = await sendExtensionRequest("wallet.getState", {});
   if (isSendStatusLocked() || requestId !== mountedId || requestEnded) return;
   if (!stateRes.ok) {
@@ -1036,6 +1095,11 @@ async function loadPending(): Promise<void> {
   const state = stateRes.result as { unlocked: boolean };
   if (!state.unlocked) {
     showUnlockScreen();
+    return;
+  }
+
+  if (pending.kind === "connect") {
+    showLegacyConnect(pending);
     return;
   }
 
@@ -1060,7 +1124,7 @@ async function resolve(decision: "approve" | "reject"): Promise<void> {
   if (pending && isBroadcastAfterApproveKind(pending.kind) && decision === "approve") {
     enterWalletSendConfirming();
   } else if (pending?.kind === "signMessage" || (pending && isSignTxKind(pending.kind))) {
-    setSignButtons({ reject: true, approve: true, approveLabel: "批准中" });
+    setSignButtons({ reject: true, approve: true, approveLabel: tr("approval.approving") });
   } else {
     legacyReject.disabled = true;
     legacyApprove.disabled = true;
@@ -1075,7 +1139,8 @@ async function resolve(decision: "approve" | "reject"): Promise<void> {
     if (pending && isBroadcastAfterApproveKind(pending.kind) && decision === "approve") {
       restoreWalletSendReviewAfterError();
     }
-    const msg = res.error?.message ?? "失敗";
+    const code = res.error?.code;
+    const msg = code ? progressUserMessage(code) : tr("error.genericFailed");
     if (pending?.kind === "signMessage" || (pending && isSignTxKind(pending.kind))) {
       signError.hidden = false;
       signError.textContent = msg;
@@ -1084,7 +1149,7 @@ async function resolve(decision: "approve" | "reject"): Promise<void> {
       setSignButtons({
         reject: false,
         approve: approveOff,
-        approveLabel: "批准",
+        approveLabel: tr("approval.approve"),
       });
       if (pending && isSignTxKind(pending.kind)) applyApproveFromSimulation(lastSim);
     } else {
@@ -1129,7 +1194,10 @@ function wireShellEvents(): void {
       const res = await sendExtensionRequest("wallet.unlock", { password });
       if (!res.ok) {
         unlockError.hidden = false;
-        unlockError.textContent = res.error?.message ?? "密碼錯誤";
+        unlockError.textContent =
+          res.error?.code === "INVALID_PASSWORD"
+            ? tr("error.code.INVALID_PASSWORD")
+            : progressUserMessage(res.error?.code ?? "");
         unlockPassword.value = "";
         return;
       }
@@ -1153,7 +1221,7 @@ function wireShellEvents(): void {
   btnCopyPk.addEventListener(
     "click",
     () => {
-      if (frozenPk) void copyPublicKeyWithFeedback(btnCopyPk, frozenPk);
+      if (frozenPk) void copyPublicKeyWithFeedback(btnCopyPk, frozenPk, shellLocale);
     },
     { signal },
   );
@@ -1166,7 +1234,13 @@ function wireShellEvents(): void {
   storageUnlockListener = (changes, area) => {
     if (area !== "session") return;
     if (!(SESSION_UNLOCKED in changes)) return;
-    if (!pending || (pending.kind !== "signMessage" && !isSignTxKind(pending.kind))) return;
+    if (
+      !pending ||
+      (pending.kind !== "connect" &&
+        pending.kind !== "signMessage" &&
+        !isSignTxKind(pending.kind))
+    )
+      return;
     if (viewUnlock.hidden) return;
     void refreshAfterUnlock(false);
   };
@@ -1180,8 +1254,8 @@ function wireShellEvents(): void {
       resolving = false;
       restoreWalletSendReviewAfterError();
       signError.hidden = false;
-      signError.textContent = rec.error;
-      setSignButtons({ reject: false, approve: false, approveLabel: "批准" });
+      signError.textContent = progressUserMessage(rec.error);
+      setSignButtons({ reject: false, approve: false, approveLabel: tr("approval.approve") });
       return;
     }
     if (rec.kind === "airwave-wallet-send-settled" && rec.ok === true) {
@@ -1225,6 +1299,10 @@ export function disposeApprovalShell(): void {
     chrome.runtime.onMessage.removeListener(runtimeMessageListener);
     runtimeMessageListener = null;
   }
+  if (settingsChangeListener) {
+    chrome.storage.onChanged.removeListener(settingsChangeListener);
+    settingsChangeListener = null;
+  }
   shellConfig = null;
   requestId = null;
   mountRoot = null;
@@ -1258,8 +1336,11 @@ export function mountApprovalShell(config: ApprovalShellConfig, root: ParentNode
 
   viewUnlock = q(root, "view-unlock");
   viewGone = q(root, "view-gone");
+  goneTitle = viewGone.querySelector("h1") as HTMLElement;
   goneLead = q(root, "gone-lead");
   viewLegacy = q(root, "view-legacy");
+  legacyTitle = viewLegacy.querySelector("h1") as HTMLElement;
+  siteLabel = q(root, "view-sign").querySelector(".site-label") as HTMLElement;
   viewSign = q(root, "view-sign");
   unlockPassword = q(root, "unlock-password");
   unlockError = q(root, "unlock-error");
@@ -1286,6 +1367,19 @@ export function mountApprovalShell(config: ApprovalShellConfig, root: ParentNode
 
   hideAll();
   wireShellEvents();
+  void loadShellLocale().then(() => {
+    applyShellLocaleToStaticChrome();
+  });
+  settingsChangeListener = (changes, area) => {
+    if (area !== "local" || !(STORAGE.settings in changes)) return;
+    const settings = changes[STORAGE.settings].newValue as Settings | undefined;
+    shellLocale = parseUiLocale(settings?.locale);
+    applyShellLocaleToStaticChrome();
+    if (!viewSign.hidden && pending && isSignTxKind(pending.kind) && !isSendStatusLocked()) {
+      renderSignTransactionBody(lastSim, simulating);
+    }
+  };
+  chrome.storage.onChanged.addListener(settingsChangeListener);
   void loadPending();
 
   return disposeApprovalShell;

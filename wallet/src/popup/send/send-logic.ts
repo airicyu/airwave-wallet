@@ -1,5 +1,6 @@
 import { parsePublicKeyBase58 } from "../../shared/accounts";
 import { sendExtensionRequest } from "../../shared/ext-api";
+import { apiErrorMessage, type UiLocale } from "../../shared/ui-i18n";
 import { amountUiToRaw, formatRawToAmountUi, solReserveLamports } from "../../shared/wallet-send-amount";
 import { NATIVE_SOL_ID, type HomeTokenRow } from "../home/home-tokens";
 import type { State } from "../types";
@@ -59,13 +60,16 @@ export async function beginTokenSend(args: {
   tokenId: string;
   amountUi: string;
   recipient: string;
+  locale: UiLocale;
 }): Promise<{ ok: true; requestId: string } | { ok: false; error: string }> {
   const res = await sendExtensionRequest("wallet.beginSend", {
     tokenId: args.tokenId,
     amountUi: args.amountUi,
     recipient: args.recipient,
   });
-  if (!res.ok) return { ok: false, error: res.error?.message ?? "無法建立交易" };
+  if (!res.ok) {
+    return { ok: false, error: apiErrorMessage(args.locale, res.error, "error.sendBuildFailed") };
+  }
   const { requestId } = res.result as { requestId: string };
   return { ok: true, requestId };
 }

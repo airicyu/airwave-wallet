@@ -1,9 +1,9 @@
 # 0.22.0 — Home 小改＋簽署 Kit 估 CU
 
-- **狀態：** `in progress`
-- **上游版本：** 行為接 [0.21.0](../0.21.0/INDEX.md) 出貨契約＋其後 0.21.1 修補（`changelog.md`／`version.md`；**無**獨立 `docs/roadmap/0.21.1/`）。簽署 CU 規則上游 [0.11.0](../0.11.0/INDEX.md)
+- **狀態：** `shipped`
+- **上游版本：** 行為接 [0.21.0](../0.21.0/INDEX.md) 出貨契約＋其後 0.21.1 修補（`changelog.md`／`version.md`；**無**獨立 `docs/roadmap/0.21.1/`）。簽署 CU 規則上游 [0.11.0](../0.11.0/INDEX.md)。其後 **0.22.1**（無獨立 roadmap 目錄）：Orb URL 去掉 `/history`
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
-- **構想來源：** [backlog/home-cluster-indicator.md](../backlog/home-cluster-indicator.md)、[backlog/address-copy-feedback.md](../backlog/address-copy-feedback.md)、[backlog/token-balance-refresh-cooldown.md](../backlog/token-balance-refresh-cooldown.md)、[backlog/estimate-cu-via-kit.md](../backlog/estimate-cu-via-kit.md)；收回租金確認中對齊 [design-principles 送出狀態](../../design-principles.md)
+- **構想來源：** 出貨後已自清 backlog（cluster 徽章、複製回饋、刷新冷卻、Kit 估 CU）；收回租金確認中對齊 [design-principles 送出狀態](../../design-principles.md)
 - **畫面：** [`docs/design-principles.md`](../../design-principles.md)；概念稿 [`docs/design-demos/022-ui-polish-ux.html`](../../design-demos/022-ui-polish-ux.html)（非正式；衝突以本 INDEX／HOW 為準）
 - **秘密欄位：** 無新密碼欄；vault blob 不改 schema
 
@@ -34,7 +34,7 @@
 | Cluster 視覺 | **僅 `devnet`** 在 wallet pill **外側右方**畫一顆非互動橙黃徽章，文案 `Devnet`（琥珀描邊＋琥珀字＋深琥珀底，`--warn` `#e8b84a`／`--warn-bg`）。**`mainnet` 不畫任何網路標示**（無徽章、無「Mainnet」字）。禁止放進 pill 內、禁止頂欄下方另開一條。徽章 `flex-shrink: 0`。點徽章不切網路、不進 Accounts |
 | 地址複製回饋 | 只這些鈕：popup 頂欄 pill 內 `#btn-widget-copy`、popout `#btn-copy-pk`、popup 審批宿主 `#appr-btn-copy-pk`。成功寫入剪貼簿後：圖示換成既有勾（`--ok`）、`title` 與 `aria-label` 改「已複製」，**1.6 秒**後還原複製圖示與「複製」。失敗不顯示成功態、不另開 toast。不改其它複製鈕、不改複製內容（仍是對外公鑰全文） |
 | 刷新冷卻 | `#btn-refresh-assets`：按下並開始該次刷新後 **disabled 3 秒**（從按下起算，含刷新尚未結束的時間）。圖示維持刷新；外圈 3 秒弧（`--accent`）。`title`／`aria-label` 維持「重新整理」（本版把這顆由英文 Refresh balances 改為繁中「重新整理」；冷卻中不改成「冷卻中」）。只擋這顆手動鈕。自動刷新、解鎖載入不套 3 秒。離開 Home Tokens、或切換作用中帳戶：立刻清掉冷卻，鈕可再按。不寫 `chrome.storage` |
-| Activity explorer | **推翻** [0.18.0](../0.18.0/INDEX.md) 列尾開 Solscan。唯一 explorer 改為 Helius **Orb**。URL：`https://orb.helius.dev/tx/{signature}/history?cluster={cluster}`。`settings.cluster === "devnet"` → `cluster=devnet`；否則 `cluster=mainnet-beta`。signature 用 `encodeURIComponent`。列尾圖示熱區、`chrome.tabs.create`、整列不可點：維持 0.18.0。`title` 與 `aria-label` 改「在 Orb 開啟」。列資料欄 `solscanUrl` **改名** `orbUrl`。開頁前綴必須是 `https://orb.helius.dev/tx/`，否則忽略。不做 explorer 選擇。不改簽署審批 Inspector |
+| Activity explorer | **推翻** [0.18.0](../0.18.0/INDEX.md) 列尾開 Solscan。唯一 explorer 改為 Helius **Orb**。URL：`https://orb.helius.dev/tx/{signature}?cluster={cluster}`（**0.22.1** 去掉 `/history`）。`settings.cluster === "devnet"` → `cluster=devnet`；否則 `cluster=mainnet-beta`。signature 用 `encodeURIComponent`。列尾圖示熱區、`chrome.tabs.create`、整列不可點：維持 0.18.0。`title` 與 `aria-label` 改「在 Orb 開啟」。列資料欄 `solscanUrl` **改名** `orbUrl`。開頁前綴必須是 `https://orb.helius.dev/tx/`，否則忽略。不做 explorer 選擇。不改簽署審批 Inspector |
 | Kit 估 CU | 只替換簽署交易 **phase 1**「把 limit 拉滿再 `simulateTransaction`、讀 `unitsConsumed`」。改為對**同一份探針副本**（limit＝1,400,000、price＝0，有則取代、無則插入；**不得**寫入 `workingTx`）呼叫 Kit `estimateResourceLimitsFactory`（RPC＝`settings.rpcUrl`），取其回傳的 **`computeUnitLimit`**（與 0.21 收回租金同一欄）當作從前模擬結果的 `unitsConsumed`。**不要**讀 factory 的 `unitsConsumed`（那是 0.11 `simulateTransaction` 的欄，factory 沒有此欄），再跑不變的 `suggestedLimitFromPhase1`。忽略 loaded accounts data size；禁止為了 factory 給 v0 交易寫入 `SetLoadedAccountsDataSizeLimit`。禁止 `estimateAndSetResourceLimitsFactory`（那會把未乘 1.1 的值寫回 message）。Factory 丟錯、逾時（仍 15 秒）、或沒有可用的 CU 整數：走 0.11.0 既有 fallback。phase 1.5／phase 2、Default CU price、費用卡、已簽不改 instruction、差額主舞台：**不變**。不新增 command。**不改**收回租金的 `computeCloseEmptyUnitLimit` |
 | 數字 | 鏈上整數繼續 `BigInt`／字串。CU limit 仍是 0.11.0 的整數 clamp，本版不改公式 |
 | 依賴 | 不新增套件。`estimateResourceLimitsFactory` 已在 `@solana/kit`（0.21 收回租金已用） |
@@ -66,7 +66,7 @@
 | 頂欄 pill 撐滿、複製在 pill 外、兩行名稱＋地址縮寫、頭像單字母 | pill 貼內容、單列：圓形頭像｜名稱置中｜複製靠右；不顯示地址；頭像約 36px 圓、前 2 字；名稱最多 15 字 |
 | 複製地址圖示不變 | 成功後勾＋「已複製」1.6s |
 | 刷新可連按 | 手動刷新 3 秒冷卻 |
-| Activity 列尾 Solscan | 列尾開 Orb（`orb.helius.dev/tx/…/history`）；欄位 `orbUrl` |
+| Activity 列尾 Solscan | 列尾開 Orb（`orb.helius.dev/tx/{sig}?cluster=`；0.22.1 無 `/history`）；欄位 `orbUrl` |
 | 收回租金確認中只有兩行字、頂欄仍在 | 藏頂欄＋與簽署送出同一 dash-ring |
 | 簽署 phase 1：limit 拉滿再 `simulateTransaction` | 同一探針改 Kit `estimateResourceLimitsFactory`；公式不變 |
 
@@ -98,18 +98,18 @@
 
 ## 驗收（出貨 checklist）
 
-- [ ] Home Tokens 與 Activity：僅 Devnet 時 pill 外側右方橙黃 `Devnet` 徽章；Mainnet 無網路標示；Home 不能切網路
-- [ ] 頂欄 pill 不撐滿、不顯示 `前4…後4`；單列圓形頭像｜名稱垂直置中｜複製靠右；無名稱時顯示公鑰前 4 字；頭像約 36px 圓顯示顯示名稱前 2 字；新名稱最多 15 字
-- [ ] 複製頂欄地址成功：勾＋「已複製」約 1.6s 還原；簽署頂欄同一顆同等。失敗無成功態
-- [ ] 刷新鈕按下後 3s 內不可再按；切帳戶或離開 Tokens 可立刻再按
-- [ ] Activity 列尾開 `https://orb.helius.dev/tx/{sig}/history?cluster=…`（devnet 為 `devnet`，否則 `mainnet-beta`）；文案「在 Orb 開啟」；`wallet/src` 的 Activity 列與 `home-activity.ts` 無 `solscan.io`
-- [ ] 收回租金送出等待：無頂欄、dash-ring、「確認中」；結束進三數結果頁而非 1s 勾
-- [ ] 簽署未簽交易 phase 1 走 Kit factory；建議 limit 仍 `max(ceil(消耗×1.1), 原 limit)` 再 clamp；失敗走 0.11 fallback
-- [ ] 無新 command、無新 storage key、無新 Wallet Standard 方法
-- [ ] `cd wallet && npm run typecheck` 與 `npm run build` 通過
-- [ ] 手驗：未封裝擴充走完上列畫面（Kit CU 以進審批費用卡有建議 limit 為準）
-- [ ] 文件與程式無真實密碼／助記詞／私鑰
-- [ ] 版本號檔對齊 `0.22.0`；狀態 `shipped` 須使用者同意；出貨後刪本版已完成之 backlog 列與檔
+- [x] Home Tokens 與 Activity：僅 Devnet 時 pill 外側右方橙黃 `Devnet` 徽章；Mainnet 無網路標示；Home 不能切網路
+- [x] 頂欄 pill 不撐滿、不顯示 `前4…後4`；單列圓形頭像｜名稱垂直置中｜複製靠右；無名稱時顯示公鑰前 4 字；頭像約 36px 圓顯示顯示名稱前 2 字；新名稱最多 15 字
+- [x] 複製頂欄地址成功：勾＋「已複製」約 1.6s 還原；簽署頂欄同一顆同等。失敗無成功態
+- [x] 刷新鈕按下後 3s 內不可再按；切帳戶或離開 Tokens 可立刻再按
+- [x] Activity 列尾開 `https://orb.helius.dev/tx/{sig}?cluster=…`（devnet 為 `devnet`，否則 `mainnet-beta`；0.22.1 無 `/history`）；文案「在 Orb 開啟」；`wallet/src` 的 Activity 列與 `home-activity.ts` 無 `solscan.io`
+- [x] 收回租金送出等待：無頂欄、dash-ring、「確認中」；結束進三數結果頁而非 1s 勾
+- [x] 簽署未簽交易 phase 1 走 Kit factory；建議 limit 仍 `max(ceil(消耗×1.1), 原 limit)` 再 clamp；失敗走 0.11 fallback
+- [x] 無新 command、無新 storage key、無新 Wallet Standard 方法
+- [x] `cd wallet && npm run typecheck` 與 `npm run build` 通過
+- [x] 手驗：未封裝擴充走完上列畫面（Kit CU 以進審批費用卡有建議 limit 為準）
+- [x] 文件與程式無真實密碼／助記詞／私鑰
+- [x] 版本號檔對齊 `0.22.0`；狀態 `shipped` 須使用者同意；出貨後刪本版已完成之 backlog 列與檔
 
 ## 錨點檔案
 
