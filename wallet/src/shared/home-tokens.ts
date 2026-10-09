@@ -5,6 +5,7 @@
 import { address } from "@solana/kit";
 import type { ParsedOwnerTokenAccount } from "./parsed-token-accounts";
 import { fetchParsedTokenAccountsForOwner } from "./parsed-token-accounts";
+import { withRateLimitRetry } from "./rpc-rate-limit";
 import { solanaRpcForUrl } from "./solana-rpc";
 
 export const WRAPPED_SOL_MINT = "So11111111111111111111111111111111111111112";
@@ -296,10 +297,17 @@ export async function fetchRpcHomeTokenRows(
   const rpc = solanaRpcForUrl(rpcUrl);
   const owner = address(ownerPublicKeyBase58);
   throwIfAborted(signal);
-  const lamports = Number((await withAbort(rpc.getBalance(owner, { commitment: "confirmed" }).send(), signal)).value);
+  const lamports = Number(
+    (
+      await withRateLimitRetry(
+        () => withAbort(rpc.getBalance(owner, { commitment: "confirmed" }).send(), signal),
+        signal,
+      )
+    ).value,
+  );
   throwIfAborted(signal);
   const parsed = await withAbort(
-    fetchParsedTokenAccountsForOwner(rpcUrl, ownerPublicKeyBase58),
+    fetchParsedTokenAccountsForOwner(rpcUrl, ownerPublicKeyBase58, signal),
     signal,
   );
   return buildHomeTokenRowsFromOwnerParsed(lamports, parsed);
@@ -314,16 +322,27 @@ export async function fetchNativeAndWrappedSolRows(
   const rpc = solanaRpcForUrl(rpcUrl);
   const owner = address(ownerPublicKeyBase58);
   throwIfAborted(signal);
-  const lamports = Number((await withAbort(rpc.getBalance(owner, { commitment: "confirmed" }).send(), signal)).value);
-  throwIfAborted(signal);
-  const wrapped = await withAbort(
-    rpc
-      .getTokenAccountsByOwner(
-        owner,
-        { mint: address(WRAPPED_SOL_MINT) },
-        { encoding: "jsonParsed", commitment: "confirmed" },
+  const lamports = Number(
+    (
+      await withRateLimitRetry(
+        () => withAbort(rpc.getBalance(owner, { commitment: "confirmed" }).send(), signal),
+        signal,
       )
-      .send(),
+    ).value,
+  );
+  throwIfAborted(signal);
+  const wrapped = await withRateLimitRetry(
+    () =>
+      withAbort(
+        rpc
+          .getTokenAccountsByOwner(
+            owner,
+            { mint: address(WRAPPED_SOL_MINT) },
+            { encoding: "jsonParsed", commitment: "confirmed" },
+          )
+          .send(),
+        signal,
+      ),
     signal,
   );
   return sortHomeTokenRows(buildHomeTokenRows(lamports, mapParsedTokenAccounts(wrapped.value)));

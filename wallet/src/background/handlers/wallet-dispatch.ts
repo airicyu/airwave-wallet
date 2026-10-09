@@ -40,6 +40,7 @@ import {
 import {
   handleShellGetLastNormalWindowId,
   handleShellGetSidebarDappApproval,
+  handleShellSidebarOpened,
   handleShellSwitchToWindow,
 } from "../shell";
 
@@ -72,6 +73,7 @@ export async function handleWalletCommand(
   if (req.command === "shell.getLastNormalWindowId") return handleShellGetLastNormalWindowId(req);
   if (req.command === "shell.getSidebarDappApproval") return handleShellGetSidebarDappApproval(req);
   if (req.command === "shell.switchToWindow") return handleShellSwitchToWindow(req);
+  if (req.command === "shell.sidebarOpened") return handleShellSidebarOpened(req);
   if (req.command === "wallet.getHomeTokens") return handleGetHomeTokens(req);
   if (req.command === "wallet.listClosableTokenAccounts") return handleListClosableTokenAccounts(req);
   if (req.command === "wallet.planCloseEmpty") return handlePlanCloseEmpty(req);

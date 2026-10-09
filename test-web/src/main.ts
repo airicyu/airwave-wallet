@@ -22,6 +22,7 @@ import {
   appendTransactionMessageInstruction,
   compileTransaction,
   compileTransactionMessage,
+  createNoopSigner,
   createSolanaRpc,
   createTransactionMessage,
   getAddressFromPublicKey,
@@ -54,6 +55,9 @@ const btnSignAndSendTx = document.getElementById("sign-and-send-tx") as HTMLButt
 const btnSignAndSendTxStd = document.getElementById(
   "sign-and-send-tx-std",
 ) as HTMLButtonElement;
+const btnSignAndSendTxStdFail = document.getElementById(
+  "sign-and-send-tx-std-fail",
+) as HTMLButtonElement;
 const btnSignTxFail = document.getElementById("sign-tx-fail") as HTMLButtonElement;
 const btnAirdrop = document.getElementById("airdrop") as HTMLButtonElement;
 
@@ -83,6 +87,7 @@ function enableSigning(addressStr: string | undefined): void {
   btnSignTx.disabled = !ok;
   btnSignAndSendTx.disabled = !ok;
   btnSignAndSendTxStd.disabled = !ok;
+  btnSignAndSendTxStdFail.disabled = !ok;
   btnSignTxFail.disabled = !ok;
   btnAirdrop.disabled = !ok;
   if (addressStr) setStatus(`已連線：${addressStr}`);
@@ -148,10 +153,10 @@ async function buildSelfTransferTx(
     (m) =>
       appendTransactionMessageInstruction(
         getTransferSolInstruction({
-          source: fromAddress,
+          source: createNoopSigner(fromAddress),
           destination: fromAddress,
           amount: lamportsAmount,
-        } as unknown as Parameters<typeof getTransferSolInstruction>[0]),
+        }),
         m,
       ),
   );
@@ -176,10 +181,10 @@ async function syntheticTxMessageBytes(): Promise<Uint8Array> {
       (m) =>
         appendTransactionMessageInstruction(
           getTransferSolInstruction({
-            source: payer,
+            source: createNoopSigner(payer),
             destination: payer,
             amount: 0n,
-          } as unknown as Parameters<typeof getTransferSolInstruction>[0]),
+          }),
           m,
         ),
     ),
@@ -456,6 +461,9 @@ btnSignAndSendTxStd.addEventListener("click", async () => {
     const { accounts } = await connect.connect({ silent: true });
     const account = accounts[0];
     if (!account) throw new Error("no account");
+    if (account.chains[0] !== "solana:devnet") {
+      throw new Error("test-web 只測 Devnet。請在錢包 Settings 把網路改成 Devnet 再按代送。");
+    }
 
     const tx = await buildSelfTransferTx(address(account.address), 0n);
 
@@ -468,6 +476,42 @@ btnSignAndSendTxStd.addEventListener("click", async () => {
   } catch (e) {
     const err = e as Error & { code?: string };
     log("signAndSendTransaction error:", err.code ?? "", err.message ?? e);
+  }
+});
+
+btnSignAndSendTxStdFail.addEventListener("click", async () => {
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as
+      | StandardConnectFeature[typeof StandardConnect]
+      | undefined;
+    const signAndSend = wallet.features[SolanaSignAndSendTransaction] as
+      | SolanaSignAndSendTransactionFeature[typeof SolanaSignAndSendTransaction]
+      | undefined;
+    if (!connect) return;
+    if (!signAndSend) {
+      throw new Error(`wallet 無 ${SolanaSignAndSendTransaction} feature`);
+    }
+
+    const { accounts } = await connect.connect({ silent: true });
+    const account = accounts[0];
+    if (!account) throw new Error("no account");
+    if (account.chains[0] !== "solana:devnet") {
+      throw new Error("test-web 只測 Devnet。請在錢包 Settings 把網路改成 Devnet 再按代送。");
+    }
+
+    const tx = await buildSelfTransferTx(address(account.address), 10n * LAMPORTS_PER_SOL);
+    log("signAndSendTransaction fail-case: 自轉 10 SOL，預期模擬／鏈上失敗");
+
+    const [out] = await signAndSend.signAndSendTransaction({
+      account,
+      chain: "solana:devnet",
+      transaction: tx,
+    });
+    log("Unexpected: fail-case signAndSendTransaction succeeded:", bs58.encode(out.signature));
+  } catch (e) {
+    const err = e as Error & { code?: string };
+    log("signAndSendTransaction fail-case:", err.code ?? "", err.message ?? e);
   }
 });
 

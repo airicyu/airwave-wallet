@@ -11,16 +11,16 @@ import type {
   SignAndSendTransactionPayload,
   SignMessagePayload,
   SignTransactionPayload,
-  UiHost,
 } from "../../shared/commands";
 import { messageLooksLikeTransactionMessage } from "../../shared/sign-message-tx";
 import { getActivePublicKey, readActiveAccountId, readConnections, readSettings } from "../storage";
-import { addPending, rejectOrdinaryDappPending } from "../pending";
+import { addPending } from "../pending";
 import { schedulePendingTimeout } from "../pending";
 import { respond } from "../messaging";
 import { rememberConnectedTab, removeConnectionAndNotify } from "../messaging";
-import { openDappApprovalInSidebarShell } from "../messaging/open-dapp-in-shell";
+import { notifySidebarDappApproval } from "../messaging/open-dapp-in-shell";
 import { openPopout } from "../messaging";
+import { isSidebarWalletOpen } from "../shell";
 import { pendingTimeoutHandlers } from "../send";
 import { signMessageEnqueueGateError } from "../session";
 import * as session from "../session";
@@ -31,30 +31,21 @@ function settingsChainId(cluster: "devnet" | "mainnet"): string {
   return cluster === "mainnet" ? "solana:mainnet" : "solana:devnet";
 }
 
-async function dappApprovalUiHost(): Promise<UiHost> {
-  const settings = await readSettings();
-  return settings.shell === "sidebar" ? "sidebar" : "popout";
-}
-
 async function presentDappApproval(
   requestId: string,
-  tabId: number,
+  _tabId: number,
   record: Omit<PendingRecord, "uiHost">,
 ): Promise<void> {
-  const uiHost = await dappApprovalUiHost();
+  let uiHost: PendingRecord["uiHost"] = "popout";
+  if (await isSidebarWalletOpen()) {
+    addPending(requestId, { ...record, uiHost: "sidebar" });
+    schedulePendingTimeout(requestId, pendingTimeoutHandlers);
+    if (await notifySidebarDappApproval(requestId)) return;
+  }
+  uiHost = "popout";
   addPending(requestId, { ...record, uiHost });
   schedulePendingTimeout(requestId, pendingTimeoutHandlers);
-  if (uiHost === "sidebar") {
-    const presented = await openDappApprovalInSidebarShell(requestId, tabId);
-    if (!presented) {
-      await rejectOrdinaryDappPending(
-        requestId,
-        "Could not open wallet sidebar for approval",
-      );
-    }
-  } else {
-    await openPopout(requestId);
-  }
+  await openPopout(requestId);
 }
 
 export async function handleDappCommand(req: ExtensionRequest): Promise<ExtensionResponse> {

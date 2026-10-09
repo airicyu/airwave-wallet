@@ -44,7 +44,8 @@ export type AirwaveCommand =
   | "storage.patchSettings"
   | "shell.getLastNormalWindowId"
   | "shell.getSidebarDappApproval"
-  | "shell.switchToWindow";
+  | "shell.switchToWindow"
+  | "shell.sidebarOpened";
 
 export const PENDING_TIMEOUT_MS = 120_000;
 
@@ -135,6 +136,11 @@ export type WalletSendProgressNotice = {
   kind: "airwave-wallet-send-progress";
   requestId: string;
   error: string;
+  /** Pretty-printed RPC/preflight err + logs; omitted when there is nothing extra. */
+  detail?: string;
+  /** False when sendTransaction preflight rejected the tx (never landed). */
+  landed?: boolean;
+  signature?: string;
 };
 
 export type ResolvePendingPayload = {

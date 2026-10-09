@@ -3,12 +3,19 @@
  * Does not run in the service worker or handle dapp bridge commands.
  */
 import { sendExtensionRequest } from "../../shared/ext-api";
-import type { WalletSendSettledNotice } from "../../shared/commands";
+import type { PendingRecord, WalletSendSettledNotice } from "../../shared/commands";
 import {
   DAPP_APPROVAL_IN_SHELL_MSG,
   type DappApprovalInShellNotice,
 } from "../../shared/dapp-approval-notice";
-import { rejectDappApprovalIfOpen } from "../components/DappApprovalHost";
+import {
+  flowPageIdFromKind,
+  popFlow,
+  pushFlow,
+  rejectFlowPending,
+  topFlow,
+  type FlowEntry,
+} from "../../flow";
 import { walletShellSurfaceFromHref } from "../../shared/shell-constants";
 import type { ClosableEntry, CloseEmptyCommitResult, CloseEmptyPlanResult } from "../../shared/close-empty-types";
 import type { HomeTokenRow } from "../home/home-tokens";
@@ -49,7 +56,7 @@ export function usePopupAppState() {
   const [currentView, setCurrentView] = useState<View>("home-token");
   const [detailTokenId, setDetailTokenId] = useState<string | null>(null);
   const [activeWalletSendRequestId, setActiveWalletSendRequestId] = useState<string | null>(null);
-  const [activeDappApprovalRequestId, setActiveDappApprovalRequestId] = useState<string | null>(null);
+  const [flowStack, setFlowStack] = useState<FlowEntry[]>([]);
   const [homeTokenRows, setHomeTokenRows] = useState<HomeTokenRow[]>([]);
   const [focusAccountId, setFocusAccountId] = useState<string | null>(null);
   const [expandedTokenRowIds, setExpandedTokenRowIds] = useState<Set<string>>(() => new Set());
@@ -77,14 +84,14 @@ export function usePopupAppState() {
     currentView,
     detailTokenId,
     activeWalletSendRequestId,
-    activeDappApprovalRequestId,
+    flowStack,
     focusAccountId,
   });
   bagRef.current = {
     currentView,
     detailTokenId,
     activeWalletSendRequestId,
-    activeDappApprovalRequestId,
+    flowStack,
     focusAccountId,
   };
 
@@ -137,11 +144,6 @@ export function usePopupAppState() {
         abortWalletSendOnPopupUnload();
         bagRef.current.activeWalletSendRequestId = null;
         setActiveWalletSendRequestId(null);
-      }
-      if (current === "dapp-approval" && next !== "dapp-approval" && bagRef.current.activeDappApprovalRequestId) {
-        rejectDappApprovalIfOpen(bagRef.current.activeDappApprovalRequestId);
-        bagRef.current.activeDappApprovalRequestId = null;
-        setActiveDappApprovalRequestId(null);
       }
       if (current === "token-send" && next !== "token-send" && next !== "send-approval") {
         setPendingSendFormError(null);
@@ -258,22 +260,28 @@ export function usePopupAppState() {
       if (wasApproval) navigateTo("token-send");
       setPendingSendFormError(notice.error ?? "CANCELLED");
     };
-    const openSidebarDappApproval = (requestId: string) => {
+    const openSidebarFlow = (requestId: string) => {
       if (walletShellSurfaceFromHref(window.location.href) !== "sidebar") return;
-      bagRef.current.activeDappApprovalRequestId = requestId;
-      setActiveDappApprovalRequestId(requestId);
-      bagRef.current.currentView = "dapp-approval";
-      setCurrentView("dapp-approval");
-      setMenuOpen(false);
-      setNavSeq((n) => n + 1);
-      setTitleOverride(null);
+      void (async () => {
+        const res = await sendExtensionRequest("ui.getPending", { requestId });
+        if (!res.ok) return;
+        const pageId = flowPageIdFromKind((res.result as PendingRecord).kind);
+        if (!pageId) return;
+        setFlowStack((prev) => {
+          const top = topFlow(prev);
+          if (top && top.requestId !== requestId) rejectFlowPending(top.requestId);
+          return pushFlow(prev, { pageId, requestId });
+        });
+        setMenuOpen(false);
+        setTitleOverride(null);
+      })();
     };
 
     const onDappApproval = (message: unknown) => {
       if (!message || typeof message !== "object") return;
       const notice = message as DappApprovalInShellNotice;
       if (notice.kind !== DAPP_APPROVAL_IN_SHELL_MSG) return;
-      openSidebarDappApproval(notice.requestId);
+      openSidebarFlow(notice.requestId);
     };
 
     const hydrateSidebarDappApproval = async () => {
@@ -282,7 +290,7 @@ export function usePopupAppState() {
       if (!res.ok || !res.result || typeof res.result !== "object") return;
       const requestId = (res.result as { requestId?: string | null }).requestId;
       if (!requestId) return;
-      openSidebarDappApproval(requestId);
+      openSidebarFlow(requestId);
     };
 
     chrome.runtime.onMessage.addListener(onSettled);
@@ -290,11 +298,11 @@ export function usePopupAppState() {
 
     const abortDappApprovalOnSidebarUnload = () => {
       if (walletShellSurfaceFromHref(window.location.href) !== "sidebar") return;
-      const dappId = bagRef.current.activeDappApprovalRequestId;
-      if (!dappId) return;
-      rejectDappApprovalIfOpen(dappId);
-      bagRef.current.activeDappApprovalRequestId = null;
-      setActiveDappApprovalRequestId(null);
+      const top = topFlow(bagRef.current.flowStack);
+      if (!top) return;
+      rejectFlowPending(top.requestId);
+      bagRef.current.flowStack = [];
+      setFlowStack([]);
     };
 
     const onUnload = () => {
@@ -335,8 +343,10 @@ export function usePopupAppState() {
       setDetailTokenId,
       activeWalletSendRequestId,
       setActiveWalletSendRequestId: setActiveWalletSendRequestIdTracked,
-      activeDappApprovalRequestId,
-      setActiveDappApprovalRequestId,
+      flowStack,
+      finishFlowPage: () => {
+        setFlowStack((prev) => popFlow(prev));
+      },
       homeTokenRows,
       setHomeTokenRows,
       focusAccountId,
@@ -384,7 +394,7 @@ export function usePopupAppState() {
       currentView,
       detailTokenId,
       activeWalletSendRequestId,
-      activeDappApprovalRequestId,
+      flowStack,
       homeTokenRows,
       focusAccountId,
       expandedTokenRowIds,

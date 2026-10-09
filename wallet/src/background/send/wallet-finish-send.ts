@@ -15,11 +15,16 @@ import { getPending, removePending } from "../pending";
 import { clearWalletSendState, getWalletSendState } from "./wallet-send-state";
 import { cancelPendingTimeout } from "../pending";
 import { sendBridgeResult } from "../messaging";
+import { formatSendFailureDetail } from "./send-fail-detail";
 
 const CONFIRM_MS = 60_000;
 
 export type WalletSendNotify = {
-  progress: (requestId: string, error: string) => void;
+  progress: (
+    requestId: string,
+    error: string,
+    extra?: { detail?: string; landed?: boolean; signature?: string },
+  ) => void;
   settled: (requestId: string, ok: boolean, errorMessage?: string, signature?: string) => void;
 };
 
@@ -73,7 +78,10 @@ export async function runWalletSendAfterApprove(
     ws.broadcastSig = sig;
     await waitConfirmOnly(requestId, rpcUrl, sig, notify);
   } catch (e) {
-    notify.progress(requestId, rpcUserCode(e, "SEND_BROADCAST_FAILED"));
+    notify.progress(requestId, "SEND_BROADCAST_FAILED", {
+      landed: false,
+      detail: formatSendFailureDetail(e),
+    });
   }
 }
 
@@ -111,7 +119,17 @@ async function waitConfirmOnly(
         return;
       }
       if (val?.err) {
-        notify.progress(requestId, "SEND_CHAIN_FAILED");
+        let detail = "";
+        try {
+          detail = JSON.stringify(val.err, null, 2);
+        } catch {
+          detail = String(val.err);
+        }
+        notify.progress(requestId, "SEND_CHAIN_FAILED", {
+          landed: true,
+          signature,
+          detail,
+        });
         return;
       }
       await sleep(1500);
@@ -125,18 +143,14 @@ async function waitConfirmOnly(
     }
     notify.progress(requestId, "SEND_CONFIRM_TIMEOUT");
   } catch (e) {
-    notify.progress(requestId, rpcUserCode(e, "SEND_CONFIRM_FAILED"));
+    notify.progress(requestId, "SEND_CONFIRM_FAILED", {
+      landed: true,
+      signature,
+      detail: formatSendFailureDetail(e),
+    });
   }
 }
 
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
-}
-
-function rpcUserCode(e: unknown, fallback: string): string {
-  const msg = e instanceof Error ? e.message : "";
-  if (!msg || msg.includes("npx @solana/errors") || msg.startsWith("Solana error #")) {
-    return fallback;
-  }
-  return msg;
 }

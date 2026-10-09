@@ -56,6 +56,42 @@ body {
   overflow: hidden;
 }
 
+.flow-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.flow-page-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 20px 16px;
+}
+
+.flow-page > .unlock-screen {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+}
+
+.bar-subpage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  min-height: 52px;
+}
+
+.bar-subpage-title {
+  flex: 1;
+  text-align: center;
+  font-weight: 650;
+}
+
 .flow-screen {
   padding: 20px 16px;
   flex: 1;
@@ -897,6 +933,7 @@ textarea:focus-visible {
   margin: 0;
   font-size: 0.84rem;
   color: var(--text-muted);
+  max-width: 20rem;
 }
 
 .send-status-sig {
@@ -904,6 +941,57 @@ textarea:focus-visible {
   font-family: var(--mono);
   font-size: 0.82rem;
   color: var(--text-muted);
+}
+
+.send-status-card.is-failed .send-status-mark {
+  color: var(--danger);
+}
+
+.send-status-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 16rem;
+  margin: 28px 0 0;
+}
+
+.send-status-actions .primary-btn,
+.send-status-actions .ghost-btn {
+  width: 100%;
+}
+
+.send-fail-details {
+  width: 100%;
+  max-width: 20rem;
+  margin: 16px 0 0;
+  text-align: left;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-sm);
+  background: var(--fill);
+  padding: 8px 12px;
+}
+
+.send-fail-details summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.send-fail-stage {
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.send-fail-details pre {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  max-height: 160px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
 }
 
 @keyframes send-status-pop {

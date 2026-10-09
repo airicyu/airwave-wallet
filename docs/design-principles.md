@@ -12,7 +12,7 @@
 
 - 主表面是 Chrome **工具列 action popup**（`default_popup`，寬約 **422px**、高約 **600px**）或 **Chrome 側欄**（內容 **寬高 100%** 跟面板）。**不要**用 `chrome.windows.create` 另開錢包獨立窗當主殼。審批 popout（網站簽名獨立窗）仍約 **420×640**，不算主表面。所有列、按鈕、輸入須在當下主表面寬度內可掃、可點；側欄拉寬時內容跟著拉滿，**禁止** 422px 置中固定欄。
 - 一屏只做一件事。第一層是 **選項列表**（Accounts 的 Add、Settings 的分區）；選了再進 **操作頁或展開列**。禁止把產生／匯入／觀察／Combined 的表單全攤在同一頁。
-- 頂欄沿用方案 A：Home 為 widget；子頁為 **Back + 標題 + Menu**。Bottom Token／Activity **只**在 Home。
+- 頂欄沿用方案 A：Home 為 widget；子頁為 **Back + 標題 + Menu**。Bottom Token／Activity **只**在 Home。Devnet 時在頂欄**下方**一條橙底狀態列寫 `Devnet`（Mainnet 不標）；不要把徽章塞進帳戶 pill 旁。Home 頂欄圖示（切到側欄、關閉側欄、選單）預設無底框，hover／focus 才顯底。側欄那顆是關側欄，不程式化打開工具列 popup。鎖定錢包在選單內，不在 Home 頂欄放鎖圖示。選單項圖示在左、文字在右；選單觸發為直向三點，不是三橫。
 - 色票與圓角對齊 [`design-demos/wallet-030-ui-concepts.html`](design-demos/wallet-030-ui-concepts.html) 的 CSS 變數（`--bg`、`--fill`、`--accent` 等）。不要另開一套高對比主題。
 - **頁殼（popup 與 popout 每一個有頂欄／殼底主行動的新 SCREEN 都要過這關，不是某一版特例）：**
   1. 整窗 **直欄 flex**，`html`／`body`／頁根 **高度 100%、`overflow: hidden`**。禁止整份文件跟著內容長高、讓視窗捲軸捲走頂欄與底欄。
@@ -58,7 +58,7 @@
 
 同一頁不要又有文字「加入」又有加號圖示做同一件事。
 
-Icon 用現有 stroke SVG 風格（約 16–18px、2px stroke），按鈕熱區約 **28–34px**。Tooltip／`aria-label` 跟目前 `settings.locale`，走 `ui-messages` catalog（如 `common.add`、`common.delete`、`common.copy`）。
+Icon 用現有 stroke SVG 風格（約 16–18px、2px stroke），按鈕熱區約 **28–34px**。Tooltip／`aria-label` 跟目前 `settings.locale`，走 `ui-messages` catalog（如 `common.add`、`common.delete`、`common.copy`）。Home Tokens 重新整理冷卻：鈕 `disabled` 並變淡，**不要**外圈倒數弧。
 
 ---
 

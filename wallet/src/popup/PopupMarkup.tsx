@@ -10,7 +10,7 @@ import {
   RevealScreen,
 } from "./accounts/AccountsScreens";
 import { ApprovalHost } from "./components/ApprovalHost";
-import { DappApprovalHost } from "./components/DappApprovalHost";
+import { FlowHost } from "../flow";
 import { HomeActivityList } from "./components/HomeActivityList";
 import { HomeTokenList, TokenDetailView } from "./components/HomeTokenList";
 import {
@@ -23,9 +23,19 @@ import {
 import { LegalDoc } from "./components/LegalDoc";
 import { CopyPkButton } from "./components/CopyPkButton";
 import { RefreshAssetsButton } from "./components/RefreshAssetsButton";
-import { IconAppWindow, IconBack, IconLock, IconMenu, IconSidebar } from "./components/StrokeIcon";
+import {
+  IconAccounts,
+  IconBack,
+  IconCollapseRight,
+  IconGlobe,
+  IconInfo,
+  IconLock,
+  IconMenu,
+  IconSettings,
+  IconSidebar,
+} from "./components/StrokeIcon";
 import { hydrateLastNormalWindowId } from "./shell/shell-bridge";
-import { isSidePanelSurface, isWalletWindowSurface, switchToSidebar, switchToWindow } from "./shell/shell-switch";
+import { closeSidebar, isSidePanelSurface, isWalletWindowSurface, switchToSidebar } from "./shell/shell-switch";
 import { WalletWidget } from "./components/WalletWidget";
 import { getExposedPublicKey } from "../shared/accounts";
 import { sendExtensionRequest } from "../shared/ext-api";
@@ -77,21 +87,37 @@ function ErrorToast(): JSX.Element {
 }
 
 function MenuItems(): JSX.Element {
-  const { navigateTo } = usePopupContext();
+  const { navigateTo, refresh, setMenuOpen } = usePopupContext();
   const { t } = useT();
   return (
     <>
       <button type="button" className="menu-item" onClick={() => navigateTo("accounts")}>
+        <IconAccounts />
         {t("menu.walletAccounts")}
       </button>
       <button type="button" className="menu-item" onClick={() => navigateTo("settings")}>
+        <IconSettings />
         {t("menu.settings")}
       </button>
       <button type="button" className="menu-item" onClick={() => navigateTo("connected-sites")}>
+        <IconGlobe />
         {t("menu.connectedSites")}
       </button>
       <button type="button" className="menu-item" onClick={() => navigateTo("about")}>
+        <IconInfo />
         {t("menu.about")}
+      </button>
+      <button
+        type="button"
+        className="menu-item menu-item-lock"
+        onClick={async () => {
+          setMenuOpen(false);
+          await sendExtensionRequest("wallet.lock");
+          await refresh();
+        }}
+      >
+        <IconLock size={16} />
+        {t("menu.lockWallet")}
       </button>
     </>
   );
@@ -104,7 +130,8 @@ export function PopupMarkup(): JSX.Element {
     detailTokenId,
     setDetailTokenId,
     activeWalletSendRequestId,
-    activeDappApprovalRequestId,
+    flowStack,
+    finishFlowPage,
     homeTokenRows,
     setHomeAssetsForce,
     menuOpen,
@@ -113,7 +140,6 @@ export function PopupMarkup(): JSX.Element {
     titleOverride,
     navigateTo,
     handleBack,
-    refresh,
     closeEmptyEntries,
     setCloseEmptyEntries,
     closeEmptyPlan,
@@ -167,8 +193,17 @@ export function PopupMarkup(): JSX.Element {
 
   if (!showShell) return <></>;
 
+  const flowCovered = flowStack.length > 0;
+
   return (
     <>
+      <div className="shell-stack">
+        <div
+          className={flowCovered ? "shell-layer is-paused" : "shell-layer"}
+          style={{ zIndex: 0 }}
+          aria-hidden={flowCovered}
+          inert={flowCovered}
+        >
       <div id="shell" className="shell">
         <header className="top-bar" id="top-bar" hidden={currentView === "close-empty-sending"}>
           <div className="bar-home" id="bar-home" hidden={!home}>
@@ -191,11 +226,6 @@ export function PopupMarkup(): JSX.Element {
                   })()}
                 />
               </div>
-              {wallet.settings.cluster === "devnet" ? (
-                <span className="cluster-badge" aria-hidden="true">
-                  Devnet
-                </span>
-              ) : null}
             </div>
             <div className="bar-spacer" />
             <div className="bar-end">
@@ -216,27 +246,15 @@ export function PopupMarkup(): JSX.Element {
                 <button
                   type="button"
                   className="icon-btn"
-                  id="btn-shell-to-window"
-                  title={t("shell.toWindow")}
-                  aria-label={t("shell.toWindow")}
-                  onClick={() => switchToWindow()}
+                  id="btn-shell-close-sidebar"
+                  title={t("shell.closeSidebar")}
+                  aria-label={t("shell.closeSidebar")}
+                  onMouseDown={() => void hydrateLastNormalWindowId()}
+                  onClick={() => closeSidebar()}
                 >
-                  <IconAppWindow />
+                  <IconCollapseRight />
                 </button>
               ) : null}
-              <button
-                type="button"
-                className="icon-btn"
-                id="btn-lock-home"
-                title={t("menu.lockWallet")}
-                aria-label={t("menu.lockWallet")}
-                onClick={async () => {
-                  await sendExtensionRequest("wallet.lock");
-                  await refresh();
-                }}
-              >
-                <IconLock />
-              </button>
               <div className="menu-anchor">
                 <button
                   type="button"
@@ -286,6 +304,11 @@ export function PopupMarkup(): JSX.Element {
             </div>
           </div>
         </header>
+        {home && wallet.settings.cluster === "devnet" ? (
+          <div className="cluster-strip" role="status">
+            Devnet
+          </div>
+        ) : null}
 
         <div
           id="menu-overlay"
@@ -353,12 +376,6 @@ export function PopupMarkup(): JSX.Element {
           {currentView === "send-approval" && activeWalletSendRequestId ? (
             <section id="screen-send-approval" className="screen approval-shell-host">
               <ApprovalHost key={activeWalletSendRequestId} requestId={activeWalletSendRequestId} />
-            </section>
-          ) : null}
-
-          {currentView === "dapp-approval" && activeDappApprovalRequestId ? (
-            <section id="screen-dapp-approval" className="screen approval-shell-host">
-              <DappApprovalHost key={activeDappApprovalRequestId} requestId={activeDappApprovalRequestId} />
             </section>
           ) : null}
 
@@ -604,8 +621,18 @@ export function PopupMarkup(): JSX.Element {
           </button>
         </nav>
       </div>
-
-      <ErrorToast />
+          <ErrorToast />
+        </div>
+        {flowStack.map((entry, i) => (
+          <FlowHost
+            key={entry.requestId}
+            entry={entry}
+            layer={i + 1}
+            paused={i < flowStack.length - 1}
+            onFinished={finishFlowPage}
+          />
+        ))}
+      </div>
     </>
   );
 }

@@ -92,6 +92,17 @@ export function IconSidebar({ size = 18 }: { size?: number }): JSX.Element {
   );
 }
 
+/** 右側欄收合：框 + 右軌 + 箭頭朝右 */
+export function IconCollapseRight({ size = 18 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M15 4v16" />
+      <path d="M6.5 12h5.5M9.5 9l3 3-3 3" />
+    </StrokeIcon>
+  );
+}
+
 export function IconAppWindow({ size = 18 }: { size?: number }): JSX.Element {
   return (
     <StrokeIcon size={size}>
@@ -112,8 +123,49 @@ export function IconLock({ size = 18 }: { size?: number }): JSX.Element {
 
 export function IconMenu({ size = 18 }: { size?: number }): JSX.Element {
   return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="12" cy="5" r="1.75" />
+      <circle cx="12" cy="12" r="1.75" />
+      <circle cx="12" cy="19" r="1.75" />
+    </svg>
+  );
+}
+
+export function IconAccounts({ size = 16 }: { size?: number }): JSX.Element {
+  return (
     <StrokeIcon size={size}>
-      <path d="M4 7h16M4 12h16M4 17h16" />
+      <circle cx="9" cy="8" r="3" />
+      <path d="M4 18c0-2.5 2.2-4 5-4s5 1.5 5 4" />
+      <circle cx="16.5" cy="8.5" r="2.2" />
+      <path d="M15 18c.3-1.6 1.5-2.8 3.2-3.2" />
+    </StrokeIcon>
+  );
+}
+
+export function IconSettings({ size = 16 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6.1 6.1l1.6 1.6M16.3 16.3l1.6 1.6M6.1 17.9l1.6-1.6M16.3 7.7l1.6-1.6" />
+    </StrokeIcon>
+  );
+}
+
+export function IconGlobe({ size = 16 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18" />
+      <path d="M12 3c2.6 3 4 6 4 9s-1.4 6-4 9M12 3C9.4 6 8 9 8 12s1.4 6 4 9" />
+    </StrokeIcon>
+  );
+}
+
+export function IconInfo({ size = 16 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v6M12 7.5h.01" />
     </StrokeIcon>
   );
 }

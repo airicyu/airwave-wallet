@@ -91,8 +91,9 @@ export const PUBLIC_RPC_BY_CLUSTER: Record<Cluster, string> = {
   mainnet: "https://api.mainnet-beta.solana.com",
 };
 
-export function normalizeShellMode(raw: unknown): ShellMode {
-  return raw === "sidebar" ? "sidebar" : "window";
+/** Persisted `shell` is ignored; live mode is whether the side panel document is open. */
+export function normalizeShellMode(_raw?: unknown): ShellMode {
+  return "window";
 }
 
 export function isPublicClusterRpc(url: string): boolean {

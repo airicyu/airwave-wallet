@@ -1,9 +1,14 @@
+/**
+ * Home holdings refresh control: disable immediately, spin the icon once, then dim for the remaining cooldown.
+ * Does not fetch balances (parent onRefresh does).
+ */
 import type { JSX } from "react";
 import { useEffect, useRef, useState } from "react";
 import { IconRefresh } from "./StrokeIcon";
 import { useT } from "../state/useT";
 
 const COOLDOWN_MS = 3000;
+const SPIN_MS = 650;
 
 export function RefreshAssetsButton({
   activeAccountId,
@@ -15,48 +20,60 @@ export function RefreshAssetsButton({
   onRefresh: () => void;
 }): JSX.Element {
   const { t } = useT();
-  const [cooling, setCooling] = useState(false);
-  const timer = useRef<number | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [spinning, setSpinning] = useState(false);
+  const spinTimer = useRef<number | null>(null);
+  const coolTimer = useRef<number | null>(null);
 
-  const clearCooling = () => {
-    if (timer.current != null) {
-      window.clearTimeout(timer.current);
-      timer.current = null;
+  const clearTimers = () => {
+    if (spinTimer.current != null) {
+      window.clearTimeout(spinTimer.current);
+      spinTimer.current = null;
     }
-    setCooling(false);
+    if (coolTimer.current != null) {
+      window.clearTimeout(coolTimer.current);
+      coolTimer.current = null;
+    }
+    setBusy(false);
+    setSpinning(false);
   };
 
   useEffect(() => {
-    clearCooling();
+    clearTimers();
   }, [activeAccountId, currentView]);
 
   useEffect(() => {
     return () => {
-      if (timer.current != null) window.clearTimeout(timer.current);
+      if (spinTimer.current != null) window.clearTimeout(spinTimer.current);
+      if (coolTimer.current != null) window.clearTimeout(coolTimer.current);
     };
   }, []);
 
   return (
     <button
       type="button"
-      className={`icon-btn ghost-inline refresh-cd${cooling ? " is-cooling" : ""}`}
+      className={`icon-btn ghost-inline${spinning ? " is-spinning" : ""}`}
       id="btn-refresh-assets"
       title={t("common.refresh")}
       aria-label={t("common.refresh")}
-      disabled={cooling}
+      disabled={busy}
       onClick={() => {
         onRefresh();
-        setCooling(true);
-        if (timer.current != null) window.clearTimeout(timer.current);
-        timer.current = window.setTimeout(() => {
-          timer.current = null;
-          setCooling(false);
+        setBusy(true);
+        setSpinning(true);
+        if (spinTimer.current != null) window.clearTimeout(spinTimer.current);
+        if (coolTimer.current != null) window.clearTimeout(coolTimer.current);
+        spinTimer.current = window.setTimeout(() => {
+          spinTimer.current = null;
+          setSpinning(false);
+        }, SPIN_MS);
+        coolTimer.current = window.setTimeout(() => {
+          coolTimer.current = null;
+          setBusy(false);
+          setSpinning(false);
         }, COOLDOWN_MS);
       }}
     >
-      <svg className="refresh-cd-arc" viewBox="0 0 32 32" aria-hidden="true">
-        <circle cx="16" cy="16" r="13" />
-      </svg>
       <IconRefresh />
     </button>
   );

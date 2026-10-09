@@ -3,14 +3,19 @@
  * Does not open approval popouts or chrome.windows.create wallet shells.
  */
 import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
-import { SHELL_LAST_NORMAL_WINDOW_MSG, WALLET_PAGE_PATH } from "../../shared/shell-constants";
-import { SIDEPANEL_PAGE_PATH } from "../../shared/shell-constants";
+import {
+  isWalletSidePanelUrl,
+  SHELL_LAST_NORMAL_WINDOW_MSG,
+  SIDEPANEL_PAGE_PATH,
+  SIDEBAR_SURFACE_PORT,
+  WALLET_PAGE_PATH,
+} from "../../shared/shell-constants";
 import type { ShellMode } from "../../shared/storage-keys";
 import { findSidebarDappApprovalRequestId, rejectOrdinaryDappPending } from "../pending";
 import { respond } from "../messaging";
-import { normalizeSettings, readSettings, writeSettings } from "../storage";
 
 let lastNormalWindowId: number | undefined;
+let sidebarSurfaceOpen = false;
 
 function broadcastLastNormalWindowId(): void {
   const payload = { windowId: lastNormalWindowId ?? null };
@@ -54,11 +59,35 @@ export async function applyToolbarForShell(shell: ShellMode): Promise<void> {
   }
 }
 
+async function setSidebarSurfaceOpen(open: boolean): Promise<void> {
+  if (sidebarSurfaceOpen === open) return;
+  sidebarSurfaceOpen = open;
+  await applyToolbarForShell(open ? "sidebar" : "window");
+}
+
+async function refreshSidebarOpenFromContexts(): Promise<void> {
+  if (typeof chrome.runtime.getContexts !== "function") return;
+  try {
+    const ctxs = await chrome.runtime.getContexts({
+      contextTypes: [chrome.runtime.ContextType.SIDE_PANEL],
+    });
+    const open = ctxs.some((c) => isWalletSidePanelUrl(c.documentUrl));
+    await setSidebarSurfaceOpen(open);
+  } catch {
+    /* API missing or denied */
+  }
+}
+
+export async function isSidebarWalletOpen(): Promise<boolean> {
+  await refreshSidebarOpenFromContexts();
+  return sidebarSurfaceOpen;
+}
+
 export async function initWalletShellOnStartup(): Promise<void> {
   await pickInitialNormalWindowId();
   broadcastLastNormalWindowId();
-  const settings = await readSettings();
-  await applyToolbarForShell(settings.shell);
+  await applyToolbarForShell("window");
+  await refreshSidebarOpenFromContexts();
 }
 
 export async function onWalletShellFocusChanged(windowId: number): Promise<void> {
@@ -120,26 +149,32 @@ async function closeSidePanelGlobal(): Promise<void> {
   await chrome.sidePanel.setOptions({ enabled: true, path: SIDEPANEL_PAGE_PATH });
 }
 
+export async function handleShellSidebarOpened(req: ExtensionRequest): Promise<ExtensionResponse> {
+  await setSidebarSurfaceOpen(true);
+  return respond({
+    kind: "airwave-ext-res",
+    requestId: req.requestId,
+    ok: true,
+    result: { open: true },
+  });
+}
+
 /**
- * 側欄 → 工具列 popup：在 SW 關側欄並寫入 shell（側欄頁卸載後仍能完成）。
+ * 關閉側欄。不 openPopup。port disconnect 後套用 popup 工具列，下次點圖示才開錢包。
  */
 export async function handleShellSwitchToWindow(req: ExtensionRequest): Promise<ExtensionResponse> {
   const { browserWindowId } = (req.payload ?? {}) as { browserWindowId?: number };
-  if (typeof browserWindowId !== "number") {
-    return respond({
-      kind: "airwave-ext-res",
-      requestId: req.requestId,
-      ok: false,
-      error: { code: "INVALID_PAYLOAD", message: "Missing browserWindowId" },
-    });
-  }
   const sidebarDappId = findSidebarDappApprovalRequestId();
   if (sidebarDappId) {
     await rejectOrdinaryDappPending(sidebarDappId, "Wallet shell switched");
   }
 
   try {
-    await closeSidePanelForBrowserWindow(browserWindowId);
+    if (typeof browserWindowId === "number") {
+      await closeSidePanelForBrowserWindow(browserWindowId);
+    } else {
+      await closeSidePanelGlobal();
+    }
   } catch {
     try {
       await closeSidePanelGlobal();
@@ -152,15 +187,11 @@ export async function handleShellSwitchToWindow(req: ExtensionRequest): Promise<
       });
     }
   }
-  const settings = await readSettings();
-  const next = normalizeSettings({ ...settings, shell: "window" });
-  await writeSettings(next);
-  await applyToolbarForShell("window");
   return respond({
     kind: "airwave-ext-res",
     requestId: req.requestId,
     ok: true,
-    result: { settings: next },
+    result: { open: false },
   });
 }
 
@@ -179,5 +210,13 @@ export function registerWalletShellListeners(): void {
 
   chrome.windows.onRemoved.addListener((windowId) => {
     void onWalletShellWindowRemoved(windowId);
+  });
+
+  chrome.runtime.onConnect.addListener((port) => {
+    if (port.name !== SIDEBAR_SURFACE_PORT) return;
+    void setSidebarSurfaceOpen(true);
+    port.onDisconnect.addListener(() => {
+      void setSidebarSurfaceOpen(false);
+    });
   });
 }

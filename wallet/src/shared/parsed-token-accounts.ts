@@ -4,6 +4,7 @@
  */
 import { address } from "@solana/kit";
 import type { TokenProgramKind } from "./home-tokens";
+import { withRateLimitRetry } from "./rpc-rate-limit";
 import { solanaRpcForUrl } from "./solana-rpc";
 
 const LEGACY_TOKEN_PROGRAM = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
@@ -61,29 +62,36 @@ function parseTokenAccountValue(
   };
 }
 
-/** 對單一 owner 各 token program 掃一次（legacy + Token-2022）。 */
+/** 對單一 owner 各 token program 掃一次（legacy 再 Token-2022；429 則等待重試）。 */
 export async function fetchParsedTokenAccountsForOwner(
   rpcUrl: string,
   owner: string,
+  signal?: AbortSignal,
 ): Promise<ParsedOwnerTokenAccount[]> {
   const rpc = solanaRpcForUrl(rpcUrl);
   const pk = address(owner);
-  const [legacy, token2022] = await Promise.all([
-    rpc
-      .getTokenAccountsByOwner(
-        pk,
-        { programId: address(LEGACY_TOKEN_PROGRAM) },
-        { encoding: "jsonParsed", commitment: "confirmed" },
-      )
-      .send(),
-    rpc
-      .getTokenAccountsByOwner(
-        pk,
-        { programId: address(TOKEN_2022_PROGRAM) },
-        { encoding: "jsonParsed", commitment: "confirmed" },
-      )
-      .send(),
-  ]);
+  const legacy = await withRateLimitRetry(
+    () =>
+      rpc
+        .getTokenAccountsByOwner(
+          pk,
+          { programId: address(LEGACY_TOKEN_PROGRAM) },
+          { encoding: "jsonParsed", commitment: "confirmed" },
+        )
+        .send(),
+    signal,
+  );
+  const token2022 = await withRateLimitRetry(
+    () =>
+      rpc
+        .getTokenAccountsByOwner(
+          pk,
+          { programId: address(TOKEN_2022_PROGRAM) },
+          { encoding: "jsonParsed", commitment: "confirmed" },
+        )
+        .send(),
+    signal,
+  );
 
   const out: ParsedOwnerTokenAccount[] = [];
   for (const { pubkey, account } of legacy.value as unknown as {

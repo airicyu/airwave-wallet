@@ -23,6 +23,7 @@ import {
   tokenProgramByMintFromParsed,
   type ParsedOwnerTokenAccount,
 } from "../../shared/parsed-token-accounts";
+import { isRpcRateLimitError, withRateLimitRetry } from "../../shared/rpc-rate-limit";
 import { setOwnerParsedTokenAccounts } from "./owner-parsed-token-cache";
 
 export type GetHomeTokensResult = {
@@ -36,6 +37,9 @@ const TTL_MS = 45_000;
 const BACKGROUND_REFRESH_MIN_CACHE_AGE_MS = 10_000;
 const WALLET_BALANCES_LIMIT = 100;
 const PAGE_DELAY_MS = 500;
+const OWNER_PIPE_GAP_MS = 250;
+const OWNER_RETRY_PASS_GAP_MS = 1500;
+const OWNER_RATE_LIMIT_PASSES = 3;
 const WALLET_API_ORIGIN = "https://api.helius.xyz";
 const JUPITER_BATCH_SIZE = 100;
 const JUPITER_DELAY_NO_KEY_MS = 2000;
@@ -115,7 +119,7 @@ async function fetchWith429Retry(
   input: RequestInfo | URL,
   init: RequestInit,
   signal: AbortSignal,
-  maxAttempts = 3,
+  maxAttempts = 8,
 ): Promise<Response> {
   let lastError: Error | undefined;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -599,15 +603,13 @@ async function fetchSingleOwnerRowsWithParsed(
 ): Promise<{ rows: HomeTokenRow[]; parsed: ParsedOwnerTokenAccount[] }> {
   const apiKey = extractHeliusApiKey(settings.heliusApiUrl);
   if (apiKey && settings.cluster === "mainnet") {
-    const [walletRows, solRows] = await Promise.all([
-      fetchWalletApiHomeTokenRows(apiKey, owner, signal),
-      fetchNativeAndWrappedSolRows(settings.rpcUrl, owner, signal),
-    ]);
+    const walletRows = await fetchWalletApiHomeTokenRows(apiKey, owner, signal);
+    const solRows = await fetchNativeAndWrappedSolRows(settings.rpcUrl, owner, signal);
     const rest = walletRows.filter(
       (r) => r.id !== NATIVE_SOL_ID && r.id !== WRAPPED_SOL_MINT,
     );
     let rows = sortHomeTokenRows([...solRows, ...rest]);
-    const parsed = await fetchParsedTokenAccountsForOwner(settings.rpcUrl, owner);
+    const parsed = await fetchParsedTokenAccountsForOwner(settings.rpcUrl, owner, signal);
     if (signal.aborted) throw new DOMException("Aborted", "AbortError");
     rows = attachTokenProgramsFromParsed(rows, parsed);
     return { rows, parsed };
@@ -616,10 +618,13 @@ async function fetchSingleOwnerRowsWithParsed(
   const rpc = solanaRpcForUrl(settings.rpcUrl);
   const pk = address(owner);
   const lamports = Number(
-    (await rpc.getBalance(pk, { commitment: "confirmed" }).send()).value,
+    (await withRateLimitRetry(
+      () => rpc.getBalance(pk, { commitment: "confirmed" }).send(),
+      signal,
+    )).value,
   );
   if (signal.aborted) throw new DOMException("Aborted", "AbortError");
-  const parsed = await fetchParsedTokenAccountsForOwner(settings.rpcUrl, owner);
+  const parsed = await fetchParsedTokenAccountsForOwner(settings.rpcUrl, owner, signal);
   if (signal.aborted) throw new DOMException("Aborted", "AbortError");
   const rows = buildHomeTokenRowsFromOwnerParsed(lamports, parsed);
   return { rows, parsed };
@@ -639,10 +644,41 @@ async function runRefresh(
 
   try {
     const perOwner: { owner: string; rows: HomeTokenRow[] }[] = [];
-    for (const owner of owners) {
-      const { rows, parsed } = await fetchSingleOwnerRowsWithParsed(owner, settings, signal);
-      setOwnerParsedTokenAccounts(fingerprint, owner, parsed);
-      perOwner.push({ owner, rows });
+    let pending = [...owners];
+    for (let pass = 0; pass < OWNER_RATE_LIMIT_PASSES && pending.length > 0; pass++) {
+      const still: string[] = [];
+      for (let i = 0; i < pending.length; i++) {
+        if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+        if (owners.length > 1 && (pass > 0 || i > 0)) {
+          await sleep(pass === 0 ? OWNER_PIPE_GAP_MS : OWNER_RETRY_PASS_GAP_MS, signal);
+        }
+        const owner = pending[i];
+        try {
+          const { rows, parsed } = await fetchSingleOwnerRowsWithParsed(owner, settings, signal);
+          setOwnerParsedTokenAccounts(fingerprint, owner, parsed);
+          perOwner.push({ owner, rows });
+        } catch (e) {
+          if (signal.aborted || (e instanceof DOMException && e.name === "AbortError")) throw e;
+          if (isRpcRateLimitError(e)) {
+            still.push(owner);
+            continue;
+          }
+          throw e;
+        }
+      }
+      pending = still;
+    }
+    if (pending.length > 0) {
+      if (cached?.length) {
+        return { rows: cached, error: "HTTP 429 rate limit" };
+      }
+      if (perOwner.length === 0) {
+        return { rows: [], error: "HTTP 429 rate limit" };
+      }
+      const rows = withMembers
+        ? mergeMultiOwnerRows(perOwner, owners)
+        : sortHomeTokenRows(perOwner[0]?.rows ?? []);
+      return { rows, error: "HTTP 429 rate limit" };
     }
 
     let rows = withMembers
@@ -672,10 +708,11 @@ async function runRefresh(
       if (cached) return { rows: cached, error: "CANCELLED" };
       return { rows: [], error: "CANCELLED" };
     }
+    const loadError = isRpcRateLimitError(e) ? "HTTP 429 rate limit" : "HOLDINGS_LOAD_FAILED";
     if (cached?.length) {
-      return { rows: cached, error: "HOLDINGS_LOAD_FAILED" };
+      return { rows: cached, error: loadError };
     }
-    return { rows: [], error: "HOLDINGS_LOAD_FAILED" };
+    return { rows: [], error: loadError };
   }
 }
 

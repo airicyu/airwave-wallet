@@ -32,7 +32,10 @@ export function HomeTokenList({ wallet, currentView, onOpenDetail }: Props): JSX
     setHomeAssetsForce,
     bumpClosableScan,
     showToast,
+    flowStack,
   } = usePopupContext();
+  const flowPausedRef = useRef(flowStack.length > 0);
+  flowPausedRef.current = flowStack.length > 0;
   const { locale, t } = useT();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -61,6 +64,7 @@ export function HomeTokenList({ wallet, currentView, onOpenDetail }: Props): JSX
 
   const load = useCallback(
     async (force = false) => {
+      if (flowPausedRef.current) return;
       if (currentView !== "home-token" || !wallet.activeAccountId) return;
       setLoading((prev) => prev || homeTokenRowsLenRef.current === 0);
       const gen = ++homeTokensGen;

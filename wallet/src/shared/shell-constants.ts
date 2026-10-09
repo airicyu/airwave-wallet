@@ -3,6 +3,8 @@ export const SIDEPANEL_PAGE_PATH = "src/sidepanel/index.html";
 /** 網站審批專用；不是錢包主殼，禁止當錢包視窗找回或聚焦 */
 export const POPOUT_PAGE_PATH = "src/popout/index.html";
 export const SHELL_LAST_NORMAL_WINDOW_MSG = "airwave-shell-last-normal-window";
+/** Side panel document holds this port so the SW knows the wallet sidebar is alive. */
+export const SIDEBAR_SURFACE_PORT = "airwave-sidebar-surface";
 
 export function isPopoutApprovalUrl(url: string | undefined): boolean {
   if (!url) return false;

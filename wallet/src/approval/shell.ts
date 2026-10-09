@@ -174,7 +174,7 @@ let draftPriceStr = "";
 let cuApplyBusy = false;
 let feeDetailsOpen = false;
 /** pending／confirmed 時禁止模擬／loadPending 把審批內容蓋回轉圈畫面 */
-let sendStatusPhase: "idle" | "pending" | "confirmed" = "idle";
+let sendStatusPhase: "idle" | "pending" | "confirmed" | "failed" = "idle";
 let confirmedTimer: ReturnType<typeof setTimeout> | null = null;
 let storageUnlockListener: ((changes: Record<string, chrome.storage.StorageChange>, area: string) => void) | null =
   null;
@@ -265,6 +265,9 @@ function setSendStatusChrome(on: boolean): void {
 const SEND_STATUS_CHECK_SVG =
   '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>';
 
+const SEND_STATUS_FAIL_SVG =
+  '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9 9l6 6M15 9l-6 6"/></svg>';
+
 
 function ensureSendStatusCard(): HTMLElement {
   let card = signBody.querySelector<HTMLElement>(".send-status-card");
@@ -304,10 +307,13 @@ function enterWalletSendConfirming(): void {
   signPageTitle.textContent = tr("approval.confirming");
   signError.hidden = true;
   const card = ensureSendStatusCard();
-  card.classList.remove("is-confirmed");
+  card.classList.remove("is-confirmed", "is-failed");
   card.classList.add("is-pending");
-  const mark = card.querySelector(".send-status-mark")!;
+  card.querySelector(".send-status-actions")?.remove();
+  card.querySelector(".send-fail-details")?.remove();
+  const mark = card.querySelector<HTMLElement>(".send-status-mark")!;
   mark.replaceChildren();
+  mark.style.color = "";
   mark.innerHTML = SEND_STATUS_AURORA_SVG;
   const title = card.querySelector(".send-status-title")!;
   title.textContent = tr("approval.confirming");
@@ -325,6 +331,7 @@ function restoreWalletSendReviewAfterError(): void {
   signDock.hidden = false;
   document.title = `Airwave — ${tr("approval.signTx")}`;
   signPageTitle.textContent = tr("approval.signTx");
+  signError.hidden = true;
   if (lastSim) {
     renderSignTransactionBody(lastSim, false);
     applyApproveFromSimulation(lastSim);
@@ -332,6 +339,133 @@ function restoreWalletSendReviewAfterError(): void {
     renderSignTransactionBody(null, true);
     setSignButtons({ reject: false, approve: true, approveLabel: tr("approval.approve") });
   }
+}
+
+function canRetryFailedSend(code: string): boolean {
+  return code !== "SEND_BLOCKHASH_EXPIRED";
+}
+
+type SendFailUiExtra = {
+  detail?: string;
+  landed?: boolean;
+  signature?: string;
+};
+
+function failDetailText(code: string, extra?: SendFailUiExtra): string {
+  if (extra?.detail) return extra.detail;
+  if (code !== "SEND_BROADCAST_FAILED" && code !== "SEND_TX_INVALID") return "";
+  if (lastSim?.outcome !== "fail") return "";
+  let errPart = "";
+  if (lastSim.err != null) {
+    try {
+      errPart = JSON.stringify(lastSim.err, null, 2);
+    } catch {
+      errPart = String(lastSim.err);
+    }
+  }
+  const logsPart = lastSim.logs?.join("\n") ?? "";
+  return [errPart, logsPart].filter(Boolean).join("\n\n");
+}
+
+function failLanded(code: string, extra?: SendFailUiExtra): boolean | undefined {
+  if (extra?.landed === true) return true;
+  if (extra?.landed === false) return false;
+  if (code === "SEND_CHAIN_FAILED") return true;
+  if (code === "SEND_BROADCAST_FAILED" || code === "SEND_TX_INVALID") return false;
+  return undefined;
+}
+
+function enterWalletSendFailedPage(errorCode: string, extra?: SendFailUiExtra): void {
+  if (expiryTimer != null) {
+    window.clearTimeout(expiryTimer);
+    expiryTimer = null;
+  }
+  sendStatusPhase = "failed";
+  resolving = false;
+  simGen += 1;
+  viewUnlock.hidden = true;
+  viewGone.hidden = true;
+  viewLegacy.hidden = true;
+  viewSign.hidden = false;
+  setSendStatusChrome(true);
+  signDock.hidden = true;
+  signError.hidden = true;
+  document.title = `Airwave — ${tr("approval.sendFailedTitle")}`;
+  signPageTitle.textContent = tr("approval.sendFailedTitle");
+  const card = ensureSendStatusCard();
+  card.classList.remove("is-pending", "is-confirmed");
+  card.classList.add("is-failed");
+  card.querySelector(".send-status-actions")?.remove();
+  card.querySelector(".send-fail-details")?.remove();
+  const mark = card.querySelector<HTMLElement>(".send-status-mark")!;
+  mark.replaceChildren();
+  mark.style.color = "var(--danger)";
+  const failMark = document.createElement("span");
+  failMark.className = "send-status-check send-status-fail";
+  failMark.innerHTML = SEND_STATUS_FAIL_SVG;
+  mark.append(failMark);
+  const title = card.querySelector(".send-status-title")!;
+  title.textContent = tr("approval.sendFailedTitle");
+  const lead = card.querySelector<HTMLElement>(".send-status-lead")!;
+  lead.hidden = false;
+  lead.textContent = progressUserMessage(errorCode);
+  const sigEl = card.querySelector<HTMLElement>(".send-status-sig")!;
+  if (extra?.signature) {
+    sigEl.hidden = false;
+    sigEl.textContent = shortSignature(extra.signature);
+  } else {
+    sigEl.hidden = true;
+    sigEl.textContent = "";
+  }
+  const detailText = failDetailText(errorCode, extra);
+  const landed = failLanded(errorCode, extra);
+  if (detailText || landed !== undefined) {
+    const details = document.createElement("details");
+    details.className = "send-fail-details";
+    const summary = document.createElement("summary");
+    summary.textContent = tr("sim.failDetails");
+    details.append(summary);
+    if (landed === false) {
+      const stage = document.createElement("p");
+      stage.className = "send-fail-stage";
+      stage.textContent = tr("approval.sendNotLanded");
+      details.append(stage);
+    } else if (landed === true) {
+      const stage = document.createElement("p");
+      stage.className = "send-fail-stage";
+      stage.textContent = tr("approval.sendLandedFailed");
+      details.append(stage);
+    }
+    if (detailText) {
+      const pre = document.createElement("pre");
+      pre.textContent = detailText;
+      details.append(pre);
+    }
+    card.append(details);
+  }
+  const actions = document.createElement("div");
+  actions.className = "send-status-actions";
+  const reviewBtn = document.createElement("button");
+  reviewBtn.type = "button";
+  reviewBtn.className = "ghost-btn";
+  reviewBtn.textContent = tr("approval.reviewTx");
+  reviewBtn.addEventListener("click", () => restoreWalletSendReviewAfterError());
+  const retryBtn = document.createElement("button");
+  retryBtn.type = "button";
+  retryBtn.className = "primary-btn";
+  retryBtn.textContent = tr("approval.retrySend");
+  const retryOk = canRetryFailedSend(errorCode);
+  retryBtn.disabled = !retryOk;
+  if (retryOk) {
+    retryBtn.addEventListener("click", () => void resolve("approve"));
+  }
+  const exitBtn = document.createElement("button");
+  exitBtn.type = "button";
+  exitBtn.className = "ghost-btn";
+  exitBtn.textContent = tr("approval.exitSend");
+  exitBtn.addEventListener("click", () => void resolve("reject"));
+  actions.append(reviewBtn, retryBtn, exitBtn);
+  card.append(actions);
 }
 
 function enterWalletSendConfirmedPage(signature?: string): void {
@@ -355,10 +489,13 @@ function enterWalletSendConfirmedPage(signature?: string): void {
   document.title = `Airwave — ${tr("approval.approved")}`;
   signPageTitle.textContent = tr("approval.approved");
   const card = ensureSendStatusCard();
-  card.classList.remove("is-pending");
+  card.classList.remove("is-pending", "is-failed");
   card.classList.add("is-confirmed");
-  const mark = card.querySelector(".send-status-mark")!;
+  card.querySelector(".send-status-actions")?.remove();
+  card.querySelector(".send-fail-details")?.remove();
+  const mark = card.querySelector<HTMLElement>(".send-status-mark")!;
   mark.replaceChildren();
+  mark.style.color = "";
   const check = document.createElement("span");
   check.className = "send-status-check";
   check.innerHTML = SEND_STATUS_CHECK_SVG;
@@ -1150,10 +1287,11 @@ async function resolve(decision: "approve" | "reject"): Promise<void> {
       return;
     }
     resolving = false;
-    if (pending && isBroadcastAfterApproveKind(pending.kind) && decision === "approve") {
-      restoreWalletSendReviewAfterError();
-    }
     const code = res.error?.code;
+    if (pending && isBroadcastAfterApproveKind(pending.kind) && decision === "approve") {
+      enterWalletSendFailedPage(code ?? "SEND_BROADCAST_FAILED");
+      return;
+    }
     const msg = code ? progressUserMessage(code) : tr("error.genericFailed");
     if (pending?.kind === "signMessage" || (pending && isSignTxKind(pending.kind))) {
       signError.hidden = false;
@@ -1266,10 +1404,11 @@ function wireShellEvents(): void {
     if (rec.requestId !== requestId) return;
     if (rec.kind === "airwave-wallet-send-progress" && typeof rec.error === "string") {
       resolving = false;
-      restoreWalletSendReviewAfterError();
-      signError.hidden = false;
-      signError.textContent = progressUserMessage(rec.error);
-      setSignButtons({ reject: false, approve: false, approveLabel: tr("approval.approve") });
+      enterWalletSendFailedPage(rec.error, {
+        detail: typeof rec.detail === "string" ? rec.detail : undefined,
+        landed: rec.landed === true ? true : rec.landed === false ? false : undefined,
+        signature: typeof rec.signature === "string" ? rec.signature : undefined,
+      });
       return;
     }
     if (rec.kind === "airwave-wallet-send-settled" && rec.ok === true) {

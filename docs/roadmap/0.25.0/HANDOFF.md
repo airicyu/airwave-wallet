@@ -6,20 +6,21 @@
 2. [INDEX.md](./INDEX.md)
 3. [docs/how.md](./docs/how.md)
 4. [docs/reasoning.md](./docs/reasoning.md)
-5. 設計審查：[docs/design-review.md](./docs/design-review.md)（第 3 輪契約層通過；本檔不是契約）
-6. 上游：[0.24.0](../0.24.0/INDEX.md)、[0.13.0](../0.13.0/INDEX.md)、[0.13.0 approval-host-how](../0.13.0/docs/approval-host-how.md)
+5. [docs/page-modules.md](./docs/page-modules.md)（網站 Page 與疊層 keep-alive）
+6. 設計審查：[docs/design-review.md](./docs/design-review.md)（第 3 輪契約層通過；本檔不是契約）
+7. 上游：[0.24.0](../0.24.0/INDEX.md)、[0.13.0](../0.13.0/INDEX.md)、[0.13.0 approval-host-how](../0.13.0/docs/approval-host-how.md)
 
 ## 產品摘要
 
-Home 頂欄一顆圖示，在錢包視窗（`src/popup/index.html`，viewport 360×600）與 Chrome 側欄（`src/sidepanel/index.html`，寬 100%）之間切換。無工具列 popup。`settings.shell` 預設 `"window"`。網站請求仍開審批 popout。錢包送出的 `uiHost` 跟發起頁路徑，走 0.13.0 的殼內離開規則。
+Home 頂欄一顆圖示，在工具列 popup 與 Chrome 側欄之間切換。殼模式＝側欄文件現在是否活著（不寫 settings）。側欄被 X 或瀏覽器新開＝popup mode。網站：側欄開著則殼內審批，否則 popout。錢包送出的 `uiHost` 跟發起頁路徑。
 
 ## Track
 
-1 manifest、`settings.shell`、工具列、找回視窗 → 2 Home 按鈕互切 → 3 拉滿寬度、`uiHost`、原則檔、typecheck＋build
+1 manifest、`settings.shell`、工具列 → 2 Home 按鈕互切 → 3 拉滿寬度、`uiHost`、原則檔 → 4 網站 Page 模組與疊層 keep-alive（Connect／簽訊息／簽交易；刪 `dapp-approval`）
 
 ## 禁區
 
-GUIDELINES pending／custody／不廣播。不新增 storage key。不加 npm 依賴。不宣告 Wallet Standard 方法。不把網站請求放進側欄。不共用 `openPopout`／`bindPopoutWindow`。SW 醒來不新建、不聚焦錢包視窗。`sidePanel.open` 必須在點擊同步呼叫。payload 只有 `shell` 時不 `notifyAccountChanged`。不拆 `PopupMarkup.tsx` 與 `popup/style.css`。不改審批 420×640，不改 `--popup-w` 定義。不要改 `../solibra-wallet`。文件不寫真實秘密。**Do not commit unless the user asks.**
+GUIDELINES pending／custody／不廣播。不新增 storage key。殼模式不寫 settings。不加 npm 依賴。不宣告 Wallet Standard 方法。側欄文件活著 → 網站請求殼內 `push`；否則 popout。禁止從網站 Connect 呼叫 `sidePanel.open`。不共用 `openPopout`／`bindPopoutWindow` 開錢包主殼。SW 醒來不新建、不聚焦錢包視窗。`sidePanel.open` 必須在 Home 點擊同步呼叫。不拆 `PopupMarkup.tsx` 與 `popup/style.css`。不改審批 420×640，不改 `--popup-w` 定義。網站 stack 疊層 keep-alive，禁止 `push` 時卸載底下 Page。不要改 `../solibra-wallet`。文件不寫真實秘密。**Do not commit unless the user asks.**
 
 ## 錨點
 

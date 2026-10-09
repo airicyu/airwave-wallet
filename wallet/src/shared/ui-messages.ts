@@ -201,6 +201,11 @@ const messages = {
     "zh-Hans": "改到工具栏",
     "en": "Move to toolbar",
   },
+  "shell.closeSidebar": {
+    "zh-Hant": "關閉側欄",
+    "zh-Hans": "关闭侧栏",
+    "en": "Close sidebar",
+  },
   "settings.hub.language": {
     "zh-Hant": "語言",
     "zh-Hans": "语言",
@@ -1176,6 +1181,36 @@ const messages = {
     "zh-Hans": "已确认",
     "en": "Confirmed",
   },
+  "approval.sendFailedTitle": {
+    "zh-Hant": "交易失敗",
+    "zh-Hans": "交易失败",
+    "en": "Transaction failed",
+  },
+  "approval.sendNotLanded": {
+    "zh-Hant": "未上鏈：RPC preflight 拒絕此交易",
+    "zh-Hans": "未上链：RPC preflight 拒绝此交易",
+    "en": "Did not land: RPC preflight rejected this transaction",
+  },
+  "approval.sendLandedFailed": {
+    "zh-Hant": "已送出，鏈上執行失敗",
+    "zh-Hans": "已送出，链上执行失败",
+    "en": "Sent, then failed on-chain",
+  },
+  "approval.reviewTx": {
+    "zh-Hant": "回顧交易",
+    "zh-Hans": "回顾交易",
+    "en": "Review transaction",
+  },
+  "approval.retrySend": {
+    "zh-Hant": "重試",
+    "zh-Hans": "重试",
+    "en": "Retry",
+  },
+  "approval.exitSend": {
+    "zh-Hant": "離開",
+    "zh-Hans": "离开",
+    "en": "Exit",
+  },
   "approval.expired": {
     "zh-Hant": "請求已過期",
     "zh-Hans": "请求已过期",
@@ -1215,6 +1250,11 @@ const messages = {
     "zh-Hant": "這個網站想連線到你的錢包",
     "zh-Hans": "这个网站想连接到你的钱包",
     "en": "This site wants to connect to your wallet",
+  },
+  "page.connect": {
+    "zh-Hant": "連線",
+    "zh-Hans": "连接",
+    "en": "Connect",
   },
   "approval.cannotSignTxAsMsg": {
     "zh-Hant": "不能把交易當成訊息簽署。",

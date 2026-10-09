@@ -18,11 +18,18 @@ export function broadcastWalletSendSettled(
   void chrome.runtime.sendMessage(msg).catch(() => {});
 }
 
-export function broadcastWalletSendProgress(requestId: string, error: string): void {
+export function broadcastWalletSendProgress(
+  requestId: string,
+  error: string,
+  extra?: { detail?: string; landed?: boolean; signature?: string },
+): void {
   const msg: WalletSendProgressNotice = {
     kind: "airwave-wallet-send-progress",
     requestId,
     error,
+    ...(extra?.detail ? { detail: extra.detail } : {}),
+    ...(extra?.landed === true ? { landed: true } : extra?.landed === false ? { landed: false } : {}),
+    ...(extra?.signature ? { signature: extra.signature } : {}),
   };
   void chrome.runtime.sendMessage(msg).catch(() => {});
 }

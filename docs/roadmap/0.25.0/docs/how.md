@@ -6,18 +6,19 @@ INDEX 衝突以 INDEX 為準。審批批准、廣播、`broadcastSig`、確認�
 
 | 詞 | 意思 |
 |----|------|
-| 錢包視窗 | `settings.shell === "window"` 那扇。`chrome.windows` 的 `type: "popup"`。載入錢包 Home |
-| 側欄 | `settings.shell === "sidebar"`。Chrome Side Panel |
-| 審批 popout | 網站請求的那扇。仍走 `openPopout(requestId)`。與錢包視窗不是同一扇 |
+| 錢包視窗／popup | 工具列 action popup。側欄錢包文件 **不在** 時的殼 |
+| 側欄 | Chrome Side Panel。這份文件活著＝sidebar mode |
+| 審批 popout | 網站請求的那扇。仍走 `openPopout(requestId)`。與錢包主殼不是同一扇 |
 
 禁止把錢包視窗的 `windowId` 交進 `bindPopoutWindow`。
 
-## `settings.shell`
+## 殼模式（不進 settings）
 
-- 型別 `"window" | "sidebar"`。
-- `normalizeSettings`：值不是這兩個字串 → `"window"`。
-- 只在切換 **成功** 之後 `patchSettings({ shell })`。
-- SW 啟動（`onInstalled`、`onStartup`、service worker 醒來）讀一次並套用下面的工具列行為。
+- 真相：側欄錢包頁（`src/sidepanel/index.html`）現在是否掛著。
+- 開著：該頁 load／SW 記到 SIDE_PANEL context。
+- 關上：該頁 `pagehide`、使用者按側欄 X、瀏覽器新開、SW 剛醒而還沒有側欄頁。
+- 只放 SW 記憶體。禁止寫 `airwave.settings.v1`。磁碟舊 `shell` 欄忽略、不再寫。
+- SW 啟動套用 **popup** 工具列（此時側欄通常沒開）。側欄頁活著才改成側欄那套 `setPopup("")` + `openPanelOnActionClick: true`。
 
 ## Manifest
 
@@ -31,7 +32,7 @@ vite input 要含側欄 HTML。crx 的 manifest 路徑與打包後路徑必須�
 
 ## 工具列
 
-一律先 `chrome.action.setPopup({ popup: "" })`。SW 啟動（含閒置後醒來）以及每次寫入 `shell` 之後，只依 `shell` 套用 `setPanelBehavior` 與 `setPopup({ popup: "" })`。啟動 **不** `windows.create`，也 **不** `windows.update` 去聚焦。
+SW 啟動（含閒置後醒來）以及側欄頁開關之後，依 **側欄文件是否活著** 套用 `setPanelBehavior` 與 `setPopup`。啟動 **不** `windows.create`，也 **不** `windows.update` 去聚焦。側欄沒開時保留 `default_popup`。
 
 錢包視窗 id 只放 SW 記憶體，不寫 `chrome.storage`。`windows.onRemoved` 清掉這個 id。禁止把審批 popout 的 `windowId` 交進這份記憶體或 `bindPopoutWindow`。
 
@@ -43,8 +44,8 @@ SW 啟動且 `shell === "window"` 時，可以用同一套 `getAll` 把仍開著
 
 | `shell` | 行為 |
 |---------|------|
-| `"sidebar"` | `chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })`。點圖示由 Chrome 開側欄 |
-| `"window"` | `setPanelBehavior({ openPanelOnActionClick: false })`。只有 `chrome.action.onClicked` 走上一節的找回或新建 |
+| 側欄文件活著 | `setPopup({ popup: "" })`、`openPanelOnActionClick: true`。點圖示由 Chrome 對側欄 |
+| 否則 | `setPopup` 恢復 `src/popup/index.html`、`openPanelOnActionClick: false`。點圖示開 action popup |
 
 ## 最後一個一般瀏覽器視窗
 
@@ -68,17 +69,19 @@ Home 按鈕的 click handler 形狀：
 
 1. 讀已經在手的 `lastNormalWindowId`。沒有就 return。
 2. **同步** 呼叫 `chrome.sidePanel.open({ windowId })`（不要先 await 別的東西）。
-3. 在它的 Promise 成功之後才：`patchSettings({ shell: "sidebar" })`、把工具列設成側欄模式、`window.close()` 關掉錢包視窗。
-4. Promise 失敗：停在視窗模式。
+3. 在它的 Promise 成功之後才：把工具列設成側欄模式、`window.close()` 關掉錢包 popup。不寫 settings。
+4. Promise 失敗：停在 popup 模式。
 
-## 切到視窗
+## 關閉側欄
 
-在側欄頁的 click handler：
+側欄 Home 那顆鈕**只關側欄**，與 INDEX「關閉側欄」相同。**禁止** `chrome.action.openPopup`、**禁止** `windows.create`。
 
-1. 請 SW 聚焦既有錢包視窗，或新建一扇並校正 viewport（下一節）。
-2. 成功後才 `patchSettings({ shell: "window" })`、工具列改回視窗模式。
-3. 關掉側欄：`chrome.sidePanel.setOptions({ enabled: false })`，接著 `setOptions({ enabled: true, path })`，`path` 與 manifest `default_path` 相同。不要省略第二步，否則下次開不了。
-4. 第 1 步失敗：不要 disable 側欄，不要寫 `shell`。
+1. 讀手上的 `lastNormalWindowId`（可沒有）。
+2. 請 SW `shell.switchToWindow`：`setOptions({ enabled: false })` 再 `enabled: true` 加回路徑（有 windowId 就帶上，沒有就用全域 options）。
+3. 側欄文件卸載 → surface port disconnect → SW 套用 **popup** 工具列（`setPopup` 還原錢包頁、`openPanelOnActionClick: false`）。
+4. **不要**在這次點擊裡打開 action popup。下次使用者點工具列圖示，Chrome 才開錢包 popup。
+5. 關側欄失敗：側欄保持開著，工具列維持側欄那套。
+6. 使用者按側欄 **X**：同一條「側欄沒了 → popup 工具列」。
 
 ## 錢包視窗 viewport
 
@@ -103,16 +106,16 @@ Home 按鈕的 click handler 形狀：
 
 | 發起 | 寫入 |
 |------|------|
-| 網站 connect／signMessage／signTransaction／signAndSendTransaction | `"popout"`，然後 `openPopout` |
+| 網站 connect／signMessage／signTransaction／signAndSendTransaction | 側欄錢包頁活著 → `"sidebar"`、通知側欄 `push`、禁止 `openPopout`。否則 `"popout"` 然後 `openPopout`。禁止從這條路徑 `sidePanel.open` |
 | `wallet.beginSend` 從 `src/popup/index.html` | `"window"`，禁止 `openPopout` |
 | `wallet.beginSend` 從 `src/sidepanel/index.html` | `"sidebar"`，禁止 `openPopout` |
 
-不讀 `settings.shell` 來決定這欄。只改 `commands/send-command.ts`。
+不讀 settings。只改 `commands/send-command.ts`（錢包送出）。網站分流見上表與 INDEX「網站請求」。
 
 `"window"` 與 `"sidebar"` 就是 0.13.0 的殼內宿主（當時字面是 `"popup"`）：abort 結束該筆錢包送出、禁止 `closePopout`、成功留在該殼回 Home、拒絕留在送出填寫。記憶體若讀到 `"popup"`，走同一條，禁止 `windows.remove`。失焦不呼叫 `ui.abortPending`。
 
 殼內審批模組的 host 用當下文件那一面。收回租金本來就沒有 pending host，仍是殼內換 view。
 
-## 只有 `shell` 的 patch
+## 誤打的 `shell` patch
 
-`handlePatchSettings`：payload 的自有鍵正好是 `shell` 一個時，`writeSettings` 之後不要 `notifyAccountChanged`。其他 patch 維持現況。
+切殼不走 `patchSettings`。若仍收到 payload 自有鍵正好是 `shell` 一個：忽略該欄，禁止 `notifyAccountChanged`。

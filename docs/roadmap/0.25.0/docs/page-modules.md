@@ -54,36 +54,32 @@ INDEX 衝突以 INDEX 為準。本檔只寫 **UI 怎麼切模組**。Pending 生
 
 現有 `BACK_PARENT` 對照表是 stack 的雛形。重構後以真正的 stack 為準，不要為網站審批另開一條「特殊 view 名稱」。
 
-## 邏輯 stack 與畫面過渡（現在立刻換，以後可從下彈）
+## 邏輯 stack 與畫面：疊層 keep-alive
 
-**產品語意**是全頁 cover：新頁蓋住舊頁，不是半透明 modal。這不代表 DOM 永遠只能存在一頁。
+**產品語意**是全頁 cover：新頁蓋住舊頁，不是半透明 modal。
 
-分兩件事，導航擁有兩者，Page 不擁有：
-
-| | 現況（本版預設） | 之後可加、架構要先留得住 |
-|--|------------------|---------------------------|
-| **邏輯** | `push`／`pop`，頂端是作用中 Page | 不變 |
-| **畫面** | 只 **mount 頂端**，底下立刻卸載（原地 replace） | 過渡策略：立刻換、自下而上滑入蓋住、返回時頂頁滑走。動畫期間 **兩頁同時存在**；結束後底層可卸載，或留下掛著（sheet 式，pop 時不必重繪 Home） |
-
-「從下彈出新頁」在動畫中必須看得到底下的 Home，所以 **不能** 用「`currentView === x` 只渲染一個小孩」當唯一真相。正確模型是：
+**本版預設：stack 裡的每一頁都繼續掛著。** 新頁疊在上面；`pop`／dismiss 只收掉自己那一層，底下那頁的本地 UI state（展開、捲動、草稿）還在。不要卸載再重新 mount。不要用 A／B 當代號（舊稿曾把「卸載」叫 A，易和這個決定搞混）。
 
 ```text
-stack（邏輯，一直都在）     畫面槽（導航暫時掛上的 DOM）
-[home, connect]            過渡中：home 槽 + connect 槽（connect 在上層）
-                           結束後策略 A：只留 connect（home 卸載，pop 再 mount）
-                           結束後策略 B：home 仍掛著但不可點，connect 蓋滿
+stack（邏輯）              畫面（同時掛著）
+[home, connect]            home（paused）＋ connect（頂端、可操作）
+pop connect                只收 connect → home 恢復可點，state 還在
 ```
 
-本版實作仍可用策略 A 的 **結束態**（畫面上一次一頁），但 Page 模組必須滿足下面契約，之後換成彈出才不必拆 Page：
+stack 只做這頁的 rollout／dismiss。Page 內部 expand 不抬到全域 store。
 
-1. **Page 是可獨立 mount 的根**（自己的標題＋內文＋底欄包在自己的根節點）。禁止一頁用 `hideAll()` 把別頁的 DOM 藏掉。禁止一頁寫死「我就是整份 `#app` 唯一內容」。
-2. **導航決定同時掛幾頁、誰在上層、過渡何時結束。** Connect 不知道自己是滑上來還是瞬間出現。
-3. **離開／pending 跟邏輯 pop 走，不跟 CSS 動畫走。** 動畫還沒播完也可以已 `push`；使用者按批准成功後先 `pop` 邏輯，畫面再滑走。禁止 Page 在 `transitionend` 才 reject pending。
-4. **底層 Page 若仍掛著：不可點、不搶焦點、不重跑進入時的副作用**（不要 Home 在底下又刷一次持倉只因為上面蓋了 Connect）。`push` 不是重新 `enter` 底下那頁。
-5. 頂欄若屬於 **殼**（帳戶 pill 只在 Home），殼聽 stack 頂端決定畫哪一種頂欄。若頂欄屬於 **Page**（Connect 的 Back＋標題），跟該 Page 根一起滑。不要讓「彈出」變成第二套頂欄邏輯寫在宿主裡。
-6. 仍禁止半蓋、禁止 Page 用 `position: fixed` 冒充整窗殼。從下彈出是 **導航對 Page 根做位移**，不是 Page 自己 `fixed` 蓋住 Home。
+Token／Activity 仍是 **同一頁裡換內容**，不是再疊一層。
 
-本版 **不做** 從下彈出的動畫。契約先把「stack 與 mount 分離」寫死，避免現在的原地 replace 把之後的過渡路封死。
+被蓋住的 Page **paused**：不可點、不搶焦點、不重跑進入時的 fetch。`push` 不是底下那頁又 `enter` 一次。
+
+過渡（本版可瞬間蓋滿；之後可從下彈）由導航對 **Page 根**做位移。Page 不知道自己是滑上來還是瞬間出現。離開／pending 跟邏輯 `pop` 走，不跟 `transitionend` 走。
+
+1. **Page 是可獨立 mount 的根**（標題＋內文＋底欄在自己的根節點）。禁止一頁 `hideAll()` 把別頁 DOM 藏掉。禁止一頁寫死「我就是整份 `#app` 唯一內容」。
+2. **導航決定層級與過渡。** 同時掛 stack 上所有 Page，頂端在最上層。
+3. 頂欄屬於 **Page** 的跟該根一起動；Home 帳戶 pill 屬於 Home 這一層，被蓋住就看不見、也不該在 Connect 上再畫一套殼頂欄。
+4. 仍禁止半蓋、禁止 Page 用 `position: fixed` 冒充整窗殼。
+5. **疊層順序只寫在 Page 根。** 每一頁根必須自成 stacking context（例如 `isolation: isolate` 加上依 stack 深度的 `z-index`）。頁內頂欄、下拉、badge 的 `z-index` 只跟自己那一頁比，禁止和別頁搶全域數字。被蓋住的頁 `pointer-events: none`，避免選單還能點穿。Toast 若屬殼、不是某一頁，掛在 stack **外面**由宿主畫，不要讓 Home 的 toast 蓋過 Connect。Page 內不要用會逃出該頁 context 的 `position: fixed`。
+6. 本版 **不做** 從下彈出動畫。
 
 ## 本版要先切開的 Page（網站請求）
 
@@ -134,4 +130,5 @@ stack（邏輯，一直都在）     畫面槽（導航暫時掛上的 DOM）
 - 不改批准／廣播／pending 只活在 SW
 - 不把網站請求塞進工具列 popup（window 模式仍 popout）
 - 不為了模組化改視覺風格或新增半蓋 overlay
-- 本版不做從下彈出等過渡動畫；但 Page 必須可被導航同時掛兩份（見上節），禁止寫成永遠只能單頁 replace
+- 本版不做從下彈出等過渡動畫
+- 禁止 `push` 時卸載底下的 Page（會丟掉該頁本地 state）
