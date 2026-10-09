@@ -4,7 +4,7 @@
  */
 import type { ExtensionRequest, ExtensionResponse } from "../shared/commands";
 import { handleDappCommand, handleUiCommand, handleWalletCommand } from "./handlers";
-import { respond } from "./messaging";
+import { alignConnectionsToActiveAccount, respond } from "./messaging";
 import {
   finishWalletSendWindowClosed,
   getPending,
@@ -18,6 +18,7 @@ import * as session from "./session";
 import { ensureLocalMigrated } from "./storage";
 
 registerWalletShellListeners();
+void chrome.storage.session.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" }).catch(() => {});
 void ensureLocalMigrated();
 
 function isExtensionPage(sender: chrome.runtime.MessageSender): boolean {
@@ -53,8 +54,9 @@ async function dispatch(
     });
   }
   await session.ensureHydrated();
+  await alignConnectionsToActiveAccount();
   if (req.command.startsWith("dapp.") || req.command === "debug.ping") {
-    return handleDappCommand(req);
+    return handleDappCommand(req, sender);
   }
   if (req.command.startsWith("ui.")) {
     return handleUiCommand(req);

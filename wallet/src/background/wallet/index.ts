@@ -6,6 +6,7 @@ export {
   handleCreateVault,
   handleGetState,
   handleLock,
+  handleReadIntegrationSecrets,
   handleUnlock,
   handleAddReadOnlyAccount,
   handleDeleteAccount,

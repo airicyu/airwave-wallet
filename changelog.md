@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.27.0 — 2026-10-10
+
+保管與簽名邊界：session 只留 salt 與 AES key，明文 secret 只在 service worker 記憶體；`workingTx` 只做本地 Compute Budget 修補，不再為了改 CU 去拉 lookup table。dApp 簽名須已連線、`signTransaction` 須帶與錢包一致的 chain，核准前分頁 origin 必須仍是當初那一個。新 vault 的 PBKDF2 迭代為 600000；`getState` 不再帶出 Jupiter／Helius 明文。
+
 ## 0.26.0 — 2026-10-10
 
 小修：匯入助記詞切「標準」／「CLI／Ledger」後預覽列會跟著變。Combined 持倉展開改 34px chevron、成員兩行＋比例條並依數量排序。解鎖畫面可見即聚焦密碼欄。帳戶類型改三色 stroke 圖（可簽／唯讀／聚合），頂欄不再用字母頭像。Accounts 可拖卡片改序。Combined Manage 分成員地址與本機帳戶兩區；刪帳戶與刪成員皆須確認。`airwave.schemaGeneration` 蓋第 1 代戳，不改既有 `*.v1` 資料形狀。

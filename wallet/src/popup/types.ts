@@ -2,7 +2,7 @@
  * Shared TypeScript types for popup wallet mirror state, connection summaries, and navigable view names.
  * Contains no runtime logic or UI rendering.
  */
-import type { AccountMeta, Settings } from "../shared/storage-keys";
+import type { AccountMeta, PublicSettings } from "../shared/storage-keys";
 import type { MessageKey } from "../shared/ui-messages";
 
 export type ConnectionSummary = {
@@ -16,7 +16,7 @@ export type State = {
   unlocked: boolean;
   accounts: AccountMeta[];
   activeAccountId: string | null;
-  settings: Settings;
+  settings: PublicSettings;
   connections: ConnectionSummary[];
 };
 

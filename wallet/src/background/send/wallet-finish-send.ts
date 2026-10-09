@@ -14,7 +14,7 @@ import { getWorkingTx } from "../pending";
 import { getPending, removePending } from "../pending";
 import { clearWalletSendState, getWalletSendState } from "./wallet-send-state";
 import { cancelPendingTimeout } from "../pending";
-import { sendBridgeResult } from "../messaging";
+import { sendBridgeResult, tabOriginStill } from "../messaging";
 import { formatSendFailureDetail } from "./send-fail-detail";
 
 const CONFIRM_MS = 60_000;
@@ -45,6 +45,28 @@ export async function runWalletSendAfterApprove(
   if (ws.broadcastSig) {
     await waitConfirmOnly(requestId, rpcUrl, ws.broadcastSig, notify);
     return;
+  }
+
+  if (pending.kind === "signAndSendTransaction") {
+    const still = await tabOriginStill(pending.tabId, pending.origin);
+    if (still !== "ok") {
+      if (still === "changed") {
+        await sendBridgeResult(
+          pending.tabId,
+          {
+            type: "airwave-bridge-result",
+            requestId,
+            ok: false,
+            error: { code: "ORIGIN_CHANGED", message: "Tab origin changed" },
+          },
+          pending.frameId,
+        );
+      }
+      removePending(requestId);
+      clearWalletSendState(requestId);
+      notify.settled(requestId, false, "ORIGIN_CHANGED");
+      return;
+    }
   }
 
   const { transaction } = pending.payload as SignTransactionPayload;
@@ -106,12 +128,16 @@ async function waitConfirmOnly(
         if (!p) return;
         if (p.kind === "signAndSendTransaction") {
           const sigBytes = Array.from(bs58.decode(signature));
-          await sendBridgeResult(p.tabId, {
-            type: "airwave-bridge-result",
-            requestId,
-            ok: true,
-            result: { signature: sigBytes },
-          });
+          await sendBridgeResult(
+            p.tabId,
+            {
+              type: "airwave-bridge-result",
+              requestId,
+              ok: true,
+              result: { signature: sigBytes },
+            },
+            p.frameId,
+          );
         }
         removePending(requestId);
         clearWalletSendState(requestId);

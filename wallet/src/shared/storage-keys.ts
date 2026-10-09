@@ -106,10 +106,40 @@ export function isPublicClusterRpc(url: string): boolean {
   return u === PUBLIC_RPC_BY_CLUSTER.devnet || u === PUBLIC_RPC_BY_CLUSTER.mainnet;
 }
 
+export function isAllowedCustomRpc(url: string): boolean {
+  try {
+    const parsed = new URL(url.trim());
+    if (parsed.username || parsed.password) return false;
+    if (!parsed.hostname) return false;
+    if (parsed.protocol === "https:") return true;
+    if (parsed.protocol === "http:") {
+      return parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 export function customRpcForCluster(url: string, cluster: Cluster): string {
   const t = url.trim();
   if (!t || isPublicClusterRpc(t)) return "";
+  if (!isAllowedCustomRpc(t)) return "";
   return t;
+}
+
+export type PublicSettings = Omit<Settings, "jupiterApiKey" | "heliusApiUrl"> & {
+  jupiterConfigured: boolean;
+  heliusConfigured: boolean;
+};
+
+export function toPublicSettings(settings: Settings): PublicSettings {
+  const { jupiterApiKey, heliusApiUrl, ...rest } = settings;
+  return {
+    ...rest,
+    jupiterConfigured: jupiterApiKey.trim().length > 0,
+    heliusConfigured: heliusApiUrl.trim().length > 0,
+  };
 }
 
 export function emptyClusterRpc(): ClusterRpcConfig {

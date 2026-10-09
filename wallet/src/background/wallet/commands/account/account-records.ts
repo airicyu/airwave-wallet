@@ -43,6 +43,9 @@ export async function handleSetActiveAccount(req: ExtensionRequest): Promise<Ext
     });
   }
   await writeActiveAccountId(accountId);
+  const connections = await readConnections();
+  for (const rec of Object.values(connections)) rec.accountId = accountId;
+  await writeConnections(connections);
   const acc = accounts.find((a) => a.id === accountId)!;
   await notifyAccountChanged(getExposedPublicKey(acc));
   return respond({

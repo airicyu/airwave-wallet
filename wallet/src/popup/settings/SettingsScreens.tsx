@@ -3,7 +3,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { hardenApiKeyInput } from "../lib/password-input";
 import { IconCheck, IconEye, IconPlus, IconTrash } from "../components/StrokeIcon";
 import { WalletPasswordInput } from "../components/WalletPasswordInput";
-import type { Settings, UiLocale } from "../../shared/storage-keys";
+import { sendExtensionRequest } from "../../shared/ext-api";
+import type { PublicSettings, UiLocale } from "../../shared/storage-keys";
 import { DEFAULT_UI_LOCALE, LOCALE_ENDONYM, UI_LOCALES } from "../../shared/ui-i18n";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
@@ -32,7 +33,7 @@ function useSettingsIo(): SettingsIo {
   return { refresh, showError, locale };
 }
 
-export function SettingsHub({ settings }: { settings: Settings }): JSX.Element {
+export function SettingsHub({ settings }: { settings: PublicSettings }): JSX.Element {
   const { navigateTo } = usePopupContext();
   const { t, locale } = useT();
   return (
@@ -87,7 +88,7 @@ export function SettingsHub({ settings }: { settings: Settings }): JSX.Element {
   );
 }
 
-export function LocaleScreen({ settings }: { settings: Settings }): JSX.Element {
+export function LocaleScreen({ settings }: { settings: PublicSettings }): JSX.Element {
   const io = useSettingsIo();
   const { locale, t } = useT();
   return (
@@ -113,7 +114,7 @@ export function LocaleScreen({ settings }: { settings: Settings }): JSX.Element 
   );
 }
 
-export function NetworkScreen({ settings }: { settings: Settings }): JSX.Element {
+export function NetworkScreen({ settings }: { settings: PublicSettings }): JSX.Element {
   const io = useSettingsIo();
   const { locale, t } = useT();
   return (
@@ -142,7 +143,7 @@ export function NetworkScreen({ settings }: { settings: Settings }): JSX.Element
   );
 }
 
-export function RpcScreen({ settings }: { settings: Settings }): JSX.Element {
+export function RpcScreen({ settings }: { settings: PublicSettings }): JSX.Element {
   const [editKey, setEditKey] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
   return (
@@ -176,7 +177,7 @@ function RpcClusterCard({
   setEditDraft,
 }: {
   cluster: Cluster;
-  settings: Settings;
+  settings: PublicSettings;
   editKey: string | null;
   editDraft: string;
   setEditKey: (k: string | null) => void;
@@ -444,7 +445,7 @@ function KeysField({
   );
 }
 
-export function KeysScreen({ settings }: { settings: Settings }): JSX.Element {
+export function KeysScreen({ settings }: { settings: PublicSettings }): JSX.Element {
   const { wallet } = usePopupContext();
   const io = useSettingsIo();
   const { locale } = useT();
@@ -452,8 +453,8 @@ export function KeysScreen({ settings }: { settings: Settings }): JSX.Element {
   const [jupiterRevealed, setJupiterRevealed] = useState(false);
   const [heliusDraft, setHeliusDraft] = useState("");
   const [jupiterDraft, setJupiterDraft] = useState("");
-  const heliusShown = heliusRevealed ? heliusDraft || settings.heliusApiUrl : heliusDraft;
-  const jupiterShown = jupiterRevealed ? jupiterDraft || settings.jupiterApiKey : jupiterDraft;
+  const heliusShown = heliusDraft;
+  const jupiterShown = jupiterDraft;
 
   return (
     <>
@@ -461,12 +462,18 @@ export function KeysScreen({ settings }: { settings: Settings }): JSX.Element {
         id="helius-api-url"
         label="Helius API URL"
         revealed={heliusRevealed}
-        stored={settings.heliusApiUrl}
+        stored={settings.heliusConfigured ? MASKED_SECRET_DISPLAY : ""}
         draft={heliusShown}
         onReveal={() => {
           setHeliusRevealed((v) => {
             const next = !v;
-            if (next) setHeliusDraft(settings.heliusApiUrl);
+            if (next) {
+              void sendExtensionRequest("wallet.readIntegrationSecrets", {}).then((res) => {
+                if (!res.ok) return;
+                const url = (res.result as { heliusApiUrl?: string } | undefined)?.heliusApiUrl ?? "";
+                setHeliusDraft(url);
+              });
+            }
             return next;
           });
         }}
@@ -480,12 +487,18 @@ export function KeysScreen({ settings }: { settings: Settings }): JSX.Element {
         id="jupiter-api-key"
         label="Jupiter API key"
         revealed={jupiterRevealed}
-        stored={settings.jupiterApiKey}
+        stored={settings.jupiterConfigured ? MASKED_SECRET_DISPLAY : ""}
         draft={jupiterShown}
         onReveal={() => {
           setJupiterRevealed((v) => {
             const next = !v;
-            if (next) setJupiterDraft(settings.jupiterApiKey);
+            if (next) {
+              void sendExtensionRequest("wallet.readIntegrationSecrets", {}).then((res) => {
+                if (!res.ok) return;
+                const key = (res.result as { jupiterApiKey?: string } | undefined)?.jupiterApiKey ?? "";
+                setJupiterDraft(key);
+              });
+            }
             return next;
           });
         }}
@@ -499,7 +512,7 @@ export function KeysScreen({ settings }: { settings: Settings }): JSX.Element {
   );
 }
 
-export function CuPriceScreen({ settings }: { settings: Settings }): JSX.Element {
+export function CuPriceScreen({ settings }: { settings: PublicSettings }): JSX.Element {
   const io = useSettingsIo();
   const { locale } = useT();
   const [draft, setDraft] = useState(String(settings.defaultCuPrice));

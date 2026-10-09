@@ -191,7 +191,7 @@ Alias：…         （可省略；短稱、UI 用詞）
 - **中文：** 金庫
 - **英文：** vault
 - **定義：** 以錢包密碼加密存放各**簽名錢包**私鑰的結構；解鎖後明文只在 service worker 記憶體。
-- **程式：** `airwave.vault.v1`；session secrets
+- **程式：** `airwave.vault.v1`。session 只留 `saltB64` 與 `keyRawB64`；明文 secrets 只在 service worker 記憶體。
 
 ### 錢包密碼
 

@@ -8,6 +8,7 @@ import {
   PUBLIC_RPC_BY_CLUSTER,
   type Cluster,
   type ClusterRpcConfig,
+  type PublicSettings,
   type Settings,
   type UiLocale,
 } from "../../shared/storage-keys";
@@ -23,7 +24,7 @@ export type SettingsIo = {
   locale: UiLocale;
 };
 
-export function rpcFingerprint(settings: Settings): string {
+export function rpcFingerprint(settings: PublicSettings): string {
   const pack = (c: Cluster): string => {
     const cfg = settings.rpcByCluster[c];
     return `${cfg.active}\u001e${cfg.urls.join("\u001f")}`;
@@ -31,8 +32,8 @@ export function rpcFingerprint(settings: Settings): string {
   return `${pack("devnet")}|${pack("mainnet")}`;
 }
 
-export function settingsFingerprint(settings: Settings): string {
-  return `${settings.cluster}|${rpcFingerprint(settings)}|${settings.heliusApiUrl}|${settings.jupiterApiKey}|${settings.defaultCuPrice}`;
+export function settingsFingerprint(settings: PublicSettings): string {
+  return `${settings.cluster}|${rpcFingerprint(settings)}|${settings.heliusConfigured}|${settings.jupiterConfigured}|${settings.defaultCuPrice}`;
 }
 
 export function cloneRpcByCluster(
@@ -50,8 +51,10 @@ export function cloneRpcByCluster(
 
 export async function patchRpcByCluster(next: Record<Cluster, ClusterRpcConfig>, io: SettingsIo, locale: UiLocale): Promise<void> {
   const res = await sendExtensionRequest("storage.patchSettings", { rpcByCluster: next });
-  if (!res.ok) io.showError(apiErrorMessage(locale, res.error, "error.saveRpcFailed"));
-  else await io.refresh();
+  if (!res.ok) {
+    if (res.error?.code === "INVALID_RPC") io.showError(t(locale, "error.invalidRpcUrl"));
+    else io.showError(apiErrorMessage(locale, res.error, "error.saveRpcFailed"));
+  } else await io.refresh();
 }
 
 export async function patchSettingsPartial(patch: Partial<Settings>, io: SettingsIo, locale: UiLocale): Promise<void> {
@@ -68,9 +71,19 @@ export function rpcOptionKey(cluster: Cluster, isPublic: boolean, url: string): 
   return isPublic ? `${cluster}:public` : `${cluster}:${url}`;
 }
 
-export function apiKeysHubSummary(settings: Settings, locale: UiLocale): string {
-  const h = settings.heliusApiUrl.trim().length > 0;
-  const j = settings.jupiterApiKey.trim().length > 0;
+async function readStoredIntegrationSecrets(): Promise<{ jupiterApiKey: string; heliusApiUrl: string }> {
+  const res = await sendExtensionRequest("wallet.readIntegrationSecrets", {});
+  if (!res.ok) return { jupiterApiKey: "", heliusApiUrl: "" };
+  const result = (res.result ?? {}) as { jupiterApiKey?: string; heliusApiUrl?: string };
+  return {
+    jupiterApiKey: result.jupiterApiKey ?? "",
+    heliusApiUrl: result.heliusApiUrl ?? "",
+  };
+}
+
+export function apiKeysHubSummary(settings: PublicSettings, locale: UiLocale): string {
+  const h = settings.heliusConfigured;
+  const j = settings.jupiterConfigured;
   if (h && j) return t(locale, "settings.hub.keysConfigured");
   if (h || j) return t(locale, "settings.hub.keysPartial");
   return t(locale, "settings.hub.keysUnset");
@@ -129,10 +142,11 @@ export async function persistHeliusField(args: {
   io: SettingsIo;
   locale: UiLocale;
 }): Promise<boolean> {
-  if (!args.revealed && args.wallet.settings.heliusApiUrl) return false;
+  const stored = (await readStoredIntegrationSecrets()).heliusApiUrl;
+  if (!args.revealed && args.wallet.settings.heliusConfigured) return false;
   let heliusApiUrl = args.draft.trim();
-  if (heliusApiUrl === MASKED_SECRET_DISPLAY) heliusApiUrl = args.wallet.settings.heliusApiUrl;
-  if (heliusApiUrl === args.wallet.settings.heliusApiUrl) return false;
+  if (heliusApiUrl === MASKED_SECRET_DISPLAY) heliusApiUrl = stored;
+  if (heliusApiUrl === stored) return false;
   await patchSettingsPartial({ heliusApiUrl }, args.io, args.locale);
   return true;
 }
@@ -144,10 +158,11 @@ export async function persistJupiterField(args: {
   io: SettingsIo;
   locale: UiLocale;
 }): Promise<boolean> {
-  if (!args.revealed && args.wallet.settings.jupiterApiKey) return false;
+  const stored = (await readStoredIntegrationSecrets()).jupiterApiKey;
+  if (!args.revealed && args.wallet.settings.jupiterConfigured) return false;
   let jupiterApiKey = args.draft.trim();
-  if (jupiterApiKey === MASKED_SECRET_DISPLAY) jupiterApiKey = args.wallet.settings.jupiterApiKey;
-  if (jupiterApiKey === args.wallet.settings.jupiterApiKey) return false;
+  if (jupiterApiKey === MASKED_SECRET_DISPLAY) jupiterApiKey = stored;
+  if (jupiterApiKey === stored) return false;
   await patchSettingsPartial({ jupiterApiKey }, args.io, args.locale);
   return true;
 }

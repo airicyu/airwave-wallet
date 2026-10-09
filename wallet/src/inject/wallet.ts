@@ -161,6 +161,7 @@ export const airwaveWallet: Wallet = {
         for (const input of inputs) {
           const result = (await bridgeRequest("dapp.signTransaction", {
             transaction: Array.from(input.transaction),
+            chain: input.chain,
           })) as { signedTransaction: number[] };
           outputs.push({
             signedTransaction: Uint8Array.from(result.signedTransaction),

@@ -29,6 +29,7 @@ import {
   handleImportSeedAccount,
   handleLock,
   handlePatchSettings,
+  handleReadIntegrationSecrets,
   handlePreviewSeedAccounts,
   handleRemoveCombinedSub,
   handleReorderAccounts,
@@ -50,6 +51,7 @@ export async function handleWalletCommand(
   sender: chrome.runtime.MessageSender,
 ): Promise<ExtensionResponse> {
   if (req.command === "wallet.getState") return handleGetState(req);
+  if (req.command === "wallet.readIntegrationSecrets") return handleReadIntegrationSecrets(req);
   if (req.command === "wallet.lock") return handleLock(req);
   if (req.command === "wallet.unlock") return handleUnlock(req);
   if (req.command === "wallet.changeVaultPassword") return handleChangeVaultPassword(req);

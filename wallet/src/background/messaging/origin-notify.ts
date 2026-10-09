@@ -7,14 +7,50 @@ import type {
   AirwaveBridgeDisconnected,
   AirwaveBridgeResult,
 } from "../../shared/bridge";
-import { readConnections, readSettings, writeConnections } from "../storage";
+import { getActivePublicKey, readActiveAccountId, readConnections, readSettings, writeConnections } from "../storage";
 
-export async function sendBridgeResult(tabId: number, msg: AirwaveBridgeResult): Promise<void> {
+export async function sendBridgeResult(
+  tabId: number,
+  msg: AirwaveBridgeResult,
+  frameId?: number,
+): Promise<void> {
   try {
-    await chrome.tabs.sendMessage(tabId, msg);
+    if (frameId != null) await chrome.tabs.sendMessage(tabId, msg, { frameId });
+    else await chrome.tabs.sendMessage(tabId, msg);
   } catch {
     /* tab closed */
   }
+}
+
+export async function tabOriginStill(
+  tabId: number,
+  origin: string,
+): Promise<"ok" | "closed" | "changed"> {
+  let tab: chrome.tabs.Tab;
+  try {
+    tab = await chrome.tabs.get(tabId);
+  } catch {
+    return "closed";
+  }
+  try {
+    const parsed = new URL(tab.url ?? "");
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "changed";
+    return parsed.origin === origin ? "ok" : "changed";
+  } catch {
+    return "changed";
+  }
+}
+
+export async function alignConnectionsToActiveAccount(): Promise<void> {
+  const activeId = await readActiveAccountId();
+  if (!activeId) return;
+  const connections = await readConnections();
+  const rows = Object.values(connections);
+  if (rows.length === 0 || rows.every((rec) => rec.accountId === activeId)) return;
+  for (const rec of rows) rec.accountId = activeId;
+  await writeConnections(connections);
+  const pubkey = await getActivePublicKey();
+  if (pubkey) await notifyAccountChanged(pubkey);
 }
 
 export async function notifyAccountChanged(publicKeyBase58: string): Promise<void> {

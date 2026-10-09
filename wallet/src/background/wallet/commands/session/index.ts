@@ -1,7 +1,7 @@
 /**
  * Re-exports session and vault password wallet command handlers.
  */
-export { handleGetState, handleLock } from "./session-state";
+export { handleGetState, handleLock, handleReadIntegrationSecrets } from "./session-state";
 export {
   handleChangeVaultPassword,
   handleCreateVault,

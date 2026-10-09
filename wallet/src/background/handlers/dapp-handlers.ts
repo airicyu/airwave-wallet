@@ -17,7 +17,7 @@ import { getActivePublicKey, readActiveAccountId, readConnections, readSettings 
 import { addPending } from "../pending";
 import { schedulePendingTimeout } from "../pending";
 import { respond } from "../messaging";
-import { rememberConnectedTab, removeConnectionAndNotify } from "../messaging";
+import { rememberConnectedTab, removeConnectionAndNotify, tabOriginStill } from "../messaging";
 import { notifySidebarDappApproval } from "../messaging/open-dapp-in-shell";
 import { openPopout } from "../messaging";
 import { isSidebarWalletOpen } from "../shell";
@@ -48,10 +48,27 @@ async function presentDappApproval(
   await openPopout(requestId);
 }
 
-export async function handleDappCommand(req: ExtensionRequest): Promise<ExtensionResponse> {
-  const tabId = req.tabId;
-  const origin = req.origin;
-  if (tabId == null || !origin) {
+function tabContext(
+  sender: chrome.runtime.MessageSender,
+): { origin: string; tabId: number; frameId: number } | null {
+  const tabId = sender.tab?.id;
+  const url = sender.tab?.url;
+  if (tabId == null || !url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    return { origin: parsed.origin, tabId, frameId: sender.frameId ?? 0 };
+  } catch {
+    return null;
+  }
+}
+
+export async function handleDappCommand(
+  req: ExtensionRequest,
+  sender: chrome.runtime.MessageSender,
+): Promise<ExtensionResponse> {
+  const tab = tabContext(sender);
+  if (!tab) {
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
@@ -59,6 +76,7 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
       error: { code: "BAD_CONTEXT", message: "Missing tab or origin" },
     });
   }
+  const { origin, tabId, frameId } = tab;
 
   if (req.command === "debug.ping") {
     const p = req.payload as { text?: string } | undefined;
@@ -86,6 +104,18 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
     const connections = await readConnections();
     const trusted = connections[origin];
     if (trusted && session.isUnlocked()) {
+      const still = await tabOriginStill(tabId, origin);
+      if (still !== "ok") {
+        return respond({
+          kind: "airwave-ext-res",
+          requestId: req.requestId,
+          ok: false,
+          error:
+            still === "changed"
+              ? { code: "ORIGIN_CHANGED", message: "Tab origin changed" }
+              : { code: "BAD_CONTEXT", message: "Missing tab or origin" },
+        });
+      }
       await rememberConnectedTab(origin, tabId, activeId);
       const settings = await readSettings();
       return respond({
@@ -110,7 +140,7 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
     await presentDappApproval(requestId, tabId, {
       kind: "connect",
       tabId,
-      frameId: req.frameId ?? 0,
+      frameId,
       origin,
       payload,
       createdAt: Date.now(),
@@ -135,6 +165,16 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
   }
 
   if (req.command === "dapp.signMessage") {
+    const activeForConn = await readActiveAccountId();
+    const connections = await readConnections();
+    if (!activeForConn || connections[origin]?.accountId !== activeForConn) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "NOT_CONNECTED", message: "Origin is not connected" },
+      });
+    }
     const gate = await signMessageEnqueueGateError();
     if (gate) {
       return respond({
@@ -160,7 +200,7 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
     await presentDappApproval(requestId, tabId, {
       kind: "signMessage",
       tabId,
-      frameId: req.frameId ?? 0,
+      frameId,
       origin,
       payload,
       createdAt: Date.now(),
@@ -176,6 +216,38 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
   }
 
   if (req.command === "dapp.signTransaction") {
+    const payload = req.payload as SignTransactionPayload | undefined;
+    const chain = payload?.chain;
+    if (!chain || typeof chain !== "string" || !ACCEPTED_CHAIN_IDS.has(chain)) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "INVALID_CHAIN", message: "Unsupported chain" },
+      });
+    }
+    const settings = await readSettings();
+    if (settingsChainId(settings.cluster) !== chain) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: {
+          code: "CHAIN_MISMATCH",
+          message: "Wallet cluster does not match request chain",
+        },
+      });
+    }
+    const activeForConn = await readActiveAccountId();
+    const connections = await readConnections();
+    if (!activeForConn || connections[origin]?.accountId !== activeForConn) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "NOT_CONNECTED", message: "Origin is not connected" },
+      });
+    }
     const gate = await signMessageEnqueueGateError();
     if (gate) {
       return respond({
@@ -198,7 +270,7 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
     await presentDappApproval(requestId, tabId, {
       kind: "signTransaction",
       tabId,
-      frameId: req.frameId ?? 0,
+      frameId,
       origin,
       payload: req.payload as SignTransactionPayload,
       createdAt: Date.now(),
@@ -235,6 +307,16 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
         },
       });
     }
+    const activeForConn = await readActiveAccountId();
+    const connections = await readConnections();
+    if (!activeForConn || connections[origin]?.accountId !== activeForConn) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "NOT_CONNECTED", message: "Origin is not connected" },
+      });
+    }
     const gate = await signMessageEnqueueGateError();
     if (gate) {
       return respond({
@@ -257,7 +339,7 @@ export async function handleDappCommand(req: ExtensionRequest): Promise<Extensio
     await presentDappApproval(requestId, tabId, {
       kind: "signAndSendTransaction",
       tabId,
-      frameId: req.frameId ?? 0,
+      frameId,
       origin,
       payload: payload as SignAndSendTransactionPayload,
       createdAt: Date.now(),

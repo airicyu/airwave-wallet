@@ -2,7 +2,8 @@
  * Password-boxed vault: PBKDF2 key derivation and AES-GCM encrypt/decrypt of account secret payloads.
  * Does not manage service-worker session unlock lifetime or chrome.storage I/O.
  */
-const PBKDF2_ITERATIONS = 310_000;
+const PBKDF2_ITERATIONS_LEGACY = 310_000;
+const PBKDF2_ITERATIONS = 600_000;
 
 export type VaultSecrets = {
   secrets: Record<string, string>;
@@ -29,7 +30,14 @@ function b64decode(b64: string): Uint8Array {
   return out;
 }
 
-async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+function assertKdfIterations(iterations: number): void {
+  if (iterations !== PBKDF2_ITERATIONS_LEGACY && iterations !== PBKDF2_ITERATIONS) {
+    throw new Error("Unsupported KDF iterations");
+  }
+}
+
+async function deriveKey(password: string, salt: Uint8Array, iterations: number): Promise<CryptoKey> {
+  assertKdfIterations(iterations);
   const enc = new TextEncoder();
   const baseKey = await crypto.subtle.importKey(
     "raw",
@@ -42,7 +50,7 @@ async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey>
     {
       name: "PBKDF2",
       salt: salt as BufferSource,
-      iterations: PBKDF2_ITERATIONS,
+      iterations,
       hash: "SHA-256",
     },
     baseKey,
@@ -83,7 +91,7 @@ export async function encryptVault(
   secrets: VaultSecrets,
 ): Promise<{ blob: VaultBlob; key: CryptoKey }> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
-  const key = await deriveKey(password, salt);
+  const key = await deriveKey(password, salt, PBKDF2_ITERATIONS);
   const ciphertext = await seal(key, secrets);
   return {
     key,
@@ -101,28 +109,36 @@ export async function encryptVaultWithKey(
   key: CryptoKey,
   saltB64: string,
   secrets: VaultSecrets,
+  iterations: number = PBKDF2_ITERATIONS,
 ): Promise<VaultBlob> {
+  assertKdfIterations(iterations);
   return {
     version: 1,
     kdf: "pbkdf2-sha256",
-    kdfParams: { salt: saltB64, iterations: PBKDF2_ITERATIONS },
+    kdfParams: { salt: saltB64, iterations },
     cipher: "aes-gcm",
     ciphertext: await seal(key, secrets),
   };
+}
+
+export async function decryptVaultWithKey(
+  key: CryptoKey,
+  blob: VaultBlob,
+): Promise<VaultSecrets> {
+  assertKdfIterations(blob.kdfParams.iterations);
+  const combined = b64decode(blob.ciphertext);
+  const iv = combined.slice(0, 12);
+  const data = combined.slice(12);
+  const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+  return JSON.parse(new TextDecoder().decode(plain)) as VaultSecrets;
 }
 
 export async function decryptVault(
   password: string,
   blob: VaultBlob,
 ): Promise<{ secrets: VaultSecrets; key: CryptoKey }> {
+  assertKdfIterations(blob.kdfParams.iterations);
   const salt = b64decode(blob.kdfParams.salt);
-  const combined = b64decode(blob.ciphertext);
-  const iv = combined.slice(0, 12);
-  const data = combined.slice(12);
-  const key = await deriveKey(password, salt);
-  const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
-  return {
-    key,
-    secrets: JSON.parse(new TextDecoder().decode(plain)) as VaultSecrets,
-  };
+  const key = await deriveKey(password, salt, blob.kdfParams.iterations);
+  return { key, secrets: await decryptVaultWithKey(key, blob) };
 }

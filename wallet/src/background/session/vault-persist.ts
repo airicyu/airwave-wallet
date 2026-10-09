@@ -13,7 +13,14 @@ export async function persistVaultFromSession(): Promise<void> {
       await session.lock();
       throw new Error("SESSION_SALT_MISMATCH");
     }
-    const blob = await encryptVaultWithKey(cryptoState.key, cryptoState.saltB64, secrets);
+    const blob = existing
+      ? await encryptVaultWithKey(
+          cryptoState.key,
+          cryptoState.saltB64,
+          secrets,
+          existing.kdfParams.iterations,
+        )
+      : await encryptVaultWithKey(cryptoState.key, cryptoState.saltB64, secrets);
     await writeVaultBlob(blob);
     await session.persistUnlockedSession();
   });

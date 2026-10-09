@@ -12,25 +12,34 @@ export async function finishSignAndSendRejected(
   userRejectedMessage = "User rejected",
 ): Promise<void> {
   const ws = getWalletSendState(requestId);
+  const frameId = getPending(requestId)?.frameId;
   cancelPendingTimeout(requestId);
   takePending(requestId);
   clearWalletSendState(requestId);
   unbindPopoutByRequest(requestId);
   if (ws.broadcastSig) {
-    await sendBridgeResult(tabId, {
+    await sendBridgeResult(
+      tabId,
+      {
+        type: "airwave-bridge-result",
+        requestId,
+        ok: false,
+        error: { code: "BROADCAST_UNCONFIRMED", message: "BROADCAST_UNCONFIRMED" },
+      },
+      frameId,
+    );
+    return;
+  }
+  await sendBridgeResult(
+    tabId,
+    {
       type: "airwave-bridge-result",
       requestId,
       ok: false,
-      error: { code: "BROADCAST_UNCONFIRMED", message: "BROADCAST_UNCONFIRMED" },
-    });
-    return;
-  }
-  await sendBridgeResult(tabId, {
-    type: "airwave-bridge-result",
-    requestId,
-    ok: false,
-    error: { code: "USER_REJECTED", message: userRejectedMessage },
-  });
+      error: { code: "USER_REJECTED", message: userRejectedMessage },
+    },
+    frameId,
+  );
 }
 
 export async function finishSignAndSendWindowClosed(requestId: string): Promise<void> {
@@ -41,12 +50,16 @@ export async function finishSignAndSendWindowClosed(requestId: string): Promise<
   takePending(requestId);
   clearWalletSendState(requestId);
   if (ws.broadcastSig) {
-    await sendBridgeResult(p.tabId, {
-      type: "airwave-bridge-result",
-      requestId,
-      ok: false,
-      error: { code: "BROADCAST_UNCONFIRMED", message: "BROADCAST_UNCONFIRMED" },
-    });
+    await sendBridgeResult(
+      p.tabId,
+      {
+        type: "airwave-bridge-result",
+        requestId,
+        ok: false,
+        error: { code: "BROADCAST_UNCONFIRMED", message: "BROADCAST_UNCONFIRMED" },
+      },
+      p.frameId,
+    );
     void chrome.runtime
       .sendMessage({
         kind: "airwave-wallet-send-settled",
@@ -57,10 +70,14 @@ export async function finishSignAndSendWindowClosed(requestId: string): Promise<
       .catch(() => {});
     return;
   }
-  await sendBridgeResult(p.tabId, {
-    type: "airwave-bridge-result",
-    requestId,
-    ok: false,
-    error: { code: "USER_REJECTED", message: "Approval window closed" },
-  });
+  await sendBridgeResult(
+    p.tabId,
+    {
+      type: "airwave-bridge-result",
+      requestId,
+      ok: false,
+      error: { code: "USER_REJECTED", message: "Approval window closed" },
+    },
+    p.frameId,
+  );
 }

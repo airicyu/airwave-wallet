@@ -31,7 +31,7 @@ export function HomeActivityList({ wallet, currentView }: Props): JSX.Element {
   const activeId = wallet.activeAccountId ?? "";
   const cluster = wallet.settings.cluster;
   const rpcUrl = wallet.settings.rpcUrl;
-  const heliusApiUrl = wallet.settings.heliusApiUrl;
+  const heliusConfigured = wallet.settings.heliusConfigured;
 
   useEffect(() => {
     if (currentView !== "home-activity") return;
@@ -62,7 +62,7 @@ export function HomeActivityList({ wallet, currentView }: Props): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [currentView, activeId, cluster, rpcUrl, heliusApiUrl]);
+  }, [currentView, activeId, cluster, rpcUrl, heliusConfigured]);
 
   return (
     <section

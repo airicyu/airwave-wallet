@@ -11,6 +11,7 @@ export type TimeoutHandlers = {
   sendBridgeResult: (
     tabId: number,
     msg: import("../../shared/bridge").AirwaveBridgeResult,
+    frameId?: number,
   ) => Promise<void>;
   walletSendSettled: (requestId: string, ok: boolean, errorMessage?: string) => void;
 };
@@ -47,22 +48,30 @@ async function onPendingTimeout(requestId: string, handlers: TimeoutHandlers): P
       handlers.walletSendSettled(requestId, false);
       return;
     }
-    await handlers.sendBridgeResult(p.tabId, {
-      type: "airwave-bridge-result",
-      requestId,
-      ok: false,
-      error: { code: "TIMEOUT", message: "Request timed out" },
-    });
+    await handlers.sendBridgeResult(
+      p.tabId,
+      {
+        type: "airwave-bridge-result",
+        requestId,
+        ok: false,
+        error: { code: "TIMEOUT", message: "Request timed out" },
+      },
+      p.frameId,
+    );
     return;
   }
   takePending(requestId);
   unbindPopoutByRequest(requestId);
-  await handlers.sendBridgeResult(p.tabId, {
-    type: "airwave-bridge-result",
-    requestId,
-    ok: false,
-    error: { code: "TIMEOUT", message: "Request timed out" },
-  });
+  await handlers.sendBridgeResult(
+    p.tabId,
+    {
+      type: "airwave-bridge-result",
+      requestId,
+      ok: false,
+      error: { code: "TIMEOUT", message: "Request timed out" },
+    },
+    p.frameId,
+  );
 }
 
 export async function finishWalletSendWindowClosed(

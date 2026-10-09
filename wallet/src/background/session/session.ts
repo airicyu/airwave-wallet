@@ -1,22 +1,31 @@
 /**
- * Holds unlocked vault secrets and loaded signing keypairs in the service worker, with session-storage hydrate.
- * Does not encrypt the vault blob or write long-lived unlock keys to chrome.storage.local.
+ * Holds unlocked vault secrets and loaded signing keypairs in service-worker memory.
+ * Session storage keeps only the AES key and salt. Does not encrypt the vault blob.
  */
 import {
+  decryptVaultWithKey,
   exportVaultKeyRaw,
   importVaultKeyRaw,
   type VaultSecrets,
 } from "../../shared/crypto-vault";
 import type { LoadedAccountKeys } from "../../shared/keypair-bytes";
 import { loadedAccountFromStoredSecret } from "../../shared/keypair-bytes";
-import { SESSION_UNLOCKED } from "../../shared/storage-keys";
-import { readVaultBlob } from "../storage";
+import { isSigningOrWatch } from "../../shared/accounts";
+import { accountKind, SESSION_UNLOCKED } from "../../shared/storage-keys";
+import { readAccounts, readVaultBlob } from "../storage";
+
+export class AccountKeyMismatchError extends Error {
+  readonly code = "ACCOUNT_KEY_MISMATCH" as const;
+  constructor() {
+    super("Account address does not match the stored key");
+    this.name = "AccountKeyMismatchError";
+  }
+}
 
 type UnlockedSessionBlob = {
-  version: 1;
+  version: 2;
   saltB64: string;
   keyRawB64: string;
-  secrets: VaultSecrets;
 };
 
 let unlocked = false;
@@ -41,12 +50,16 @@ export function isUnlocked(): boolean {
 }
 
 export async function lock(): Promise<void> {
+  clearUnlockedMemory();
+  await chrome.storage.session.remove(SESSION_UNLOCKED);
+}
+
+function clearUnlockedMemory(): void {
   unlocked = false;
   vaultSecrets = null;
   vaultKey = null;
   vaultSaltB64 = null;
   accountsById.clear();
-  await chrome.storage.session.remove(SESSION_UNLOCKED);
 }
 
 export async function loadSecrets(secrets: VaultSecrets): Promise<void> {
@@ -60,6 +73,17 @@ export async function loadSecrets(secrets: VaultSecrets): Promise<void> {
       accountsById.set(id, loaded);
     }),
   );
+  const accounts = await readAccounts();
+  for (const meta of accounts) {
+    if (!isSigningOrWatch(meta) || accountKind(meta) !== "signing") continue;
+    const loaded = accountsById.get(meta.id);
+    if (!loaded) continue;
+    if (loaded.address !== meta.publicKeyBase58) {
+      clearUnlockedMemory();
+      await chrome.storage.session.remove(SESSION_UNLOCKED);
+      throw new AccountKeyMismatchError();
+    }
+  }
   unlocked = true;
 }
 
@@ -79,10 +103,9 @@ export async function setVaultSecrets(secrets: VaultSecrets): Promise<void> {
 export async function persistUnlockedSession(): Promise<void> {
   if (!unlocked || !vaultKey || !vaultSaltB64 || !vaultSecrets) return;
   const blob: UnlockedSessionBlob = {
-    version: 1,
+    version: 2,
     saltB64: vaultSaltB64,
     keyRawB64: await exportVaultKeyRaw(vaultKey),
-    secrets: vaultSecrets,
   };
   await chrome.storage.session.set({ [SESSION_UNLOCKED]: blob });
 }
@@ -91,19 +114,22 @@ async function hydrateFromSessionStore(): Promise<void> {
   if (unlocked) return;
   const r = await chrome.storage.session.get(SESSION_UNLOCKED);
   const raw = r[SESSION_UNLOCKED] as UnlockedSessionBlob | undefined;
-  if (!raw || raw.version !== 1 || !raw.saltB64 || !raw.keyRawB64 || !raw.secrets?.secrets) {
+  if (!raw || raw.version !== 2 || !raw.saltB64 || !raw.keyRawB64) {
+    await chrome.storage.session.remove(SESSION_UNLOCKED);
     return;
   }
   const vaultBlob = await readVaultBlob();
-  if (vaultBlob && vaultBlob.kdfParams.salt !== raw.saltB64) {
+  if (!vaultBlob || vaultBlob.kdfParams.salt !== raw.saltB64) {
     await chrome.storage.session.remove(SESSION_UNLOCKED);
     return;
   }
   try {
     const key = await importVaultKeyRaw(raw.keyRawB64);
+    const secrets = await decryptVaultWithKey(key, vaultBlob);
     setVaultCrypto(key, raw.saltB64);
-    await loadSecrets(raw.secrets);
+    await loadSecrets(secrets);
   } catch {
+    clearUnlockedMemory();
     await chrome.storage.session.remove(SESSION_UNLOCKED);
   }
 }

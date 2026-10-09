@@ -368,6 +368,7 @@ btnSignTxFail.addEventListener("click", async () => {
 
     const [out] = await signTx.signTransaction({
       account,
+      chain: "solana:devnet",
       transaction: tx,
     });
     log("Signed fail-case tx base58:", bs58.encode(out.signedTransaction));
@@ -395,6 +396,7 @@ btnSignTx.addEventListener("click", async () => {
 
     const [out] = await signTx.signTransaction({
       account,
+      chain: "solana:devnet",
       transaction: tx,
     });
     log("Signed tx base58:", bs58.encode(out.signedTransaction));
@@ -422,6 +424,7 @@ btnSignAndSendTx.addEventListener("click", async () => {
 
     const [out] = await signTx.signTransaction({
       account,
+      chain: "solana:devnet",
       transaction: tx,
     });
     log("Signed for send, broadcasting…");

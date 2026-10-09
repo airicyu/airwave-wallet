@@ -8,7 +8,7 @@ import { messageLooksLikeTransactionMessage } from "../../shared/sign-message-tx
 import { getActivePublicKey, readActiveAccountId, readSettings } from "../storage";
 import { takePending } from "./pending";
 import { getWorkingTx } from "./sign-tx-pending-state";
-import { sendBridgeResult, rememberConnectedTab } from "../messaging";
+import { sendBridgeResult, rememberConnectedTab, tabOriginStill } from "../messaging";
 import { loadedAccountForAccountId, signingErrorForAccountId } from "../session";
 import { partiallySignWireTransaction } from "../../shared/tx-wire";
 import * as session from "../session";
@@ -21,9 +21,11 @@ export async function finishConnect(
 ): Promise<void> {
   const pending = takePending(requestId);
   if (!pending) return;
+  const reply = (msg: Parameters<typeof sendBridgeResult>[1]) =>
+    sendBridgeResult(tabId, msg, pending.frameId);
 
   if (!approved) {
-    await sendBridgeResult(tabId, {
+    await reply({
       type: "airwave-bridge-result",
       requestId,
       ok: false,
@@ -33,7 +35,7 @@ export async function finishConnect(
   }
 
   if (!session.isUnlocked()) {
-    await sendBridgeResult(tabId, {
+    await reply({
       type: "airwave-bridge-result",
       requestId,
       ok: false,
@@ -45,7 +47,7 @@ export async function finishConnect(
   const activeId = await readActiveAccountId();
   const pubkey = await getActivePublicKey();
   if (!activeId || !pubkey) {
-    await sendBridgeResult(tabId, {
+    await reply({
       type: "airwave-bridge-result",
       requestId,
       ok: false,
@@ -54,10 +56,23 @@ export async function finishConnect(
     return;
   }
 
+  const still = await tabOriginStill(pending.tabId, pending.origin);
+  if (still !== "ok") {
+    if (still === "changed") {
+      await reply({
+        type: "airwave-bridge-result",
+        requestId,
+        ok: false,
+        error: { code: "ORIGIN_CHANGED", message: "Tab origin changed" },
+      });
+    }
+    return;
+  }
+
   await rememberConnectedTab(origin, tabId, activeId);
   const settings = await readSettings();
 
-  await sendBridgeResult(tabId, {
+  await reply({
     type: "airwave-bridge-result",
     requestId,
     ok: true,
@@ -72,13 +87,15 @@ export async function finishSignMessage(
 ): Promise<void> {
   const pending = takePending(requestId);
   if (!pending) return;
+  const reply = (msg: Parameters<typeof sendBridgeResult>[1]) =>
+    sendBridgeResult(tabId, msg, pending.frameId);
 
   const { message } = pending.payload as SignMessagePayload;
   const msgBytes = Uint8Array.from(message);
   const looksLikeTx = messageLooksLikeTransactionMessage(msgBytes);
 
   if (looksLikeTx) {
-    await sendBridgeResult(tabId, {
+    await reply({
       type: "airwave-bridge-result",
       requestId,
       ok: false,
@@ -91,7 +108,7 @@ export async function finishSignMessage(
   }
 
   if (!approved) {
-    await sendBridgeResult(tabId, {
+    await reply({
       type: "airwave-bridge-result",
       requestId,
       ok: false,
@@ -101,7 +118,7 @@ export async function finishSignMessage(
   }
 
   if (!session.isUnlocked()) {
-    await sendBridgeResult(tabId, {
+    await reply({
       type: "airwave-bridge-result",
       requestId,
       ok: false,
@@ -112,7 +129,7 @@ export async function finishSignMessage(
 
   const signAccountId = pending.signAccountId;
   if (!signAccountId) {
-    await sendBridgeResult(tabId, {
+    await reply({
       type: "airwave-bridge-result",
       requestId,
       ok: false,
@@ -123,7 +140,7 @@ export async function finishSignMessage(
 
   const accountErr = await signingErrorForAccountId(signAccountId);
   if (accountErr) {
-    await sendBridgeResult(tabId, {
+    await reply({
       type: "airwave-bridge-result",
       requestId,
       ok: false,
@@ -134,7 +151,7 @@ export async function finishSignMessage(
 
   const loaded = await loadedAccountForAccountId(signAccountId);
   if (!loaded) {
-    await sendBridgeResult(tabId, {
+    await reply({
       type: "airwave-bridge-result",
       requestId,
       ok: false,
@@ -143,9 +160,22 @@ export async function finishSignMessage(
     return;
   }
 
+  const still = await tabOriginStill(pending.tabId, pending.origin);
+  if (still !== "ok") {
+    if (still === "changed") {
+      await reply({
+        type: "airwave-bridge-result",
+        requestId,
+        ok: false,
+        error: { code: "ORIGIN_CHANGED", message: "Tab origin changed" },
+      });
+    }
+    return;
+  }
+
   const signature = nacl.sign.detached(msgBytes, loaded.secretKeyBytes);
 
-  await sendBridgeResult(tabId, {
+  await reply({
     type: "airwave-bridge-result",
     requestId,
     ok: true,
@@ -161,9 +191,11 @@ export async function finishSignTransaction(
   const workingBytes = getWorkingTx(requestId);
   const pending = takePending(requestId);
   if (!pending) return;
+  const reply = (msg: Parameters<typeof sendBridgeResult>[1]) =>
+    sendBridgeResult(tabId, msg, pending.frameId);
 
   if (!approved) {
-    await sendBridgeResult(tabId, {
+    await reply({
       type: "airwave-bridge-result",
       requestId,
       ok: false,
@@ -173,7 +205,7 @@ export async function finishSignTransaction(
   }
 
   if (!session.isUnlocked()) {
-    await sendBridgeResult(tabId, {
+    await reply({
       type: "airwave-bridge-result",
       requestId,
       ok: false,
@@ -184,7 +216,7 @@ export async function finishSignTransaction(
 
   const signAccountId = pending.signAccountId;
   if (!signAccountId) {
-    await sendBridgeResult(tabId, {
+    await reply({
       type: "airwave-bridge-result",
       requestId,
       ok: false,
@@ -195,7 +227,7 @@ export async function finishSignTransaction(
 
   const accountErr = await signingErrorForAccountId(signAccountId);
   if (accountErr) {
-    await sendBridgeResult(tabId, {
+    await reply({
       type: "airwave-bridge-result",
       requestId,
       ok: false,
@@ -209,7 +241,7 @@ export async function finishSignTransaction(
 
   const loaded = await loadedAccountForAccountId(signAccountId);
   if (!loaded) {
-    await sendBridgeResult(tabId, {
+    await reply({
       type: "airwave-bridge-result",
       requestId,
       ok: false,
@@ -218,11 +250,24 @@ export async function finishSignTransaction(
     return;
   }
 
+  const still = await tabOriginStill(pending.tabId, pending.origin);
+  if (still !== "ok") {
+    if (still === "changed") {
+      await reply({
+        type: "airwave-bridge-result",
+        requestId,
+        ok: false,
+        error: { code: "ORIGIN_CHANGED", message: "Tab origin changed" },
+      });
+    }
+    return;
+  }
+
   let signedBytes: Uint8Array;
   try {
     signedBytes = await partiallySignWireTransaction(txBytes, loaded.signer);
   } catch {
-    await sendBridgeResult(tabId, {
+    await reply({
       type: "airwave-bridge-result",
       requestId,
       ok: false,
@@ -231,7 +276,7 @@ export async function finishSignTransaction(
     return;
   }
 
-  await sendBridgeResult(tabId, {
+  await reply({
     type: "airwave-bridge-result",
     requestId,
     ok: true,

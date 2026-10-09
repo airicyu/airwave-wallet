@@ -1,22 +1,19 @@
 /**
- * Rewrites compiled transactions to set compute unit limit and price for simulation and default fee behavior.
- * Does not submit transactions or decode individual instructions for display.
+ * Estimates compute units via RPC decompile, and writes a local Compute Budget patch into unsigned bytes.
+ * Does not submit transactions or fetch lookup tables while producing workingTx.
  */
 import {
+  type Address,
   type CompiledTransactionMessage,
   type CompiledTransactionMessageWithLifetime,
-  compileTransaction,
   decompileTransactionMessageFetchingLookupTables,
   getCompiledTransactionMessageDecoder,
+  getCompiledTransactionMessageEncoder,
   type GetMultipleAccountsApi,
-  type MicroLamports,
   type Rpc,
 } from "@solana/kit";
 import {
-  updateOrAppendSetComputeUnitLimitInstruction,
-  updateOrAppendSetComputeUnitPriceInstruction,
-} from "@solana-program/compute-budget";
-import {
+  compiledAddressTableLookups,
   messageBytesToUint8Array,
   normalizedCompiledInstructions,
 } from "../../shared/compiled-message";
@@ -156,17 +153,77 @@ export type WriteCuResult =
   | { ok: true; bytes: Uint8Array }
   | { ok: false; reason: "duplicate_cb" | "cannot_write" };
 
-function mergeSignatures(
-  original: ReturnType<typeof decodeWireTransaction>,
-  updated: ReturnType<typeof decodeWireTransaction>,
-): ReturnType<typeof decodeWireTransaction> {
-  const signatures = { ...updated.signatures };
-  for (const [addr, sig] of Object.entries(original.signatures)) {
-    if (sig && addr in signatures) {
-      signatures[addr as keyof typeof signatures] = sig;
+type LocalCompiled = CompiledTransactionMessage &
+  CompiledTransactionMessageWithLifetime & {
+    version: "legacy" | 0;
+    instructions: {
+      programAddressIndex: number;
+      accountIndices?: readonly number[];
+      data?: Uint8Array;
+    }[];
+  };
+
+function isLocalCompiled(message: CompiledTransactionMessage): message is LocalCompiled {
+  return message.version === "legacy" || message.version === 0;
+}
+
+function discData(disc: 2 | 3, value: number): Uint8Array {
+  const width = disc === 2 ? 4 : 8;
+  const data = new Uint8Array(1 + width);
+  data[0] = disc;
+  const view = new DataView(data.buffer);
+  view.setUint32(1, value >>> 0, true);
+  if (disc === 3) view.setUint32(5, Math.floor(value / 0x1_0000_0000), true);
+  return data;
+}
+
+function pointsAtLookup(
+  ixs: { programAddressIndex: number; accountIndices: number[] }[],
+  staticLen: number,
+): boolean {
+  for (const ix of ixs) {
+    if (ix.programAddressIndex >= staticLen) return true;
+    for (const index of ix.accountIndices) {
+      if (index >= staticLen) return true;
     }
   }
-  return { ...updated, signatures };
+  return false;
+}
+
+function upsertDisc(
+  ixs: { programAddressIndex: number; accountIndices: number[]; data: Uint8Array }[],
+  programIndex: number,
+  disc: 2 | 3,
+  value: number,
+): void {
+  const data = discData(disc, value);
+  const found = ixs.find((ix) => ix.programAddressIndex === programIndex && ix.data[0] === disc);
+  if (found) {
+    found.data = data;
+    return;
+  }
+  ixs.unshift({ programAddressIndex: programIndex, accountIndices: [], data });
+}
+
+function withoutCb(
+  message: CompiledTransactionMessage,
+): { programAddressIndex: number; accountIndices: number[]; data: string }[] {
+  const keys = message.staticAccounts;
+  const out = [];
+  for (const ix of normalizedCompiledInstructions(message)) {
+    const pid = keys[ix.programAddressIndex];
+    if (pid === CB_PID && (ix.data[0] === 2 || ix.data[0] === 3)) continue;
+    out.push({
+      programAddressIndex: ix.programAddressIndex,
+      accountIndices: [...ix.accountIndices],
+      data: [...ix.data].join(","),
+    });
+  }
+  return out;
+}
+
+function sameJson(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 export async function decompileTxMessageFromBytes(txBytes: Uint8Array, rpcUrl: string) {
@@ -180,7 +237,7 @@ export async function writeCuToTransactionBytes(
   txBytes: Uint8Array,
   limit: number,
   price: number,
-  rpcUrl: string,
+  _rpcUrl: string,
 ): Promise<WriteCuResult> {
   let tx: ReturnType<typeof decodeWireTransaction>;
   try {
@@ -190,36 +247,77 @@ export async function writeCuToTransactionBytes(
   }
 
   const compiled = decodeCompiledMessage(messageBytesToUint8Array(tx.messageBytes));
-  if (hasDuplicateCbDisc(compiled)) {
-    return { ok: false, reason: "duplicate_cb" };
+  if (!isLocalCompiled(compiled)) return { ok: false, reason: "cannot_write" };
+  if (hasDuplicateCbDisc(compiled)) return { ok: false, reason: "duplicate_cb" };
+
+  const originalIxs = normalizedCompiledInstructions(compiled).map((ix) => ({
+    programAddressIndex: ix.programAddressIndex,
+    accountIndices: [...ix.accountIndices],
+    data: new Uint8Array(ix.data),
+  }));
+  const staticLen = compiled.staticAccounts.length;
+  let programIndex = compiled.staticAccounts.findIndex((a) => a === CB_PID);
+  const appended = programIndex < 0;
+  let staticAccounts = [...compiled.staticAccounts];
+  let header = compiled.header;
+  if (appended) {
+    if (pointsAtLookup(originalIxs, staticLen)) return { ok: false, reason: "cannot_write" };
+    staticAccounts = [...staticAccounts, CB_PID as Address];
+    programIndex = staticAccounts.length - 1;
+    header = {
+      ...compiled.header,
+      numReadonlyNonSignerAccounts: compiled.header.numReadonlyNonSignerAccounts + 1,
+    };
   }
 
-  const rpc = solanaRpcForUrl(rpcUrl) as Rpc<GetMultipleAccountsApi>;
-  let decompiled;
-  try {
-    decompiled = await decompileTransactionMessageFetchingLookupTables(compiled, rpc);
-  } catch {
-    return { ok: false, reason: "cannot_write" };
-  }
+  const nextIxs = originalIxs.map((ix) => ({
+    programAddressIndex: ix.programAddressIndex,
+    accountIndices: [...ix.accountIndices],
+    data: new Uint8Array(ix.data),
+  }));
+  upsertDisc(nextIxs, programIndex, 2, limit);
+  upsertDisc(nextIxs, programIndex, 3, price);
 
-  let updatedMessage = decompiled;
-  updatedMessage = updateOrAppendSetComputeUnitLimitInstruction(limit, updatedMessage);
-  updatedMessage = updateOrAppendSetComputeUnitPriceInstruction(
-    price as unknown as MicroLamports,
-    updatedMessage,
-  );
-
-  let newTx: ReturnType<typeof decodeWireTransaction>;
-  try {
-    const compiledMsg = compileTransaction(updatedMessage);
-    newTx = mergeSignatures(tx, compiledMsg);
-  } catch {
-    return { ok: false, reason: "cannot_write" };
-  }
+  const nextCompiled = {
+    ...compiled,
+    header,
+    staticAccounts,
+    instructions: nextIxs,
+  };
 
   try {
-    const serialized = encodeWireTransaction(newTx);
+    const messageBytes = new Uint8Array(
+      getCompiledTransactionMessageEncoder().encode(nextCompiled),
+    ) as unknown as typeof tx.messageBytes;
+    const serialized = encodeWireTransaction({ ...tx, messageBytes });
     if (serialized.length > 1232) return { ok: false, reason: "cannot_write" };
+    const written = decodeCompiledMessage(
+      messageBytesToUint8Array(decodeWireTransaction(serialized).messageBytes),
+    );
+    const accountsAfter = appended ? written.staticAccounts.slice(0, -1) : written.staticAccounts;
+    if (!sameJson(accountsAfter, compiled.staticAccounts)) return { ok: false, reason: "cannot_write" };
+    if (!sameJson(compiledAddressTableLookups(written), compiledAddressTableLookups(compiled))) {
+      return { ok: false, reason: "cannot_write" };
+    }
+    if (written.lifetimeToken !== compiled.lifetimeToken) return { ok: false, reason: "cannot_write" };
+    if (!sameJson(withoutCb(written), withoutCb(compiled))) return { ok: false, reason: "cannot_write" };
+    if (!appended && !sameJson(written.header, compiled.header)) return { ok: false, reason: "cannot_write" };
+    if (written.header.numSignerAccounts !== compiled.header.numSignerAccounts) {
+      return { ok: false, reason: "cannot_write" };
+    }
+    if (written.header.numReadonlySignerAccounts !== compiled.header.numReadonlySignerAccounts) {
+      return { ok: false, reason: "cannot_write" };
+    }
+    if (appended && written.header.numReadonlyNonSignerAccounts !== header.numReadonlyNonSignerAccounts) {
+      return { ok: false, reason: "cannot_write" };
+    }
+    const parsed = parseCuFromMessage(written);
+    if (cbDiscCount(written, 2) !== 1 || cbDiscCount(written, 3) !== 1) {
+      return { ok: false, reason: "cannot_write" };
+    }
+    if (parsed.limit !== (limit >>> 0) || parsed.price !== price) {
+      return { ok: false, reason: "cannot_write" };
+    }
     return { ok: true, bytes: serialized };
   } catch {
     return { ok: false, reason: "cannot_write" };

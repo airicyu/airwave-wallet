@@ -25,6 +25,7 @@ export {
   handleCreateVault,
   handleGetState,
   handleLock,
+  handleReadIntegrationSecrets,
   handleUnlock,
 } from "./session";
 export { handleDisconnectAllOrigins, handleDisconnectOrigin } from "./connection-commands";

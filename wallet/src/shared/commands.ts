@@ -17,6 +17,7 @@ export type AirwaveCommand =
   | "wallet.unlock"
   | "wallet.lock"
   | "wallet.getState"
+  | "wallet.readIntegrationSecrets"
   | "wallet.createVault"
   | "wallet.importAccount"
   | "wallet.previewSeedAccounts"
@@ -111,6 +112,7 @@ export type SignMessagePayload = {
 
 export type SignTransactionPayload = {
   transaction: number[];
+  chain: string;
 };
 
 export type SignAndSendTransactionPayload = {

@@ -44,6 +44,15 @@ export async function handleUnlock(req: ExtensionRequest): Promise<ExtensionResp
     const { secrets, key } = await decryptVault(password, blob);
     session.setVaultCrypto(key, blob.kdfParams.salt);
     await session.loadSecrets(secrets);
+    if (blob.kdfParams.iterations === 310_000) {
+      try {
+        const next = await encryptVault(password, secrets);
+        await writeVaultBlob(next.blob);
+        session.setVaultCrypto(next.key, next.blob.kdfParams.salt);
+      } catch {
+        session.setVaultCrypto(key, blob.kdfParams.salt);
+      }
+    }
     await session.persistUnlockedSession();
     return respond({
       kind: "airwave-ext-res",
@@ -51,7 +60,15 @@ export async function handleUnlock(req: ExtensionRequest): Promise<ExtensionResp
       ok: true,
       result: { unlocked: true },
     });
-  } catch {
+  } catch (e: unknown) {
+    if (e instanceof session.AccountKeyMismatchError) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "ACCOUNT_KEY_MISMATCH", message: "Account address does not match the stored key" },
+      });
+    }
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
@@ -147,12 +164,12 @@ export async function handleCreateVault(req: ExtensionRequest): Promise<Extensio
       error: { code: "INVALID_LABEL", message: "名稱最多 15 字" },
     });
   }
-  if (!password) {
+  if (typeof password !== "string" || password.length < 8) {
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
       ok: false,
-      error: { code: "INVALID_PASSWORD", message: "Password required" },
+      error: { code: "WEAK_PASSWORD", message: "新密碼過短" },
     });
   }
   if ((await readVaultBlob()) != null) {

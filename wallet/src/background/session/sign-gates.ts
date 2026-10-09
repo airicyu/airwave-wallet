@@ -2,9 +2,9 @@
  * Pre-enqueue signing gates: active account, read-only role, lock state, and pubkey resolution for dapp requests.
  * Does not sign messages or transactions.
  */
-import { getExposedPublicKey, resolvePubkey, signingWatchPubkeyExists } from "../../shared/accounts";
+import { getExposedPublicKey, isSigningOrWatch, resolvePubkey, signingWatchPubkeyExists } from "../../shared/accounts";
 import type { LoadedAccountKeys } from "../../shared/keypair-bytes";
-import type { AccountMeta } from "../../shared/storage-keys";
+import { accountKind, type AccountMeta } from "../../shared/storage-keys";
 import { getActiveAccountMeta } from "./active-account";
 import { readAccounts } from "../storage";
 import * as session from "./session";
@@ -51,6 +51,23 @@ export async function signMessageEnqueueGateError(): Promise<SignGateError | nul
   return null;
 }
 
+async function mismatchIfSigningAddressWrong(
+  accounts: AccountMeta[],
+  signingAccountId: string,
+): Promise<SignGateError | null> {
+  const signingMeta = accounts.find((a) => a.id === signingAccountId);
+  if (!signingMeta || !isSigningOrWatch(signingMeta) || accountKind(signingMeta) !== "signing") {
+    return null;
+  }
+  const loaded = session.getLoadedAccount(signingAccountId);
+  if (!loaded || loaded.address === signingMeta.publicKeyBase58) return null;
+  await session.lock();
+  return {
+    code: "ACCOUNT_KEY_MISMATCH",
+    message: "Account address does not match the stored key",
+  };
+}
+
 export async function loadedAccountForAccountId(accountId: string): Promise<LoadedAccountKeys | null> {
   if (!session.isUnlocked()) return null;
   const accounts = await readAccounts();
@@ -60,6 +77,7 @@ export async function loadedAccountForAccountId(accountId: string): Promise<Load
   const gatePubkey = getExposedPublicKey(meta);
   const resolved = resolvePubkey(accounts, secrets, gatePubkey);
   if (resolved.role !== "signing") return null;
+  if (await mismatchIfSigningAddressWrong(accounts, resolved.accountId)) return null;
   return session.getLoadedAccount(resolved.accountId) ?? null;
 }
 
@@ -75,6 +93,8 @@ export async function signingErrorForAccountId(accountId: string): Promise<SignG
   if (resolved.role === "readOnly") {
     return { code: "ACCOUNT_READ_ONLY", message: "Read-only account cannot sign" };
   }
+  const mismatch = await mismatchIfSigningAddressWrong(accounts, resolved.accountId);
+  if (mismatch) return mismatch;
   const loaded = session.getLoadedAccount(resolved.accountId);
   if (!loaded) {
     return { code: "NO_KEY", message: "Missing key" };
@@ -90,6 +110,7 @@ export async function loadedAccountForActiveSigning(): Promise<LoadedAccountKeys
   const gatePubkey = getExposedPublicKey(active);
   const resolved = resolvePubkey(accounts, secrets, gatePubkey);
   if (resolved.role !== "signing") return null;
+  if (await mismatchIfSigningAddressWrong(accounts, resolved.accountId)) return null;
   return session.getLoadedAccount(resolved.accountId) ?? null;
 }
 

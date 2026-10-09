@@ -5,6 +5,7 @@
 import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/commands";
 import { respond } from "../../../messaging";
 import * as session from "../../../session";
+import { toPublicSettings } from "../../../../shared/storage-keys";
 import {
   readAccounts,
   readActiveAccountId,
@@ -33,8 +34,21 @@ export async function handleGetState(req: ExtensionRequest): Promise<ExtensionRe
       unlocked: session.isUnlocked(),
       accounts,
       activeAccountId,
-      settings,
+      settings: toPublicSettings(settings),
       connections: connectionsList,
+    },
+  });
+}
+
+export async function handleReadIntegrationSecrets(req: ExtensionRequest): Promise<ExtensionResponse> {
+  const settings = await readSettings();
+  return respond({
+    kind: "airwave-ext-res",
+    requestId: req.requestId,
+    ok: true,
+    result: {
+      jupiterApiKey: settings.jupiterApiKey,
+      heliusApiUrl: settings.heliusApiUrl,
     },
   });
 }

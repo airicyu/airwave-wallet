@@ -28,6 +28,21 @@ import {
   withImportSeedCapacity,
   type ImportSeedDraft,
 } from "./import-seed-flow";
+
+let seedClipboardClearTimer: ReturnType<typeof setTimeout> | null = null;
+
+function copySeedWords(words: string[]): void {
+  void navigator.clipboard
+    .writeText(words.join(" "))
+    .then(() => {
+      if (seedClipboardClearTimer != null) clearTimeout(seedClipboardClearTimer);
+      seedClipboardClearTimer = setTimeout(() => {
+        seedClipboardClearTimer = null;
+        void navigator.clipboard.writeText(" ").catch(() => {});
+      }, 30_000);
+    })
+    .catch(() => {});
+}
 import { createGenerateSeedDraft, type GenerateSeedDraft } from "./generate-seed-flow";
 
 export function AddAccountChooser(): JSX.Element {
@@ -413,7 +428,7 @@ export function GenerateSeedScreen(): JSX.Element {
           title={t("common.copy")}
           aria-label={t("common.copy")}
           onClick={() => {
-            if (draft.words) void navigator.clipboard.writeText(draft.words.join(" "));
+            if (draft.words) copySeedWords(draft.words);
           }}
         >
           <IconCopy />

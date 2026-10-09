@@ -32,12 +32,16 @@ export async function rejectOrdinaryDappPending(
     }
   }
 
-  await sendBridgeResult(p.tabId, {
-    type: "airwave-bridge-result",
-    requestId,
-    ok: false,
-    error,
-  });
+  await sendBridgeResult(
+    p.tabId,
+    {
+      type: "airwave-bridge-result",
+      requestId,
+      ok: false,
+      error,
+    },
+    p.frameId,
+  );
 }
 
 const DAPP_SHELL_KINDS = new Set([
