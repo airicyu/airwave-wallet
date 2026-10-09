@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Airwave — 帳戶類型圖示</title>
+    <style>
+      :root { --bg:#0f1419; --fill:#1e2630; --text:#e8eef4; --muted:#9aa7b4; --ok:#4ecb8d; --warn:#e8b84a; --comb:#c084fc; }
+      body { margin:0; font-family:"Segoe UI","Microsoft JhengHei UI","PingFang TC",sans-serif; background:#080b0e; color:var(--text); padding:28px; }
+      .row { display:flex; gap:16px; align-items:center; margin:12px 0; }
+      .av { width:36px; height:36px; border-radius:50%; background:var(--fill); display:grid; place-items:center; }
+      .card { display:flex; align-items:center; gap:8px; padding:12px; background:#161c24; border-radius:12px; width:320px; }
+    </style>
+  </head>
+  <body>
+    <h1>類型圖示</h1>
+    <p>Widget 取代字母頭像。列表名稱左側同圖。綠鑰匙＝可簽、黃眼睛＝唯讀、紫疊卡＝聚合。</p>
+    <div class="row"><div class="av" style="color:var(--ok)">🔑</div> 簽名錢包</div>
+    <div class="row"><div class="av" style="color:var(--warn)">👁</div> 唯讀</div>
+    <div class="row"><div class="av" style="color:var(--comb)">⧉</div> 聚合錢包帳戶</div>
+    <div class="card"><span style="color:var(--ok)">🔑</span> <strong>Main</strong> <span style="font-size:11px;color:var(--muted)">使用中</span></div>
+  </body>
+</html>

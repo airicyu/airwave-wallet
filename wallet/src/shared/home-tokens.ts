@@ -65,6 +65,20 @@ export function formatUsdLabel(price: number): string {
   return `$${price.toFixed(2)}`;
 }
 
+/** Display order for combined member rows: larger uiAmount first; equal amount → natural-sort pubkey. Does not mutate. */
+export function sortCombinedTokenMembers(members: HomeTokenMemberShare[]): HomeTokenMemberShare[] {
+  return [...members].sort((a, b) => {
+    const aOk = Number.isFinite(a.uiAmount);
+    const bOk = Number.isFinite(b.uiAmount);
+    if (aOk && bOk) {
+      if (a.uiAmount > b.uiAmount) return -1;
+      if (a.uiAmount < b.uiAmount) return 1;
+    } else if (aOk && !bOk) return -1;
+    else if (!aOk && bOk) return 1;
+    return a.pubkey.localeCompare(b.pubkey, "en", { numeric: true, sensitivity: "base" });
+  });
+}
+
 export function sortHomeTokenRows(rows: HomeTokenRow[]): HomeTokenRow[] {
   const native: HomeTokenRow[] = [];
   const wrapped: HomeTokenRow[] = [];

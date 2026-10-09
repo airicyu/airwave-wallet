@@ -1,3 +1,7 @@
+/**
+ * Home Tokens list: load rows, combined member expand, and token detail hero.
+ * Does not begin a send or own wallet vault state.
+ */
 import type { JSX } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isCombinedAccount } from "../../shared/accounts";
@@ -7,7 +11,8 @@ import {
   shouldUseRpcTransientToast,
 } from "../../shared/friendly-error-message";
 import { accountKind } from "../../shared/storage-keys";
-import { NATIVE_SOL_ID, shortMint, type HomeTokenRow } from "../home/home-tokens";
+import { NATIVE_SOL_ID, shortMint, sortCombinedTokenMembers, type HomeTokenRow } from "../home/home-tokens";
+import { IconChevronDown } from "./StrokeIcon";
 import { shortAddr } from "../lib/format";
 import { usePopupContext } from "../state/PopupContext";
 import { t as translate } from "../../shared/ui-i18n";
@@ -160,9 +165,10 @@ function TokenRow({
   onToggleExpand: () => void;
 }): JSX.Element {
   const { t } = useT();
+  const expandLabel = isExpanded ? t("token.collapseMembers") : t("token.expandMembers");
   return (
-    <>
-      <li
+    <li className={`token-block${isExpanded ? " is-expanded" : ""}`}>
+      <div
         className="token-card"
         tabIndex={0}
         role="button"
@@ -188,35 +194,46 @@ function TokenRow({
             {row.uiAmountLabel} {row.symbol}
           </div>
         </div>
-        <div className="token-right">
-          <div className="token-usd">{row.usdLabel}</div>
-          {canExpand ? (
-            <button
-              type="button"
-              className="token-expand-btn"
-              aria-expanded={isExpanded}
-              onClick={(ev) => {
-                ev.stopPropagation();
-                onToggleExpand();
-              }}
-            >
-              {isExpanded ? "▾" : "▸"}
-            </button>
-          ) : null}
-        </div>
-      </li>
+        <div className="token-usd">{row.usdLabel}</div>
+        {canExpand ? (
+          <button
+            type="button"
+            className="token-expand-btn"
+            aria-expanded={isExpanded}
+            title={expandLabel}
+            aria-label={expandLabel}
+            onClick={(ev) => {
+              ev.stopPropagation();
+              onToggleExpand();
+            }}
+          >
+            <IconChevronDown size={16} />
+          </button>
+        ) : null}
+      </div>
       {canExpand && isExpanded && row.members ? (
-        <li className="token-members">
-          <ul>
-            {row.members.map((m) => (
-              <li key={m.pubkey} className="token-member-row">
-                {shortAddr(m.pubkey)} · {m.uiAmountLabel} {row.symbol} · {Math.round(m.percent)}%
-              </li>
-            ))}
-          </ul>
-        </li>
+        <div className="token-member-panel">
+          {sortCombinedTokenMembers(row.members).map((m) => {
+            const pct = Math.round(m.percent);
+            const bar = Math.min(100, Math.max(0, m.percent));
+            return (
+              <div key={m.pubkey} className="token-member">
+                <div className="token-member-top">
+                  <span className="token-member-addr">{shortAddr(m.pubkey)}</span>
+                  <span className="token-member-pct">{`${pct}%`}</span>
+                </div>
+                <div className="token-member-amt">
+                  {m.uiAmountLabel} {row.symbol}
+                </div>
+                <div className="token-member-bar" aria-hidden="true">
+                  <i style={{ width: `${bar}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : null}
-    </>
+    </li>
   );
 }
 

@@ -8,6 +8,7 @@ type Props = {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  autoFocus?: boolean;
   onKeyDown?: (ev: KeyboardEvent<HTMLInputElement>) => void;
 };
 
@@ -17,12 +18,16 @@ export function WalletPasswordInput({
   onChange,
   placeholder,
   className = "wallet-pwd-masked",
+  autoFocus = false,
   onKeyDown,
 }: Props): JSX.Element {
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (ref.current) hardenWalletPasswordInput(ref.current);
   }, []);
+  useEffect(() => {
+    if (autoFocus) ref.current?.focus();
+  }, [autoFocus]);
   return (
     <input
       ref={ref}

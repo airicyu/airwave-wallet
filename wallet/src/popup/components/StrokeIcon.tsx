@@ -1,3 +1,7 @@
+/**
+ * Stroke SVG icons for popup chrome (copy, chevron, menu, shell).
+ * Does not include raster product marks such as icon128.
+ */
 import type { JSX, ReactNode } from "react";
 
 export function StrokeIcon({
@@ -225,6 +229,44 @@ export function IconX({ size = 16 }: { size?: number }): JSX.Element {
   return (
     <StrokeIcon size={size}>
       <path d="M18 6L6 18M6 6l12 12" />
+    </StrokeIcon>
+  );
+}
+
+export function IconKey({ size = 16 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <circle cx="9" cy="15" r="4" />
+      <path d="M12 13l7-7" />
+      <path d="M16 6h3v3" />
+    </StrokeIcon>
+  );
+}
+
+export function IconLayers({ size = 16 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <rect x="5" y="8" width="12" height="10" rx="2" />
+      <rect x="8" y="5" width="12" height="10" rx="2" />
+    </StrokeIcon>
+  );
+}
+
+export function IconSwitch({ size = 16 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <path d="M16 3l4 4-4 4" />
+      <path d="M20 7H9" />
+      <path d="M8 21l-4-4 4-4" />
+      <path d="M4 17h11" />
+    </StrokeIcon>
+  );
+}
+
+export function IconChevronDown({ size = 16 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <path d="M6 9l6 6 6-6" />
     </StrokeIcon>
   );
 }

@@ -31,6 +31,7 @@ import {
   handlePatchSettings,
   handlePreviewSeedAccounts,
   handleRemoveCombinedSub,
+  handleReorderAccounts,
   handleRenameAccount,
   handleSetActiveAccount,
   handleSetCombinedMain,
@@ -59,6 +60,7 @@ export async function handleWalletCommand(
   if (req.command === "wallet.previewSeedAccounts") return handlePreviewSeedAccounts(req);
   if (req.command === "wallet.importSeedAccount") return handleImportSeedAccount(req);
   if (req.command === "wallet.setActiveAccount") return handleSetActiveAccount(req);
+  if (req.command === "wallet.reorderAccounts") return handleReorderAccounts(req);
   if (req.command === "wallet.renameAccount") return handleRenameAccount(req);
   if (req.command === "wallet.exportAccountSecret") return handleExportAccountSecret(req);
   if (req.command === "wallet.addReadOnlyAccount") return handleAddReadOnlyAccount(req);

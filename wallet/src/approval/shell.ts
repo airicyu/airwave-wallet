@@ -21,13 +21,13 @@ import {
   type UiHost,
 } from "../shared/commands";
 import type { SimulatePendingTxResult } from "../shared/simulate-pending-tx-types";
+import { accountVisualKind, paintAccountKindMark } from "../shared/account-kind-visual";
 import type { AccountMeta } from "../shared/storage-keys";
 import { SESSION_UNLOCKED } from "../shared/storage-keys";
 import { renderSimulationNotice } from "./cards";
 import { copyPublicKeyWithFeedback } from "../shared/copy-pk-feedback";
 import { SEND_STATUS_AURORA_SVG } from "../shared/send-status-mark";
 import {
-  avatarPrefix,
   bytesFromSignMessage,
   bytesFromSignTransaction,
   displayAccountName,
@@ -1156,7 +1156,7 @@ async function renderSignShell(
 
   frozenPk = exposedPk(meta);
   const name = displayAccountName(meta.label, frozenPk);
-  signAvatar.textContent = avatarPrefix(name);
+  paintAccountKindMark(signAvatar, accountVisualKind(meta));
   signLabel.textContent = name;
   signAddr.textContent = "";
 
@@ -1193,10 +1193,12 @@ async function renderSignShell(
 function showUnlockScreen(): void {
   hideAll();
   document.title = `Airwave — ${tr("approval.review")}`;
+  const becameVisible = viewUnlock.hidden;
   viewUnlock.hidden = false;
   unlockPassword.value = "";
   unlockError.hidden = true;
   unlockError.textContent = "";
+  if (becameVisible) unlockPassword.focus();
 }
 
 async function showConnectOrFinishReconnect(): Promise<void> {
@@ -1351,6 +1353,7 @@ function wireShellEvents(): void {
             ? tr("error.code.INVALID_PASSWORD")
             : progressUserMessage(res.error?.code ?? "");
         unlockPassword.value = "";
+        unlockPassword.focus();
         return;
       }
       unlockPassword.value = "";

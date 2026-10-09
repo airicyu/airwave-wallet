@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.26.0 — 2026-10-10
+
+小修：匯入助記詞切「標準」／「CLI／Ledger」後預覽列會跟著變。Combined 持倉展開改 34px chevron、成員兩行＋比例條並依數量排序。解鎖畫面可見即聚焦密碼欄。帳戶類型改三色 stroke 圖（可簽／唯讀／聚合），頂欄不再用字母頭像。Accounts 可拖卡片改序。Combined Manage 分成員地址與本機帳戶兩區；刪帳戶與刪成員皆須確認。`airwave.schemaGeneration` 蓋第 1 代戳，不改既有 `*.v1` 資料形狀。
+
+## 0.25.0 — 2026-10-10
+
+錢包主殼在工具列 action popup 與 Chrome 側欄之間切換：Home 頂欄一顆圖示；殼模式＝側欄文件現在是否活著，不寫 settings。側欄開著時點工具列走側欄、網站審批進殼內 stack；否則 popup／popout。錢包送出與收回租金留在當下殼。`uiHost` 寫 `"window"` 或 `"sidebar"`，不再寫 `"popup"`。
+
 ## 0.24.0 — 2026-10-09
 
 重構、行為與 0.23.0 相同：`AGENTS.md` 規定 `wallet/src` 的 `.ts` 少於 50 行可不寫檔首註解、50 行以上必須英文職責註解（≤100 words），並補齊全 tree（不含 `ui-messages.ts`）；400／150 行門檻。`background/wallet` 命令搬入 `commands/` 並分 account／combined／session；`simulate-pending-tx.ts` 與 `close-empty-service.ts` 拆成同層模組並刪除舊檔。不改命令字串、storage、畫面與三語 catalog。

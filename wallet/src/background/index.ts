@@ -15,8 +15,10 @@ import { finishSignAndSendWindowClosed } from "./send";
 import { pendingTimeoutHandlers } from "./send";
 import { registerWalletShellListeners } from "./shell";
 import * as session from "./session";
+import { ensureLocalMigrated } from "./storage";
 
 registerWalletShellListeners();
+void ensureLocalMigrated();
 
 function isExtensionPage(sender: chrome.runtime.MessageSender): boolean {
   const url = sender.url ?? "";
@@ -38,6 +40,16 @@ async function dispatch(
       requestId: req.requestId,
       ok: false,
       error: { code: "FORBIDDEN", message: "Command not allowed from this sender" },
+    });
+  }
+  try {
+    await ensureLocalMigrated();
+  } catch {
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: { code: "STORAGE_MIGRATION_FAILED", message: "Storage migration failed" },
     });
   }
   await session.ensureHydrated();

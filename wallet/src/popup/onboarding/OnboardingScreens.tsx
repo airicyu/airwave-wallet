@@ -1,5 +1,9 @@
+/**
+ * Popup onboarding screens (vault, seed import/generate, secret import, watch-only).
+ * Does not mount Home or the approval host.
+ */
 import type { Dispatch, SetStateAction, JSX } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ACCOUNT_LABEL_MAX } from "../../shared/account-label";
 import { sendExtensionRequest } from "../../shared/ext-api";
 import { getExposedPublicKey, isSigningOrWatch, parsePublicKeyBase58 } from "../../shared/accounts";
@@ -146,6 +150,8 @@ export function ImportSeedScreen(): JSX.Element {
   const { clearError, refresh, navigateTo, setBackOverride, setTitleOverride } = usePopupContext();
   const { t, locale } = useT();
   const [draft, setDraft] = useState<ImportSeedDraft>(emptyImportSeedDraft);
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
 
   useEffect(() => {
     if (draft.step === "pick") setTitleOverride(t("nav.pickAccounts"));
@@ -162,9 +168,17 @@ export function ImportSeedScreen(): JSX.Element {
     return () => setBackOverride(null);
   }, [draft.step, setBackOverride]);
 
-  const runPreview = useCallback(async (snapshot: ImportSeedDraft) => {
+  const runPreview = useCallback(async (partial: ImportSeedDraft) => {
+    const snapshot = { ...draftRef.current, ...partial, previewGen: draftRef.current.previewGen };
     const startedGen = snapshot.previewGen + 1;
-    setDraft((prev) => ({ ...prev, previewGen: startedGen, busy: true, err: "" }));
+    const busyDraft: ImportSeedDraft = {
+      ...snapshot,
+      previewGen: startedGen,
+      busy: true,
+      err: "",
+    };
+    draftRef.current = busyDraft;
+    setDraft(busyDraft);
     const { gen, next, outcome } = await requestSeedPreview({ ...snapshot, previewGen: snapshot.previewGen });
     setDraft((prev) => {
       if (prev.previewGen !== gen) return prev;
@@ -284,11 +298,7 @@ function ImportSeedPick({
             type="button"
             className={`scheme-btn${draft.kind === s.id ? " on" : ""}`}
             onClick={() => {
-              setDraft((prev) => {
-                const next = { ...prev, kind: s.id, selected: null };
-                void runPreview(next);
-                return next;
-              });
+              void runPreview({ ...draft, kind: s.id, selected: null });
             }}
           >
             {s.label}
@@ -305,7 +315,7 @@ function ImportSeedPick({
             autoComplete="off"
             value={draft.customPath}
             onChange={(e) => setDraft((prev) => ({ ...prev, customPath: e.target.value }))}
-            onBlur={() => void runPreview(draft)}
+            onBlur={(e) => void runPreview({ ...draft, customPath: e.currentTarget.value })}
           />
         </div>
       ) : null}
@@ -683,6 +693,7 @@ export function LockedScreen(): JSX.Element {
     if (!res.ok) {
       const code = res.error?.code;
       showError(code ? messageForErrorCode(locale, code) : t("error.unlockFailed"));
+      document.getElementById("unlock-password")?.focus();
     }
     else {
       await refresh();
@@ -697,6 +708,7 @@ export function LockedScreen(): JSX.Element {
       <div className="unlock-form">
         <WalletPasswordInput
           id="unlock-password"
+          autoFocus
           placeholder={t("unlock.passwordPlaceholder")}
           value={password}
           onChange={setPassword}

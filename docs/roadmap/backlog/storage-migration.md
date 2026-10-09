@@ -1,6 +1,6 @@
 # 版本升級與 storage 遷移 — backlog
 
-構想尚未排進某版 INDEX，**不是契約**。排程後以該版 INDEX 為準。
+[0.26.0](../0.26.0/INDEX.md) 已出貨骨架：`airwave.schemaGeneration`＝1，不改 `*.v1` 形狀。之後真正改資料形狀時另開版本契約；本檔仍是構想，不是契約。
 
 ## 現況
 

@@ -349,6 +349,22 @@ body {
   flex-shrink: 0;
 }
 
+.avatar.kind-mark,
+.kind-mark.avatar {
+  background: var(--fill);
+}
+
+.kind-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.account-kind-slot {
+  flex-shrink: 0;
+}
+
 .icon-btn {
   width: 34px;
   height: 34px;
@@ -1886,6 +1902,10 @@ body {
 }
 
 .account-card {
+  margin-bottom: 8px;
+}
+
+.account-card-body {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1893,17 +1913,65 @@ body {
   border: 1px solid var(--stroke-soft);
   border-radius: var(--radius);
   background: var(--bg-elevated);
-  margin-bottom: 8px;
 }
 
-.account-card.active {
+.account-card.active .account-card-body {
   border-color: var(--accent-dim);
+}
+
+.account-card.is-dragging .account-card-body {
+  opacity: 0.55;
+}
+
+#accounts-list.is-reordering,
+#accounts-list.is-reordering * {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .account-card-main {
   flex: 1;
   min-width: 0;
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.account-card-main:active {
+  cursor: grabbing;
+}
+
+.account-card-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-grip {
+  width: 8px;
+  flex-shrink: 0;
+  align-self: stretch;
+  min-height: 28px;
+  background-image: radial-gradient(circle, var(--text-dim) 1px, transparent 1.2px);
+  background-size: 4px 4px;
+  opacity: 0.35;
+}
+
+.account-card-main:hover {
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.28));
+}
+
+.account-card-main:hover .account-grip {
+  opacity: 0.85;
+}
+
+.account-drop-line {
+  height: 2px;
+  margin: 0 12px;
+  background: var(--accent);
+  border-radius: 99px;
 }
 
 .account-title-row {
@@ -2602,33 +2670,114 @@ hr {
   border-radius: 6px;
 }
 
-.token-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  flex-shrink: 0;
+.token-block {
+  list-style: none;
+  border: 1px solid var(--stroke-soft);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+
+.token-block .token-card {
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
 .token-expand-btn {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
   border: none;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 2px 6px;
-  font-size: 0.85rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.token-members {
-  list-style: none;
-  margin: -4px 0 0;
-  padding: 0 12px 8px 52px;
+.token-expand-btn svg {
+  display: block;
+  transform: rotate(-90deg);
+  transition: transform 0.15s ease;
 }
 
-.token-member-row {
+.token-expand-btn[aria-expanded="true"] svg {
+  transform: rotate(0deg);
+}
+
+.token-expand-btn:hover,
+.token-expand-btn:focus-visible {
+  color: var(--text);
+  background: var(--fill);
+}
+
+.token-member-panel {
+  border-top: 1px solid var(--stroke-soft);
+  padding: 4px 10px 10px;
+  font-family: inherit;
+}
+
+.token-member {
+  padding: 8px 6px;
+  min-width: 0;
+}
+
+.token-member + .token-member {
+  border-top: 1px solid var(--stroke-soft);
+}
+
+.token-member-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.token-member-addr {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.token-member-pct {
+  flex-shrink: 0;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.token-member-amt {
+  margin-top: 2px;
+  font-family: inherit;
   font-size: 0.78rem;
   color: var(--text-muted);
-  padding: 4px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.token-member-bar {
+  margin-top: 6px;
+  height: 3px;
+  border-radius: 99px;
+  background: var(--fill);
+  overflow: hidden;
+}
+
+.token-member-bar i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 99px;
 }
 
 .combined-pick-list {

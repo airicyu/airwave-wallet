@@ -24,6 +24,7 @@ export type AirwaveCommand =
   | "wallet.generateSeedAccount"
   | "wallet.generateAccount"
   | "wallet.setActiveAccount"
+  | "wallet.reorderAccounts"
   | "wallet.renameAccount"
   | "wallet.deleteAccount"
   | "wallet.addReadOnlyAccount"

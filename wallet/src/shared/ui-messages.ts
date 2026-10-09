@@ -391,6 +391,11 @@ const messages = {
     "zh-Hans": "设为当前钱包",
     "en": "Set as current wallet",
   },
+  "accounts.changeCurrentWallet": {
+    "zh-Hant": "切換目前錢包",
+    "zh-Hans": "切换当前钱包",
+    "en": "Change current wallet",
+  },
   "common.localAccounts": {
     "zh-Hant": "本機帳戶",
     "zh-Hans": "本地账户",
@@ -861,10 +866,25 @@ const messages = {
     "zh-Hans": "确定移除此钱包账户？",
     "en": "Remove this wallet account?",
   },
+  "accounts.removeMemberConfirm": {
+    "zh-Hant": "確定移除此成員地址？",
+    "zh-Hans": "确定移除此成员地址？",
+    "en": "Remove this member address?",
+  },
   "accounts.currentWalletAddress": {
     "zh-Hant": "目前錢包地址",
     "zh-Hans": "当前钱包地址",
     "en": "Current wallet address",
+  },
+  "accounts.sectionMembers": {
+    "zh-Hant": "成員地址",
+    "zh-Hans": "成员地址",
+    "en": "Member addresses",
+  },
+  "accounts.sectionAddFromLocal": {
+    "zh-Hant": "本機錢包帳戶",
+    "zh-Hans": "本地钱包账户",
+    "en": "Local wallet accounts",
   },
   "accounts.revealWarn": {
     "zh-Hant": "請勿分享或截圖保存私鑰。",
@@ -910,6 +930,21 @@ const messages = {
     "zh-Hant": "唯讀",
     "zh-Hans": "只读",
     "en": "Read-only",
+  },
+  "accounts.kindSigning": {
+    "zh-Hant": "簽名錢包",
+    "zh-Hans": "签名钱包",
+    "en": "Signing",
+  },
+  "accounts.kindReadOnly": {
+    "zh-Hant": "唯讀",
+    "zh-Hans": "只读",
+    "en": "Read-only",
+  },
+  "accounts.kindCombined": {
+    "zh-Hant": "聚合錢包帳戶",
+    "zh-Hans": "聚合钱包账户",
+    "en": "Combined",
   },
   "accounts.copyAddress": {
     "zh-Hant": "複製地址",
@@ -995,6 +1030,16 @@ const messages = {
     "zh-Hant": "Jupiter 已驗證",
     "zh-Hans": "Jupiter 已验证",
     "en": "Jupiter verified",
+  },
+  "token.expandMembers": {
+    "zh-Hant": "展開成員持倉",
+    "zh-Hans": "展开成员持仓",
+    "en": "Show member holdings",
+  },
+  "token.collapseMembers": {
+    "zh-Hant": "收合成員持倉",
+    "zh-Hans": "收起成员持仓",
+    "en": "Hide member holdings",
   },
   "closeEmpty.title": {
     "zh-Hant": "收回租金",

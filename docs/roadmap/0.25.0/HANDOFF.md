@@ -37,5 +37,5 @@ GUIDELINES pending／custody／不廣播。不新增 storage key。殼模式不�
 - [x] 設計審查無未關 HIGH（第 3 輪複審，2026-10-09）
 - [x] INDEX 狀態改 `in progress` 後實作 Track 1–3（程式已合入；瀏覽器手驗待本機）
 - [x] `cd wallet && npm run typecheck` 與 `npm run build` 通過
-- [ ] INDEX 手驗走完（含 SW 回收後再點圖示、SW 醒來不自己開窗）
-- [ ] 出貨前 changelog／version 對齊 `0.25.0`；`shipped` 與清 backlog 須使用者同意
+- [x] INDEX 手驗走完（含 SW 回收後再點圖示、SW 醒來不自己開窗）
+- [x] changelog 已寫 `0.25.0`；`shipped` 與清 backlog（使用者同意）。現行 `version.md` 為後續 `0.26.0`

@@ -1,6 +1,6 @@
 # 0.25.0 — 錢包視窗與側欄
 
-- **狀態：** `in progress`
+- **狀態：** `shipped`
 - **上游版本：** [0.24.0](../0.24.0/INDEX.md) 的目錄與命令出口；使用者可見行為接 [0.23.0](../0.23.0/INDEX.md)。審批宿主接 [0.13.0](../0.13.0/INDEX.md)，本版只改下面寫明的 `uiHost` 與殼，不改批准／廣播規則
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
 - **構想來源：** [backlog/sidebar-mode.md](../backlog/sidebar-mode.md)（排程前草稿；與本 INDEX 衝突以本檔為準）
@@ -101,22 +101,22 @@
 
 ## 驗收（出貨 checklist）
 
-- [ ] 點工具列：側欄沒開 → action popup；側欄開著 → 側欄；禁止 `windows.create` 錢包主殼
-- [ ] Home 頂欄、選單左側有切殼圖示；子頁、鎖定、審批沒有；鎖定在選單內
-- [ ] popup → 側欄成功後關 popup；側欄 Home 關側欄後不自動 `openPopup`；`sidePanel.open` 失敗則不關目前這一面
-- [ ] 側欄按 X 後回到 popup mode（工具列再開是 popup；網站 Connect 走 popout）
-- [ ] 側欄寬度 100% 跟面板，無 422px 置中欄
-- [ ] 網站審批：側欄文件活著 → 殼內；否則 popout。錢包送出與收回租金留在當下殼
-- [ ] 側欄 connect 是完整 Page（自有標題與底欄），不是 `dapp-approval`／送出標題；結束 pop 回 Home
-- [ ] `uiHost` 不再寫入 `"popup"`
-- [ ] 解鎖規則不變
-- [ ] 三語 catalog 有 `shell.toSidebar`、`shell.closeSidebar`
-- [ ] `cd wallet && npm run typecheck` 與 `npm run build` 通過
-- [ ] 未封裝擴充走完 Track 2、Track 3 手驗
-- [ ] design-principles 第 1 節已改成工具列 popup／側欄
-- [ ] 文件與程式無真實密碼／助記詞／私鑰
-- [ ] 版本號檔對齊 `0.25.0`；狀態 `shipped` 須使用者同意
-- [ ] 出貨後刪 backlog 的 sidebar 列與 `sidebar-mode.md`
+- [x] 點工具列：側欄沒開 → action popup；側欄開著 → 側欄；禁止 `windows.create` 錢包主殼
+- [x] Home 頂欄、選單左側有切殼圖示；子頁、鎖定、審批沒有；鎖定在選單內
+- [x] popup → 側欄成功後關 popup；側欄 Home 關側欄後不自動 `openPopup`；`sidePanel.open` 失敗則不關目前這一面
+- [x] 側欄按 X 後回到 popup mode（工具列再開是 popup；網站 Connect 走 popout）
+- [x] 側欄寬度 100% 跟面板，無 422px 置中欄
+- [x] 網站審批：側欄文件活著 → 殼內；否則 popout。錢包送出與收回租金留在當下殼
+- [x] 側欄 connect 是完整 Page（自有標題與底欄），不是 `dapp-approval`／送出標題；結束 pop 回 Home
+- [x] `uiHost` 不再寫入 `"popup"`
+- [x] 解鎖規則不變
+- [x] 三語 catalog 有 `shell.toSidebar`、`shell.closeSidebar`
+- [x] `cd wallet && npm run typecheck` 與 `npm run build` 通過
+- [x] 未封裝擴充走完 Track 2、Track 3 手驗
+- [x] design-principles 第 1 節已改成工具列 popup／側欄
+- [x] 文件與程式無真實密碼／助記詞／私鑰
+- [x] 狀態 `shipped`（使用者同意）。出貨當下版本檔曾對齊 `0.25.0`；其後 [0.26.0](../0.26.0/INDEX.md) 已覆蓋為 `0.26.0`
+- [x] 出貨後刪 backlog 的 sidebar 列與 `sidebar-mode.md`
 
 ## 錨點檔案
 

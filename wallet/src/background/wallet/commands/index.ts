@@ -10,6 +10,7 @@ export {
   handleImportAccount,
   handleImportSeedAccount,
   handlePreviewSeedAccounts,
+  handleReorderAccounts,
   handleRenameAccount,
   handleSetActiveAccount,
 } from "./account";

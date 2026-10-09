@@ -8,7 +8,12 @@ export const STORAGE = {
   activeAccountId: "airwave.activeAccountId.v1",
   connections: "airwave.connections.v1",
   vault: "airwave.vault.v1",
+  /** Integer generation of local records; not the extension X.Y.Z. */
+  schemaGeneration: "airwave.schemaGeneration",
 } as const;
+
+/** This build's local schema generation. Existing `*.v1` keys are generation 1. */
+export const CURRENT_SCHEMA_GENERATION = 1;
 
 /** 僅 `chrome.storage.session`：解鎖工作金鑰。關瀏覽器即清。禁止寫入 local。 */
 export const SESSION_UNLOCKED = "airwave.unlocked.session.v1";

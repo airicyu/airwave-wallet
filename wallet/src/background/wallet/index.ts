@@ -15,6 +15,7 @@ export {
   handleImportAccount,
   handleImportSeedAccount,
   handlePreviewSeedAccounts,
+  handleReorderAccounts,
   handleRenameAccount,
   handleSetActiveAccount,
   handleAddCombinedSub,

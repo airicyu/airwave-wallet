@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Airwave — 帳戶卡片拖曳</title>
+    <style>
+      body { margin:0; font-family:"Segoe UI","Microsoft JhengHei UI","PingFang TC",sans-serif; background:#080b0e; color:#e8eef4; padding:28px; }
+      .card { display:flex; gap:8px; padding:12px; background:#161c24; border-radius:12px; width:340px; margin:8px 0; align-items:center; }
+      .grip { width:8px; align-self:stretch; background-image:radial-gradient(circle,#6b7785 1px,transparent 1.2px); background-size:4px 4px; opacity:.4; }
+      .line { height:2px; background:#3d9cf0; margin:0 12px; width:316px; }
+    </style>
+  </head>
+  <body>
+    <h1>卡片拖曳</h1>
+    <p>主區含淡 grip；懸停陰影；插入藍線。kebab／複製不拖。</p>
+    <div class="card"><div class="grip"></div> Account A</div>
+    <div class="line"></div>
+    <div class="card"><div class="grip"></div> Account B</div>
+  </body>
+</html>

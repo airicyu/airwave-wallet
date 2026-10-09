@@ -1,5 +1,10 @@
-import type { JSX } from "react";
-import { useCallback, useState } from "react";
+/**
+ * Accounts list, manage, rename, and combined-create screens.
+ * Does not own vault session or Home token rows.
+ */
+import type { JSX, PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { accountVisualKind } from "../../shared/account-kind-visual";
 import {
   getExposedPublicKey,
   isCombinedAccount,
@@ -10,7 +15,8 @@ import { ACCOUNT_LABEL_MAX } from "../../shared/account-label";
 import { sendExtensionRequest } from "../../shared/ext-api";
 import type { CombinedAccountMeta } from "../../shared/storage-keys";
 import { accountKind, type AccountMeta } from "../../shared/storage-keys";
-import { IconCopy, IconEye, IconKebab, IconPlus, IconRename, IconTrash, IconX } from "../components/StrokeIcon";
+import { AccountKindMark } from "../components/AccountKindMark";
+import { IconCopy, IconEye, IconKebab, IconPlus, IconRename, IconSwitch, IconTrash, IconX } from "../components/StrokeIcon";
 import { addCombinedDraftParts, emptyCombinedCreate, validCombinedMembers } from "./combined-logic";
 import { WalletPasswordInput } from "../components/WalletPasswordInput";
 import { apiErrorMessage } from "../../shared/ui-i18n";
@@ -20,9 +26,90 @@ import { useRegisterDock } from "../state/dock";
 import { useT } from "../state/useT";
 import type { CombinedCreateState, State } from "../types";
 
+const ACCOUNT_DRAG_PX = 6;
+
 export function AccountsList({ wallet }: { wallet: State }): JSX.Element {
-  const { navigateTo } = usePopupContext();
-  const { t } = useT();
+  const { navigateTo, refresh, showError, clearError } = usePopupContext();
+  const { t, locale } = useT();
+  const [order, setOrder] = useState(() => wallet.accounts.map((a) => a.id));
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropLine, setDropLine] = useState<{ id: string; edge: "before" | "after" } | null>(null);
+  const dropLineRef = useRef(dropLine);
+  dropLineRef.current = dropLine;
+  const dragRef = useRef<{ id: string; startY: number; live: boolean } | null>(null);
+  const skipClickRef = useRef(false);
+
+  useEffect(() => {
+    setOrder(wallet.accounts.map((a) => a.id));
+  }, [wallet.accounts]);
+
+  const persistOrder = useCallback(
+    async (next: string[]) => {
+      const res = await sendExtensionRequest("wallet.reorderAccounts", { orderedIds: next });
+      if (!res.ok) showError(apiErrorMessage(locale, res.error, "error.genericFailed"));
+      else await refresh();
+    },
+    [locale, refresh, showError],
+  );
+
+  const onPointerMove = useCallback((ev: PointerEvent) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    if (!drag.live && Math.abs(ev.clientY - drag.startY) < ACCOUNT_DRAG_PX) return;
+    if (!drag.live) {
+      drag.live = true;
+      skipClickRef.current = true;
+      setDraggingId(drag.id);
+      window.getSelection()?.removeAllRanges();
+    }
+    ev.preventDefault();
+    const cards = Array.from(document.querySelectorAll<HTMLElement>("#accounts-list .account-card"));
+    let line: { id: string; edge: "before" | "after" } | null = null;
+    for (const card of cards) {
+      const id = card.dataset.accountId;
+      if (!id) continue;
+      const r = card.getBoundingClientRect();
+      const mid = r.top + r.height / 2;
+      if (ev.clientY < r.bottom && ev.clientY >= r.top) {
+        line = { id, edge: ev.clientY < mid ? "before" : "after" };
+        break;
+      }
+    }
+    setDropLine(line);
+  }, []);
+
+  const onPointerUp = useCallback(() => {
+    window.removeEventListener("pointermove", onPointerMove);
+    window.removeEventListener("pointerup", onPointerUp);
+    const drag = dragRef.current;
+    dragRef.current = null;
+    setDraggingId(null);
+    const line = dropLineRef.current;
+    setDropLine(null);
+    if (!drag?.live || !line) return;
+    setOrder((prev) => {
+      const next = prev.filter((id) => id !== drag.id);
+      let idx = next.indexOf(line.id);
+      if (idx < 0) return prev;
+      if (line.edge === "after") idx += 1;
+      next.splice(idx, 0, drag.id);
+      void persistOrder(next);
+      return next;
+    });
+  }, [onPointerMove, persistOrder]);
+
+  const startDrag = (id: string, ev: ReactPointerEvent) => {
+    if ((ev.target as HTMLElement).closest("button")) return;
+    ev.preventDefault();
+    window.getSelection()?.removeAllRanges();
+    dragRef.current = { id, startY: ev.clientY, live: false };
+    window.addEventListener("pointermove", onPointerMove, { passive: false });
+    window.addEventListener("pointerup", onPointerUp);
+  };
+
+  const byId = new Map(wallet.accounts.map((a) => [a.id, a]));
+  const ordered = order.map((id) => byId.get(id)).filter((a): a is AccountMeta => a != null);
+
   return (
     <>
       <div className="subpage-head compact">
@@ -38,79 +125,136 @@ export function AccountsList({ wallet }: { wallet: State }): JSX.Element {
           <IconPlus size={18} />
         </button>
       </div>
-      <div id="accounts-list">
-        {wallet.accounts.map((a) => (
-          <AccountCard key={a.id} account={a} wallet={wallet} />
+      <div id="accounts-list" className={draggingId ? "is-reordering" : undefined}>
+        {ordered.map((a) => (
+          <AccountCard
+            key={a.id}
+            account={a}
+            wallet={wallet}
+            dragging={draggingId === a.id}
+            dropEdge={dropLine?.id === a.id ? dropLine.edge : null}
+            onMainPointerDown={(ev) => startDrag(a.id, ev)}
+            onMainClick={async () => {
+              if (skipClickRef.current) {
+                skipClickRef.current = false;
+                return;
+              }
+              clearError();
+              const res = await sendExtensionRequest("wallet.setActiveAccount", { accountId: a.id });
+              if (!res.ok) showError(apiErrorMessage(locale, res.error, "error.switchFailed"));
+              else {
+                await refresh();
+                navigateTo("home-token");
+              }
+            }}
+          />
         ))}
       </div>
     </>
   );
 }
 
-function AccountCard({ account: a, wallet }: { account: AccountMeta; wallet: State }): JSX.Element {
-  const { clearError, showError, refresh, navigateTo } = usePopupContext();
-  const { t, locale } = useT();
+function AccountCard({
+  account: a,
+  wallet,
+  dragging,
+  dropEdge,
+  onMainPointerDown,
+  onMainClick,
+}: {
+  account: AccountMeta;
+  wallet: State;
+  dragging: boolean;
+  dropEdge: "before" | "after" | null;
+  onMainPointerDown: (ev: ReactPointerEvent) => void;
+  onMainClick: () => void;
+}): JSX.Element {
+  const { navigateTo } = usePopupContext();
+  const { t } = useT();
+  const kind = accountVisualKind(a);
   return (
-    <div className={`account-card${a.id === wallet.activeAccountId ? " active" : ""}`}>
-      <div
-        className="account-card-main"
-        onClick={async () => {
-          clearError();
-          const res = await sendExtensionRequest("wallet.setActiveAccount", { accountId: a.id });
-          if (!res.ok) showError(apiErrorMessage(locale, res.error, "error.switchFailed"));
-          else {
-            await refresh();
-            navigateTo("home-token");
-          }
-        }}
-      >
-        <div className="account-title-row">
-          <span className="account-name">{a.label}</span>
-          <button
-            type="button"
-            className="icon-btn ghost-inline"
-            title={t("accounts.renameAccount")}
-            aria-label={t("accounts.renameAccount")}
-            onClick={(ev) => {
-              ev.stopPropagation();
-              navigateTo("account-rename", a.id);
-            }}
-          >
-            <IconRename />
-          </button>
-          {a.id === wallet.activeAccountId ? (
-            <span className="badge" style={{ borderColor: "var(--accent)", color: "var(--accent)" }}>
-              {t("accounts.active")}
-            </span>
-          ) : null}
-          {isCombinedAccount(a) ? <span className="badge">{t("accounts.badgeCombined")}</span> : null}
-          {accountKind(a) === "readOnly" ? <span className="badge">{t("accounts.badgeReadOnly")}</span> : null}
+    <div
+      className={`account-card${a.id === wallet.activeAccountId ? " active" : ""}${dragging ? " is-dragging" : ""}`}
+      data-account-id={a.id}
+    >
+      {dropEdge === "before" ? <div className="account-drop-line" /> : null}
+      <div className="account-card-body">
+        <div className="account-card-main" onPointerDown={onMainPointerDown} onClick={() => onMainClick()}>
+          <span className="account-grip" aria-hidden="true" />
+          <AccountKindMark
+            kind={kind}
+            size={16}
+            label={
+              kind === "combined"
+                ? t("accounts.kindCombined")
+                : kind === "readOnly"
+                  ? t("accounts.kindReadOnly")
+                  : t("accounts.kindSigning")
+            }
+          />
+          <div className="account-card-copy">
+            <div className="account-title-row">
+              <span className="account-name">{a.label}</span>
+              <button
+                type="button"
+                className="icon-btn ghost-inline"
+                title={t("accounts.renameAccount")}
+                aria-label={t("accounts.renameAccount")}
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  navigateTo("account-rename", a.id);
+                }}
+              >
+                <IconRename />
+              </button>
+              {a.id === wallet.activeAccountId ? (
+                <span className="badge" style={{ borderColor: "var(--accent)", color: "var(--accent)" }}>
+                  {t("accounts.active")}
+                </span>
+              ) : null}
+            </div>
+            <div className="account-addr-row">
+              {kind === "combined" ? (
+                <button
+                  type="button"
+                  className="icon-btn ghost-inline"
+                  title={t("accounts.changeCurrentWallet")}
+                  aria-label={t("accounts.changeCurrentWallet")}
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    navigateTo("account-manage", a.id);
+                  }}
+                >
+                  <IconSwitch size={16} />
+                </button>
+              ) : null}
+              <span className="addr">{shortAddr(getExposedPublicKey(a))}</span>
+              <button
+                type="button"
+                className="icon-btn ghost-inline"
+                title={t("accounts.copyAddress")}
+                aria-label={t("accounts.copyAddress")}
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  void navigator.clipboard.writeText(getExposedPublicKey(a));
+                }}
+              >
+                <IconCopy />
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="account-addr-row">
-          <span className="addr">{shortAddr(getExposedPublicKey(a))}</span>
-          <button
-            type="button"
-            className="icon-btn ghost-inline"
-            title={t("accounts.copyAddress")}
-            aria-label={t("accounts.copyAddress")}
-            onClick={(ev) => {
-              ev.stopPropagation();
-              void navigator.clipboard.writeText(getExposedPublicKey(a));
-            }}
-          >
-            <IconCopy />
-          </button>
-        </div>
+        <button
+          type="button"
+          className="icon-btn"
+          title={t("accounts.manageAccount")}
+          aria-label={t("accounts.manageAccount")}
+          onClick={() => navigateTo("account-manage", a.id)}
+        >
+          <IconKebab />
+        </button>
       </div>
-      <button
-        type="button"
-        className="icon-btn"
-        title={t("accounts.manageAccount")}
-        aria-label={t("accounts.manageAccount")}
-        onClick={() => navigateTo("account-manage", a.id)}
-      >
-        <IconKebab />
-      </button>
+      {dropEdge === "after" ? <div className="account-drop-line" /> : null}
     </div>
   );
 }
@@ -233,6 +377,17 @@ function CombinedManagePanel({
   const [manageAddSubPk, setManageAddSubPk] = useState("");
   const inCombined = new Set(acc.subPubkeys.map((pk) => parsePublicKeyBase58(pk) ?? pk));
 
+  const removeMember = async (publicKeyBase58: string) => {
+    clearError();
+    if (!confirm(t("accounts.removeMemberConfirm"))) return;
+    const res = await sendExtensionRequest("wallet.removeCombinedSub", {
+      combinedId: acc.id,
+      publicKeyBase58,
+    });
+    if (!res.ok) showError(apiErrorMessage(locale, res.error, "error.removeFailed"));
+    else await refresh();
+  };
+
   const submitManagePaste = async () => {
     clearError();
     const publicKeyBase58 = manageAddSubPk.trim();
@@ -254,42 +409,7 @@ function CombinedManagePanel({
       <p id="manage-combined-main" className="manage-addr">
         {shortAddr(acc.mainPubkey)}
       </p>
-      <p className="sec-head">{t("common.localAccounts")}</p>
-      <div id="manage-combined-pick-list" className="combined-pick-list">
-        {wallet.accounts.filter(isSigningOrWatch).map((a) => {
-          const pk = parsePublicKeyBase58(a.publicKeyBase58) ?? a.publicKeyBase58;
-          const already = inCombined.has(pk);
-          return (
-            <label key={a.id} className="combined-pick-row">
-              <input
-                type="checkbox"
-                checked={already}
-                disabled={already && acc.subPubkeys.length <= 1}
-                onChange={async (e) => {
-                  clearError();
-                  const res = e.target.checked
-                    ? await sendExtensionRequest("wallet.addCombinedSub", {
-                        combinedId: acc.id,
-                        publicKeyBase58: a.publicKeyBase58,
-                      })
-                    : await sendExtensionRequest("wallet.removeCombinedSub", {
-                        combinedId: acc.id,
-                        publicKeyBase58: a.publicKeyBase58,
-                      });
-                  if (!res.ok) {
-                    showError(
-                      apiErrorMessage(locale, res.error, e.target.checked ? "error.addFailed" : "error.removeFailed"),
-                    );
-                  }
-                  else await refresh();
-                }}
-              />
-              <span className="pick-name">{a.label}</span>
-              <span className="pick-addr">{shortAddr(a.publicKeyBase58)}</span>
-            </label>
-          );
-        })}
-      </div>
+      <p className="sec-head">{t("accounts.sectionMembers")}</p>
       <div className="field">
         <label htmlFor="manage-add-sub-pk">{t("common.address")}</label>
         <div className="add-line">
@@ -350,15 +470,7 @@ function CombinedManagePanel({
                   title={t("common.delete")}
                   aria-label={t("common.delete")}
                   disabled={acc.subPubkeys.length <= 1}
-                  onClick={async () => {
-                    clearError();
-                    const res = await sendExtensionRequest("wallet.removeCombinedSub", {
-                      combinedId: acc.id,
-                      publicKeyBase58: pk,
-                    });
-                    if (!res.ok) showError(apiErrorMessage(locale, res.error, "error.removeFailed"));
-                    else await refresh();
-                  }}
+                  onClick={() => void removeMember(pk)}
                 >
                   <IconTrash size={14} />
                 </button>
@@ -367,6 +479,37 @@ function CombinedManagePanel({
           );
         })}
       </ul>
+      <p className="sec-head">{t("accounts.sectionAddFromLocal")}</p>
+      <div id="manage-combined-pick-list" className="combined-pick-list">
+        {wallet.accounts.filter(isSigningOrWatch).map((a) => {
+          const pk = parsePublicKeyBase58(a.publicKeyBase58) ?? a.publicKeyBase58;
+          const already = inCombined.has(pk);
+          return (
+            <label key={a.id} className="combined-pick-row">
+              <input
+                type="checkbox"
+                checked={already}
+                disabled={already && acc.subPubkeys.length <= 1}
+                onChange={async (e) => {
+                  if (!e.target.checked) {
+                    await removeMember(a.publicKeyBase58);
+                    return;
+                  }
+                  clearError();
+                  const res = await sendExtensionRequest("wallet.addCombinedSub", {
+                    combinedId: acc.id,
+                    publicKeyBase58: a.publicKeyBase58,
+                  });
+                  if (!res.ok) showError(apiErrorMessage(locale, res.error, "error.addFailed"));
+                  else await refresh();
+                }}
+              />
+              <span className="pick-name">{a.label}</span>
+              <span className="pick-addr">{shortAddr(a.publicKeyBase58)}</span>
+            </label>
+          );
+        })}
+      </div>
     </div>
   );
 }

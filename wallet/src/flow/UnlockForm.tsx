@@ -30,6 +30,7 @@ export function UnlockForm({
       setBusy(false);
       setPassword("");
       setError(apiErrorMessage(locale, res.error, "error.unlockFailed"));
+      document.getElementById("connect-unlock-password")?.focus();
       return;
     }
     onUnlocked();
@@ -43,6 +44,7 @@ export function UnlockForm({
       <div className="unlock-form">
         <WalletPasswordInput
           id="connect-unlock-password"
+          autoFocus
           placeholder={t(locale, "unlock.passwordPlaceholder")}
           value={password}
           onChange={setPassword}

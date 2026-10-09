@@ -304,6 +304,18 @@ input.wallet-pwd-masked {
   flex-shrink: 0;
 }
 
+.avatar.kind-mark,
+.kind-mark.avatar {
+  background: var(--fill);
+}
+
+.kind-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .icon-btn {
   display: inline-flex;
   align-items: center;

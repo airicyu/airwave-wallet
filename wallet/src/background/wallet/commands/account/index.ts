@@ -4,6 +4,7 @@
 export {
   handleAddReadOnlyAccount,
   handleDeleteAccount,
+  handleReorderAccounts,
   handleRenameAccount,
   handleSetActiveAccount,
 } from "./account-records";

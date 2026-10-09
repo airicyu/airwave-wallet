@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — Combined 持倉展開</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --ok: #4ecb8d;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --popup-w: 360px;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif;
+        background: #080b0e;
+        color: var(--text);
+      }
+      .page { max-width: 920px; margin: 0 auto; padding: 28px 20px 48px; }
+      h1 { font-size: 1.25rem; margin: 0 0 8px; }
+      .lead { color: var(--text-muted); font-size: 0.92rem; max-width: 46em; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
+      @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+      .col h2 { font-size: 0.85rem; color: var(--text-dim); font-weight: 600; margin: 0 0 10px; }
+      .phone {
+        width: var(--popup-w);
+        background: var(--bg);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        padding: 12px;
+      }
+      .token-list { display: flex; flex-direction: column; gap: 8px; }
+      .token-card {
+        display: flex; align-items: center; gap: 12px;
+        padding: 14px 12px; border: 1px solid var(--stroke-soft);
+        border-radius: var(--radius); background: var(--bg-elevated);
+      }
+      .icon {
+        width: 40px; height: 40px; border-radius: 50%; background: var(--fill);
+        display: grid; place-items: center; font-weight: 700; color: var(--text-muted); flex-shrink: 0;
+      }
+      .main { flex: 1; min-width: 0; }
+      .name { font-weight: 600; font-size: 0.92rem; }
+      .qty { margin-top: 2px; font-size: 0.78rem; color: var(--text-muted); font-family: inherit; }
+      .usd { font-weight: 600; font-size: 0.92rem; flex-shrink: 0; }
+      .old-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+      .tiny { border: none; background: transparent; color: var(--text-muted); font-size: 0.85rem; padding: 2px 6px; }
+      .old-members { padding: 4px 12px 8px 52px; font-size: 0.78rem; color: var(--text-muted); }
+      .old-members div { padding: 4px 0; white-space: nowrap; }
+      .block { border: 1px solid var(--stroke-soft); border-radius: var(--radius); background: var(--bg-elevated); overflow: hidden; }
+      .block .token-card { border: none; border-radius: 0; }
+      .expand {
+        width: 34px; height: 34px; flex-shrink: 0; border: none; border-radius: 8px;
+        background: transparent; color: var(--text-muted); display: grid; place-items: center; cursor: pointer;
+      }
+      .expand:hover { background: var(--fill); color: var(--text); }
+      .expand svg { transition: transform 0.15s; }
+      .expand.open svg { transform: rotate(0deg); }
+      .expand.shut svg { transform: rotate(-90deg); }
+      .panel { padding: 4px 10px 10px; border-top: 1px solid var(--stroke-soft); }
+      .member { padding: 8px 6px; }
+      .member + .member { border-top: 1px solid var(--stroke-soft); }
+      .m-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+      .addr { font-family: var(--mono); font-size: 0.78rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .pct { flex-shrink: 0; font-family: inherit; font-size: 0.78rem; font-weight: 600; color: var(--text); }
+      .amt { margin-top: 2px; font-family: inherit; font-size: 0.78rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .bar { margin-top: 6px; height: 3px; border-radius: 99px; background: var(--fill); overflow: hidden; }
+      .bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+      .note { margin-top: 28px; font-size: 0.85rem; color: var(--text-muted); }
+      .note li { margin: 6px 0; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>Combined 持倉展開</h1>
+      <p class="lead">360px 寬。左＝現況（小三角、一行塞地址＋數量＋%）。右＝提案：34px chevron 獨立熱區；成員兩行＋比例條，永不橫向溢出。</p>
+      <div class="grid">
+        <div class="col">
+          <h2>現況</h2>
+          <div class="phone">
+            <div class="token-list">
+              <div class="token-card">
+                <div class="icon">◎</div>
+                <div class="main"><div class="name">Solana ✓</div><div class="qty">0.586324815 SOL</div></div>
+                <div class="old-right">
+                  <div class="usd">$64.14</div>
+                  <button class="tiny" type="button">▾</button>
+                </div>
+              </div>
+              <div class="old-members">
+                <div>buwa…9XsS · 0.070525243 SOL · 12%</div>
+                <div>tra5…CbB4 · 0.075428811 SOL · 13%</div>
+                <div>8Cqe…W6MM · 0.151523589 SOL · 26%</div>
+                <div>2nho…14bH · 0.140586986 SOL · 24%</div>
+                <div>hoas…Yxx7 · 0.148260186 SOL · 25%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <h2>提案</h2>
+          <div class="phone">
+            <div class="token-list">
+              <div class="block">
+                <div class="token-card">
+                  <div class="icon">◎</div>
+                  <div class="main"><div class="name">Solana ✓</div><div class="qty">0.586324815 SOL</div></div>
+                  <div class="usd">$64.14</div>
+                  <button class="expand open" type="button" aria-label="收合成員持倉">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                </div>
+                <div class="panel">
+                  <div class="member">
+                    <div class="m-top"><span class="addr">8Cqe…W6MM</span><span class="pct">26%</span></div>
+                    <div class="amt">0.151523589 SOL</div>
+                    <div class="bar"><i style="width:26%"></i></div>
+                  </div>
+                  <div class="member">
+                    <div class="m-top"><span class="addr">hoas…Yxx7</span><span class="pct">25%</span></div>
+                    <div class="amt">0.148260186 SOL</div>
+                    <div class="bar"><i style="width:25%"></i></div>
+                  </div>
+                  <div class="member">
+                    <div class="m-top"><span class="addr">2nho…14bH</span><span class="pct">24%</span></div>
+                    <div class="amt">0.140586986 SOL</div>
+                    <div class="bar"><i style="width:24%"></i></div>
+                  </div>
+                  <div class="member">
+                    <div class="m-top"><span class="addr">tra5…CbB4</span><span class="pct">13%</span></div>
+                    <div class="amt">0.075428811 SOL</div>
+                    <div class="bar"><i style="width:13%"></i></div>
+                  </div>
+                  <div class="member">
+                    <div class="m-top"><span class="addr">buwa…9XsS</span><span class="pct">12%</span></div>
+                    <div class="amt">0.070525243 SOL</div>
+                    <div class="bar"><i style="width:12%"></i></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <ul class="note">
+        <li>點卡片主區仍進代幣詳情；只有 chevron 展開／收合（stopPropagation）。</li>
+        <li>地址前 4…後 4；數量與 % 分列，ellipsis，禁止 nowrap 單行塞三欄。</li>
+        <li>比例條只是掃一眼，不是新資料；% 仍四捨五入到整數（0.5.0）。</li>
+        <li>成員依持倉數量大→小；數量相同則完整公鑰 natural sort。</li>
+        <li>字體對齊產品：正文 Segoe UI／JhengHei UI／PingFang TC；地址 `--mono`；數量與卡片 `.token-qty` 同級。</li>
+      </ul>
+    </div>
+  </body>
+</html>
