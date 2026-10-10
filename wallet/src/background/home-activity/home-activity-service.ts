@@ -11,9 +11,7 @@ import {
 } from "../../shared/home-activity";
 import type { Settings } from "../../shared/storage-keys";
 import { solanaRpcForUrl } from "../../shared/solana-rpc";
-import { extractHeliusApiKey } from "../home-tokens";
-
-const HELIUS_TX_ORIGIN = "https://api.helius.xyz";
+import { resolveHeliusApiTarget, type HeliusApiTarget } from "../../shared/helius-api-target";
 
 export type HomeActivityResult =
   | { rows: HomeActivityRow[]; error?: undefined }
@@ -33,10 +31,10 @@ async function fetchJson(url: string): Promise<unknown> {
 
 async function fetchEnhanced(
   owner: string,
-  apiKey: string,
+  target: HeliusApiTarget,
 ): Promise<HomeActivityRow[]> {
-  const url = new URL(`${HELIUS_TX_ORIGIN}/v0/addresses/${encodeURIComponent(owner)}/transactions`);
-  url.searchParams.set("api-key", apiKey);
+  const url = new URL(`${target.origin}/v0/addresses/${encodeURIComponent(owner)}/transactions`);
+  if (target.apiKey) url.searchParams.set("api-key", target.apiKey);
   url.searchParams.set("limit", String(homeActivityLimit()));
   url.searchParams.set("token-accounts", "balanceChanged");
   url.searchParams.set("sort-order", "desc");
@@ -66,9 +64,9 @@ export async function getHomeActivity(owner: string, settings: Settings): Promis
     return { rows: [], error: "unavailable" };
   }
   try {
-    const apiKey = extractHeliusApiKey(settings.heliusApiUrl);
-    if (settings.cluster === "mainnet" && apiKey) {
-      return { rows: await fetchEnhanced(owner, apiKey) };
+    const helius = resolveHeliusApiTarget(settings.heliusApiUrl);
+    if (settings.cluster === "mainnet" && helius) {
+      return { rows: await fetchEnhanced(owner, helius) };
     }
     return { rows: await fetchSignatures(owner, settings) };
   } catch {

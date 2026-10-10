@@ -1,5 +1,5 @@
 /**
- * Loads and caches home token balances and mint metadata (RPC, Helius wallet API, Jupiter) for popup display.
+ * Loads and caches home token balances and mint metadata (RPC, Jupiter) for popup display.
  * Does not sign transfers or manage vault encryption.
  */
 import { address } from "@solana/kit";
@@ -9,18 +9,14 @@ import {
   NATIVE_SOL_ID,
   WRAPPED_SOL_MINT,
   buildHomeTokenRowsFromOwnerParsed,
-  fetchNativeAndWrappedSolRows,
   formatUsdLabel,
   iconLetterForSymbol,
-  shortMint,
   sortHomeTokenRows,
   type HomeTokenMemberShare,
   type HomeTokenRow,
-  type TokenProgramKind,
 } from "../../shared/home-tokens";
 import {
   fetchParsedTokenAccountsForOwner,
-  tokenProgramByMintFromParsed,
   type ParsedOwnerTokenAccount,
 } from "../../shared/parsed-token-accounts";
 import { isRpcRateLimitError, withRateLimitRetry } from "../../shared/rpc-rate-limit";
@@ -35,12 +31,9 @@ export type GetHomeTokensResult = {
 const TTL_MS = 45_000;
 /** 快取仍很新時不再排背景 refresh（避免 force 刷新後 list 讀快取又打第二輪 RPC）。 */
 const BACKGROUND_REFRESH_MIN_CACHE_AGE_MS = 10_000;
-const WALLET_BALANCES_LIMIT = 100;
-const PAGE_DELAY_MS = 500;
 const OWNER_PIPE_GAP_MS = 250;
 const OWNER_RETRY_PASS_GAP_MS = 1500;
 const OWNER_RATE_LIMIT_PASSES = 3;
-const WALLET_API_ORIGIN = "https://api.helius.xyz";
 const JUPITER_BATCH_SIZE = 100;
 const JUPITER_DELAY_NO_KEY_MS = 2000;
 const JUPITER_DELAY_WITH_KEY_MS = 1000;
@@ -86,7 +79,7 @@ function scheduleBackgroundRefresh(
 export function homeTokensCacheFingerprint(owners: string[], settings: Settings): string {
   const ownersJoin = owners.join("\u001f");
   const rpc = `${settings.rpcByCluster.devnet.active}:${settings.rpcByCluster.devnet.urls.join(",")}|${settings.rpcByCluster.mainnet.active}:${settings.rpcByCluster.mainnet.urls.join(",")}`;
-  return `${ownersJoin}|${settings.cluster}|${rpc}|${settings.heliusApiUrl}|${settings.rpcUrl}|${settings.jupiterApiKey}`;
+  return `${ownersJoin}|${settings.cluster}|${rpc}|${settings.rpcUrl}|${settings.jupiterApiKey}`;
 }
 
 function sleep(ms: number, signal?: AbortSignal): Promise<void> {
@@ -153,231 +146,6 @@ function httpsIconUrl(raw: unknown): string | undefined {
   if (typeof raw !== "string") return undefined;
   if (!raw.startsWith("https:")) return undefined;
   return raw;
-}
-
-export function extractHeliusApiKey(heliusApiUrl: string): string | null {
-  const t = heliusApiUrl.trim();
-  if (!t) return null;
-  try {
-    const u = new URL(t);
-    const fromApiKey = u.searchParams.get("api-key")?.trim();
-    if (fromApiKey) return fromApiKey;
-    const fromApiKeyAlt = u.searchParams.get("apiKey")?.trim();
-    return fromApiKeyAlt || null;
-  } catch {
-    return null;
-  }
-}
-
-type WalletTokenBalance = {
-  mint: string;
-  symbol?: string | null;
-  name?: string | null;
-  balance: number;
-  decimals: number;
-  pricePerToken?: number | null;
-  usdValue?: number | null;
-  logoUri?: string | null;
-};
-
-type WalletBalancesPage = {
-  balances: WalletTokenBalance[];
-  hasMore: boolean;
-};
-
-function asFiniteNumber(v: unknown): number | undefined {
-  if (typeof v === "number" && Number.isFinite(v)) return v;
-  if (typeof v === "string" && v.trim()) {
-    const n = Number(v);
-    if (Number.isFinite(n)) return n;
-  }
-  return undefined;
-}
-
-function parseWalletTokenBalance(raw: unknown): WalletTokenBalance | null {
-  if (!raw || typeof raw !== "object") return null;
-  const rec = raw as Record<string, unknown>;
-  const mint = trimMeta(rec.mint);
-  if (!mint) return null;
-  const balance = asFiniteNumber(rec.balance);
-  const decimals = asFiniteNumber(rec.decimals);
-  if (balance == null || decimals == null) return null;
-  return {
-    mint,
-    symbol: trimMeta(rec.symbol) ?? null,
-    name: trimMeta(rec.name) ?? null,
-    balance,
-    decimals,
-    pricePerToken: asFiniteNumber(rec.pricePerToken) ?? null,
-    usdValue: asFiniteNumber(rec.usdValue) ?? null,
-    logoUri: trimMeta(rec.logoUri) ?? null,
-  };
-}
-
-async function fetchWalletBalancesPage(
-  apiKey: string,
-  owner: string,
-  page: number,
-  signal: AbortSignal,
-  options?: { showZeroBalance?: boolean },
-): Promise<WalletBalancesPage> {
-  const url = new URL(`${WALLET_API_ORIGIN}/v1/wallet/${owner}/balances`);
-  url.searchParams.set("api-key", apiKey);
-  url.searchParams.set("page", String(page));
-  url.searchParams.set("limit", String(WALLET_BALANCES_LIMIT));
-  url.searchParams.set("showNfts", "false");
-  url.searchParams.set("showZeroBalance", options?.showZeroBalance === true ? "true" : "false");
-  url.searchParams.set("showNative", "true");
-
-  const res = await fetchWith429Retry(
-    url,
-    { method: "GET", headers: { "X-Api-Key": apiKey } },
-    signal,
-  );
-
-  if (!res.ok) {
-    if (res.status === 429) {
-      throw new Error("Helius 速率限制（429），請稍後再試");
-    }
-    throw new Error(`Helius Wallet API 失敗（HTTP ${res.status}）`);
-  }
-
-  let json: unknown;
-  try {
-    json = await res.json();
-  } catch {
-    throw new Error("Helius Wallet API 回應無法解析");
-  }
-  if (!json || typeof json !== "object") {
-    throw new Error("Helius Wallet API 回應格式錯誤");
-  }
-  const rec = json as Record<string, unknown>;
-  if (!Array.isArray(rec.balances)) {
-    throw new Error("Helius Wallet API 回應缺少 balances");
-  }
-  const balancesRaw = rec.balances;
-  const balances: WalletTokenBalance[] = [];
-  for (const item of balancesRaw) {
-    const parsed = parseWalletTokenBalance(item);
-    if (parsed) balances.push(parsed);
-  }
-  const pagination = rec.pagination as Record<string, unknown> | undefined;
-  const hasMore = pagination?.hasMore === true;
-  return { balances, hasMore };
-}
-
-function mergeWalletBalances(pages: WalletTokenBalance[][]): HomeTokenRow[] {
-  const byMint = new Map<
-    string,
-    {
-      ui: number;
-      decimals: number;
-      name: string;
-      symbol: string;
-      iconUrl?: string;
-      usdLabel: string;
-      usdTotal?: number;
-    }
-  >();
-
-  for (const page of pages) {
-    for (const item of page) {
-      if (item.balance === 0) continue;
-      if (item.mint === WRAPPED_SOL_MINT) continue;
-      if (item.decimals === 0) continue;
-
-      let usdLabel = "—";
-      let usdTotal: number | undefined;
-      if (item.usdValue != null && Number.isFinite(item.usdValue)) {
-        usdLabel = formatUsdLabel(item.usdValue);
-        usdTotal = item.usdValue;
-      } else if (item.pricePerToken != null) {
-        const t = item.pricePerToken * item.balance;
-        if (Number.isFinite(t)) {
-          usdLabel = formatUsdLabel(t);
-          usdTotal = t;
-        }
-      }
-
-      const symbol = item.symbol || shortMint(item.mint);
-      const name = item.name || symbol;
-      const iconUrl = httpsIconUrl(item.logoUri);
-      const prev = byMint.get(item.mint);
-      if (prev) {
-        prev.ui += item.balance;
-        if (usdTotal != null) {
-          prev.usdLabel = usdLabel;
-          prev.usdTotal = (prev.usdTotal ?? 0) + usdTotal;
-          if (prev.usdTotal != null) prev.usdLabel = formatUsdLabel(prev.usdTotal);
-        }
-        if (iconUrl && !prev.iconUrl) prev.iconUrl = iconUrl;
-        if (item.name) prev.name = item.name;
-        if (item.symbol) prev.symbol = item.symbol;
-      } else {
-        byMint.set(item.mint, {
-          ui: item.balance,
-          decimals: item.decimals,
-          name,
-          symbol,
-          iconUrl,
-          usdLabel,
-          usdTotal,
-        });
-      }
-    }
-  }
-
-  const rows: HomeTokenRow[] = [];
-
-  for (const [mint, row] of byMint) {
-    if (row.ui === 0) continue;
-    rows.push({
-      id: mint,
-      name: row.name,
-      symbol: row.symbol,
-      uiAmount: row.ui,
-      uiAmountLabel: row.ui.toLocaleString(undefined, {
-        maximumFractionDigits: Math.min(row.decimals, 9),
-      }),
-      usdLabel: row.usdLabel,
-      usdTotal: row.usdTotal,
-      iconLetter: iconLetterForSymbol(row.symbol),
-      iconUrl: row.iconUrl,
-      decimals: row.decimals,
-    });
-  }
-
-  return rows;
-}
-
-function attachTokenProgramsFromParsed(
-  rows: HomeTokenRow[],
-  parsed: ParsedOwnerTokenAccount[],
-): HomeTokenRow[] {
-  const byMint = tokenProgramByMintFromParsed(parsed);
-  return rows.map((row) => {
-    if (row.id === NATIVE_SOL_ID) return row;
-    if (row.tokenProgram) return row;
-    const tp = byMint.get(row.id);
-    if (!tp) return row;
-    return { ...row, tokenProgram: tp };
-  });
-}
-
-async function fetchWalletApiHomeTokenRows(
-  apiKey: string,
-  owner: string,
-  signal: AbortSignal,
-): Promise<HomeTokenRow[]> {
-  const pages: WalletTokenBalance[][] = [];
-  let page = 1;
-  for (;;) {
-    const p = await fetchWalletBalancesPage(apiKey, owner, page, signal);
-    pages.push(p.balances);
-    if (!p.hasMore) return mergeWalletBalances(pages);
-    page += 1;
-    await sleep(PAGE_DELAY_MS, signal);
-  }
 }
 
 type JupiterTokenHit = {
@@ -601,20 +369,6 @@ async function fetchSingleOwnerRowsWithParsed(
   settings: Settings,
   signal: AbortSignal,
 ): Promise<{ rows: HomeTokenRow[]; parsed: ParsedOwnerTokenAccount[] }> {
-  const apiKey = extractHeliusApiKey(settings.heliusApiUrl);
-  if (apiKey && settings.cluster === "mainnet") {
-    const walletRows = await fetchWalletApiHomeTokenRows(apiKey, owner, signal);
-    const solRows = await fetchNativeAndWrappedSolRows(settings.rpcUrl, owner, signal);
-    const rest = walletRows.filter(
-      (r) => r.id !== NATIVE_SOL_ID && r.id !== WRAPPED_SOL_MINT,
-    );
-    let rows = sortHomeTokenRows([...solRows, ...rest]);
-    const parsed = await fetchParsedTokenAccountsForOwner(settings.rpcUrl, owner, signal);
-    if (signal.aborted) throw new DOMException("Aborted", "AbortError");
-    rows = attachTokenProgramsFromParsed(rows, parsed);
-    return { rows, parsed };
-  }
-
   const rpc = solanaRpcForUrl(settings.rpcUrl);
   const pk = address(owner);
   const lamports = Number(
@@ -762,42 +516,6 @@ export type MintDisplayMeta = {
   symbol?: string;
   iconUrl?: string;
 };
-
-const HELIUS_MINT_LOOKUP_MAX_PAGES = 20;
-
-/** 從 Helius Wallet API（含零餘額）解析 mint 的 symbol／icon。 */
-export async function lookupHeliusWalletMintMetadata(
-  apiKey: string,
-  owner: string,
-  mints: ReadonlySet<string>,
-): Promise<Map<string, MintDisplayMeta>> {
-  const remaining = new Set(mints);
-  const out = new Map<string, MintDisplayMeta>();
-  if (remaining.size === 0) return out;
-
-  const signal = new AbortController().signal;
-  let page = 1;
-  while (remaining.size > 0 && page <= HELIUS_MINT_LOOKUP_MAX_PAGES) {
-    const { balances, hasMore } = await fetchWalletBalancesPage(apiKey, owner, page, signal, {
-      showZeroBalance: true,
-    });
-    for (const item of balances) {
-      if (!remaining.has(item.mint)) continue;
-      const symbol = item.symbol?.trim();
-      const iconUrl = httpsIconUrl(item.logoUri);
-      if (!symbol && !iconUrl) continue;
-      out.set(item.mint, {
-        symbol: symbol || undefined,
-        iconUrl,
-      });
-      remaining.delete(item.mint);
-    }
-    if (!hasMore) break;
-    page += 1;
-    await sleep(PAGE_DELAY_MS, signal);
-  }
-  return out;
-}
 
 /** mainnet：Jupiter tokens v2 search 批次查 symbol／icon。 */
 export async function lookupJupiterMintMetadata(

@@ -1,5 +1,5 @@
 /**
- * Merges mint symbols and icons into closable token-account entries using home-token and Helius/Jupiter metadata.
+ * Merges mint symbols and icons into closable token-account entries using home-token and Jupiter metadata.
  * Does not discover closable accounts on-chain or commit close transactions.
  */
 import type { ClosableEntry } from "../../shared/close-empty-types";
@@ -11,8 +11,6 @@ import {
 } from "../../shared/home-tokens";
 import type { Settings } from "../../shared/storage-keys";
 import {
-  extractHeliusApiKey,
-  lookupHeliusWalletMintMetadata,
   lookupJupiterMintMetadata,
   type MintDisplayMeta,
 } from "../home-tokens/home-tokens-service";
@@ -77,11 +75,9 @@ export async function enrichClosableEntries(
 ): Promise<ClosableEntry[]> {
   const next = entries.map((e) => patchFromHomeRow(e, homeRows));
 
-  const ownersToQuery = new Set<string>();
   const mintsRemote = new Set<string>();
   for (const e of next) {
     if (!needsRemoteMeta(e, homeRows)) continue;
-    ownersToQuery.add(e.owner);
     mintsRemote.add(e.mint);
   }
   if (mintsRemote.size === 0) {
@@ -89,36 +85,12 @@ export async function enrichClosableEntries(
   }
 
   const remote = new Map<string, MintDisplayMeta>();
-  const apiKey = extractHeliusApiKey(settings.heliusApiUrl);
-  if (apiKey && settings.cluster === "mainnet") {
-    for (const owner of ownersToQuery) {
-      const mints = new Set(
-        next.filter((e) => e.owner === owner && mintsRemote.has(e.mint)).map((e) => e.mint),
-      );
-      if (mints.size === 0) continue;
-      const part = await lookupHeliusWalletMintMetadata(apiKey, owner, mints);
-      for (const [mint, meta] of part) {
-        const prev = remote.get(mint);
-        remote.set(mint, {
-          symbol: meta.symbol ?? prev?.symbol,
-          iconUrl: meta.iconUrl ?? prev?.iconUrl,
-        });
-      }
-    }
-  }
-
-  const stillNeedSymbol: string[] = [];
-  for (const mint of mintsRemote) {
-    const hit = remote.get(mint);
-    if (!hit?.symbol) stillNeedSymbol.push(mint);
-  }
-  if (stillNeedSymbol.length > 0 && settings.cluster === "mainnet") {
-    const jup = await lookupJupiterMintMetadata(stillNeedSymbol, settings.jupiterApiKey);
+  if (settings.cluster === "mainnet") {
+    const jup = await lookupJupiterMintMetadata([...mintsRemote], settings.jupiterApiKey);
     for (const [mint, meta] of jup) {
-      const prev = remote.get(mint);
       remote.set(mint, {
-        symbol: meta.symbol ?? prev?.symbol,
-        iconUrl: meta.iconUrl ?? prev?.iconUrl,
+        symbol: meta.symbol,
+        iconUrl: meta.iconUrl,
       });
     }
   }

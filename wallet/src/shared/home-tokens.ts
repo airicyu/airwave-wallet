@@ -294,15 +294,6 @@ async function withAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<
   });
 }
 
-function mapParsedTokenAccounts(
-  value: readonly {
-    pubkey: string;
-    account: ParsedTokenAccountEntry["account"] & { owner: string };
-  }[],
-): ParsedTokenAccountEntry[] {
-  return value.map(({ account }) => ({ account }));
-}
-
 export async function fetchRpcHomeTokenRows(
   rpcUrl: string,
   ownerPublicKeyBase58: string,
@@ -325,39 +316,4 @@ export async function fetchRpcHomeTokenRows(
     signal,
   );
   return buildHomeTokenRowsFromOwnerParsed(lamports, parsed);
-}
-
-/** Wallet API 路徑用來拆 native／wSOL。wSOL 在 legacy Token program，用 mint 過濾即可。 */
-export async function fetchNativeAndWrappedSolRows(
-  rpcUrl: string,
-  ownerPublicKeyBase58: string,
-  signal?: AbortSignal,
-): Promise<HomeTokenRow[]> {
-  const rpc = solanaRpcForUrl(rpcUrl);
-  const owner = address(ownerPublicKeyBase58);
-  throwIfAborted(signal);
-  const lamports = Number(
-    (
-      await withRateLimitRetry(
-        () => withAbort(rpc.getBalance(owner, { commitment: "confirmed" }).send(), signal),
-        signal,
-      )
-    ).value,
-  );
-  throwIfAborted(signal);
-  const wrapped = await withRateLimitRetry(
-    () =>
-      withAbort(
-        rpc
-          .getTokenAccountsByOwner(
-            owner,
-            { mint: address(WRAPPED_SOL_MINT) },
-            { encoding: "jsonParsed", commitment: "confirmed" },
-          )
-          .send(),
-        signal,
-      ),
-    signal,
-  );
-  return sortHomeTokenRows(buildHomeTokenRows(lamports, mapParsedTokenAccounts(wrapped.value)));
 }
