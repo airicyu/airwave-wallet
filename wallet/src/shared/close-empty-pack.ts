@@ -14,7 +14,7 @@ export type PackableCloseItem = {
 
 export type MeasureCloseTxGroupBytes = (tokenAccounts: string[], owner: string, program: TokenProgramKind) => number;
 
-/** Popup 殼底估算：保守常數，與 SW 真實 wire 長度同用 greedy 演算法 */
+/** Conservative popup estimate; same greedy packing as the service worker's real wire length. */
 export function estimateCloseEmptyTxBytes(
   tokenAccounts: string[],
   _owner: string,
@@ -30,7 +30,7 @@ function groupKey(owner: string, program: TokenProgramKind): string {
 }
 
 /**
- * 同一 owner、同一 token program 才可同一筆；超過 measure 回傳的 byte 上限則開新筆。
+ * Pack only the same owner and token program into one tx; start a new tx when measure exceeds the byte cap.
  */
 export function packCloseEmptyAccounts(
   items: PackableCloseItem[],

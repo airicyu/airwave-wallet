@@ -10,6 +10,7 @@ import { getExposedPublicKey, isSigningOrWatch, parsePublicKeyBase58 } from "../
 import type { SeedPathKind } from "../../shared/seed-derive";
 import type { AccountMeta } from "../../shared/storage-keys";
 import { BrandMark } from "../components/BrandMark";
+import { FirstRunBrand } from "../components/FirstRunBrand";
 import { IconCopy } from "../components/StrokeIcon";
 import { SensitiveTextArea, SensitiveTextInput, WalletPasswordInput } from "../components/WalletPasswordInput";
 import { shortAddr } from "../lib/format";
@@ -17,6 +18,7 @@ import { apiErrorMessage, displayStoredError, messageForErrorCode } from "../../
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
 import { useRegisterDock } from "../state/dock";
+import { shouldShowRpcGuide, viewAfterAccountCreated } from "../lib/rpc-guide";
 import { detectSecret } from "./import-secret";
 import {
   emptyImportSeedDraft,
@@ -85,7 +87,7 @@ export function AddImportChooser(): JSX.Element {
 }
 
 export function ImportSecretScreen(): JSX.Element {
-  const { clearError, refresh, navigateTo } = usePopupContext();
+  const { clearError, refresh, navigateTo, wallet } = usePopupContext();
   const { t, locale } = useT();
   const [label, setLabel] = useState("");
   const [secret, setSecret] = useState("");
@@ -116,9 +118,10 @@ export function ImportSecretScreen(): JSX.Element {
       setErr(apiErrorMessage(locale, res.error, "error.importFailed"));
       return;
     }
-    await refresh();
-    navigateTo("accounts");
-  }, [clearError, secret, label, refresh, navigateTo, t, locale]);
+    const prevCount = wallet?.accounts.length ?? 0;
+    const state = await refresh();
+    navigateTo(viewAfterAccountCreated(prevCount, state, "accounts"));
+  }, [clearError, secret, label, refresh, navigateTo, t, locale, wallet]);
 
   useRegisterDock({ label: t("common.import"), disabled: !d.ok, onPrimary });
 
@@ -162,7 +165,7 @@ export function ImportSecretScreen(): JSX.Element {
 }
 
 export function ImportSeedScreen(): JSX.Element {
-  const { clearError, refresh, navigateTo, setBackOverride, setTitleOverride } = usePopupContext();
+  const { clearError, refresh, navigateTo, setBackOverride, setTitleOverride, wallet } = usePopupContext();
   const { t, locale } = useT();
   const [draft, setDraft] = useState<ImportSeedDraft>(emptyImportSeedDraft);
   const draftRef = useRef(draft);
@@ -226,9 +229,10 @@ export function ImportSeedScreen(): JSX.Element {
       }));
       return;
     }
-    await refresh();
-    navigateTo("accounts");
-  }, [clearError, draft, runPreview, refresh, navigateTo, locale]);
+    const prevCount = wallet?.accounts.length ?? 0;
+    const state = await refresh();
+    navigateTo(viewAfterAccountCreated(prevCount, state, "accounts"));
+  }, [clearError, draft, runPreview, refresh, navigateTo, locale, wallet]);
 
   const filled = importSeedFilledCount(draft.words);
   const dock =
@@ -395,8 +399,9 @@ export function GenerateSeedScreen(): JSX.Element {
       }));
       return;
     }
-    await refresh();
-    navigateTo("add-account");
+    const prevCount = wallet?.accounts.length ?? 0;
+    const state = await refresh();
+    navigateTo(viewAfterAccountCreated(prevCount, state, "add-account"));
   }, [draft.words, draft.label, clearError, wallet, refresh, navigateTo, locale]);
 
   useRegisterDock({
@@ -467,7 +472,7 @@ export function GenerateSeedScreen(): JSX.Element {
 }
 
 export function GenerateBurnerScreen(): JSX.Element {
-  const { clearError, refresh, navigateTo, setBackOverride } = usePopupContext();
+  const { clearError, refresh, navigateTo, setBackOverride, wallet } = usePopupContext();
   const { t, locale } = useT();
   const [label, setLabel] = useState("");
   const [err, setErr] = useState("");
@@ -491,6 +496,7 @@ export function GenerateBurnerScreen(): JSX.Element {
       return;
     }
     clearError();
+    const prevCount = wallet?.accounts.length ?? 0;
     const res = await sendExtensionRequest("wallet.generateAccount", {
       label: label.trim() || undefined,
     });
@@ -500,9 +506,13 @@ export function GenerateBurnerScreen(): JSX.Element {
     }
     const { account } = res.result as { account: AccountMeta };
     const pk = isSigningOrWatch(account) ? account.publicKeyBase58 : getExposedPublicKey(account);
+    const state = await refresh();
+    if (viewAfterAccountCreated(prevCount, state, "add-generate") === "rpc-guide") {
+      navigateTo("rpc-guide");
+      return;
+    }
     setSuccessPk(pk);
-    await refresh();
-  }, [successPk, label, clearError, navigateTo, refresh, locale]);
+  }, [successPk, label, clearError, navigateTo, refresh, locale, wallet]);
 
   useRegisterDock({
     label: done ? t("common.done") : t("onboarding.generate"),
@@ -547,7 +557,7 @@ export function GenerateBurnerScreen(): JSX.Element {
 }
 
 export function WatchAccountScreen(): JSX.Element {
-  const { clearError, refresh, navigateTo, showError } = usePopupContext();
+  const { clearError, refresh, navigateTo, showError, wallet } = usePopupContext();
   const { t, locale } = useT();
   const [label, setLabel] = useState("");
   const [pk, setPk] = useState("");
@@ -568,10 +578,11 @@ export function WatchAccountScreen(): JSX.Element {
     });
     if (!res.ok) showError(apiErrorMessage(locale, res.error, "error.addFailed"));
     else {
-      await refresh();
-      navigateTo("accounts");
+      const prevCount = wallet?.accounts.length ?? 0;
+      const state = await refresh();
+      navigateTo(viewAfterAccountCreated(prevCount, state, "accounts"));
     }
-  }, [clearError, pk, label, showError, refresh, navigateTo, t, locale]);
+  }, [clearError, pk, label, showError, refresh, navigateTo, t, locale, wallet]);
 
   useRegisterDock({ label: t("common.create"), disabled: !parseOk, onPrimary });
 
@@ -652,9 +663,10 @@ export function SetupScreen(): JSX.Element {
   const [password2, setPassword2] = useState("");
 
   return (
-    <section id="setup" className="unlock-screen">
-      <BrandMark />
-      <h1>Airwave</h1>
+    <section id="setup" className="unlock-screen first-run-page">
+      <FirstRunBrand />
+      <div className="first-run-main">
+        <p className="first-run-lead">{t("setup.passwordLead")}</p>
       <div className="unlock-form">
         <WalletPasswordInput
           id="setup-password"
@@ -685,13 +697,14 @@ export function SetupScreen(): JSX.Element {
             const res = await sendExtensionRequest("wallet.createVault", { password, empty: true });
             if (!res.ok) showError(apiErrorMessage(locale, res.error, "error.createFailed"));
             else {
-              await refresh();
-              navigateTo("add-account");
+              const state = await refresh();
+              navigateTo(shouldShowRpcGuide(state) ? "rpc-guide" : "add-account");
             }
           }}
         >
           {t("onboarding.start")}
         </button>
+      </div>
       </div>
     </section>
   );

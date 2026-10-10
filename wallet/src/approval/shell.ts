@@ -50,7 +50,7 @@ export type ApprovalShellConfig = {
   requestId: string;
   host: UiHost;
   callbacks: ApprovalShellCallbacks;
-  /** Popup 內掛載時加前綴，避免與 popup 既有 id 衝突 */
+  /** Prefix ids when mounted inside the popup so they do not collide with existing popup ids. */
   elementIdPrefix?: string;
 };
 
@@ -173,7 +173,7 @@ let draftLimitStr = "";
 let draftPriceStr = "";
 let cuApplyBusy = false;
 let feeDetailsOpen = false;
-/** pending／confirmed 時禁止模擬／loadPending 把審批內容蓋回轉圈畫面 */
+/** While pending/confirmed, do not let simulate or loadPending replace the review UI with a spinner. */
 let sendStatusPhase: "idle" | "pending" | "confirmed" | "failed" = "idle";
 let confirmedTimer: ReturnType<typeof setTimeout> | null = null;
 let storageUnlockListener: ((changes: Record<string, chrome.storage.StorageChange>, area: string) => void) | null =

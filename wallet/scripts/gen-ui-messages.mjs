@@ -61,6 +61,28 @@ const entries = {
   "settings.network.aria": triple("目前網路", "当前网络", "Current network"),
   "settings.rpc.current": triple("目前", "当前", "Current"),
   "settings.rpc.builtin": triple("內建", "内置", "Built-in"),
+  "settings.rpc.mainnetUnset": triple("未設定", "未设置", "Not set"),
+  "setup.pickLanguage": triple("請選擇語言", "请选择语言", "Choose your language"),
+  "setup.passwordLead": triple("請設定用來鎖定錢包的密碼", "请设定用来锁定钱包的密码", "Set a password to lock this wallet"),
+  "rpcGuide.title": triple("設定 Mainnet RPC", "设置 Mainnet RPC", "Set Mainnet RPC"),
+  "rpcGuide.body": triple(
+    "Mainnet 必須填你自己的 RPC，才能查餘額與送出。",
+    "Mainnet 必须填你自己的 RPC，才能查余额与发送。",
+    "You must set your own Mainnet RPC before you can load balances or send.",
+  ),
+  "rpcGuide.heliusLink": triple(
+    "向 Helius 免費申請 API key",
+    "向 Helius 免费申请 API key",
+    "Get a free API key from Helius",
+  ),
+  "rpcGuide.setRpc": triple("設定 RPC", "设置 RPC", "Set RPC"),
+  "rpcGuide.skip": triple("略過", "跳过", "Skip"),
+  "home.mainnetRpcRequired": triple(
+    "Mainnet 需要你自己的 RPC 才能查餘額與送出。",
+    "Mainnet 需要你自己的 RPC 才能查余额与发送。",
+    "Mainnet needs your own RPC to load balances and send.",
+  ),
+  "home.goSetRpc": triple("設定 RPC", "设置 RPC", "Set RPC"),
   "common.add": triple("加入", "加入", "Add"),
   "common.delete": triple("刪除", "删除", "Delete"),
   "common.confirm": triple("確認", "确认", "Confirm"),
@@ -122,6 +144,7 @@ const entries = {
   "error.code.WEAK_PASSWORD": triple("新密碼過短", "新密码过短", "New password too short"),
   "error.code.WALLET_LOCKED": triple("請先解鎖錢包", "请先解锁钱包", "Unlock wallet first"),
   "error.code.BROADCAST_UNCONFIRMED": triple("已送出、確認未知", "已发送、确认未知", "Sent; confirmation unknown"),
+  "error.code.MAINNET_RPC_UNSET": triple("Mainnet 尚未設定 RPC", "Mainnet 尚未设置 RPC", "Mainnet RPC is not set"),
   "error.code.INVALID_ADDRESS": triple("地址無效", "地址无效", "Invalid address"),
   "error.code.INVALID_PAYLOAD": triple("數量或代幣資料無效", "数量或代币数据无效", "Invalid amount or token data"),
   "error.code.INSUFFICIENT_FUNDS": triple("餘額不足", "余额不足", "Insufficient funds"),
@@ -318,6 +341,10 @@ const entries = {
 };
 
 const lines = [];
+lines.push("/**");
+lines.push(" * Generated UI copy table (zh-Hant / zh-Hans / en).");
+lines.push(" * Do not edit by hand; run scripts/gen-ui-messages.mjs.");
+lines.push(" */");
 lines.push('import type { UiLocale } from "./storage-keys";');
 lines.push("");
 lines.push("const messages = {");

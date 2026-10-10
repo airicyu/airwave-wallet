@@ -4,5 +4,5 @@ import { airwaveWallet } from "./wallet";
 
 registerWallet(airwaveWallet);
 void bridgeRequest("debug.ping", { text: "airwave" }).catch(() => {
-  /* SW 尚未就緒時忽略 */
+  /* Ignore until the service worker is ready. */
 });

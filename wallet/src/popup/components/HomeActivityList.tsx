@@ -11,7 +11,9 @@ import {
   kindLabel,
   type HomeActivityRow,
 } from "../../shared/home-activity";
+import { jsonRpcMissing } from "../../shared/storage-keys";
 import { sendExtensionRequest } from "../../shared/ext-api";
+import { MainnetRpcStop } from "./MainnetRpcStop";
 import type { State, View } from "../types";
 import { useT } from "../state/useT";
 import { IconExternal } from "./StrokeIcon";
@@ -45,6 +47,7 @@ export function HomeActivityList({ wallet, currentView }: Props): JSX.Element {
   const cluster = wallet.settings.cluster;
   const rpcUrl = wallet.settings.rpcUrl;
   const heliusConfigured = wallet.settings.heliusConfigured;
+  const activityNeedsRpc = jsonRpcMissing(wallet.settings) && !heliusConfigured;
 
   const genRef = useRef(0);
   const rowsRef = useRef<HomeActivityRow[]>([]);
@@ -118,6 +121,7 @@ export function HomeActivityList({ wallet, currentView }: Props): JSX.Element {
 
   useEffect(() => {
     if (currentView !== "home-activity") return;
+    if (activityNeedsRpc) return;
     genRef.current += 1;
     const gen = genRef.current;
     inFlightRef.current = false;
@@ -150,7 +154,7 @@ export function HomeActivityList({ wallet, currentView }: Props): JSX.Element {
     return () => {
       genRef.current += 1;
     };
-  }, [currentView, activeId, cluster, rpcUrl, heliusConfigured]);
+  }, [currentView, activeId, cluster, rpcUrl, heliusConfigured, activityNeedsRpc]);
 
   useEffect(() => {
     if (phase !== "list") return;
@@ -177,13 +181,16 @@ export function HomeActivityList({ wallet, currentView }: Props): JSX.Element {
     <section
       ref={sectionRef}
       id="screen-home-activity"
-      className={phase === "list" ? "screen" : "screen activity-screen"}
+      className={phase === "list" && !activityNeedsRpc ? "screen" : "screen activity-screen"}
     >
       <h3 className="activity-head">{t("common.activity")}</h3>
-      {phase === "loading" ? <p className="activity-quiet">{t("common.loading")}</p> : null}
-      {phase === "empty" ? <p className="activity-quiet">{t("activity.empty")}</p> : null}
-      {phase === "error" ? <p className="activity-quiet activity-quiet-err">{t("error.activityLoad")}</p> : null}
-      {phase === "list" ? (
+      {activityNeedsRpc ? <MainnetRpcStop /> : null}
+      {!activityNeedsRpc && phase === "loading" ? <p className="activity-quiet">{t("common.loading")}</p> : null}
+      {!activityNeedsRpc && phase === "empty" ? <p className="activity-quiet">{t("activity.empty")}</p> : null}
+      {!activityNeedsRpc && phase === "error" ? (
+        <p className="activity-quiet activity-quiet-err">{t("error.activityLoad")}</p>
+      ) : null}
+      {!activityNeedsRpc && phase === "list" ? (
         <>
           <ul className="activity-feed">
             {rows.map((row) => (

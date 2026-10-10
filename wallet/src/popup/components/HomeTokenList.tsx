@@ -10,7 +10,8 @@ import {
   friendlyErrorMessage,
   shouldUseRpcTransientToast,
 } from "../../shared/friendly-error-message";
-import { accountKind } from "../../shared/storage-keys";
+import { accountKind, jsonRpcMissing } from "../../shared/storage-keys";
+import { MainnetRpcStop } from "./MainnetRpcStop";
 import { NATIVE_SOL_ID, shortMint, sortCombinedTokenMembers, type HomeTokenRow } from "../home/home-tokens";
 import { IconChevronDown } from "./StrokeIcon";
 import { shortAddr } from "../lib/format";
@@ -71,6 +72,7 @@ export function HomeTokenList({ wallet, currentView, onOpenDetail }: Props): JSX
     async (force = false) => {
       if (flowPausedRef.current) return;
       if (currentView !== "home-token" || !wallet.activeAccountId) return;
+      if (jsonRpcMissing(wallet.settings)) return;
       setLoading((prev) => prev || homeTokenRowsLenRef.current === 0);
       const gen = ++homeTokensGen;
       try {
@@ -95,7 +97,7 @@ export function HomeTokenList({ wallet, currentView, onOpenDetail }: Props): JSX
         if (gen === homeTokensGen) setLoading(false);
       }
     },
-    [currentView, wallet.activeAccountId, setHomeTokenRows, bumpClosableScan, reportAssetsIssue],
+    [currentView, wallet.activeAccountId, wallet.settings, setHomeTokenRows, bumpClosableScan, reportAssetsIssue],
   );
 
   useEffect(() => {
@@ -107,6 +109,10 @@ export function HomeTokenList({ wallet, currentView, onOpenDetail }: Props): JSX
     setHomeAssetsForce(false);
     void load(true);
   }, [homeAssetsForce, load, setHomeAssetsForce]);
+
+  if (jsonRpcMissing(wallet.settings)) {
+    return <MainnetRpcStop />;
+  }
 
   if (loading && homeTokenRows.length === 0) {
     return (

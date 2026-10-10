@@ -15,4 +15,3 @@
 | [簽署交易 Durable Nonce 提醒](./sign-tx-durable-nonce-alert.md) | 審批時若第一條是 System `AdvanceNonceAccount`，提醒這筆用了 durable nonce；不擋批准 |
 | [簽署交易 AI 安全評估](./sign-tx-ai-security-eval.md) | 未排程。0.28.0 已撤。等 bubble-harness 再排審批卡。POC：`test-web/sign-risk.html` |
 | [bubble-harness 多輪查詢 runtime](./bubble-harness-runtime.md) | 隔離 query-only JS harness；host 注入唯讀 tool。錢包評估卡排在本項之後 |
-| [Mainnet RPC 未設定＋首次短引導](./mainnet-rpc-first-run.md) | 已排 [0.29.0](../0.29.0/INDEX.md)。Chrome 商店前要出貨 |

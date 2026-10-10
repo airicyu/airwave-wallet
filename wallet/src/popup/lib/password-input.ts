@@ -1,4 +1,4 @@
-/** 降低瀏覽器／密碼管理器把助記詞或私鑰當成可儲存表單欄位的機率（無法 100% 保證）。 */
+/** Reduce the chance the browser/password manager treats seed or secret-key fields as saveable (not a guarantee). */
 export function hardenSensitiveTextInput(el: HTMLInputElement | HTMLTextAreaElement): void {
   el.autocomplete = "off";
   el.setAttribute("autocapitalize", "off");
@@ -14,7 +14,7 @@ export function hardenSensitiveTextInput(el: HTMLInputElement | HTMLTextAreaElem
   });
 }
 
-/** 錢包密碼欄：類 B 遮罩 text，不進密碼管理器。 */
+/** Wallet password field: type-B masked text; do not store in the password manager. */
 export function hardenWalletPasswordInput(inp: HTMLInputElement): void {
   inp.type = "text";
   inp.classList.add("wallet-pwd-masked");

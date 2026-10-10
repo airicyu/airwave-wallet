@@ -41,6 +41,9 @@ export async function simulateTransactionRpc(
   tx: Transaction,
   deadline: SimDeadline,
 ): Promise<RpcSimulateValue> {
+  if (!rpcUrl.trim()) {
+    throw new Error("JSON-RPC URL required");
+  }
   const encoded = bytesToBase64(encodeWireTransaction(tx));
   const payload = {
     jsonrpc: "2.0",

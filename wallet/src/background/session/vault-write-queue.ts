@@ -1,4 +1,4 @@
-/** 串行化所有寫入 `airwave.vault.v1` 與改密路徑，避免交錯覆寫。 */
+/** Serialize every write to `airwave.vault.v1` and password-change paths so they cannot interleave. */
 let chain: Promise<void> = Promise.resolve();
 
 export function runVaultWrite<T>(fn: () => Promise<T>): Promise<T> {

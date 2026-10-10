@@ -35,7 +35,7 @@ async function pickInitialNormalWindowId(): Promise<void> {
   lastNormalWindowId = any?.id;
 }
 
-/** 若記憶體 id 已失效（視窗關了），重選仍存在的 normal 視窗並推送殼。 */
+/** If the remembered window id is gone, pick an existing normal window and push the shell. */
 export async function ensureLastNormalWindowId(): Promise<void> {
   if (lastNormalWindowId != null) {
     try {
@@ -160,7 +160,7 @@ export async function handleShellSidebarOpened(req: ExtensionRequest): Promise<E
 }
 
 /**
- * 關閉側欄。不 openPopup。port disconnect 後套用 popup 工具列，下次點圖示才開錢包。
+ * Close the side panel. Do not openPopup. After the port disconnects, restore the toolbar popup so the next icon click opens the wallet.
  */
 export async function handleShellSwitchToWindow(req: ExtensionRequest): Promise<ExtensionResponse> {
   const { browserWindowId } = (req.payload ?? {}) as { browserWindowId?: number };

@@ -35,7 +35,7 @@ export async function signGateError(): Promise<SignGateError | null> {
   return null;
 }
 
-/** signMessage enqueue：不含鎖定早退（鎖定仍 pending＋popout）。 */
+/** signMessage enqueue: no early return on lock (locked still pending + popout). */
 export async function signMessageEnqueueGateError(): Promise<SignGateError | null> {
   const active = await getActiveAccountMeta();
   if (!active) {

@@ -1,4 +1,4 @@
-/** signTransaction pending：僅 SW 記憶體，不進 storage */
+/** signTransaction pending: service-worker memory only; not persisted. */
 export type SignTxPendingState = {
   workingTx?: Uint8Array;
   writeSeq: number;

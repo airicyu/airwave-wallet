@@ -156,6 +156,14 @@ Alias：…         （可省略；短稱、UI 用詞）
 - **Alias：** 成員錢包地址、member wallet address
 - **勿用：** 子地址（舊稱，易像 nested account）；member wallet／成員錢包（那是理解概念，不是列上的型別）；sub account
 
+### Mainnet RPC 未設定
+
+- **中文：** Mainnet RPC 未設定
+- **英文：** Mainnet RPC unset
+- **定義：** 目前網路是 Mainnet，且沒有一條使用者自己的合法 JSON-RPC（`rpcByCluster.mainnet.active` 為空、等於官方 `https://api.mainnet-beta.solana.com`、或不在自訂 `urls`）。此時不打官方公用節點；JSON-RPC 命令失敗碼 `MAINNET_RPC_UNSET`。
+- **程式：** `isMainnetRpcReady`、`effectiveRpcUrl("mainnet") === ""`、`settings.rpcGuideDismissed`
+- **勿用：** 把 Settings 的 Helius API URL 叫做 RPC，或當成 JSON-RPC 後備
+
 ### 查詢地址
 
 - **中文：** 查詢地址

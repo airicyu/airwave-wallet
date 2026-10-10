@@ -56,7 +56,7 @@ function extraAccountFields(
 }
 
 /**
- * 靜態解讀單條 compiled ix（0.19.0 變體表）。不吻合 → `{ decoded: false }`。
+ * Statically decode one compiled ix (0.19.0 variant table). No match → `{ decoded: false }`.
  */
 export function decodeCompiledIx(
   programId: string,

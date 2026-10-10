@@ -16,8 +16,16 @@ Helius、Jupiter 選填：沒有它們仍可在 Mainnet 查餘額與送出（只
 
 全屏只出現一次，避免每次開 popup 擋操作。略過只表示看過說明。Mainnet 未就緒時 Tokens 仍停住，否則商店使用者會以為壞掉。
 
-即使當下在 Devnet 也出一次：之後切 Mainnet 才發現要填，不如建完第一個帳戶就講。
+即使當下在 Devnet 也出一次：之後切 Mainnet 才發現要填，不如設完密碼就講。
 
-## 為何不連外申請頁
+## 為何語言必須在設密碼之前
 
-綁單一供應商（Helius 註冊）會過時、也暗示「必須用 Helius 當 RPC」。文案只要求 JSON-RPC。
+預設 `settings.locale` 是 zh-Hant。英文 Chrome 使用者若第一屏就是密碼或 RPC 說明，會看不懂。語言列用 endonym，選了立刻寫入，之後密碼與 RPC 引導跟該 locale。不在密碼頁夾語言開關，避免一屏兩件事。
+
+## 為何關閉 popup 不算略過
+
+引導是否結束只看 `rpcGuideDismissed`。關閉 popup 只卸掉 React 導航，下次預設會進 Home，看起來像略過。必須等使用者按略過或設定 RPC 才寫 dismissed；條件仍在則每次開啟導回引導。
+
+## 為何引導可附 Helius 連外、卻不當 Helius API 欄
+
+商店使用者需要一條可填的 JSON-RPC。Helius 免費 API key 可組成 RPC URL。連外只開註冊頁；填進 Mainnet RPC，不是 Settings 的 Helius enhanced 欄。正文不提 Jupiter。

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.29.0 — 2026-10-10
+
+Mainnet 必須自備 JSON-RPC，不再打官方公用節點。首次：選語言 → 設密碼 → RPC 引導（略過或設定才結束）。Home 未就緒停住。Helius／Jupiter 仍選填，不當 RPC 後備。Devnet 仍可用官方公用 RPC。
+
 ## 0.28.0 — 2026-10-10
 
 Home Activity 捲到底載入更舊一頁（Helius／RPC `before`）。列上時間改為本地 `YYYY-MM-DD HH:MM:SS`。有 mint 時左側 https token icon，Jupiter／持倉快取的 symbol 覆寫 mint 縮寫。

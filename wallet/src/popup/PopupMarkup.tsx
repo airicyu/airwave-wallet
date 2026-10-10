@@ -38,6 +38,7 @@ import { hydrateLastNormalWindowId } from "./shell/shell-bridge";
 import { closeSidebar, isSidePanelSurface, isWalletWindowSurface, switchToSidebar } from "./shell/shell-switch";
 import { WalletWidget } from "./components/WalletWidget";
 import { getExposedPublicKey } from "../shared/accounts";
+import { jsonRpcMissing } from "../shared/storage-keys";
 import { sendExtensionRequest } from "../shared/ext-api";
 import { apiErrorMessage } from "../shared/ui-i18n";
 import { isHomeView } from "./lib/format";
@@ -50,9 +51,10 @@ import {
   ImportSecretScreen,
   ImportSeedScreen,
   LockedScreen,
-  SetupScreen,
   WatchAccountScreen,
 } from "./onboarding/OnboardingScreens";
+import { SetupFlow } from "./onboarding/SetupFlow";
+import { RpcGuideScreen } from "./onboarding/RpcGuideScreen";
 import { screenEnterKey, subpageTitle } from "./runtime";
 import { TokenSendForm } from "./send/TokenSendForm";
 import {
@@ -176,7 +178,7 @@ export function PopupMarkup(): JSX.Element {
   if (!vaultExists) {
     return (
       <>
-        <SetupScreen />
+        <SetupFlow />
         <ErrorToast />
       </>
     );
@@ -205,7 +207,7 @@ export function PopupMarkup(): JSX.Element {
           inert={flowCovered}
         >
       <div id="shell" className="shell">
-        <header className="top-bar" id="top-bar" hidden={currentView === "close-empty-sending"}>
+        <header className="top-bar" id="top-bar" hidden={currentView === "close-empty-sending" || currentView === "rpc-guide"}>
           <div className="bar-home" id="bar-home" hidden={!home}>
             <div className="bar-wallet-group">
               <div className="bar-wallet">
@@ -324,6 +326,8 @@ export function PopupMarkup(): JSX.Element {
               <div className="section-head section-head-tokens">
                 <h3>{t("common.tokens")}</h3>
                 <div className="section-head-actions">
+                {jsonRpcMissing(wallet.settings) ? null : (
+                  <>
                 <CloseEmptyRecycleButton
                   wallet={wallet}
                   onOpen={async () => {
@@ -340,6 +344,8 @@ export function PopupMarkup(): JSX.Element {
                   currentView={currentView}
                   onRefresh={() => setHomeAssetsForce(true)}
                 />
+                  </>
+                )}
                 </div>
               </div>
               <HomeTokenList
@@ -443,6 +449,8 @@ export function PopupMarkup(): JSX.Element {
               />
             </section>
           ) : null}
+
+          {currentView === "rpc-guide" ? <RpcGuideScreen /> : null}
 
           {currentView === "home-activity" ? (
             <HomeActivityList wallet={wallet} currentView={currentView} />
@@ -593,15 +601,27 @@ export function PopupMarkup(): JSX.Element {
 
         <footer id="shell-dock" className="shell-dock" hidden={!dock}>
           {dock?.meta ? <p className="shell-dock-meta">{dock.meta}</p> : null}
-          <button
-            type="button"
-            className="primary-btn"
-            id="dock-primary"
-            disabled={dock?.disabled ?? true}
-            onClick={() => void dock?.onPrimary()}
-          >
-            {dock?.label ?? ""}
-          </button>
+          <div className={dock?.secondaryLabel ? "shell-dock-row" : undefined}>
+            {dock?.secondaryLabel ? (
+              <button
+                type="button"
+                className="ghost-btn"
+                id="dock-secondary"
+                onClick={() => void dock.onSecondary?.()}
+              >
+                {dock.secondaryLabel}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="primary-btn"
+              id="dock-primary"
+              disabled={dock?.disabled ?? true}
+              onClick={() => void dock?.onPrimary()}
+            >
+              {dock?.label ?? ""}
+            </button>
+          </div>
         </footer>
 
         <nav id="home-tab-bar" className="tab-bar" hidden={!home}>

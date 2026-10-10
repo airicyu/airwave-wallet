@@ -15,7 +15,7 @@
   --warn-bg: #3a2e14;
   --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
   --popup-w: 422px; /* 384 × 1.1 */
-  --popup-h: 600px; /* Chrome 擴充 popup 視窗高度上限 */
+  --popup-h: 600px; /* Chrome extension popup max height */
   --radius: 12px;
   --radius-sm: 8px;
 }
@@ -79,6 +79,15 @@ body {
   margin: 0 0 12px;
 }
 
+.unlock-screen,
+.rpc-guide {
+  background:
+    radial-gradient(ellipse 80% 55% at 12% 82%, color-mix(in srgb, #9945ff 11%, transparent), transparent 72%),
+    radial-gradient(ellipse 70% 48% at 92% 14%, color-mix(in srgb, #14f195 8%, transparent), transparent 70%),
+    radial-gradient(ellipse 55% 40% at 72% 68%, color-mix(in srgb, #5b8cff 7%, transparent), transparent 68%),
+    var(--bg);
+}
+
 .unlock-screen {
   flex: 1;
   min-height: 0;
@@ -87,11 +96,65 @@ body {
   justify-content: center;
   padding: 28px 20px 36px;
   overflow: auto;
-  background:
-    radial-gradient(ellipse 80% 55% at 12% 82%, color-mix(in srgb, #9945ff 11%, transparent), transparent 72%),
-    radial-gradient(ellipse 70% 48% at 92% 14%, color-mix(in srgb, #14f195 8%, transparent), transparent 70%),
-    radial-gradient(ellipse 55% 40% at 72% 68%, color-mix(in srgb, #5b8cff 7%, transparent), transparent 68%),
-    var(--bg);
+}
+
+.unlock-screen.first-run-page {
+  justify-content: flex-start;
+  padding: 32px 20px 28px;
+}
+
+.first-run-page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 32px 20px 28px;
+}
+
+.first-run-brand {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.first-run-brand .brand-mark {
+  width: 64px;
+  height: 64px;
+  margin: 0;
+  border-radius: 18px;
+}
+
+h1.first-run-name,
+.unlock-screen h1.first-run-name {
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: 0;
+  color: var(--text);
+}
+
+.first-run-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+}
+
+.first-run-lead {
+  margin: 0 0 16px;
+  text-align: center;
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .brand-mark {
@@ -514,6 +577,13 @@ body {
   flex-direction: column;
 }
 
+.screen-body:has(#screen-rpc-guide) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
 .screen-body:has(.close-empty-screen) {
   display: flex;
   flex-direction: column;
@@ -607,6 +677,73 @@ body {
   padding: 10px 12px 12px;
   border-top: 1px solid var(--stroke-soft);
   background: var(--bg-elevated);
+}
+
+.shell-dock-row {
+  display: flex;
+  gap: 10px;
+}
+
+.shell-dock-row .ghost-btn {
+  flex: 0 0 38%;
+  width: auto;
+  padding: 11px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--stroke);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.shell-dock-row .primary-btn {
+  flex: 1;
+  width: auto;
+}
+
+.rpc-guide {
+  align-items: stretch;
+  text-align: left;
+  overflow: auto;
+}
+
+.rpc-guide-copy {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.rpc-guide-copy h3 {
+  margin: 0 0 10px;
+  font-size: 1.12rem;
+  font-weight: 650;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.rpc-guide-body {
+  margin: 0;
+  max-width: none;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.rpc-guide-link {
+  margin: 16px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+  align-self: flex-start;
 }
 
 .shell-dock-meta {
@@ -1154,6 +1291,44 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+#screen-home-token {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-rpc-stop {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.home-rpc-stop p {
+  margin: 0;
+  max-width: 22em;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.home-rpc-stop-btn {
+  margin: 0;
+  padding: 8px 14px;
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  background: var(--fill);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
 }
 
 .close-empty-btn {

@@ -2,6 +2,7 @@
  * chrome.storage key constants and Settings/AccountMeta types with RPC and settings normalization helpers.
  * Does not read or write storage records (see background storage-io).
  */
+import { resolveHeliusApiTarget } from "./helius-api-target";
 export const STORAGE = {
   settings: "airwave.settings.v1",
   accounts: "airwave.accounts.v1",
@@ -15,34 +16,36 @@ export const STORAGE = {
 /** This build's local schema generation. Existing `*.v1` keys are generation 1. */
 export const CURRENT_SCHEMA_GENERATION = 1;
 
-/** 僅 `chrome.storage.session`：解鎖工作金鑰。關瀏覽器即清。禁止寫入 local。 */
+/** `chrome.storage.session` only: unlock working key. Cleared when the browser closes. Never write to local. */
 export const SESSION_UNLOCKED = "airwave.unlocked.session.v1";
 
 export type UiLocale = "zh-Hant" | "zh-Hans" | "en";
 
-/** 錢包主殼：獨立視窗或 Chrome 側欄（見 roadmap 0.25.0） */
+/** Wallet shell: standalone window or Chrome side panel (roadmap 0.25.0). */
 export type ShellMode = "window" | "sidebar";
 
 export type Cluster = "devnet" | "mainnet";
 
 export type ClusterRpcConfig = {
-  /** 自訂節點（不含該鏈公開 RPC） */
+  /** Custom endpoints (not that cluster's public RPC). */
   urls: string[];
-  /** 目前選用的自訂 URL；空字串＝該鏈公開節點 */
+  /** Selected custom URL. Devnet empty = official public RPC; Mainnet empty = unset. */
   active: string;
 };
 
 export type Settings = {
   cluster: Cluster;
-  /** 目前 cluster 實際使用的 RPC（給 Connection／持倉） */
+  /** RPC the current cluster actually uses (Connection / holdings). */
   rpcUrl: string;
   rpcByCluster: Record<Cluster, ClusterRpcConfig>;
   heliusApiUrl: string;
   jupiterApiKey: string;
-  /** micro-lamports per CU；未簽 signTransaction 預設 CU price */
+  /** micro-lamports per CU; default CU price for unsigned signTransaction. */
   defaultCuPrice: number;
   locale: UiLocale;
   shell: ShellMode;
+  /** First-account RPC guide already seen (Skip or open Settings both count). */
+  rpcGuideDismissed: boolean;
 };
 
 export type AccountKind = "signing" | "readOnly";
@@ -89,6 +92,7 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultCuPrice: 25_000,
   locale: "zh-Hant",
   shell: "window",
+  rpcGuideDismissed: false,
 };
 
 export const PUBLIC_RPC_BY_CLUSTER: Record<Cluster, string> = {
@@ -138,7 +142,7 @@ export function toPublicSettings(settings: Settings): PublicSettings {
   return {
     ...rest,
     jupiterConfigured: jupiterApiKey.trim().length > 0,
-    heliusConfigured: heliusApiUrl.trim().length > 0,
+    heliusConfigured: resolveHeliusApiTarget(heliusApiUrl) != null,
   };
 }
 
@@ -175,7 +179,21 @@ export function normalizeClusterRpc(raw: unknown, cluster: Cluster): ClusterRpcC
   return { urls, active: active && urls.includes(active) ? active : "" };
 }
 
+export function isMainnetRpcReady(cfg: ClusterRpcConfig): boolean {
+  const active = cfg.active.trim();
+  if (!active) return false;
+  if (active === PUBLIC_RPC_BY_CLUSTER.mainnet) return false;
+  return isAllowedCustomRpc(active) && cfg.urls.includes(active);
+}
+
+export function jsonRpcMissing(settings: { cluster: Cluster; rpcUrl: string }): boolean {
+  return settings.cluster === "mainnet" && settings.rpcUrl.trim() === "";
+}
+
 export function effectiveRpcUrl(cluster: Cluster, cfg: ClusterRpcConfig): string {
+  if (cluster === "mainnet") {
+    return isMainnetRpcReady(cfg) ? cfg.active.trim() : "";
+  }
   if (cfg.active && cfg.urls.includes(cfg.active)) return cfg.active;
-  return PUBLIC_RPC_BY_CLUSTER[cluster];
+  return PUBLIC_RPC_BY_CLUSTER.devnet;
 }

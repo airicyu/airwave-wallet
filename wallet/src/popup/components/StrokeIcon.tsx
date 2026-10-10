@@ -96,7 +96,7 @@ export function IconSidebar({ size = 18 }: { size?: number }): JSX.Element {
   );
 }
 
-/** 右側欄收合：框 + 右軌 + 箭頭朝右 */
+/** Collapse the right rail: frame + right track + arrow pointing right. */
 export function IconCollapseRight({ size = 18 }: { size?: number }): JSX.Element {
   return (
     <StrokeIcon size={size}>
@@ -191,7 +191,7 @@ export function IconRefresh({ size = 18 }: { size?: number }): JSX.Element {
   );
 }
 
-/** 收回空帳戶租金；對齊 docs/design-demos/close-empty-token-accounts-ux.html */
+/** Reclaim rent on empty token accounts; matches docs/design-demos/close-empty-token-accounts-ux.html */
 export function IconRecycle({ size = 22 }: { size?: number }): JSX.Element {
   return (
     <svg

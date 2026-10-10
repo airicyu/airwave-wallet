@@ -78,7 +78,7 @@ export type PendingKind =
 
 export type UiHost = "popout" | "popup" | "window" | "sidebar";
 
-/** 0.13 殼內審批宿主（含舊記憶體 `"popup"`） */
+/** In-wallet approval host from 0.13 (includes legacy in-memory `"popup"`). */
 export function isInWalletShellHost(host: UiHost): boolean {
   return host === "popup" || host === "window" || host === "sidebar";
 }
@@ -91,13 +91,13 @@ export type PendingRecord = {
   payload: unknown;
   createdAt: number;
   uiHost: UiHost;
-  /** signMessage／signTransaction／signAndSendTransaction：enqueue 時凍結的簽名帳戶（僅 SW 記憶體） */
+  /** Signing account frozen at enqueue for signMessage / signTransaction / signAndSendTransaction (SW memory only). */
   signAccountId?: string;
-  /** signMessage：enqueue 時 SW 判定（popout 只信此旗標） */
+  /** signMessage: SW verdict at enqueue (popout trusts this flag only). */
   messageLooksLikeTx?: boolean;
   /**
-   * 已連線的 origin 在鎖定時再次 connect（非 silent）。
-   * 解鎖後直接完成連線，不再顯示同意連線。
+   * Connected origin called connect again while locked (not silent).
+   * After unlock, finish the connection without showing connect consent.
    */
   reconnectWhileLocked?: boolean;
 };
@@ -126,7 +126,7 @@ export type BeginSendPayload = {
   recipient: string;
 };
 
-/** 僅擴充頁 runtime；非 airwave-bridge-* */
+/** Extension-page runtime only; not airwave-bridge-*. */
 export type WalletSendSettledNotice = {
   kind: "airwave-wallet-send-settled";
   requestId: string;

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — Mainnet RPC 引導</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --accent: #3d9cf0;
+        --popup-w: 360px;
+        --popup-h: 600px;
+        --radius: 12px;
+        --font: "Segoe UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+      }
+      .page { max-width: 880px; margin: 0 auto; padding: 28px 20px 48px; }
+      h1 { font-size: 1.2rem; margin: 0 0 8px; }
+      .lead { color: var(--text-muted); font-size: 0.92rem; max-width: 46em; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; margin-top: 24px; }
+      @media (max-width: 1100px) { .grid { grid-template-columns: 1fr 1fr; } }
+      @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+      .col h2 { font-size: 0.85rem; color: #6b7785; font-weight: 600; margin: 0 0 10px; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        background: var(--bg);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .body { flex: 1; min-height: 0; overflow: auto; padding: 24px 16px 12px; }
+      .body h3 { margin: 0 0 12px; font-size: 1.05rem; }
+      .body p { margin: 0; color: var(--text-muted); font-size: 0.92rem; line-height: 1.5; }
+      .skip { margin-top: 20px; background: none; border: 0; color: var(--text-muted); cursor: pointer; padding: 0; }
+      .dock { flex-shrink: 0; padding: 12px 16px 16px; display: flex; gap: 10px; }
+      .ghost {
+        flex: 0 0 38%;
+        border: 1px solid var(--stroke);
+        border-radius: 10px;
+        background: transparent;
+        color: var(--text);
+        padding: 12px;
+        cursor: pointer;
+      }
+      .primary {
+        flex: 1;
+        width: 100%;
+        border: 0;
+        border-radius: 10px;
+        background: var(--accent);
+        color: #0b1220;
+        font-weight: 600;
+        padding: 12px;
+        cursor: pointer;
+      }
+      .center { justify-content: center; align-items: center; text-align: center; }
+      .center h3 { font-size: 1.45rem; }
+      .center p { font-size: 1.08rem; color: var(--text); max-width: 18em; }
+      .center .link { margin-top: 8px; }
+      .quiet { padding: 24px 16px; }
+      .quiet p { color: var(--text-muted); font-size: 0.92rem; margin: 0 0 12px; }
+      .link {
+        background: none;
+        border: 0;
+        color: var(--accent);
+        padding: 0;
+        cursor: pointer;
+        font-size: 0.92rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>首次設定：語言 → 密碼 → Mainnet RPC</h1>
+      <p class="lead">尚無金庫先選語言，再設密碼，然後才是 RPC 引導。關閉 popup 不算略過。引導只說必須填 Mainnet RPC；Helius 免費 key 用連外，填進 RPC 不是 Helius API 欄。</p>
+      <div class="grid">
+        <div class="col">
+          <h2>1 語言</h2>
+          <div class="phone">
+            <div class="body">
+              <h3>Language</h3>
+              <p style="margin-bottom:12px">繁體中文</p>
+              <p style="margin-bottom:12px">简体中文</p>
+              <p>English</p>
+            </div>
+            <div class="dock"><button class="primary" type="button">Next</button></div>
+          </div>
+        </div>
+        <div class="col">
+          <h2>2 密碼</h2>
+          <div class="phone">
+            <div class="body">
+              <h3>Airwave</h3>
+              <p>Password, then confirm.</p>
+            </div>
+            <div class="dock"><button class="primary" type="button">Get started</button></div>
+          </div>
+        </div>
+        <div class="col">
+          <h2>3 Mainnet RPC</h2>
+          <div class="phone">
+            <div class="body center">
+              <h3>Set Mainnet RPC</h3>
+              <p>You must set your own Mainnet RPC before you can load balances or send.</p>
+              <button class="link" type="button">Get a free API key from Helius</button>
+            </div>
+            <div class="dock">
+              <button class="ghost" type="button">Skip</button>
+              <button class="primary" type="button">Set RPC</button>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <h2>Home 停住</h2>
+          <div class="phone">
+            <div class="quiet">
+              <p>Mainnet needs your own RPC to load balances and send.</p>
+              <button class="link" type="button">Set RPC</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

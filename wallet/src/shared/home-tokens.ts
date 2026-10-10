@@ -26,25 +26,25 @@ export type HomeTokenMemberShare = {
 
 export type HomeTokenRow = {
   id: string;
-  /** 展示用全名（Wallet API／Jupiter；沒有則退回 symbol／mint 縮寫） */
+  /** Display name (Wallet API / Jupiter; fall back to symbol / mint abbreviation). */
   name: string;
   symbol: string;
-  /** 數值持倉量（供 Jupiter 等計價；勿從 uiAmountLabel 反推） */
+  /** Numeric balance for pricing (e.g. Jupiter). Do not parse uiAmountLabel. */
   uiAmount: number;
   uiAmountLabel: string;
   usdLabel: string;
-  /** 該列持倉 USD 總額（不是單價）；無效或「—」則省略。供排序，勿從 usdLabel 回推為主路徑 */
+  /** Row USD total (not unit price). Omit if invalid or "—". For sorting; do not parse usdLabel as the source of truth. */
   usdTotal?: number;
   iconLetter: string;
   iconUrl?: string;
   isVerified?: boolean;
   organicScore?: number;
   organicScoreLabel?: string;
-  /** 鏈上最小單位小數位；原生 SOL＝9 */
+  /** On-chain decimals; native SOL is 9. */
   decimals: number;
-  /** SPL mint 所屬 token program；原生無此欄 */
+  /** Token program for an SPL mint; omitted for native SOL. */
   tokenProgram?: TokenProgramKind;
-  /** combined 展開列；單一帳戶路徑不附 */
+  /** Combined expand rows; omitted on the single-account path. */
   members?: HomeTokenMemberShare[];
 };
 
@@ -205,7 +205,7 @@ export function buildHomeTokenRows(
   return rows;
 }
 
-/** 由單次 GTAO 掃描結果組持倉列（非零餘額）。 */
+/** Build holdings rows (nonzero balances) from one GTAO scan. */
 export function buildHomeTokenRowsFromOwnerParsed(
   lamports: number,
   parsed: ParsedOwnerTokenAccount[],

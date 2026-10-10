@@ -29,7 +29,7 @@ export type GetHomeTokensResult = {
 };
 
 const TTL_MS = 45_000;
-/** 快取仍很新時不再排背景 refresh（避免 force 刷新後 list 讀快取又打第二輪 RPC）。 */
+/** Skip a background refresh when the cache is still fresh (avoids a second RPC after a force refresh). */
 const BACKGROUND_REFRESH_MIN_CACHE_AGE_MS = 10_000;
 const OWNER_PIPE_GAP_MS = 250;
 const OWNER_RETRY_PASS_GAP_MS = 1500;
@@ -93,7 +93,7 @@ function scheduleBackgroundRefresh(
   const abort = new AbortController();
   void runRefresh(owners, settings, abort.signal, fingerprint, withMembers)
     .catch(() => {
-      /* 背景刷新失敗保留舊快取 */
+      /* Keep the previous cache if a background refresh fails. */
     })
     .finally(() => {
       if (backgroundRefreshFingerprint === fingerprint) {
@@ -543,7 +543,7 @@ export type MintDisplayMeta = {
   iconUrl?: string;
 };
 
-/** mainnet：Jupiter tokens v2 search 批次查 symbol／icon。 */
+/** Mainnet: batch-fetch symbol/icon via Jupiter tokens v2 search. */
 export async function lookupJupiterMintMetadata(
   mints: string[],
   jupiterApiKey: string,
@@ -578,7 +578,7 @@ export async function lookupJupiterMintMetadata(
   return out;
 }
 
-/** @deprecated 單 owner 路徑；popup 應走 getHomeTokensForOwners */
+/** @deprecated Single-owner path; popup should call getHomeTokensForOwners. */
 export async function getHomeTokensForOwner(
   owner: string | null,
   settings: Settings,

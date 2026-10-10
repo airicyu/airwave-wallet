@@ -31,6 +31,7 @@ export const BACK_PARENT: Partial<Record<View, View>> = {
   settings: "home-token",
   "connected-sites": "home-token",
   about: "home-token",
+  "rpc-guide": "home-token",
   accounts: "home-token",
   "home-activity": "home-token",
   "send-approval": "token-send",

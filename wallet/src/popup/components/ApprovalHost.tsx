@@ -76,7 +76,7 @@ export function syncWalletSendAbortId(id: string | null): void {
   abortRequestId = id;
 }
 
-/** 唯一一份 popup 送出 pending abort（pagehide／beforeunload／離開審批 view）。 */
+/** Single popup abort for in-wallet send pending (pagehide/beforeunload/leaving the approval view). */
 export function abortWalletSendOnPopupUnload(): void {
   const rid = abortRequestId;
   if (!rid) return;

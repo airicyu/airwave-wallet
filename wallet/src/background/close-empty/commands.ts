@@ -2,7 +2,9 @@
  * Thin command wrappers for list, plan, and commit close-empty wallet operations.
  */
 import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
+import { jsonRpcMissing } from "../../shared/storage-keys";
 import { respond } from "../messaging";
+import { readSettings } from "../storage";
 import { commitCloseEmpty } from "./commit-close-empty";
 import { listClosableTokenAccounts } from "./list-closable";
 import { planCloseEmpty } from "./plan-close-empty";
@@ -10,6 +12,15 @@ import { planCloseEmpty } from "./plan-close-empty";
 export async function handleListClosableTokenAccounts(
   req: ExtensionRequest,
 ): Promise<ExtensionResponse> {
+  const settings = await readSettings();
+  if (jsonRpcMissing(settings)) {
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: { code: "MAINNET_RPC_UNSET", message: "Mainnet RPC is not set" },
+    });
+  }
   const payload = (req.payload ?? {}) as { force?: boolean };
   const result = await listClosableTokenAccounts({ force: payload.force === true });
   if (!result.ok) {
@@ -29,6 +40,15 @@ export async function handleListClosableTokenAccounts(
 }
 
 export async function handlePlanCloseEmpty(req: ExtensionRequest): Promise<ExtensionResponse> {
+  const settings = await readSettings();
+  if (jsonRpcMissing(settings)) {
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: { code: "MAINNET_RPC_UNSET", message: "Mainnet RPC is not set" },
+    });
+  }
   const payload = (req.payload ?? {}) as { tokenAccounts?: string[] };
   const tokenAccounts = payload.tokenAccounts;
   if (!Array.isArray(tokenAccounts)) {
@@ -57,6 +77,15 @@ export async function handlePlanCloseEmpty(req: ExtensionRequest): Promise<Exten
 }
 
 export async function handleCommitCloseEmpty(req: ExtensionRequest): Promise<ExtensionResponse> {
+  const settings = await readSettings();
+  if (jsonRpcMissing(settings)) {
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: { code: "MAINNET_RPC_UNSET", message: "Mainnet RPC is not set" },
+    });
+  }
   const payload = (req.payload ?? {}) as { planId?: string };
   if (!payload.planId || typeof payload.planId !== "string") {
     return respond({

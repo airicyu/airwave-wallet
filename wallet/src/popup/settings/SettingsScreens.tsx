@@ -8,7 +8,7 @@ import { hardenApiKeyInput } from "../lib/password-input";
 import { IconCheck, IconEye, IconPlus, IconTrash } from "../components/StrokeIcon";
 import { WalletPasswordInput } from "../components/WalletPasswordInput";
 import { sendExtensionRequest } from "../../shared/ext-api";
-import type { PublicSettings, UiLocale } from "../../shared/storage-keys";
+import { isMainnetRpcReady, type PublicSettings, type UiLocale } from "../../shared/storage-keys";
 import { DEFAULT_UI_LOCALE, LOCALE_ENDONYM, UI_LOCALES } from "../../shared/ui-i18n";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
@@ -62,7 +62,9 @@ export function SettingsHub({ settings }: { settings: PublicSettings }): JSX.Ele
         <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-rpc")}>
           <span className="hub-label">{t("settings.hub.rpc")}</span>
           <span className="hub-summary hub-summary-ellipsis" id="hub-summary-rpc">
-            {settings.rpcUrl}
+            {settings.cluster === "mainnet" && !isMainnetRpcReady(settings.rpcByCluster.mainnet)
+              ? t("settings.rpc.mainnetUnset")
+              : settings.rpcUrl}
           </span>
         </button>
       </li>
@@ -138,7 +140,11 @@ export function NetworkScreen({ settings }: { settings: PublicSettings }): JSX.E
           <span className="network-pick-meta">
             <span className="network-pick-title">{cluster === "mainnet" ? "Mainnet" : "Devnet"}</span>
             <span className="network-pick-sum">
-              {cluster === "mainnet" ? "https://api.mainnet-beta.solana.com" : "https://api.devnet.solana.com"}
+              {cluster === "mainnet"
+                ? isMainnetRpcReady(settings.rpcByCluster.mainnet)
+                  ? settings.rpcByCluster.mainnet.active
+                  : t("settings.rpc.mainnetUnset")
+                : settings.rpcByCluster.devnet.active || PUBLIC_RPC_BY_CLUSTER.devnet}
             </span>
           </span>
         </label>
@@ -192,7 +198,7 @@ function RpcClusterCard({
   const { locale, t } = useT();
   const cfg = settings.rpcByCluster[cluster];
   const rows: { url: string; isPublic: boolean }[] = [
-    { url: PUBLIC_RPC_BY_CLUSTER[cluster], isPublic: true },
+    ...(cluster === "devnet" ? [{ url: PUBLIC_RPC_BY_CLUSTER.devnet, isPublic: true }] : []),
     ...cfg.urls.map((url) => ({ url, isPublic: false })),
   ];
   return (

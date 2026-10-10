@@ -25,6 +25,7 @@ import {
   bindWalletShellFocusHydrate,
   hydrateLastNormalWindowId,
 } from "../shell/shell-bridge";
+import { shouldShowRpcGuide } from "../lib/rpc-guide";
 import { BACK_PARENT } from "../runtime";
 import type { State, View } from "../types";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
@@ -181,6 +182,11 @@ export function usePopupAppState() {
     if (backOverrideRef.current?.()) return;
     const view = bagRef.current.currentView;
     if (view === "close-empty-sending") return;
+    if (view === "rpc-guide") return;
+    if (view === "settings-rpc" && (mirror.wallet?.accounts.length ?? 0) === 0) {
+      navigateTo("add-account");
+      return;
+    }
     if (view === "close-empty-pick") {
       resetCloseEmptyFlow();
     }
@@ -193,7 +199,7 @@ export function usePopupAppState() {
       return;
     }
     navigateTo(BACK_PARENT[view] ?? "home-token");
-  }, [navigateTo]);
+  }, [mirror.wallet, navigateTo]);
 
   const setBackOverride = useCallback((fn: (() => boolean) | null) => {
     backOverrideRef.current = fn;
@@ -232,6 +238,10 @@ export function usePopupAppState() {
     }
     if (state.vaultExists && !state.unlocked) {
       clearCloseEmptyDraft();
+    }
+    if (state.vaultExists && state.unlocked && shouldShowRpcGuide(state)) {
+      const view = bagRef.current.currentView;
+      if (view !== "rpc-guide") navigateTo("rpc-guide");
     }
   }, [mirror.wallet, navigateTo, clearCloseEmptyDraft]);
 

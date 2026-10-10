@@ -15,7 +15,7 @@ export async function hydrateLastNormalWindowId(): Promise<void> {
   }
 }
 
-/** 錢包視窗重新聚焦時再問 SW（避免切回視窗後 id 未推送）。 */
+/** Ask the service worker again when the wallet window refocuses (id may not have been pushed). */
 export function bindWalletShellFocusHydrate(): () => void {
   const onFocus = () => {
     void hydrateLastNormalWindowId();

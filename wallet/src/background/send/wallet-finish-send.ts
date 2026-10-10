@@ -42,6 +42,25 @@ export async function runWalletSendAfterApprove(
   const ws = getWalletSendState(requestId);
   cancelPendingTimeout(requestId);
 
+  if (!rpcUrl.trim()) {
+    if (pending.kind === "signAndSendTransaction") {
+      await sendBridgeResult(
+        pending.tabId,
+        {
+          type: "airwave-bridge-result",
+          requestId,
+          ok: false,
+          error: { code: "MAINNET_RPC_UNSET", message: "Mainnet RPC is not set" },
+        },
+        pending.frameId,
+      );
+    }
+    removePending(requestId);
+    clearWalletSendState(requestId);
+    notify.settled(requestId, false, "MAINNET_RPC_UNSET");
+    return;
+  }
+
   if (ws.broadcastSig) {
     await waitConfirmOnly(requestId, rpcUrl, ws.broadcastSig, notify);
     return;

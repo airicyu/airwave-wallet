@@ -9,6 +9,7 @@ import type {
   ResolvePendingPayload,
   SignTransactionPayload,
 } from "../../shared/commands";
+import { jsonRpcMissing } from "../../shared/storage-keys";
 import { getExposedPublicKey } from "../../shared/accounts";
 import { finishConnect, finishSignMessage, finishSignTransaction } from "../pending";
 import { getPending, unbindPopoutByRequest } from "../pending";
@@ -273,6 +274,14 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
       });
     }
     const settings = await readSettings();
+    if (jsonRpcMissing(settings)) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "MAINNET_RPC_UNSET", message: "Mainnet RPC is not set" },
+      });
+    }
     const rpcUrl = settings.rpcUrl;
     const { transaction } = p.payload as SignTransactionPayload;
     const sim = await simulateSignTransaction(

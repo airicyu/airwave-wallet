@@ -43,7 +43,7 @@ export type SimulateSignTxOutcome =
   | { ok: true; result: SimulatePendingTxResult; seq: number }
   | { ok: false; code: "INVALID_PAYLOAD" | "NOT_FOUND"; message: string };
 
-/** 鏈上優先費：ceil(limit × price / 1_000_000) lamports。price 為 micro-lamports／CU。 */
+/** On-chain priority fee: ceil(limit × price / 1_000_000) lamports. price is micro-lamports per CU. */
 function priorityFeeLamports(cuLimit: number, cuPrice: number): number {
   const micro = BigInt(cuLimit) * BigInt(cuPrice);
   return Number((micro + 999_999n) / 1_000_000n);

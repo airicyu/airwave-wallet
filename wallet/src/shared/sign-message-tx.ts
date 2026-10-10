@@ -1,6 +1,6 @@
 import { getCompiledTransactionMessageDecoder } from "@solana/kit";
 
-/** Decode 成功即視為交易 message。popout 不要再 parse 決定 UI。 */
+/** If decode succeeds, treat it as a transaction message. The popout must not parse again to pick UI. */
 export function messageLooksLikeTransactionMessage(bytes: Uint8Array): boolean {
   try {
     getCompiledTransactionMessageDecoder().decode(bytes);

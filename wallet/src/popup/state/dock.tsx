@@ -5,8 +5,10 @@ export type DockRegistration = {
   label: string;
   disabled: boolean;
   onPrimary: () => void | Promise<void>;
-  /** 主按鈕上方一行（例如已選筆數） */
+  /** One line above the primary button (for example selected count). */
   meta?: string;
+  secondaryLabel?: string;
+  onSecondary?: () => void | Promise<void>;
 };
 
 type DockCtx = {
@@ -35,13 +37,15 @@ export function useRegisterDock(spec: DockRegistration | null): void {
   const disabled = spec?.disabled ?? true;
   const meta = spec?.meta;
   const onPrimary = spec?.onPrimary;
+  const secondaryLabel = spec?.secondaryLabel;
+  const onSecondary = spec?.onSecondary;
   const active = spec != null;
   useEffect(() => {
     if (!active || !onPrimary) {
       setDock(null);
       return () => setDock(null);
     }
-    setDock({ label, disabled, onPrimary, meta });
+    setDock({ label, disabled, onPrimary, meta, secondaryLabel, onSecondary });
     return () => setDock(null);
-  }, [active, label, disabled, meta, onPrimary, setDock]);
+  }, [active, label, disabled, meta, onPrimary, secondaryLabel, onSecondary, setDock]);
 }

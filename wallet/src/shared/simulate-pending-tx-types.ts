@@ -22,7 +22,7 @@ export type SimulateTxInstruction = {
   desc?: string;
   unresolved?: boolean;
   accounts?: SimulateTxIxAccount[];
-  /** 連續小寫 hex，無 0x；空字串表示無 data */
+  /** Lowercase hex with no 0x prefix; empty string means no data. */
   dataHex?: string;
 };
 
@@ -41,8 +41,8 @@ export type SimulatePendingTxResult = {
   cuLimit?: number | null;
   cuPrice?: number | null;
   cuWriteError?: string;
-  /** 未簽可改 CU limit／price */
+  /** Unsigned txs may change CU limit/price. */
   cuEditable?: boolean;
-  /** popout 丟棄過期回包 */
+  /** Popout discards stale responses. */
   seq?: number;
 };

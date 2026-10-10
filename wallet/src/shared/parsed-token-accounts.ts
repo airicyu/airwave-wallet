@@ -62,7 +62,7 @@ function parseTokenAccountValue(
   };
 }
 
-/** 對單一 owner 各 token program 掃一次（legacy 再 Token-2022；429 則等待重試）。 */
+/** Scan each token program once per owner (legacy then Token-2022; wait and retry on 429). */
 export async function fetchParsedTokenAccountsForOwner(
   rpcUrl: string,
   owner: string,

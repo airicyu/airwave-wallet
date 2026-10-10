@@ -23,6 +23,7 @@ export type State = {
 export type View =
   | "home-token"
   | "home-activity"
+  | "rpc-guide"
   | "token-detail"
   | "token-send"
   | "send-approval"
@@ -54,7 +55,7 @@ export type View =
   | "about-terms"
   | "connected-sites";
 
-export const SUBPAGE_TITLE_KEYS: Record<Exclude<View, "home-token" | "home-activity">, MessageKey> = {
+export const SUBPAGE_TITLE_KEYS: Record<Exclude<View, "home-token" | "home-activity" | "rpc-guide">, MessageKey> = {
   accounts: "nav.accounts",
   "add-account": "nav.addAccount",
   "add-generate": "nav.addGenerate",

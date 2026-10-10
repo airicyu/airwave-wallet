@@ -10,12 +10,12 @@ export function isSidePanelSurface(): boolean {
   return walletShellSurfaceFromHref(window.location.href) === "sidebar";
 }
 
-/** 工具列 action popup（`popup/index.html`），不是審批 `popout` 獨立窗 */
+/** Toolbar action popup (`popup/index.html`), not the approval `popout` window. */
 export function isWalletWindowSurface(): boolean {
   return walletShellSurfaceFromHref(window.location.href) === "window";
 }
 
-/** 工具列 popup → 側欄：點擊同步 `sidePanel.open`（見 HOW），成功後通知 SW 並關 popup。 */
+/** Toolbar popup → side panel: open `sidePanel` on click (see HOW), then notify the SW and close the popup. */
 export function switchToSidebar(): void {
   const windowId = getLastNormalWindowId();
   if (windowId == null) return;
@@ -27,7 +27,7 @@ export function switchToSidebar(): void {
 }
 
 /**
- * 側欄 Home：只關側欄。不 openPopup。卸載後 SW 還原工具列 popup 模式，下次點圖示才開錢包。
+ * Side-panel Home: close the panel only. Do not openPopup. After unload the SW restores toolbar popup mode.
  */
 export function closeSidebar(): void {
   const browserWindowId = getLastNormalWindowId();

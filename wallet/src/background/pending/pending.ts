@@ -27,7 +27,7 @@ export function removePending(id: string): void {
   clearSignTxState(id);
 }
 
-/** popout windowId → requestId（僅記憶體） */
+/** popout windowId → requestId (memory only). */
 export const pendingByWindow = new Map<number, string>();
 
 export function bindPopoutWindow(windowId: number, requestId: string): void {

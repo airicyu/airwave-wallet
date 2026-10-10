@@ -69,6 +69,7 @@ export function normalizeSettings(raw: Partial<Settings> | undefined): Settings 
     defaultCuPrice: normalizeDefaultCuPrice(raw?.defaultCuPrice),
     locale: normalizeUiLocale(raw?.locale),
     shell: normalizeShellMode(raw?.shell),
+    rpcGuideDismissed: raw?.rpcGuideDismissed === true,
   };
 }
 

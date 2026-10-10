@@ -17,7 +17,7 @@ function rawErrorText(raw: unknown): string {
   return "";
 }
 
-/** UI-only：將 code／raw 轉成使用者短句。 */
+/** UI-only: map a code/raw token to a short user-facing sentence. */
 export function friendlyErrorMessage(
   raw: unknown,
   locale: UiLocale,
@@ -34,7 +34,7 @@ export function friendlyErrorMessage(
   return text;
 }
 
-/** 持倉區不顯示長文，改底部 toast（見 rpc-rate-limit-toast-ux 概念稿）。 */
+/** Holdings views do not show a long error; use a bottom toast (see rpc-rate-limit-toast-ux). */
 export function shouldUseRpcTransientToast(raw: string): boolean {
   if (!raw.trim()) return false;
   if (isLikelyRpcRateLimitMessage(raw)) return true;

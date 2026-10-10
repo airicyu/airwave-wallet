@@ -23,6 +23,19 @@ export function parseUiLocale(v: unknown): UiLocale {
   return DEFAULT_UI_LOCALE;
 }
 
+/** Maps Chrome UI language to a catalog locale. Unknown codes stay zh-Hant. */
+export function localeFromChromeUi(): UiLocale {
+  const raw =
+    typeof chrome !== "undefined" && chrome.i18n && typeof chrome.i18n.getUILanguage === "function"
+      ? chrome.i18n.getUILanguage()
+      : "";
+  const lower = raw.toLowerCase().replace(/_/g, "-");
+  if (lower === "en" || lower.startsWith("en-")) return "en";
+  if (lower === "zh-cn" || lower === "zh-sg" || lower.startsWith("zh-hans")) return "zh-Hans";
+  if (lower.startsWith("zh")) return "zh-Hant";
+  return DEFAULT_UI_LOCALE;
+}
+
 function interpolate(template: string, vars?: Record<string, string>): string {
   if (!vars) return template;
   return template.replace(/\{(\w+)\}/g, (_, key: string) => vars[key] ?? `{${key}}`);

@@ -1,4 +1,4 @@
-/** 鏈上 lamports（BigInt 或十進位字串）→ SOL 顯示，禁止經 number 做加減 */
+/** On-chain lamports (BigInt or decimal string) → SOL display. Do not add/subtract via number. */
 export function formatSolFromLamportsString(lamports: string | bigint): string {
   const v = typeof lamports === "string" ? BigInt(lamports) : lamports;
   const neg = v < 0n;

@@ -10,7 +10,7 @@ import {
   rowsFromEnhanced,
   type HomeActivityRow,
 } from "../../shared/home-activity";
-import type { Settings } from "../../shared/storage-keys";
+import { jsonRpcMissing, type Settings } from "../../shared/storage-keys";
 import { solanaRpcForUrl } from "../../shared/solana-rpc";
 import { resolveHeliusApiTarget, type HeliusApiTarget } from "../../shared/helius-api-target";
 import {
@@ -122,6 +122,9 @@ export async function getHomeActivity(
   }
   try {
     const helius = resolveHeliusApiTarget(settings.heliusApiUrl);
+    if (jsonRpcMissing(settings) && !helius) {
+      return { rows: [], error: "unavailable" };
+    }
     if (settings.cluster === "mainnet" && helius) {
       return { rows: await fetchEnhanced(owner, helius, settings, before) };
     }

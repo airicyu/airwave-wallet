@@ -16,7 +16,7 @@ export type HomeActivityIcon = {
 export type HomeActivityRow = {
   signature: string;
   kind: HomeActivityKind;
-  /** `fail`／`ok` 由畫面加「失敗」「成功」；金額列為 null */
+  /** `fail`/`ok`: the UI adds Failed/Succeeded; amount column is null. */
   lead: HomeActivityLead;
   detail: string;
   timestampSec: number | null;

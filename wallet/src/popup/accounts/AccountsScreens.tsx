@@ -21,6 +21,7 @@ import { addCombinedDraftParts, emptyCombinedCreate, validCombinedMembers } from
 import { WalletPasswordInput } from "../components/WalletPasswordInput";
 import { apiErrorMessage } from "../../shared/ui-i18n";
 import { shortAddr } from "../lib/format";
+import { viewAfterAccountCreated } from "../lib/rpc-guide";
 import { usePopupContext } from "../state/PopupContext";
 import { useRegisterDock } from "../state/dock";
 import { useT } from "../state/useT";
@@ -664,8 +665,9 @@ export function CombinedCreateScreen({ wallet }: { wallet: State }): JSX.Element
       setErr(apiErrorMessage(locale, res.error, "error.createFailed"));
       return;
     }
-    await refresh();
-    navigateTo("accounts");
+    const prevCount = wallet.accounts.length;
+    const state = await refresh();
+    navigateTo(viewAfterAccountCreated(prevCount, state, "accounts"));
   }, [clearError, create, wallet, label, currentMain, refresh, navigateTo, t, locale]);
 
   useRegisterDock({

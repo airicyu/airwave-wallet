@@ -1,3 +1,7 @@
+/**
+ * Generated UI copy table (zh-Hant / zh-Hans / en).
+ * Do not edit by hand; run scripts/gen-ui-messages.mjs.
+ */
 import type { UiLocale } from "./storage-keys";
 
 const messages = {
@@ -275,6 +279,56 @@ const messages = {
     "zh-Hant": "內建",
     "zh-Hans": "内置",
     "en": "Built-in",
+  },
+  "settings.rpc.mainnetUnset": {
+    "zh-Hant": "未設定",
+    "zh-Hans": "未设置",
+    "en": "Not set",
+  },
+  "setup.pickLanguage": {
+    "zh-Hant": "請選擇語言",
+    "zh-Hans": "请选择语言",
+    "en": "Choose your language",
+  },
+  "setup.passwordLead": {
+    "zh-Hant": "請設定用來鎖定錢包的密碼",
+    "zh-Hans": "请设定用来锁定钱包的密码",
+    "en": "Set a password to lock this wallet",
+  },
+  "rpcGuide.title": {
+    "zh-Hant": "設定 Mainnet RPC",
+    "zh-Hans": "设置 Mainnet RPC",
+    "en": "Set Mainnet RPC",
+  },
+  "rpcGuide.body": {
+    "zh-Hant": "Mainnet 必須填你自己的 RPC，才能查餘額與送出。",
+    "zh-Hans": "Mainnet 必须填你自己的 RPC，才能查余额与发送。",
+    "en": "You must set your own Mainnet RPC before you can load balances or send.",
+  },
+  "rpcGuide.heliusLink": {
+    "zh-Hant": "向 Helius 免費申請 API key",
+    "zh-Hans": "向 Helius 免费申请 API key",
+    "en": "Get a free API key from Helius",
+  },
+  "rpcGuide.setRpc": {
+    "zh-Hant": "設定 RPC",
+    "zh-Hans": "设置 RPC",
+    "en": "Set RPC",
+  },
+  "rpcGuide.skip": {
+    "zh-Hant": "略過",
+    "zh-Hans": "跳过",
+    "en": "Skip",
+  },
+  "home.mainnetRpcRequired": {
+    "zh-Hant": "Mainnet 需要你自己的 RPC 才能查餘額與送出。",
+    "zh-Hans": "Mainnet 需要你自己的 RPC 才能查余额与发送。",
+    "en": "Mainnet needs your own RPC to load balances and send.",
+  },
+  "home.goSetRpc": {
+    "zh-Hant": "設定 RPC",
+    "zh-Hans": "设置 RPC",
+    "en": "Set RPC",
   },
   "common.add": {
     "zh-Hant": "加入",
@@ -580,6 +634,11 @@ const messages = {
     "zh-Hant": "已送出、確認未知",
     "zh-Hans": "已发送、确认未知",
     "en": "Sent; confirmation unknown",
+  },
+  "error.code.MAINNET_RPC_UNSET": {
+    "zh-Hant": "Mainnet 尚未設定 RPC",
+    "zh-Hans": "Mainnet 尚未设置 RPC",
+    "en": "Mainnet RPC is not set",
   },
   "error.code.INVALID_ADDRESS": {
     "zh-Hant": "地址無效",

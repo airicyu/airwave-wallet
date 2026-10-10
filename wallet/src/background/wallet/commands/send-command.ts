@@ -4,7 +4,7 @@
  */
 import type { BeginSendPayload, ExtensionRequest, ExtensionResponse } from "../../../shared/commands";
 import { getExposedPublicKey } from "../../../shared/accounts";
-import { accountKind } from "../../../shared/storage-keys";
+import { accountKind, jsonRpcMissing } from "../../../shared/storage-keys";
 import { getHomeTokensForOwners } from "../../home-tokens";
 import { respond } from "../../messaging";
 import { addPending, schedulePendingTimeout } from "../../pending";
@@ -56,6 +56,14 @@ export async function handleBeginSend(
   }
   const payload = req.payload as BeginSendPayload;
   const settings = await readSettings();
+  if (jsonRpcMissing(settings)) {
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: { code: "MAINNET_RPC_UNSET", message: "Mainnet RPC is not set" },
+    });
+  }
   const owner = getExposedPublicKey(active);
   const { rows } = await getHomeTokensForOwners([owner], settings);
   const row = await resolveHomeTokenRowForSend(rows, payload.tokenId);
