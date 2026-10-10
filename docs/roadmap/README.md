@@ -39,6 +39,8 @@
 | [0.25.0](./0.25.0/INDEX.md) | shipped | 工具列 popup 與 Chrome 側欄互切；側欄活著則網站審批進殼內 |
 | [0.26.0](./0.26.0/INDEX.md) | shipped | 小修：匯入預覽、Combined 展開、解鎖聚焦、類型圖示、卡片拖曳、schema 世代骨架 |
 | [0.27.0](./0.27.0/INDEX.md) | shipped | 保管與簽名邊界：session 不含明文 secret、本地 CU、dApp origin／chain／連線 |
+| [0.28.0](./0.28.0/INDEX.md) | shipped | Home Activity：捲到底載入更舊紀錄、本地時間、token icon／symbol |
+| [0.29.0](./0.29.0/INDEX.md) | planned | Mainnet RPC 必填；官方公用節點不當後備；第一個帳戶後短引導 |
 
 **版本號：** `x.y.z` 的 **patch**（例如 **0.3.1**）留給該 minor 的 **bugfix**，不排新功能。新功能走下一個 **minor**（0.3.0 → 0.4.0 → 0.5.0）。
 

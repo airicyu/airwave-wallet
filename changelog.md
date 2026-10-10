@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.28.0 — 2026-10-10
+
+Home Activity 捲到底載入更舊一頁（Helius／RPC `before`）。列上時間改為本地 `YYYY-MM-DD HH:MM:SS`。有 mint 時左側 https token icon，Jupiter／持倉快取的 symbol 覆寫 mint 縮寫。
+
 ## 0.27.0 — 2026-10-10
 
 保管與簽名邊界：session 只留 salt 與 AES key，明文 secret 只在 service worker 記憶體；`workingTx` 只做本地 Compute Budget 修補，不再為了改 CU 去拉 lookup table。dApp 簽名須已連線、`signTransaction` 須帶與錢包一致的 chain，核准前分頁 origin 必須仍是當初那一個。新 vault 的 PBKDF2 迭代為 600000；`getState` 不再帶出 Jupiter／Helius 明文。

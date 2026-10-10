@@ -736,6 +736,11 @@ const messages = {
     "zh-Hans": "活动暂时无法加载",
     "en": "Activity unavailable",
   },
+  "error.activityOlderLoad": {
+    "zh-Hant": "更舊的活動這次沒載到",
+    "zh-Hans": "更旧的活动这次没加载到",
+    "en": "Couldn't load older activity",
+  },
   "onboarding.createSeedWallet": {
     "zh-Hant": "建立助記詞錢包",
     "zh-Hans": "建立助记词钱包",
@@ -1116,6 +1121,11 @@ const messages = {
     "zh-Hans": "尚无交易",
     "en": "No transactions yet",
   },
+  "activity.loadingOlder": {
+    "zh-Hant": "載入更舊的活動",
+    "zh-Hans": "加载更旧的活动",
+    "en": "Loading older activity",
+  },
   "activity.openOrb": {
     "zh-Hant": "在區塊瀏覽器開啟",
     "zh-Hans": "在区块浏览器打开",
@@ -1150,36 +1160,6 @@ const messages = {
     "zh-Hant": "交易",
     "zh-Hans": "交易",
     "en": "Transaction",
-  },
-  "activity.when.justNow": {
-    "zh-Hant": "剛剛",
-    "zh-Hans": "刚刚",
-    "en": "Just now",
-  },
-  "activity.when.minutesAgo": {
-    "zh-Hant": "{min} 分鐘前",
-    "zh-Hans": "{min} 分钟前",
-    "en": "{min} min ago",
-  },
-  "activity.when.hoursAgo": {
-    "zh-Hant": "{hr} 小時前",
-    "zh-Hans": "{hr} 小时前",
-    "en": "{hr} hr ago",
-  },
-  "activity.when.yesterday": {
-    "zh-Hant": "昨天",
-    "zh-Hans": "昨天",
-    "en": "Yesterday",
-  },
-  "activity.when.daysAgo": {
-    "zh-Hant": "{days} 天前",
-    "zh-Hans": "{days} 天前",
-    "en": "{days} days ago",
-  },
-  "activity.when.weeksAgo": {
-    "zh-Hant": "{weeks} 週前",
-    "zh-Hans": "{weeks} 周前",
-    "en": "{weeks} wk ago",
   },
   "settings.password.change": {
     "zh-Hant": "變更密碼",

@@ -107,7 +107,7 @@ Settings **第一層是選項列表**，再進子頁。不要一打開就把 Hel
 
 - **網路：** 兩列單選（Devnet、Mainnet），圓點表示目前；立刻寫入。**不要**用分段 tab／seg 來選 cluster。
 - **RPC：** 同一頁兩張卡（Devnet、Mainnet）各自編清單；radio + ellipsis URL。目前 cluster 的卡標「目前」。選／加／刪立刻寫入。
-- **API keys：** 標籤寫 **Helius API URL**、**Jupiter API key**。皆 `type="text"`，**不要** `type="password"`。有值時兩欄都顯示 `••••••`（不要「已設定」、不要露出後 4 或 `?api-key=`）。Reveal 才給全文（單行 ellipsis），**不要**再要錢包密碼。空值＝可貼上後確認圖示提交該列；清除圖示立刻寫成空。失焦或確認才寫入，禁止整頁 Save。
+- **API keys：** 標籤寫 **Helius API URL**、**Jupiter API key**。皆 `type="text"`，**不要** `type="password"`。有值時都顯示 `••••••`（不要「已設定」、不要露出後 4 或 `?api-key=`）。Reveal 才給全文（單行 ellipsis），**不要**再要錢包密碼。空值＝可貼上後確認圖示提交該列；清除圖示立刻寫成空。失焦或確認才寫入，禁止整頁 Save。樞紐摘要：兩支都有值才是已設定，一支都沒有才是未設定，其餘是部分設定。
 - **錢包密碼：** 獨立子頁，殼底主按鈕；遮罩規則見 [`research/secret-field-autofill.md`](research/secret-field-autofill.md) 類 B 與 [`design-demos/change-wallet-password-ux.html`](design-demos/change-wallet-password-ux.html)。
 
 舊稿 [`design-demos/settings-rpc-ux.html`](design-demos/settings-rpc-ux.html) 只保留 RPC 列互動細節；樞紐結構以 hub 稿為準。

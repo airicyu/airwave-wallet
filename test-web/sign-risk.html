@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>簽署安全評估 POC</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 52rem; margin: 1.5rem; }
+      textarea, select, input, pre { width: 100%; box-sizing: border-box; }
+      textarea { font-family: ui-monospace, monospace; }
+      label { display: block; margin: 0.75rem 0; }
+      pre { white-space: pre-wrap; background: #f4f4f4; padding: 0.75rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p><a href="/">← 回到 test-web 連線頁</a></p>
+      <h1>簽署安全評估 POC</h1>
+      <p>
+        與錢包連線頁分開。OpenRouter key 與 RPC URL 只留在這個欄位，不會寫進檔案或 localStorage。
+        RPC 經本機 Vite 轉送，避免瀏覽器 CORS。查 mainnet 請用對應 RPC。
+      </p>
+      <label>
+        領域說明（送給模型的固定 context）
+        <textarea id="risk-context" rows="14" spellcheck="false"></textarea>
+      </label>
+      <label>
+        RPC URL
+        <input id="risk-rpc" type="url" spellcheck="false" placeholder="https://api.mainnet-beta.solana.com" value="https://api.mainnet-beta.solana.com" />
+      </label>
+      <label>
+        交易雜湊（已上鏈 signature）
+        <input id="risk-sig" type="text" spellcheck="false" autocomplete="off" />
+      </label>
+      <button id="risk-load-tx" type="button">用雜湊載入交易並查帳戶</button>
+      <button id="risk-fetch-accounts" type="button">只查目前摘要的帳戶</button>
+      <label>
+        本地樣本
+        <select id="risk-scenario">
+          <option value="sol-transfer">System Transfer</option>
+          <option value="durable-nonce">Durable nonce 後再轉 SOL</option>
+          <option value="unknown-program">未知 program</option>
+          <option value="set-authority">Token SetAuthority（AccountOwner 交給別人）</option>
+          <option value="approve">Token Approve（小額）</option>
+          <option value="unlimited-approve">Token Approve（u64 最大／無限額）</option>
+          <option value="close-account">Token CloseAccount（收款人不是 signer）</option>
+          <option value="system-assign">System Assign（改帳戶 owner）</option>
+        </select>
+      </label>
+      <label>
+        本地樣本的交易本體
+        <select id="risk-wire">
+          <option value="message">未簽 message（沒有簽名區）</option>
+          <option value="masked-wire">遮罩 wire（簽名區 64 bytes 全是 0）</option>
+        </select>
+      </label>
+      <label>
+        模型
+        <select id="risk-model">
+          <option value="moonshotai/kimi-k2-0905">Kimi K2 0905</option>
+          <option value="~deepseek/deepseek-flash-latest">DeepSeek Flash latest</option>
+          <option value="~deepseek/deepseek-pro-latest">DeepSeek Pro latest</option>
+        </select>
+      </label>
+      <label>
+        OpenRouter API key
+        <input id="risk-key" type="password" autocomplete="off" spellcheck="false" />
+      </label>
+      <button id="risk-ask" type="button">詢問 OpenRouter</button>
+      <p id="risk-status"></p>
+      <h3>送給模型的摘要</h3>
+      <pre id="risk-flags"></pre>
+      <h3>模型回覆</h3>
+      <pre id="risk-answer"></pre>
+    </main>
+    <script type="module" src="/src/sign-risk-page.ts"></script>
+  </body>
+</html>

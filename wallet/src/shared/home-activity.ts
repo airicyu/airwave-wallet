@@ -8,6 +8,11 @@ export type HomeActivityKind = "send" | "receive" | "swap" | "tx";
 
 export type HomeActivityLead = "fail" | "ok" | null;
 
+export type HomeActivityIcon = {
+  mint: string;
+  iconUrl: string;
+};
+
 export type HomeActivityRow = {
   signature: string;
   kind: HomeActivityKind;
@@ -16,6 +21,8 @@ export type HomeActivityRow = {
   detail: string;
   timestampSec: number | null;
   orbUrl: string;
+  mints: string[];
+  icons: HomeActivityIcon[];
 };
 
 const SOL_MINT = "So11111111111111111111111111111111111111112";
@@ -41,26 +48,22 @@ export function isOrbTxUrl(url: string): boolean {
   return url.startsWith("https://orb.helius.dev/tx/");
 }
 
-export function activityWhen(timestampSec: number | null, locale: UiLocale, nowMs = Date.now()): string {
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+/** Local timezone `YYYY-MM-DD HH:MM:SS`. Empty if the unix second is missing. */
+export function activityWhen(timestampSec: number | null): string {
   if (timestampSec == null || !Number.isFinite(timestampSec)) return "";
-  const then = timestampSec * 1000;
-  const diff = Math.max(0, nowMs - then);
-  const min = Math.floor(diff / 60_000);
-  if (min < 1) return t(locale, "activity.when.justNow");
-  if (min < 60) return t(locale, "activity.when.minutesAgo", { min: String(min) });
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return t(locale, "activity.when.hoursAgo", { hr: String(hr) });
-  const startToday = new Date(nowMs);
-  startToday.setHours(0, 0, 0, 0);
-  const startThen = new Date(then);
-  startThen.setHours(0, 0, 0, 0);
-  const dayDiff = Math.round((startToday.getTime() - startThen.getTime()) / 86_400_000);
-  if (dayDiff <= 1) return t(locale, "activity.when.yesterday");
-  if (dayDiff < 7) return t(locale, "activity.when.daysAgo", { days: String(dayDiff) });
-  const weeks = Math.floor(dayDiff / 7);
-  if (weeks < 5) return t(locale, "activity.when.weeksAgo", { weeks: String(weeks) });
-  const d = new Date(then);
-  return `${d.getMonth() + 1}/${d.getDate()}`;
+  const d = new Date(timestampSec * 1000);
+  if (!Number.isFinite(d.getTime())) return "";
+  const y = String(d.getFullYear()).padStart(4, "0");
+  const mo = pad2(d.getMonth() + 1);
+  const day = pad2(d.getDate());
+  const h = pad2(d.getHours());
+  const min = pad2(d.getMinutes());
+  const sec = pad2(d.getSeconds());
+  return `${y}-${mo}-${day} ${h}:${min}:${sec}`;
 }
 
 export function kindLabel(kind: HomeActivityKind, locale: UiLocale): string {
@@ -82,6 +85,22 @@ function asString(raw: unknown): string {
 function shortAddr(pk: string): string {
   if (pk.length <= 8) return pk;
   return `${pk.slice(0, 4)}…${pk.slice(-4)}`;
+}
+
+export function activityDetailWithSymbols(
+  detail: string,
+  mints: string[],
+  symbols: Map<string, string>,
+): string {
+  let out = detail;
+  for (const mint of mints) {
+    const symbol = symbols.get(mint)?.trim();
+    if (!symbol) continue;
+    const short = shortAddr(mint);
+    if (!short || short === symbol || !out.includes(short)) continue;
+    out = out.split(short).join(symbol);
+  }
+  return out;
 }
 
 function symbolForMint(mint: string): string {
@@ -136,7 +155,17 @@ function tokenLabel(raw: unknown): string | null {
   return `${ui} ${symbolForMint(mint || SOL_MINT)}`;
 }
 
-type Leg = { outgoing: boolean; label: string; counterparty: string };
+type Leg = { outgoing: boolean; label: string; counterparty: string; mint: string };
+
+function uniqueMints(mints: string[]): string[] {
+  const out: string[] = [];
+  for (const mint of mints) {
+    if (!mint || out.includes(mint)) continue;
+    out.push(mint);
+    if (out.length >= 2) break;
+  }
+  return out;
+}
 
 function legsForOwner(tx: Record<string, unknown>, owner: string): Leg[] {
   const tokenLegs: Leg[] = [];
@@ -149,8 +178,9 @@ function legsForOwner(tx: Record<string, unknown>, owner: string): Leg[] {
     const to = asString(rec.toUserAccount);
     const label = tokenLabel(rec);
     if (!label) continue;
-    if (from === owner) tokenLegs.push({ outgoing: true, label, counterparty: to });
-    else if (to === owner) tokenLegs.push({ outgoing: false, label, counterparty: from });
+    const mint = asString(rec.mint) || SOL_MINT;
+    if (from === owner) tokenLegs.push({ outgoing: true, label, counterparty: to, mint });
+    else if (to === owner) tokenLegs.push({ outgoing: false, label, counterparty: from, mint });
   }
   const natives = Array.isArray(tx.nativeTransfers) ? tx.nativeTransfers : [];
   for (const item of natives) {
@@ -161,8 +191,8 @@ function legsForOwner(tx: Record<string, unknown>, owner: string): Leg[] {
     const lamports = asLamports(rec.amount);
     if (lamports == null) continue;
     const label = `${formatUnits(lamports, 9)} SOL`;
-    if (from === owner) nativeLegs.push({ outgoing: true, label, counterparty: to });
-    else if (to === owner) nativeLegs.push({ outgoing: false, label, counterparty: from });
+    if (from === owner) nativeLegs.push({ outgoing: true, label, counterparty: to, mint: SOL_MINT });
+    else if (to === owner) nativeLegs.push({ outgoing: false, label, counterparty: from, mint: SOL_MINT });
   }
   return tokenLegs.length > 0 ? tokenLegs : nativeLegs;
 }
@@ -201,42 +231,63 @@ function amountText(raw: unknown, native: boolean): string | null {
   return tokenLabel(raw);
 }
 
+type SwapSide = { text: string; mint: string };
+
 function firstSwapSide(
   items: unknown,
   owner: string,
   native: boolean,
-): string | null {
+): SwapSide | null {
   const list = Array.isArray(items) ? items : items != null ? [items] : [];
-  const matched: string[] = [];
-  const any: string[] = [];
+  const matched: SwapSide[] = [];
+  const any: SwapSide[] = [];
   for (const item of list) {
     const rec = asRecord(item);
     const text = amountText(native ? rec : item, native);
     if (!text) continue;
-    any.push(text);
+    const mint = native ? SOL_MINT : asString(rec?.mint) || SOL_MINT;
+    const side = { text, mint };
+    any.push(side);
     const who = asString(rec?.account ?? rec?.userAccount);
-    if (!who || who === owner) matched.push(text);
+    if (!who || who === owner) matched.push(side);
   }
   return matched[0] ?? any[0] ?? null;
 }
 
-function swapDetail(tx: Record<string, unknown>, owner: string, signature: string): string {
+function swapSides(tx: Record<string, unknown>, owner: string): { inn: SwapSide | null; out: SwapSide | null; legs: Leg[] } {
   const events = asRecord(tx.events);
   const swap = asRecord(events?.swap);
+  let inn: SwapSide | null = null;
+  let out: SwapSide | null = null;
   if (swap) {
-    const inn =
+    inn =
       firstSwapSide(swap.tokenInputs, owner, false) ??
       firstSwapSide(swap.nativeInput, owner, true);
-    const out =
+    out =
       firstSwapSide(swap.tokenOutputs, owner, false) ??
       firstSwapSide(swap.nativeOutput, owner, true);
-    if (inn && out) return `${inn} → ${out}`;
   }
   const legs = legsForOwner(tx, owner);
-  const spent = legs.find((l) => l.outgoing);
-  const got = legs.find((l) => !l.outgoing);
-  if (spent && got) return `${spent.label} → ${got.label}`;
-  return shortAddr(signature);
+  if (!inn || !out) {
+    const spent = legs.find((l) => l.outgoing);
+    const got = legs.find((l) => !l.outgoing);
+    if (!inn && spent) inn = { text: spent.label, mint: spent.mint };
+    if (!out && got) out = { text: got.label, mint: got.mint };
+  }
+  return { inn, out, legs };
+}
+
+function mintsForKind(kind: HomeActivityKind, legs: Leg[], inn: SwapSide | null, out: SwapSide | null): string[] {
+  if (kind === "swap") return uniqueMints([inn?.mint ?? "", out?.mint ?? ""]);
+  if (kind === "send") {
+    const leg = legs.find((l) => l.outgoing);
+    return uniqueMints(leg ? [leg.mint] : []);
+  }
+  if (kind === "receive") {
+    const leg = legs.find((l) => !l.outgoing);
+    return uniqueMints(leg ? [leg.mint] : []);
+  }
+  return uniqueMints(legs.map((l) => l.mint));
 }
 
 export function rowFromEnhanced(
@@ -252,13 +303,20 @@ export function rowFromEnhanced(
   const failed = tx.transactionError != null;
   let kind: HomeActivityKind = "tx";
   let detail = shortAddr(signature);
+  let mints: string[] = [];
   if (type === "SWAP") {
     kind = "swap";
-    detail = swapDetail(tx, owner, signature);
+    const sides = swapSides(tx, owner);
+    detail = sides.inn && sides.out ? `${sides.inn.text} → ${sides.out.text}` : shortAddr(signature);
+    mints = mintsForKind(kind, sides.legs, sides.inn, sides.out);
   } else if (type === "TRANSFER") {
     const legs = legsForOwner(tx, owner);
     kind = classifyTransfer(legs);
     detail = detailFromLeg(kind, legs, signature);
+    mints = mintsForKind(kind, legs, null, null);
+  } else {
+    const legs = legsForOwner(tx, owner);
+    mints = mintsForKind("tx", legs, null, null);
   }
   const timestamp = tx.timestamp;
   return {
@@ -268,6 +326,8 @@ export function rowFromEnhanced(
     detail,
     timestampSec: typeof timestamp === "number" && Number.isFinite(timestamp) ? timestamp : null,
     orbUrl: orbTxUrl(signature, cluster),
+    mints,
+    icons: [],
   };
 }
 
@@ -301,5 +361,7 @@ export function rowFromSignature(
     detail: shortAddr(signature),
     timestampSec: blockTime,
     orbUrl: orbTxUrl(signature, cluster),
+    mints: [],
+    icons: [],
   };
 }

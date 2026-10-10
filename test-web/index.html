@@ -4,11 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Airwave test-web</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 52rem; margin: 1.5rem; }
+      textarea, select, input, pre { width: 100%; box-sizing: border-box; }
+      textarea { font-family: ui-monospace, monospace; }
+      label { display: block; margin: 0.75rem 0; }
+      pre { white-space: pre-wrap; background: #f4f4f4; padding: 0.75rem; }
+    </style>
   </head>
   <body>
     <main>
       <h1>Airwave test-web</h1>
       <p>請先在 Chrome 載入未封裝擴充 <code>wallet/dist</code>，於 popup 建立並解鎖錢包。</p>
+      <p><a href="/sign-risk.html">簽署安全評估 POC</a>（不走錢包連線）</p>
       <p id="status">正在尋找 Airwave…</p>
       <button id="connect" type="button">Connect</button>
       <button id="disconnect" type="button">Disconnect</button>

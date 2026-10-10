@@ -5,6 +5,14 @@ import { getActiveAccountMeta } from "../session";
 import { readSettings } from "../storage";
 import { getHomeActivity } from "./home-activity-service";
 
+function payloadBefore(payload: unknown): string | undefined {
+  if (!payload || typeof payload !== "object") return undefined;
+  const before = (payload as { before?: unknown }).before;
+  if (typeof before !== "string") return undefined;
+  const trimmed = before.trim();
+  return trimmed || undefined;
+}
+
 export async function handleGetHomeActivity(req: ExtensionRequest): Promise<ExtensionResponse> {
   const settings = await readSettings();
   const active = await getActiveAccountMeta();
@@ -16,7 +24,11 @@ export async function handleGetHomeActivity(req: ExtensionRequest): Promise<Exte
       result: { rows: [] },
     });
   }
-  const result = await getHomeActivity(getExposedPublicKey(active), settings);
+  const result = await getHomeActivity(
+    getExposedPublicKey(active),
+    settings,
+    payloadBefore(req.payload),
+  );
   return respond({
     kind: "airwave-ext-res",
     requestId: req.requestId,

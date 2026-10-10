@@ -1822,6 +1822,54 @@ body {
   padding: 0;
 }
 
+.activity-sentinel {
+  height: 1px;
+  width: 100%;
+  pointer-events: none;
+}
+
+.activity-more-spin {
+  width: 16px;
+  height: 16px;
+  margin: 16px auto;
+  border: 2px solid var(--stroke-soft);
+  border-top-color: var(--text-muted);
+  border-radius: 50%;
+  animation: activity-spin 0.7s linear infinite;
+}
+
+@keyframes activity-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.activity-more-err {
+  margin: 8px 0 4px;
+  color: var(--danger);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.activity-icons {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.activity-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--fill);
+  border: 1px solid var(--bg-elevated);
+}
+
+.activity-icon + .activity-icon {
+  margin-left: -6px;
+}
+
 .activity-row {
   display: flex;
   align-items: center;
@@ -1850,7 +1898,8 @@ body {
 
 .activity-when {
   color: var(--text-dim);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
   flex-shrink: 0;
 }

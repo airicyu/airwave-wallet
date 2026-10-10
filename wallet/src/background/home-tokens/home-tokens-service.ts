@@ -47,6 +47,32 @@ type CacheEntry = {
 
 let memoryCache: CacheEntry | null = null;
 
+export type PeekedMintDisplay = {
+  iconUrl?: string;
+  symbol?: string;
+};
+
+/** In-memory home-token icon／symbol only. Does not fetch Jupiter or refresh balances. */
+export function peekCachedMintDisplay(mint: string): PeekedMintDisplay {
+  const rows = memoryCache?.rows;
+  if (!rows) return {};
+  const httpsUrl = (url: string | undefined): string | undefined =>
+    url && url.startsWith("https:") ? url : undefined;
+  const rowForMint = (): HomeTokenRow | undefined => {
+    if (mint === WRAPPED_SOL_MINT) {
+      return rows.find((row) => row.id === NATIVE_SOL_ID) ?? rows.find((row) => row.id === WRAPPED_SOL_MINT);
+    }
+    return rows.find((item) => item.id === mint);
+  };
+  const row = rowForMint();
+  if (!row) return {};
+  const symbol = row.symbol?.trim();
+  return {
+    iconUrl: httpsUrl(row.iconUrl),
+    symbol: symbol || undefined,
+  };
+}
+
 type InFlight = {
   fingerprint: string;
   abort: AbortController;
