@@ -1,3 +1,7 @@
+/**
+ * Popup settings hub and sub-screens (locale, network, RPC, API keys, CU, password).
+ * Does not write chrome.storage; persistence goes through settings-logic commands.
+ */
 import type { JSX } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { hardenApiKeyInput } from "../lib/password-input";
@@ -396,7 +400,7 @@ function KeysField({
   draft: string;
   onReveal: () => void;
   onDraft: (v: string) => void;
-  onPersist: () => void;
+  onPersist: (value: string) => void;
 }): JSX.Element {
   const { t } = useT();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -404,6 +408,9 @@ function KeysField({
     if (inputRef.current) hardenApiKeyInput(inputRef.current);
   }, []);
   const display = !revealed && stored ? MASKED_SECRET_DISPLAY : draft;
+  const commit = (value: string): void => {
+    onPersist(value);
+  };
   return (
     <div className="field keys-field">
       <label htmlFor={id}>{label}</label>
@@ -417,10 +424,11 @@ function KeysField({
           readOnly={!revealed && !!stored}
           value={display}
           onChange={(e) => {
-            onDraft(e.target.value);
-            if (e.target.value === "") void onPersist();
+            const v = e.target.value;
+            onDraft(v);
+            if (v === "") commit(v);
           }}
-          onBlur={() => void onPersist()}
+          onBlur={(e) => commit(e.currentTarget.value)}
         />
         <button
           type="button"
@@ -436,7 +444,8 @@ function KeysField({
           className="icon-btn ghost-inline keys-confirm-btn"
           title={t("common.confirm")}
           aria-label={t("common.confirm")}
-          onClick={() => void onPersist()}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => commit(inputRef.current?.value ?? draft)}
         >
           <IconCheck />
         </button>
@@ -471,16 +480,16 @@ export function KeysScreen({ settings }: { settings: PublicSettings }): JSX.Elem
               void sendExtensionRequest("wallet.readIntegrationSecrets", {}).then((res) => {
                 if (!res.ok) return;
                 const url = (res.result as { heliusApiUrl?: string } | undefined)?.heliusApiUrl ?? "";
-                setHeliusDraft(url);
+                setHeliusDraft((current) => (current.trim() ? current : url));
               });
             }
             return next;
           });
         }}
         onDraft={setHeliusDraft}
-        onPersist={() => {
+        onPersist={(value) => {
           if (!wallet) return;
-          void persistHeliusField({ wallet, revealed: heliusRevealed, draft: heliusDraft, io, locale });
+          void persistHeliusField({ draft: value, io, locale });
         }}
       />
       <KeysField
@@ -496,16 +505,16 @@ export function KeysScreen({ settings }: { settings: PublicSettings }): JSX.Elem
               void sendExtensionRequest("wallet.readIntegrationSecrets", {}).then((res) => {
                 if (!res.ok) return;
                 const key = (res.result as { jupiterApiKey?: string } | undefined)?.jupiterApiKey ?? "";
-                setJupiterDraft(key);
+                setJupiterDraft((current) => (current.trim() ? current : key));
               });
             }
             return next;
           });
         }}
         onDraft={setJupiterDraft}
-        onPersist={() => {
+        onPersist={(value) => {
           if (!wallet) return;
-          void persistJupiterField({ wallet, revealed: jupiterRevealed, draft: jupiterDraft, io, locale });
+          void persistJupiterField({ draft: value, io, locale });
         }}
       />
     </>

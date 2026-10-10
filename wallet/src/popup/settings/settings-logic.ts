@@ -136,14 +136,11 @@ export function parseDefaultCuPriceInput(raw: string): number | null {
 }
 
 export async function persistHeliusField(args: {
-  wallet: State;
-  revealed: boolean;
   draft: string;
   io: SettingsIo;
   locale: UiLocale;
 }): Promise<boolean> {
   const stored = (await readStoredIntegrationSecrets()).heliusApiUrl;
-  if (!args.revealed && args.wallet.settings.heliusConfigured) return false;
   let heliusApiUrl = args.draft.trim();
   if (heliusApiUrl === MASKED_SECRET_DISPLAY) heliusApiUrl = stored;
   if (heliusApiUrl === stored) return false;
@@ -152,14 +149,11 @@ export async function persistHeliusField(args: {
 }
 
 export async function persistJupiterField(args: {
-  wallet: State;
-  revealed: boolean;
   draft: string;
   io: SettingsIo;
   locale: UiLocale;
 }): Promise<boolean> {
   const stored = (await readStoredIntegrationSecrets()).jupiterApiKey;
-  if (!args.revealed && args.wallet.settings.jupiterConfigured) return false;
   let jupiterApiKey = args.draft.trim();
   if (jupiterApiKey === MASKED_SECRET_DISPLAY) jupiterApiKey = stored;
   if (jupiterApiKey === stored) return false;
