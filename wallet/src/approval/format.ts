@@ -49,6 +49,18 @@ export function hexCompact(bytes: Uint8Array): string {
   return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+export function bytesFromHexCompact(hex: string): Uint8Array | null {
+  const h = hex.trim();
+  if (!h || h.length % 2 !== 0) return null;
+  const out = new Uint8Array(h.length / 2);
+  for (let i = 0; i < out.length; i++) {
+    const n = Number.parseInt(h.slice(i * 2, i * 2 + 2), 16);
+    if (Number.isNaN(n)) return null;
+    out[i] = n;
+  }
+  return out;
+}
+
 export function isDisplayableUtf8(bytes: Uint8Array): { ok: true; text: string } | { ok: false } {
   try {
     const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);

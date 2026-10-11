@@ -204,7 +204,7 @@ function TokenRow({
         {canExpand ? (
           <button
             type="button"
-            className="token-expand-btn"
+            className="row-expand-btn"
             aria-expanded={isExpanded}
             title={expandLabel}
             aria-label={expandLabel}

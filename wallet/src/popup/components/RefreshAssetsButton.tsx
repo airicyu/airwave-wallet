@@ -8,7 +8,7 @@ import { IconRefresh } from "./StrokeIcon";
 import { useT } from "../state/useT";
 
 const COOLDOWN_MS = 3000;
-const SPIN_MS = 650;
+const SPIN_MS = 325;
 
 export function RefreshAssetsButton({
   activeAccountId,

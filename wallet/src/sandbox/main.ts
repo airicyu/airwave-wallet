@@ -4,6 +4,7 @@
  */
 import { runSandboxLoop } from "../agent-harness/loop";
 import { TX_AI_BRIDGE_KIND, type TxAiBridgeMessage, type TxAiChatMessage } from "../shared/tx-ai-protocol";
+import { TX_AI_LLM_BRIDGE_MS } from "../shared/tx-ai";
 
 const pending = new Map<string, (message: TxAiBridgeMessage) => void>();
 let runAbort: AbortController | null = null;
@@ -19,7 +20,7 @@ function request(message: TxAiBridgeMessage): Promise<TxAiBridgeMessage> {
     const timer = setTimeout(() => {
       pending.delete(correlationId);
       reject(new Error("bridge_timeout"));
-    }, 25_000);
+    }, TX_AI_LLM_BRIDGE_MS);
     pending.set(correlationId, (response) => {
       clearTimeout(timer);
       if (response.op === "assess.fail" || response.ok === false) {

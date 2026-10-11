@@ -37,7 +37,10 @@ export const TX_AI_KINDS = ["signTransaction", "signAndSendTransaction", "wallet
 export type TxAiKind = (typeof TX_AI_KINDS)[number];
 
 export const TX_AI_MAX_STEPS = 12;
-export const TX_AI_WALL_MS = 90_000;
+/** Whole assess session budget (report loop + flags + Decisions). */
+export const TX_AI_WALL_MS = 60_000;
+/** Per llm.chat round-trip through the sandbox bridge (must stay ≤ wall). */
+export const TX_AI_LLM_BRIDGE_MS = 55_000;
 
 export const HOST_TOOL_NAMES = [
   "decode_message",

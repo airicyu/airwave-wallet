@@ -2,10 +2,9 @@
  * Orchestrates CU limit/price writes and phase-1/phase-2 simulation for sign-tx pending requests.
  * Does not handle approval UI or vault signing.
  */
-import { estimateResourceLimitsFactory, getCompiledTransactionMessageDecoder } from "@solana/kit";
+import { getCompiledTransactionMessageDecoder } from "@solana/kit";
 import {
   CU_LIMIT_MAX,
-  decompileTxMessageFromBytes,
   estimateCuLimitFromCompiledIxs,
   hasDuplicateCbDisc,
   isTransactionSigned,
@@ -17,7 +16,6 @@ import {
   writeCuToTransactionBytes,
   type WriteCuResult,
 } from "./compute-budget-tx";
-import { solanaRpcForUrl } from "../../shared/solana-rpc";
 import { SimDeadline } from "./sim-deadline";
 import { runPhase2Simulation, type Phase2SimContext } from "./phase2-deltas";
 import { simulateTransactionRpc } from "./simulate-rpc";
@@ -109,18 +107,18 @@ async function simulatePhase1ForLimit(
 
   const deadline = new SimDeadline();
   try {
-    const { computeUnitLimit } = await deadline.run(async () => {
-      const decompiled = await decompileTxMessageFromBytes(probeBytes, ctx.rpcUrl);
-      const estimate = estimateResourceLimitsFactory({ rpc: solanaRpcForUrl(ctx.rpcUrl) });
-      return estimate(decompiled, { commitment: "confirmed" });
-    });
+    const probeTx = decodeWireTransaction(probeBytes);
+    const value = await deadline.run(() =>
+      simulateTransactionRpc(ctx.rpcUrl, probeTx, deadline, { replaceRecentBlockhash: false }),
+    );
+    const units = value.unitsConsumed;
     if (
-      typeof computeUnitLimit === "number" &&
-      Number.isFinite(computeUnitLimit) &&
-      Number.isInteger(computeUnitLimit) &&
-      computeUnitLimit >= 0
+      typeof units === "number" &&
+      Number.isFinite(units) &&
+      Number.isInteger(units) &&
+      units >= 0
     ) {
-      return suggestedLimitFromPhase1(computeUnitLimit, originalLimit);
+      return suggestedLimitFromPhase1(units, originalLimit);
     }
   } catch {
     /* fall through */

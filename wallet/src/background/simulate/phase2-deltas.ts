@@ -261,7 +261,9 @@ export async function runPhase2Simulation(
 
   let value: RpcSimulateValue;
   try {
-    value = await simulateTransactionRpc(ctx.rpcUrl, tx, deadline);
+    value = await simulateTransactionRpc(ctx.rpcUrl, tx, deadline, {
+      replaceRecentBlockhash: false,
+    });
   } catch (e) {
     const reason = e instanceof Error && e.message === "SIM_TIMEOUT" ? "SIM_TIMEOUT" : "SIM_RPC";
     let instructions: SimulateTxInstruction[] | undefined;
@@ -348,4 +350,16 @@ export async function runPhase2Simulation(
     messageBytesToUint8Array(tx.messageBytes),
     cluster,
   );
+}
+
+/** Static-account fallback when approval UI needs ix rows without a full sim payload. */
+export function instructionsFromTxBytes(txBytes: Uint8Array): SimulateTxInstruction[] {
+  try {
+    const tx = decodeWireTransaction(txBytes);
+    const message = decodeCompiledMessage(messageBytesToUint8Array(tx.messageBytes));
+    const accountKeys = message.staticAccounts.map((pk) => String(pk));
+    return buildInstructions(message, accountKeys);
+  } catch {
+    return [];
+  }
 }

@@ -70,7 +70,7 @@ export function normalizeSettings(raw: Partial<Settings> | undefined): Settings 
     openRouterApiKey: typeof raw?.openRouterApiKey === "string" ? raw.openRouterApiKey : "",
     openRouterModel: normalizeReportModel(raw?.openRouterModel),
     openRouterDecisionsModel: normalizeDecisionsModel(raw?.openRouterDecisionsModel),
-    txAiAnalysisEnabled: raw?.txAiAnalysisEnabled === true,
+    txAiAnalysisEnabled: raw?.txAiAnalysisEnabled ?? true,
     defaultCuPrice: normalizeDefaultCuPrice(raw?.defaultCuPrice),
     locale: normalizeUiLocale(raw?.locale),
     shell: normalizeShellMode(raw?.shell),

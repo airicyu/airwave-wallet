@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Airwave — Extension runtime and transaction-AI isolation</title>
+  <!--
+    Current-state map (aligned with wallet 0.32.0 code). Not a version contract.
+    On conflict, docs/roadmap/0.30.0 (runtime / tools / Decisions) and 0.32.0 (UI) win.
+    Older five-runtime channel note: extension-message-flow.html.
+    Chinese edition: extension-runtime-and-tx-ai.html.
+  -->
+  <style>
+    :root {
+      --bg: #0c1016;
+      --bg-elev: #141b24;
+      --bg-card: #18212c;
+      --line: #2a3644;
+      --text: #e8eef4;
+      --muted: #8b9aab;
+      --dim: #5e6d7c;
+      --page: #3d9cf0;
+      --content: #52c4a0;
+      --sw: #e6a23c;
+      --ui: #c084fc;
+      --off: #f0b429;
+      --sand: #f472b6;
+      --ok: #4ecb8d;
+      --danger: #c75050;
+      --watch: #d4a24c;
+      --font: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background:
+        radial-gradient(900px 420px at 8% -8%, #1a2a3c 0%, transparent 55%),
+        radial-gradient(700px 360px at 92% 0%, #2a1c30 0%, transparent 50%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    a { color: var(--page); }
+    header.top {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 44px 24px 20px;
+    }
+    header.top h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.5rem, 3vw, 2.1rem);
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+    header.top p {
+      margin: 0 0 10px;
+      max-width: 72ch;
+      color: var(--muted);
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .pill {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: #121820;
+    }
+    nav.toc {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+    nav.toc .inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 10px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    nav.toc a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.84rem;
+      padding: 5px 10px;
+      border: 1px solid transparent;
+    }
+    nav.toc a:hover { color: var(--text); border-color: var(--line); }
+    nav.toc a.lang {
+      margin-left: auto;
+      border-color: var(--line);
+    }
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 28px 24px 80px;
+      display: grid;
+      gap: 48px;
+    }
+    section h2 {
+      margin: 0 0 8px;
+      font-size: 1.28rem;
+      font-weight: 650;
+    }
+    section > p.lead {
+      margin: 0 0 18px;
+      color: var(--muted);
+      max-width: 78ch;
+    }
+    .grid-8 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+    }
+    .ctx {
+      border: 1px solid var(--line);
+      background: var(--bg-card);
+      padding: 12px 14px;
+      border-left: 3px solid;
+    }
+    .ctx[data-c="page"] { border-left-color: var(--page); }
+    .ctx[data-c="content"] { border-left-color: var(--content); }
+    .ctx[data-c="sw"] { border-left-color: var(--sw); }
+    .ctx[data-c="ui"] { border-left-color: var(--ui); }
+    .ctx[data-c="off"] { border-left-color: var(--off); }
+    .ctx[data-c="sand"] { border-left-color: var(--sand); }
+    .ctx h3 {
+      margin: 0 0 4px;
+      font-size: 0.92rem;
+      font-family: var(--mono);
+    }
+    .ctx p { margin: 0; font-size: 0.82rem; color: var(--muted); }
+    .ctx .tag {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 0.68rem;
+      font-family: var(--mono);
+      padding: 2px 6px;
+      border: 1px solid var(--line);
+      color: var(--dim);
+    }
+    .diagram {
+      border: 1px solid var(--line);
+      background: #10161e;
+      padding: 16px;
+      overflow-x: auto;
+    }
+    .diagram svg { display: block; width: 100%; min-width: 880px; height: auto; }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 18px;
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .legend i {
+      display: inline-block;
+      width: 16px;
+      height: 3px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 9px 11px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #152030; font-weight: 600; }
+    td { background: var(--bg-elev); color: var(--muted); }
+    td:first-child, td.mono {
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+    }
+    code, .mono { font-family: var(--mono); font-size: 0.86em; }
+    .callout {
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--ok);
+      background: #132018;
+      padding: 12px 14px;
+      margin-top: 14px;
+    }
+    .callout.warn { border-left-color: var(--danger); background: #201418; }
+    .callout.watch { border-left-color: var(--watch); background: #1e1a12; }
+    .callout h3 { margin: 0 0 4px; font-size: 0.92rem; }
+    .callout p { margin: 0; font-size: 0.86rem; color: var(--muted); }
+    .steps { border: 1px solid var(--line); background: var(--bg-elev); }
+    .step {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .step:last-child { border-bottom: none; }
+    .step .n { font-family: var(--mono); font-size: 0.78rem; color: var(--dim); padding-top: 2px; }
+    .step strong { display: block; font-size: 0.94rem; margin-bottom: 3px; }
+    .step p { margin: 0; font-size: 0.86rem; color: var(--muted); }
+    .path {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 7px;
+      font-family: var(--mono);
+      font-size: 0.74rem;
+    }
+    .chip {
+      padding: 2px 7px;
+      border: 1px solid var(--line);
+      background: #121820;
+    }
+    .chip.page { color: var(--page); border-color: #2a5578; }
+    .chip.content { color: var(--content); border-color: #2a6a55; }
+    .chip.sw { color: var(--sw); border-color: #7a5a20; }
+    .chip.ui { color: var(--ui); border-color: #5a3a78; }
+    .chip.off { color: var(--off); border-color: #7a6a20; }
+    .chip.sand { color: var(--sand); border-color: #7a3a58; }
+    .arrow { color: var(--dim); }
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .tabs button {
+      font: inherit;
+      font-size: 0.86rem;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid var(--line);
+      padding: 7px 12px;
+      cursor: pointer;
+    }
+    .tabs button[aria-selected="true"] {
+      color: var(--text);
+      border-color: var(--page);
+      background: #152030;
+    }
+    .layers {
+      display: grid;
+      gap: 8px;
+    }
+    .layer {
+      border: 1px solid var(--line);
+      background: var(--bg-card);
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 12px;
+    }
+    .layer .who {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      padding-top: 2px;
+    }
+    .layer .who small { display: block; color: var(--dim); font-size: 0.7rem; margin-top: 4px; }
+    .layer ul { margin: 0; padding-left: 1.1em; color: var(--muted); font-size: 0.84rem; }
+    .layer.sw { border-left: 3px solid var(--sw); }
+    .layer.off { border-left: 3px solid var(--off); }
+    .layer.sand { border-left: 3px solid var(--sand); }
+    .layer.ui { border-left: 3px solid var(--ui); }
+    .deny {
+      color: #e8a0a0;
+      font-size: 0.8rem;
+    }
+    footer.note {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 24px 48px;
+      color: var(--dim);
+      font-size: 0.78rem;
+    }
+    @media (max-width: 640px) {
+      .layer { grid-template-columns: 1fr; }
+      nav.toc a.lang { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <h1>Chrome extension runtime and transaction-AI isolation</h1>
+    <p>
+      Airwave is a Manifest V3 Solana wallet. Each surface is its own Chrome context, not one shared JS heap.
+      Signing analysis runs in <code>manifest.sandbox</code>. Models, RPC, keys, and grading live only in the service worker.
+    </p>
+    <div class="meta">
+      <span class="pill">wallet 0.32.0</span>
+      <span class="pill">MV3 · service_worker</span>
+      <span class="pill">sandbox + offscreen</span>
+      <span class="pill">code map, not a contract</span>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <div class="inner">
+      <a href="#runtimes">Eight contexts</a>
+      <a href="#topology">Channels</a>
+      <a href="#state">Who holds what</a>
+      <a href="#trust">Trust roots</a>
+      <a href="#isolation">AI isolation</a>
+      <a href="#assess">Assess flow</a>
+      <a href="#tools">Tool allowlist</a>
+      <a href="#sources">Source files</a>
+      <a class="lang" href="./extension-runtime-and-tx-ai.html">中文</a>
+    </div>
+  </nav>
+
+  <main>
+    <section id="runtimes">
+      <h2>1. Eight isolated runtimes</h2>
+      <p class="lead">
+        Variables, closures, and React stores do not cross contexts. The page world has no <code>chrome.*</code>.
+        The sandbox has neither privileged extension APIs nor network. The only business hub is the service worker.
+      </p>
+      <div class="grid-8">
+        <article class="ctx" data-c="page">
+          <h3>dApp page</h3>
+          <p>A normal website. It sees Wallet Standard only, not the extension interior.</p>
+          <span class="tag">page world</span>
+        </article>
+        <article class="ctx" data-c="page">
+          <h3>inject.ts</h3>
+          <p>Injected into the main world by the content script. Registers Airwave Wallet Standard and leaves the page via <code>postMessage</code>.</p>
+          <span class="tag">no chrome.*</span>
+        </article>
+        <article class="ctx" data-c="content">
+          <h3>content-script.ts</h3>
+          <p>Isolated world on the same tab. Forwards allowlisted <code>dapp.*</code> and posts results back to the page.</p>
+          <span class="tag">has chrome.runtime</span>
+        </article>
+        <article class="ctx" data-c="sw">
+          <h3>background SW</h3>
+          <p>Command routing, pending, vault / signing, simulation, OpenRouter, host tools, Decisions.</p>
+          <span class="tag">sole privileged hub</span>
+        </article>
+        <article class="ctx" data-c="ui">
+          <h3>popup</h3>
+          <p>Toolbar wallet shell. Accounts, settings, wallet-send confirm. Destroyed when closed.</p>
+          <span class="tag">extension page</span>
+        </article>
+        <article class="ctx" data-c="ui">
+          <h3>side panel</h3>
+          <p>The same wallet UI. When the panel is open, dApp approval can mount as an in-shell overlay.</p>
+          <span class="tag">extension page</span>
+        </article>
+        <article class="ctx" data-c="ui">
+          <h3>popout</h3>
+          <p>Approval window from <code>chrome.windows.create</code>. Main dApp approval path when the side panel is closed.</p>
+          <span class="tag">extension page</span>
+        </article>
+        <article class="ctx" data-c="off">
+          <h3>offscreen + sandbox</h3>
+          <p>Offscreen only embeds the iframe and forwards JSON. The sandbox runs the harness loop with no network and no <code>chrome.*</code>.</p>
+          <span class="tag">short-lived · bound to assess</span>
+        </article>
+      </div>
+      <div class="callout watch">
+        <h3>What the older note missed</h3>
+        <p>
+          <a href="./extension-message-flow.html">extension-message-flow.html</a> described five runtimes.
+          The current build also has a side panel, offscreen, and sandbox. Approval is no longer always a popout.
+        </p>
+      </div>
+    </section>
+
+    <section id="topology">
+      <h2>2. Who can talk to whom</h2>
+      <p class="lead">
+        There are only three channels: page ↔ content uses <code>window.postMessage</code>;
+        extension pages / content / offscreen ↔ SW use <code>chrome.runtime</code>;
+        offscreen ↔ sandbox uses another <code>postMessage</code> bound to <code>event.source</code>.
+      </p>
+      <div class="diagram" aria-label="Runtime topology">
+        <svg viewBox="0 0 1040 560" role="img">
+          <title>Airwave Chrome extension runtime topology</title>
+          <defs>
+            <marker id="aPage" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#3d9cf0"/></marker>
+            <marker id="aSw" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e6a23c"/></marker>
+            <marker id="aUi" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#c084fc"/></marker>
+            <marker id="aSand" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f472b6"/></marker>
+          </defs>
+
+          <rect x="24" y="20" width="280" height="300" rx="6" fill="#121820" stroke="#2a3644"/>
+          <text x="40" y="44" fill="#8b9aab" font-size="12" font-family="ui-monospace, monospace">PAGE · isolated world</text>
+
+          <rect x="48" y="64" width="232" height="56" fill="#152535" stroke="#3d9cf0" stroke-width="1.6"/>
+          <text x="164" y="88" text-anchor="middle" fill="#3d9cf0" font-size="14" font-family="ui-monospace, monospace">dApp</text>
+          <text x="164" y="106" text-anchor="middle" fill="#8b9aab" font-size="11">Wallet Standard</text>
+
+          <rect x="48" y="148" width="232" height="56" fill="#152535" stroke="#3d9cf0" stroke-width="1.6"/>
+          <text x="164" y="172" text-anchor="middle" fill="#3d9cf0" font-size="14" font-family="ui-monospace, monospace">inject.ts</text>
+          <text x="164" y="190" text-anchor="middle" fill="#8b9aab" font-size="11">no chrome.* · Promise map</text>
+
+          <rect x="48" y="232" width="232" height="56" fill="#132820" stroke="#52c4a0" stroke-width="1.6"/>
+          <text x="164" y="256" text-anchor="middle" fill="#52c4a0" font-size="14" font-family="ui-monospace, monospace">content-script.ts</text>
+          <text x="164" y="274" text-anchor="middle" fill="#8b9aab" font-size="11">allowlisted dapp.* relay</text>
+
+          <line x1="164" y1="120" x2="164" y2="148" stroke="#3d9cf0" stroke-width="1.6" marker-end="url(#aPage)"/>
+          <text x="176" y="138" fill="#3d9cf0" font-size="10">function call</text>
+          <line x1="164" y1="204" x2="164" y2="232" stroke="#3d9cf0" stroke-width="1.6" marker-end="url(#aPage)"/>
+          <text x="176" y="222" fill="#3d9cf0" font-size="10">postMessage · same origin</text>
+
+          <rect x="360" y="88" width="300" height="164" rx="6" fill="#231c10" stroke="#e6a23c" stroke-width="2"/>
+          <text x="510" y="120" text-anchor="middle" fill="#e6a23c" font-size="16" font-family="ui-monospace, monospace">service worker</text>
+          <text x="510" y="142" text-anchor="middle" fill="#8b9aab" font-size="12">pending · vault · sign</text>
+          <text x="510" y="162" text-anchor="middle" fill="#8b9aab" font-size="12">simulate · host tools</text>
+          <text x="510" y="182" text-anchor="middle" fill="#8b9aab" font-size="12">OpenRouter chat / Decisions</text>
+          <text x="510" y="214" text-anchor="middle" fill="#5e6d7c" font-size="11">storage.local is truth · in-memory pending</text>
+          <text x="510" y="232" text-anchor="middle" fill="#5e6d7c" font-size="11">MV3 may sleep · no long-lived background</text>
+
+          <line x1="280" y1="260" x2="360" y2="180" stroke="#e6a23c" stroke-width="1.6" marker-end="url(#aSw)"/>
+          <text x="286" y="206" fill="#e6a23c" font-size="10">runtime.sendMessage</text>
+
+          <rect x="740" y="20" width="276" height="232" rx="6" fill="#1a1424" stroke="#2a3644"/>
+          <text x="756" y="44" fill="#8b9aab" font-size="12" font-family="ui-monospace, monospace">EXTENSION PAGES</text>
+          <rect x="760" y="60" width="236" height="48" fill="#221833" stroke="#c084fc"/>
+          <text x="878" y="90" text-anchor="middle" fill="#c084fc" font-size="13" font-family="ui-monospace, monospace">popup</text>
+          <rect x="760" y="118" width="236" height="48" fill="#221833" stroke="#c084fc"/>
+          <text x="878" y="148" text-anchor="middle" fill="#c084fc" font-size="13" font-family="ui-monospace, monospace">side panel</text>
+          <rect x="760" y="176" width="236" height="48" fill="#221833" stroke="#c084fc"/>
+          <text x="878" y="206" text-anchor="middle" fill="#c084fc" font-size="13" font-family="ui-monospace, monospace">popout</text>
+
+          <line x1="660" y1="150" x2="740" y2="150" stroke="#c084fc" stroke-width="1.6" marker-end="url(#aUi)"/>
+          <text x="668" y="140" fill="#c084fc" font-size="10">ui.* / wallet.*</text>
+
+          <rect x="360" y="320" width="656" height="216" rx="6" fill="#1a1610" stroke="#2a3644"/>
+          <text x="376" y="344" fill="#8b9aab" font-size="12" font-family="ui-monospace, monospace">TX-AI ISOLATION · short-lived</text>
+
+          <rect x="384" y="368" width="260" height="132" fill="#2a2210" stroke="#f0b429" stroke-width="1.6"/>
+          <text x="514" y="404" text-anchor="middle" fill="#f0b429" font-size="14" font-family="ui-monospace, monospace">offscreen</text>
+          <text x="514" y="426" text-anchor="middle" fill="#8b9aab" font-size="11">embed iframe · forward JSON</text>
+          <text x="514" y="446" text-anchor="middle" fill="#5e6d7c" font-size="11">no key · no tools</text>
+          <text x="514" y="466" text-anchor="middle" fill="#5e6d7c" font-size="11">no Decisions</text>
+
+          <rect x="720" y="368" width="260" height="132" fill="#2a1420" stroke="#f472b6" stroke-width="1.6"/>
+          <text x="850" y="404" text-anchor="middle" fill="#f472b6" font-size="14" font-family="ui-monospace, monospace">sandbox iframe</text>
+          <text x="850" y="426" text-anchor="middle" fill="#8b9aab" font-size="11">harness loop · max 12</text>
+          <text x="850" y="446" text-anchor="middle" fill="#5e6d7c" font-size="11">no chrome.* · connect-src none</text>
+          <text x="850" y="466" text-anchor="middle" fill="#5e6d7c" font-size="11">no vault / API key</text>
+
+          <line x1="510" y1="252" x2="510" y2="368" stroke="#f0b429" stroke-width="1.6" marker-end="url(#aSw)"/>
+          <text x="522" y="316" fill="#f0b429" font-size="10">offscreen.createDocument</text>
+          <line x1="644" y1="434" x2="720" y2="434" stroke="#f472b6" stroke-width="1.6" marker-end="url(#aSand)"/>
+          <text x="652" y="422" fill="#f472b6" font-size="10">postMessage</text>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><i style="background:#3d9cf0"></i>page postMessage</span>
+        <span><i style="background:#e6a23c"></i>chrome.runtime ↔ SW</span>
+        <span><i style="background:#c084fc"></i>extension-page commands</span>
+        <span><i style="background:#f472b6"></i>offscreen ↔ sandbox</span>
+      </div>
+    </section>
+
+    <section id="state">
+      <h2>3. Who holds what (state and custody)</h2>
+      <p class="lead">
+        Persistent state treats <code>chrome.storage</code> as truth. UI mirrors it via <code>onChanged</code> and commands.
+        Pending requests and AI reports live only in SW memory. They are not written to storage and are not recovered by a lucky hydrate.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Where it lives</th>
+            <th>Who may touch it</th>
+            <th>Who must not</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>password-boxed vault</td>
+            <td><code>chrome.storage.local</code> · <code>airwave.vault.v1</code></td>
+            <td>SW decrypts into memory only</td>
+            <td>inject / content / sandbox / offscreen / approval pages</td>
+          </tr>
+          <tr>
+            <td>unlock working key</td>
+            <td>SW memory + <code>storage.session</code> (<code>TRUSTED_CONTEXTS</code>)</td>
+            <td>SW only; cleared when the browser closes</td>
+            <td>any page world, sandbox</td>
+          </tr>
+          <tr>
+            <td>settings / account meta / connections</td>
+            <td><code>storage.local</code></td>
+            <td>SW reads and writes; extension pages see the public shape</td>
+            <td>OpenRouter key is omitted from <code>getState</code></td>
+          </tr>
+          <tr>
+            <td>pending sign request</td>
+            <td>SW <code>Map</code></td>
+            <td>SW; UI via <code>ui.getPending</code></td>
+            <td>storage hydrate, content, sandbox</td>
+          </tr>
+          <tr>
+            <td><code>TxAiAssessState</code></td>
+            <td>SW memory, keyed by that <code>requestId</code></td>
+            <td>SW writes; approval page short-polls</td>
+            <td>not persisted, not reused across pendings</td>
+          </tr>
+          <tr>
+            <td>assess transaction snapshot</td>
+            <td>SW session · signature slots stripped</td>
+            <td>host tools hit this copy only</td>
+            <td>sandbox does not get the live unsigned bytes as a mutable object; CU edits do not update the snapshot</td>
+          </tr>
+          <tr>
+            <td>OpenRouter API key</td>
+            <td>settings secret field; full text only via the extension-page secrets command</td>
+            <td>SW uses it for chat / Decisions</td>
+            <td>offscreen, sandbox, public <code>getState</code></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <h3>How the wallet shell picks an approval surface</h3>
+        <p>
+          dApp connect / sign: if the side panel is open → <code>uiHost: "sidebar"</code> and notify the in-shell overlay; otherwise open a popout.
+          The wallet’s own <code>walletSend</code> stays in the originating popup / sidebar and does not open a popout.
+          Closing the popout ends that pending (walletSend / signAndSend have their own finish paths).
+        </p>
+      </div>
+    </section>
+
+    <section id="trust">
+      <h2>4. Message trust roots</h2>
+      <p class="lead">
+        Trust Chrome’s sender and <code>event.source</code>, not a self-reported <code>from</code> string in the envelope.
+        Results go back on the originating line. There is no default all-tab broadcast.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Channel</th>
+            <th>Allowed</th>
+            <th>Rejected</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>inject → content</td>
+            <td><code>event.source === window</code> and matching origin; command in <code>PAGE_COMMANDS</code></td>
+            <td>any <code>wallet.*</code> / <code>ui.*</code>; forged off-site messages</td>
+          </tr>
+          <tr>
+            <td>content → SW</td>
+            <td><code>dapp.*</code>, <code>debug.ping</code>; SW takes the tab origin</td>
+            <td>extension-page-only commands (<code>isExtensionPage</code> blocks them)</td>
+          </tr>
+          <tr>
+            <td>popup / sidebar / popout → SW</td>
+            <td><code>ui.*</code>, <code>wallet.*</code>, <code>shell.*</code></td>
+            <td>a web-page sender impersonating an extension page</td>
+          </tr>
+          <tr>
+            <td>offscreen → SW (<code>airwave-tx-ai</code>)</td>
+            <td><code>sender.id</code> is this extension, no tab, URL contains <code>offscreen</code></td>
+            <td>content / web pages / fake offscreen</td>
+          </tr>
+          <tr>
+            <td>SW → offscreen</td>
+            <td>no tab; URL empty or contains service-worker / background</td>
+            <td>other extension pages firing <code>assess.start</code></td>
+          </tr>
+          <tr>
+            <td>sandbox ↔ offscreen</td>
+            <td>only the own iframe / parent <code>event.source</code></td>
+            <td>page, content, unknown frames</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout warn">
+        <h3>Deliberately not done</h3>
+        <p>
+          No RSA encrypt / decrypt theater on every inject ↔ extension result.
+          No <code>chrome.storage</code> event bus.
+          No writing pending or AI reports to storage and hoping a later reopen hydrates them.
+        </p>
+      </div>
+    </section>
+
+    <section id="isolation">
+      <h2>5. Transaction-AI isolation layers</h2>
+      <p class="lead">
+        The model only decides the next tool call inside the sandbox. Real network and chain work always return to the SW.
+        Offscreen exists for one reason: a service worker cannot host a DOM iframe, so it is a short-lived host.
+      </p>
+      <div class="layers">
+        <article class="layer sw">
+          <div class="who">
+            service worker
+            <small>highest privilege</small>
+          </div>
+          <ul>
+            <li>After enqueue, if the switch is on and the key is non-empty, auto <code>assess.start</code> once</li>
+            <li>Snapshot <code>workingTx ??</code> original bytes and strip signature slots</li>
+            <li>Open / close offscreen; run allowlisted tools; call OpenRouter chat</li>
+            <li>Compute deterministic flags locally; then Decisions; then the floor</li>
+            <li class="deny">Does not hand the key, vault, or live unsigned bytes to the sandbox</li>
+          </ul>
+        </article>
+        <article class="layer off">
+          <div class="who">
+            offscreen
+            <small>relay only</small>
+          </div>
+          <ul>
+            <li>Creates the sandbox iframe: <code>chrome.runtime.getURL("src/sandbox/index.html")</code></li>
+            <li>Forwards SW <code>assess.start</code> / <code>assess.abort</code> downward</li>
+            <li>Forwards sandbox <code>tool</code> / <code>llm.chat</code> / done / fail upward, then posts the reply back</li>
+            <li class="deny">Does not execute tools, hold the OpenRouter key, read settings secrets, or call Decisions</li>
+          </ul>
+        </article>
+        <article class="layer sand">
+          <div class="who">
+            sandbox
+            <small>offline JS</small>
+          </div>
+          <ul>
+            <li>CSP: <code>sandbox allow-scripts; script-src 'self'; object-src 'none'; connect-src 'none'</code></li>
+            <li>Page also sets <code>connect-src 'none'</code>; the bundle is the copied <code>agent-harness/loop.ts</code></li>
+            <li>At most 12 steps: <code>llm.chat</code> → optional <code>tool</code> → <code>reportText</code></li>
+            <li class="deny">No <code>chrome.*</code>, no fetch / XHR / WebSocket, no vault, no signing, no <code>eval</code> of model strings</li>
+          </ul>
+        </article>
+        <article class="layer ui">
+          <div class="who">
+            approval shell
+            <small>consume only</small>
+          </div>
+          <ul>
+            <li>Mounts the single-row “AI analysis” card only when conditions match (under the title, above expected changes)</li>
+            <li>Short-polls <code>ui.getPending</code> for <code>txAi</code>; does not invent a second start path</li>
+            <li>Refresh / 3-second simulation updates expected changes only; does not rerun AI</li>
+            <li class="deny">A high grade never disables approve; <code>ui.resolvePending</code> does not wait for assess</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="assess">
+      <h2>6. AI flow for one signature request</h2>
+      <p class="lead">
+        Only <code>signTransaction</code> / <code>signAndSendTransaction</code> / <code>walletSend</code>.
+        <code>signMessage</code> is out of scope. At most one assess at a time; a second queues; a finished pending is dropped.
+      </p>
+
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" aria-selected="true" data-panel="happy">Happy path</button>
+        <button type="button" role="tab" aria-selected="false" data-panel="loop">Sandbox loop</button>
+        <button type="button" role="tab" aria-selected="false" data-panel="grade">Grading and floor</button>
+        <button type="button" role="tab" aria-selected="false" data-panel="end">End and failure</button>
+      </div>
+
+      <div id="panel-happy" class="flow-panel">
+        <div class="steps">
+          <div class="step">
+            <div class="n">01</div>
+            <div class="body">
+              <strong>Pending enqueues successfully</strong>
+              <p><code>addPending</code> fires the hook → <code>maybeStartTxAi</code>. An existing session does not re-enter.</p>
+              <div class="path">
+                <span class="chip sw">SW pending</span>
+                <span class="arrow">→</span>
+                <span class="chip sw">assess.ts</span>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">02</div>
+            <div class="body">
+              <strong>Read settings; stop if conditions fail</strong>
+              <p>Continue only if <code>txAiAnalysisEnabled</code> and the OpenRouter key is non-empty after trim. Otherwise the approval card is omitted too.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">03</div>
+            <div class="body">
+              <strong>Snapshot unsigned bytes</strong>
+              <p>Copy <code>workingTx ??</code> enqueue bytes and zero every signature slot (64 zero bytes). Later CU edits do not rerun or update this copy.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">04</div>
+            <div class="body">
+              <strong>Ensure offscreen, send <code>assess.start</code></strong>
+              <p>Payload includes the locale prompt and <code>requestId</code>. <strong>No</strong> API key. Wall clock is <strong>60s</strong>; each sandbox <code>llm.chat</code> / tool round trip is <strong>55s</strong>.</p>
+              <div class="path">
+                <span class="chip sw">SW</span>
+                <span class="arrow">→ runtime →</span>
+                <span class="chip off">offscreen</span>
+                <span class="arrow">→ postMessage →</span>
+                <span class="chip sand">sandbox</span>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">05</div>
+            <div class="body">
+              <strong>Sandbox queries for several rounds, then <code>assess.done</code></strong>
+              <p>Every chat / tool hop goes through offscreen back to the SW. The SW only accepts the current <code>activeTxAiRequestId</code>.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">06</div>
+            <div class="body">
+              <strong>SW local flags → Decisions → floor → <code>done</code></strong>
+              <p>The next <code>ui.getPending</code> shows the grade and report. Clicking the row card opens the overlay and does not rerun.</p>
+              <div class="path">
+                <span class="chip ui">approval shell</span>
+                <span class="arrow">← ui.getPending.txAi ←</span>
+                <span class="chip sw">SW memory</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-loop" class="flow-panel" hidden>
+        <div class="steps">
+          <div class="step">
+            <div class="n">A</div>
+            <div class="body">
+              <strong>Sandbox announces ready</strong>
+              <p>Offscreen then flushes any queued <code>assess.start</code>.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">B</div>
+            <div class="body">
+              <strong><code>runSandboxLoop</code></strong>
+              <p>system + user → <code>callModel</code>. If the model returns <code>tool_calls</code>, each <code>executeTool</code> result is clipped to 8,000 characters and fed back.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">C</div>
+            <div class="body">
+              <strong><code>llm.chat</code> in the SW</strong>
+              <p>Sanitize messages (roles, length, tool_calls cap), then call <code>/api/v1/chat/completions</code> with the report model from settings.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">D</div>
+            <div class="body">
+              <strong><code>tool</code> in the SW</strong>
+              <p><code>hostToolVerdict</code> rejects names outside the table. Args that mention write RPCs such as <code>sendTransaction</code> are also rejected. Tools fail if RPC is unset.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">E</div>
+            <div class="body">
+              <strong>Stop conditions</strong>
+              <p>No more tools and a non-empty body → <code>assess.done</code>. An empty reply gets one nudge. After 12 steps, take the last assistant body. Abort / timeout → fail.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-grade" class="flow-panel" hidden>
+        <div class="steps">
+          <div class="step">
+            <div class="n">G1</div>
+            <div class="body">
+              <strong>Deterministic flags trust only the SW</strong>
+              <p><code>local-flags</code> computes <code>unknown_program</code>, <code>durable_nonce</code>, <code>authority_change</code>, <code>unlimited_approve</code>, <code>close_account_external</code>, <code>system_assign</code>, <code>owner_mismatch</code>, <code>lookup_account_unchecked</code> on the snapshot. Flags from the model or <code>decode_message</code> are for the model to read and are not written into <code>TxAiAssessState</code>.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">G2</div>
+            <div class="body">
+              <strong>Decisions only in the SW</strong>
+              <p><code>POST https://openrouter.ai/api/alpha/decisions</code> with <code>openRouterDecisionsModel</code>. State carries the report, SW flags, kind, and locale. <strong>No secrets.</strong></p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">G3</div>
+            <div class="body">
+              <strong>The floor only raises</strong>
+              <p><code>unlimited_approve</code> / <code>authority_change</code> / <code>close_account_external</code> / <code>system_assign</code> ≥ watch; <code>owner_mismatch</code> ≥ high. A failed chain read skips Decisions; the displayed grade can still be raised by the floor.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-end" class="flow-panel" hidden>
+        <div class="steps">
+          <div class="step">
+            <div class="n">X</div>
+            <div class="body">
+              <strong>Drop on pending end</strong>
+              <p><code>takePending</code> / <code>removePending</code> call <code>discardTxAi</code>: abort, dequeue, and close offscreen if nothing else is queued. Approve does not wait.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">Y</div>
+            <div class="body">
+              <strong>Failure still allows signing</strong>
+              <p>Timeout, empty report, offscreen failing to open, or unparseable Decisions → <code>error</code> or UI “Unknown”. Does not block approve, simulation, or CU edits.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">Z</div>
+            <div class="body">
+              <strong>Two simulations do not silently rewrite each other</strong>
+              <p>Approval <code>ui.simulatePendingTx</code> uses the transaction’s own blockhash (0.32). The AI <code>simulate</code> tool still sets <code>replaceRecentBlockhash: true</code>. They share the RPC helper; the caller passes the flag.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tools">
+      <h2>7. The sandbox may request only these tools</h2>
+      <p class="lead">
+        There is no generic <code>rpc(method, params)</code>. Names that mention vault / sign / storage but are not in this table are rejected.
+        Broadcast and chain-mutating methods are hard-banned.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>tool.name</th>
+            <th>What the SW actually does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>decode_message</td>
+            <td>Decode the assess snapshot; return instructions. Its flags are for the model only</td>
+          </tr>
+          <tr>
+            <td>get_accounts</td>
+            <td>Read-only multi-account (jsonParsed); pubkeys may be omitted and fall back to keys remembered from the last decode</td>
+          </tr>
+          <tr>
+            <td>simulate</td>
+            <td><code>simulateTransaction</code> with <code>replaceRecentBlockhash: true</code> and no sigVerify</td>
+          </tr>
+          <tr>
+            <td>rpc_get_balance</td>
+            <td><code>getBalance</code></td>
+          </tr>
+          <tr>
+            <td>rpc_get_account_info</td>
+            <td><code>getAccountInfo</code> (base64 or jsonParsed)</td>
+          </tr>
+          <tr>
+            <td>rpc_get_multiple_accounts</td>
+            <td><code>getMultipleAccounts</code>, at most 20 pubkeys</td>
+          </tr>
+          <tr>
+            <td>rpc_get_token_accounts_by_owner</td>
+            <td><code>getTokenAccountsByOwner</code></td>
+          </tr>
+          <tr>
+            <td>rpc_get_signatures_for_address</td>
+            <td><code>getSignaturesForAddress</code>, limit ≤ 20</td>
+          </tr>
+          <tr>
+            <td>rpc_get_transaction</td>
+            <td><code>getTransaction</code></td>
+          </tr>
+          <tr>
+            <td>rpc_get_latest_blockhash</td>
+            <td><code>getLatestBlockhash</code></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout warn">
+        <h3>Banned set</h3>
+        <p>
+          <code>sendTransaction</code>, <code>sendRawTransaction</code>, <code>requestAirdrop</code>, arbitrary URL fetch, filesystem,
+          <code>eval</code> / <code>new Function</code> / dynamic <code>import()</code> of an unfixed URL, sandbox talking to OpenRouter directly.
+          The host must not execute model output as code either.
+        </p>
+      </div>
+    </section>
+
+    <section id="sources">
+      <h2>8. Source files</h2>
+      <p class="lead">This HTML is a current-state map. The contract is still the roadmap INDEX.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>wallet/manifest.config.ts</td>
+            <td>SW, popup, sidePanel, content, inject WAR, sandbox page, CSP, offscreen permission</td>
+          </tr>
+          <tr>
+            <td>wallet/src/background/index.ts</td>
+            <td>Sender checks, command split, assess hook, tx-ai bridge accepted only from offscreen</td>
+          </tr>
+          <tr>
+            <td>wallet/src/content/content-script.ts</td>
+            <td>Injects inject.ts; relays dApp commands and account-changed events</td>
+          </tr>
+          <tr>
+            <td>wallet/src/inject/inject.ts · bridge-client.ts</td>
+            <td>Wallet Standard; in-page Promise map</td>
+          </tr>
+          <tr>
+            <td>wallet/src/background/pending/pending.ts</td>
+            <td>In-memory pending; discardTxAi on end</td>
+          </tr>
+          <tr>
+            <td>wallet/src/background/tx-ai/assess.ts</td>
+            <td>Queue, open offscreen, wait for the loop, grade, 60s wall clock</td>
+          </tr>
+          <tr>
+            <td>wallet/src/background/tx-ai/bridge.ts</td>
+            <td>Offscreen sender check; proxy tools / chat</td>
+          </tr>
+          <tr>
+            <td>wallet/src/offscreen/main.ts</td>
+            <td>Iframe host; bidirectional JSON relay</td>
+          </tr>
+          <tr>
+            <td>wallet/src/sandbox/main.ts</td>
+            <td>Runs the loop; talks only to parent</td>
+          </tr>
+          <tr>
+            <td>wallet/src/agent-harness/loop.ts</td>
+            <td>12-step tool loop; does not go to the network itself</td>
+          </tr>
+          <tr>
+            <td>wallet/src/approval/tx-ai-widget.ts</td>
+            <td>Row card and overlay; reads <code>ui.getPending</code> only</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="note">
+    Aligned with wallet 0.32.0 code (2026-10-11). AI runtime contract:
+    <code>docs/roadmap/0.30.0</code>. Sign-page row card and approval simulation:
+    <code>docs/roadmap/0.32.0</code>.
+    Chinese edition: <a href="./extension-runtime-and-tx-ai.html">extension-runtime-and-tx-ai.html</a>.
+  </footer>
+
+  <script>
+    document.querySelectorAll(".tabs").forEach((tabs) => {
+      tabs.addEventListener("click", (event) => {
+        const btn = event.target.closest("button[data-panel]");
+        if (!btn || !tabs.contains(btn)) return;
+        const id = btn.getAttribute("data-panel");
+        tabs.querySelectorAll("button").forEach((b) => b.setAttribute("aria-selected", String(b === btn)));
+        tabs.parentElement.querySelectorAll(".flow-panel").forEach((panel) => {
+          panel.hidden = panel.id !== `panel-${id}`;
+        });
+      });
+    });
+  </script>
+</body>
+</html>

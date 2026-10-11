@@ -36,10 +36,15 @@ export type RpcSimulateValue = {
   loadedAddresses?: RpcLoadedAddresses | null;
 };
 
+export type SimulateTransactionRpcOptions = {
+  replaceRecentBlockhash: boolean;
+};
+
 export async function simulateTransactionRpc(
   rpcUrl: string,
   tx: Transaction,
   deadline: SimDeadline,
+  options: SimulateTransactionRpcOptions,
 ): Promise<RpcSimulateValue> {
   if (!rpcUrl.trim()) {
     throw new Error("JSON-RPC URL required");
@@ -54,7 +59,7 @@ export async function simulateTransactionRpc(
       {
         encoding: "base64",
         sigVerify: false,
-        replaceRecentBlockhash: true,
+        replaceRecentBlockhash: options.replaceRecentBlockhash,
         commitment: "confirmed",
       },
     ],

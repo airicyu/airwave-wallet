@@ -90,7 +90,9 @@ export async function executeHostTool(args: {
   if (args.name === "simulate") {
     try {
       const tx = decodeWireTransaction(args.snapshot);
-      const value = await simulateTransactionRpc(args.rpcUrl, tx, new SimDeadline());
+      const value = await simulateTransactionRpc(args.rpcUrl, tx, new SimDeadline(), {
+        replaceRecentBlockhash: true,
+      });
       return {
         ok: true,
         err: value.err ?? null,

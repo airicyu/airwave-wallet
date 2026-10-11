@@ -1,6 +1,6 @@
 /**
- * Floating AI pill on the sign shell, parallel to simulation and approve.
- * Does not start an assess, and is not driven by simulation card rerenders.
+ * In-flow AI row card on the sign shell (under title, above simulation).
+ * Does not start assess or rerun on simulation refresh.
  */
 import { sendExtensionRequest } from "../shared/ext-api";
 import { mountTxAiMarkdown } from "../shared/tx-ai-markdown";
@@ -9,16 +9,22 @@ import { t, type UiLocale } from "../shared/ui-i18n";
 import type { MessageKey } from "../shared/ui-messages";
 
 let watchId = "";
-let slotHost: HTMLElement | null = null;
+let slotEl: HTMLElement | null = null;
+let scrollHost: HTMLElement | null = null;
 let overlayOpen = false;
 let latest: TxAiAssessState = { status: "idle" };
 let idlePolls = 0;
 let timer: ReturnType<typeof setInterval> | null = null;
 let locale: UiLocale = "zh-Hant";
-let alignObserver: ResizeObserver | null = null;
 let paintedKey = "";
 
 const REPORT_ICON = `<path d="M7 4.5h7l3.5 3.5V19.5H7z"/><path d="M14 4.5V8h3.5"/><path d="M9.5 12h5"/><path d="M9.5 15h5"/>`;
+
+/** Bot — AI row mark (stroke paths, 24×24). */
+const BOT_ICON = `<path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/>`;
+
+const BACK_TOP_SVG =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5"/><polyline points="5 12 12 5 19 12"/></svg>';
 
 function levelOf(state: TxAiAssessState): TxAiLevel | "running" | "hidden" {
   if (state.status === "idle") return "hidden";
@@ -27,15 +33,50 @@ function levelOf(state: TxAiAssessState): TxAiLevel | "running" | "hidden" {
   return state.level;
 }
 
-function labelKey(level: TxAiLevel | "running"): MessageKey {
-  if (level === "running") return "approval.txAi.running";
-  return `approval.txAi.level.${level}`;
+function riskIndexKey(level: TxAiLevel): MessageKey {
+  return `approval.txAi.riskIndex.${level}`;
 }
 
 function reportText(state: TxAiAssessState): string {
   if (state.status === "done") return state.reportText;
   if (state.status === "error") return state.reportText ?? "";
   return "";
+}
+
+function hasReportBody(state: TxAiAssessState): boolean {
+  return reportText(state).trim().length > 0;
+}
+
+function isTimedOutError(state: TxAiAssessState): boolean {
+  return (
+    state.status === "error" &&
+    (state.message === "timeout" || state.message === "bridge_timeout")
+  );
+}
+
+function reportEmptyMessageKey(state: TxAiAssessState): MessageKey {
+  if (state.status === "error") {
+    if (state.message === "timeout") return "approval.txAi.reportTimeout";
+    if (state.message === "bridge_timeout") return "approval.txAi.reportSlow";
+    return "approval.txAi.failed";
+  }
+  return "approval.txAi.reportEmpty";
+}
+
+function rowResultKey(state: TxAiAssessState, level: TxAiLevel | "running" | "hidden"): MessageKey {
+  if (state.status === "error") {
+    return isTimedOutError(state) ? "approval.txAi.rowTimedOut" : "approval.txAi.failed";
+  }
+  const riskLevel: TxAiLevel = level === "unknown" ? "unknown" : level === "running" || level === "hidden" ? "unknown" : level;
+  return riskIndexKey(riskLevel);
+}
+
+function overlayTitleKey(state: TxAiAssessState, level: TxAiLevel | "running" | "hidden"): MessageKey {
+  if (state.status === "error") {
+    return isTimedOutError(state) ? "approval.txAi.rowTimedOut" : "approval.txAi.failed";
+  }
+  const riskLevel: TxAiLevel = level === "unknown" ? "unknown" : level === "running" || level === "hidden" ? "unknown" : level;
+  return riskIndexKey(riskLevel);
 }
 
 function scrollPane(host: HTMLElement): HTMLElement | null {
@@ -45,141 +86,171 @@ function scrollPane(host: HTMLElement): HTMLElement | null {
   );
 }
 
-function alignFloat(host: HTMLElement): void {
-  const float = host.querySelector<HTMLElement>(".ai-float");
-  const site = host.querySelector<HTMLElement>(".site-row");
-  if (!float || !site) return;
-  const pane = scrollPane(host);
-  const scrolled = pane ? pane.scrollTop : 0;
-  const top = site.getBoundingClientRect().top - host.getBoundingClientRect().top + scrolled;
-  float.style.top = `${Math.max(8, top)}px`;
+/** Sign shell root (not the scrolling pane); overlay must cover the visible viewport. */
+function overlayRoot(host: HTMLElement): HTMLElement {
+  return host;
 }
 
-function watchAlign(host: HTMLElement): void {
-  alignObserver?.disconnect();
-  alignObserver = new ResizeObserver(() => alignFloat(host));
-  alignObserver.observe(host);
-  const site = host.querySelector(".site-row");
-  if (site) alignObserver.observe(site);
+function removeVeil(host: HTMLElement): void {
+  overlayRoot(host).querySelector(".ai-veil")?.remove();
+  scrollPane(host)?.querySelector(".ai-veil")?.remove();
 }
 
 function visualKey(): string {
-  return `${levelOf(latest)}|${overlayOpen ? "1" : "0"}|${reportText(latest)}|${locale}`;
+  const err = latest.status === "error" ? latest.message : "";
+  return `${latest.status}|${levelOf(latest)}|${err}|${reportText(latest)}|${locale}`;
 }
 
-function paint(host: HTMLElement): void {
+function svgIcon(paths: string, className: string): SVGSVGElement {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.classList.add(className);
+  svg.innerHTML = paths;
+  return svg;
+}
+
+function openReport(): void {
+  if (!hasReportBody(latest)) return;
+  overlayOpen = true;
+  paintOverlay();
+}
+
+function paintRow(): void {
+  const slot = slotEl;
+  if (!slot) return;
   const nextKey = visualKey();
-  if (paintedKey === nextKey && host.querySelector("#tx-ai-root")) {
-    if (!overlayOpen) alignFloat(host);
-    return;
-  }
+  if (paintedKey === nextKey && slot.querySelector(".ai-card")) return;
   paintedKey = nextKey;
-  host.querySelector("#tx-ai-root")?.remove();
-  scrollPane(host)?.querySelector(".ai-veil")?.remove();
+  slot.replaceChildren();
   const level = levelOf(latest);
   if (level === "hidden") {
-    const pane = scrollPane(host);
+    slot.hidden = true;
+    return;
+  }
+  slot.hidden = false;
+
+  const running = level === "running";
+  const failed = latest.status === "error";
+  const card = document.createElement("div");
+  card.className = "ai-card";
+  card.dataset.level = failed ? "failed" : level;
+  if (running) card.setAttribute("role", "status");
+
+  const row = document.createElement("div");
+  row.className = "ai-row";
+  const mark = document.createElement("span");
+  mark.className = "ai-mark";
+  mark.append(svgIcon(BOT_ICON, "ai-mark-icon"));
+  const label = document.createElement("span");
+  label.className = "ai-label";
+  label.textContent = t(locale, "approval.txAi.rowLabel");
+  row.append(mark, label);
+  if (running) {
+    const status = document.createElement("span");
+    status.className = "ai-status ai-status--running";
+    status.textContent = t(locale, "approval.txAi.running");
+    row.append(status);
+  } else {
+    const result = document.createElement("span");
+    result.className = "ai-result";
+    result.textContent = t(locale, rowResultKey(latest, level));
+    row.append(result);
+    if (hasReportBody(latest)) {
+      const reportBtn = document.createElement("button");
+      reportBtn.type = "button";
+      reportBtn.className = "ai-report-btn";
+      reportBtn.title = t(locale, "approval.txAi.openReport");
+      reportBtn.setAttribute("aria-label", t(locale, "approval.txAi.openReport"));
+      reportBtn.append(svgIcon(REPORT_ICON, "ai-report-icon"));
+      reportBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openReport();
+      });
+      row.append(reportBtn);
+    }
+  }
+  card.append(row);
+  if (running) {
+    const track = document.createElement("div");
+    track.className = "ai-track";
+    track.setAttribute("aria-hidden", "true");
+    const bar = document.createElement("span");
+    track.append(bar);
+    card.append(track);
+  }
+  slot.append(card);
+}
+
+function paintOverlay(): void {
+  const host = scrollHost;
+  if (!host) return;
+  const pane = scrollPane(host);
+  const mount = overlayRoot(host);
+  removeVeil(host);
+  if (!overlayOpen) {
     if (pane) pane.style.overflowY = "";
     return;
   }
-
-  const root = document.createElement("div");
-  root.id = "tx-ai-root";
-  const report = reportText(latest);
-  const canOpen = level !== "running" && Boolean(report);
-
-  if (!overlayOpen) {
-    const float = document.createElement("div");
-    float.className = "ai-float";
-    if (level === "running") {
-      const chip = document.createElement("span");
-      chip.className = "ai-chip";
-      chip.dataset.level = "running";
-      chip.setAttribute("role", "status");
-      chip.setAttribute("aria-label", t(locale, "approval.txAi.running"));
-      const mark = document.createElement("span");
-      mark.className = "ai-mark";
-      const sweep = document.createElement("span");
-      sweep.className = "ai-radar-sweep";
-      const rings = document.createElement("span");
-      rings.className = "ai-radar-rings";
-      mark.append(sweep, rings);
-      const word = document.createElement("span");
-      word.className = "ai-word";
-      word.textContent = "AI";
-      chip.append(mark, word);
-      float.append(chip);
-    } else {
-      const chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = "ai-chip";
-      chip.dataset.level = level;
-      chip.setAttribute("aria-label", t(locale, "approval.txAi.openReport"));
-      if (!canOpen) chip.disabled = true;
-      const mark = document.createElement("span");
-      mark.className = "ai-mark ready";
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("viewBox", "0 0 24 24");
-      svg.setAttribute("aria-hidden", "true");
-      svg.classList.add("ai-doc");
-      svg.innerHTML = REPORT_ICON;
-      mark.append(svg);
-      const word = document.createElement("span");
-      word.className = "ai-word";
-      word.textContent = "AI";
-      chip.append(mark, word);
-      if (canOpen) {
-        chip.addEventListener("click", () => {
-          overlayOpen = true;
-          paint(host);
-        });
-      }
-      float.append(chip);
-    }
-    root.append(float);
+  const level = levelOf(latest);
+  if (level === "hidden" || level === "running") {
+    overlayOpen = false;
+    return;
   }
-
-  const pane = scrollPane(host);
-  if (overlayOpen && canOpen) {
-    if (pane) pane.style.overflowY = "hidden";
-    const veil = document.createElement("div");
-    veil.className = "ai-veil";
-    const sheet = document.createElement("div");
-    sheet.className = "ai-sheet";
-    const head = document.createElement("div");
-    head.className = "ai-sheet-head";
-    const title = document.createElement("h3");
-    title.textContent = t(locale, labelKey(level));
-    const close = document.createElement("button");
-    close.type = "button";
-    close.className = "ai-sheet-close";
-    close.setAttribute("aria-label", t(locale, "approval.txAi.closeReport"));
-    close.textContent = "×";
-    const closeOverlay = () => {
+  const report = reportText(latest).trim();
+  if (pane) pane.style.overflowY = "hidden";
+  const veil = document.createElement("div");
+  veil.className = "ai-veil";
+  const sheet = document.createElement("div");
+  sheet.className = "ai-sheet";
+  const head = document.createElement("div");
+  head.className = "ai-sheet-head";
+  const title = document.createElement("h3");
+  title.textContent = t(locale, overlayTitleKey(latest, level));
+  const close = document.createElement("button");
+  close.type = "button";
+  close.className = "ai-sheet-close";
+  close.setAttribute("aria-label", t(locale, "approval.txAi.closeReport"));
+  close.textContent = "×";
+  close.addEventListener("click", () => {
+    overlayOpen = false;
+    paintOverlay();
+  });
+  veil.addEventListener("click", (event) => {
+    if (event.target === veil) {
       overlayOpen = false;
-      paint(host);
-    };
-    close.addEventListener("click", closeOverlay);
-    veil.addEventListener("click", (event) => {
-      if (event.target === veil) closeOverlay();
-    });
-    head.append(title, close);
-    const body = document.createElement("div");
-    body.className = "ai-report";
-    mountTxAiMarkdown(body, report);
-    sheet.append(head, body);
-    veil.append(sheet);
-    const mount = pane ?? host;
-    mount.append(veil);
-  } else if (pane) {
-    pane.style.overflowY = "";
+      paintOverlay();
+    }
+  });
+  head.append(title, close);
+  const disclaimer = document.createElement("p");
+  disclaimer.className = "ai-report-disclaimer";
+  disclaimer.textContent = t(locale, "approval.txAi.reportDisclaimer");
+  const body = document.createElement("div");
+  body.className = "ai-report";
+  if (report) mountTxAiMarkdown(body, report);
+  else {
+    const empty = document.createElement("p");
+    empty.className = "ai-report-empty";
+    empty.textContent = t(locale, reportEmptyMessageKey(latest));
+    body.append(empty);
   }
-
-  host.append(root);
-  if (!overlayOpen) {
-    alignFloat(host);
-    watchAlign(host);
-  }
+  const foot = document.createElement("div");
+  foot.className = "ai-sheet-foot";
+  const toTop = document.createElement("button");
+  toTop.type = "button";
+  toTop.className = "icon-btn ai-to-top";
+  toTop.setAttribute("aria-label", t(locale, "approval.txAi.backToTop"));
+  toTop.innerHTML = BACK_TOP_SVG;
+  toTop.addEventListener("click", (event) => {
+    event.stopPropagation();
+    body.scrollTop = 0;
+    veil.scrollTop = 0;
+  });
+  foot.append(toTop);
+  sheet.append(head, disclaimer, body, foot);
+  veil.append(sheet);
+  mount.append(veil);
 }
 
 async function poll(): Promise<void> {
@@ -189,19 +260,22 @@ async function poll(): Promise<void> {
   if (!res.ok) {
     latest = { status: "idle" };
     overlayOpen = false;
-    if (slotHost?.isConnected) paint(slotHost);
+    paintRow();
+    paintOverlay();
     stopTimer();
     return;
   }
   const txAi = (res.result as { txAi?: TxAiAssessState } | undefined)?.txAi;
   latest = txAi ?? { status: "idle" };
+  if (latest.status === "error" && !hasReportBody(latest)) overlayOpen = false;
   if (latest.status === "idle") {
     idlePolls += 1;
     if (idlePolls >= 4) stopTimer();
   } else {
     idlePolls = 0;
   }
-  if (slotHost?.isConnected) paint(slotHost);
+  paintRow();
+  if (overlayOpen) paintOverlay();
   if (latest.status === "done" || latest.status === "error") stopTimer();
 }
 
@@ -214,9 +288,12 @@ function stopTimer(): void {
 
 export function attachTxAiToSignShell(host: HTMLElement, requestId: string, nextLocale: UiLocale): void {
   locale = nextLocale;
-  slotHost = host;
+  scrollHost = host;
+  const slot = host.querySelector<HTMLElement>(".sign-ai-slot");
+  if (!slot) return;
+  slotEl = slot;
   if (watchId === requestId) {
-    if (host.isConnected) paint(host);
+    paintRow();
     return;
   }
   watchId = requestId;
@@ -229,19 +306,16 @@ export function attachTxAiToSignShell(host: HTMLElement, requestId: string, next
   timer = setInterval(() => {
     void poll();
   }, 1200);
-  paint(host);
+  paintRow();
 }
 
 export function stopTxAiWatch(): void {
-  const host = slotHost;
+  if (scrollHost) removeVeil(scrollHost);
   watchId = "";
-  slotHost = null;
+  slotEl = null;
+  scrollHost = null;
   overlayOpen = false;
   paintedKey = "";
   stopTimer();
-  alignObserver?.disconnect();
-  alignObserver = null;
   latest = { status: "idle" };
-  host?.querySelector("#tx-ai-root")?.remove();
-  host && scrollPane(host)?.querySelector(".ai-veil")?.remove();
 }

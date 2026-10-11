@@ -20,12 +20,25 @@ import {
   type PendingRecord,
   type UiHost,
 } from "../shared/commands";
-import type { SimulatePendingTxResult } from "../shared/simulate-pending-tx-types";
+import type { SimulatePendingTxResult, SimulateTxInstruction } from "../shared/simulate-pending-tx-types";
+import { instructionsFromTxBytes } from "../background/simulate/phase2-deltas";
 import { accountVisualKind, paintAccountKindMark } from "../shared/account-kind-visual";
+import { createRowExpandChevron } from "../shared/row-expand-chevron";
 import type { AccountMeta } from "../shared/storage-keys";
 import { SESSION_UNLOCKED } from "../shared/storage-keys";
-import { renderSimulationNotice } from "./cards";
 import { attachTxAiToSignShell, stopTxAiWatch } from "./tx-ai-widget";
+import {
+  disposeSignTxBody,
+  getSignTxBodyRefs,
+  mountSignTxBodyShell,
+  deltaDisplayFingerprint,
+  paintDeltaInner,
+  startAutoSim,
+  stopAutoSim,
+  syncInspectorUrl,
+  syncRetryDisabled,
+  updateFeeTotalEl,
+} from "./sign-tx-body";
 import { copyPublicKeyWithFeedback } from "../shared/copy-pk-feedback";
 import { SEND_STATUS_AURORA_SVG } from "../shared/send-status-mark";
 import {
@@ -34,6 +47,7 @@ import {
   displayAccountName,
   displayOrigin,
   formatSolFromLamports,
+  bytesFromHexCompact,
   hexCompact,
   hexGrouped,
   isDisplayableUtf8,
@@ -83,6 +97,11 @@ function applyShellLocaleToStaticChrome(): void {
   const copyLabel = tr("common.copy");
   btnCopyPk.title = copyLabel;
   btnCopyPk.setAttribute("aria-label", copyLabel);
+  if (btnCopySite) {
+    const siteCopy = tr("approval.copySite");
+    btnCopySite.title = siteCopy;
+    btnCopySite.setAttribute("aria-label", siteCopy);
+  }
   signReject.textContent = tr("approval.reject");
   signApprove.textContent = tr("approval.approve");
   legacyReject.textContent = tr("approval.reject");
@@ -174,6 +193,15 @@ let draftLimitStr = "";
 let draftPriceStr = "";
 let cuApplyBusy = false;
 let feeDetailsOpen = false;
+let signTxBodyReady = false;
+let feeFrozenForSim = false;
+/** Fee card DOM was built during loading; refresh once when the first sim result arrives. */
+let feeBreakdownReady = false;
+/** Transaction details were built before sim; refresh once when the first sim result arrives. */
+let txDetailsReady = false;
+let lastDeltaFingerprint = "";
+let pendingOriginFull = "";
+let btnCopySite: HTMLButtonElement | null = null;
 /** While pending/confirmed, do not let simulate or loadPending replace the review UI with a spinner. */
 let sendStatusPhase: "idle" | "pending" | "confirmed" | "failed" = "idle";
 let confirmedTimer: ReturnType<typeof setTimeout> | null = null;
@@ -296,6 +324,7 @@ function isSendStatusLocked(): boolean {
 }
 
 function enterWalletSendConfirming(): void {
+  stopAutoSim();
   if (expiryTimer != null) {
     window.clearTimeout(expiryTimer);
     expiryTimer = null;
@@ -579,6 +608,7 @@ let expiryTimer: number | null = null;
 
 function showGone(): void {
   if (isSendStatusLocked()) return;
+  stopAutoSim();
   requestEnded = true;
   if (expiryTimer != null) {
     window.clearTimeout(expiryTimer);
@@ -691,114 +721,81 @@ function renderSignMessageBody(p: PendingRecord, bytes: Uint8Array): void {
   }
 }
 
-const EXPLORER_INSPECTOR_PREFIX = "https://explorer.solana.com/tx/inspector";
-
-const EXPLORER_ICON_SVG =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
-
-const RETRY_ICON_SVG =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>';
-
-function validInspectorUrl(url: string | null | undefined): string | null {
-  if (!url || !url.startsWith(EXPLORER_INSPECTOR_PREFIX)) return null;
-  return url;
+function retrySimDisabled(): boolean {
+  return simulating || cuDirty || (txCuEditable && !hasCuPair());
 }
 
-function renderDeltaCard(sim: SimulatePendingTxResult | null, loading: boolean): HTMLElement {
-  const card = document.createElement("div");
-  card.className = "card";
-  const head = document.createElement("div");
-  head.className = "sim-head";
-  const label = document.createElement("h3");
-  label.textContent = tr("approval.expectedDelta");
-  const tools = document.createElement("div");
-  tools.className = "sim-tools";
-  const retry = document.createElement("button");
-  retry.type = "button";
-  retry.className = "icon-btn";
-  retry.title = tr("approval.retrySim");
-  retry.setAttribute("aria-label", tr("approval.retrySim"));
-  retry.innerHTML = RETRY_ICON_SVG;
-  retry.disabled = simulating || cuDirty || (txCuEditable && !hasCuPair());
-  retry.addEventListener("click", () => void runSimulation());
-  tools.append(retry);
-  const inspectorUrl = validInspectorUrl(sim?.inspectorUrl);
-  if (inspectorUrl) {
-    const explorer = document.createElement("a");
-    explorer.className = "icon-btn explorer";
-    explorer.href = inspectorUrl;
-    explorer.title = tr("approval.simExplorer");
-    explorer.setAttribute("aria-label", tr("approval.simExplorer"));
-    explorer.innerHTML = EXPLORER_ICON_SVG;
-    explorer.addEventListener("click", (e) => {
-      e.preventDefault();
-      void chrome.tabs.create({ url: inspectorUrl });
-    });
-    tools.append(explorer);
-  }
-  head.append(label, tools);
-  card.append(head);
+function priorityFeeLamports(cuLimit: number, cuPrice: number): number {
+  const micro = BigInt(cuLimit) * BigInt(cuPrice);
+  return Number((micro + 999_999n) / 1_000_000n);
+}
 
-  if (loading) {
-    const p = document.createElement("p");
-    p.className = "muted-center";
-    p.textContent = tr("approval.querying");
-    card.append(p);
-    return card;
+function localTotalFeeLamports(sim: SimulatePendingTxResult | null): number | null {
+  if (!sim || sim.sigFeeLamports == null) return null;
+  if (localCuLimit != null && localCuPrice != null) {
+    return sim.sigFeeLamports + priorityFeeLamports(localCuLimit, localCuPrice);
   }
+  return sim.totalFeeLamports ?? null;
+}
 
-  if (!sim || sim.outcome === "unparseable") {
-    const p = document.createElement("p");
-    p.className = "muted-center";
-    p.textContent = tr("approval.cannotEstimateDelta");
-    card.append(p);
-    return card;
-  }
+function refreshFeeTotal(sim: SimulatePendingTxResult | null, loading: boolean): void {
+  const totalEl = signBody.querySelector<HTMLElement>('[data-part="fee"] .fee-total');
+  if (!totalEl) return;
+  updateFeeTotalEl(totalEl, {
+    loading,
+    cuWriteError: sim?.cuWriteError,
+    totalLamports: localTotalFeeLamports(sim),
+    estimating: !hasCuPair() && txCuEditable && !sim?.cuWriteError,
+    progressUserMessage,
+    tr,
+  });
+}
 
-  const deltas = sim.deltas;
-  if (!deltas || (sim.outcome === "rpc" && deltas.length === 0)) {
-    const p = document.createElement("p");
-    p.className = "muted-center";
-    p.textContent = tr("approval.cannotEstimateDelta");
-    card.append(p);
-    return card;
+function paintDeltaOnly(sim: SimulatePendingTxResult | null, loading: boolean): void {
+  const r = getSignTxBodyRefs();
+  if (!r) return;
+  if (loading && lastSim) {
+    syncRetryDisabled(retrySimDisabled());
+    return;
   }
-
-  if (deltas.length === 0) {
-    const p = document.createElement("p");
-    p.className = "muted-center";
-    p.textContent = tr("approval.noBalanceChange");
-    card.append(p);
-    return card;
+  if (!loading && sim) {
+    const fp = deltaDisplayFingerprint(sim);
+    if (fp === lastDeltaFingerprint && r.deltaInner.childElementCount > 0) {
+      syncInspectorUrl(sim.inspectorUrl);
+      syncRetryDisabled(retrySimDisabled());
+      return;
+    }
+    paintDeltaInner(r.deltaInner, sim, false, shellLocale);
+    lastDeltaFingerprint = fp;
+  } else {
+    paintDeltaInner(r.deltaInner, sim, loading, shellLocale);
+    if (!loading && sim) lastDeltaFingerprint = deltaDisplayFingerprint(sim);
+    else if (!loading) lastDeltaFingerprint = "";
   }
-
-  for (const d of deltas) {
-    const row = document.createElement("div");
-    row.className = "delta-row";
-    const sym = document.createElement("span");
-    sym.textContent = d.symbol;
-    const amt = document.createElement("span");
-    amt.className = `delta-amount ${d.sign}`;
-    amt.textContent = `${d.sign === "plus" ? "+" : "−"}${d.amount} ${d.symbol}`;
-    row.append(sym, amt);
-    card.append(row);
-  }
-  return card;
+  syncInspectorUrl(sim?.inspectorUrl ?? lastSim?.inspectorUrl);
+  syncRetryDisabled(retrySimDisabled());
 }
 
 function renderFeeCard(sim: SimulatePendingTxResult | null, loading: boolean): HTMLElement {
   const card = document.createElement("div");
   card.className = "card fee-card";
 
-  const titleRow = document.createElement("div");
-  titleRow.className = "fee-card-head";
+  const details = document.createElement("details");
+  details.className = "fee-details";
+
+  const summary = document.createElement("summary");
+  summary.className = "fee-card-head";
+  const leading = document.createElement("span");
+  leading.className = "fee-head-leading";
+  const chevron = createRowExpandChevron();
   const title = document.createElement("span");
-  title.className = "card-label";
+  title.className = "card-label fee-card-label";
   title.textContent = tr("approval.txFee");
+  leading.append(chevron, title);
   const totalEl = document.createElement("span");
   totalEl.className = "fee-total";
-  titleRow.append(title, totalEl);
-  card.append(titleRow);
+  summary.append(leading, totalEl);
+  details.append(summary);
 
   if (loading || (sim == null && txCuEditable)) {
     totalEl.textContent = tr("approval.estimating");
@@ -809,12 +806,6 @@ function renderFeeCard(sim: SimulatePendingTxResult | null, loading: boolean): H
   } else {
     totalEl.textContent = tr("approval.unknown");
   }
-
-  const details = document.createElement("details");
-  details.className = "fee-details";
-  const summary = document.createElement("summary");
-  summary.textContent = tr("approval.sigFeeCu");
-  details.append(summary);
 
   const inner = document.createElement("div");
   inner.className = "fee-details-inner";
@@ -922,6 +913,10 @@ function renderFeeCard(sim: SimulatePendingTxResult | null, loading: boolean): H
     draftLimitStr = String(limit);
     draftPriceStr = String(price);
     cuApplyBusy = true;
+    signTxBodyReady = false;
+    feeFrozenForSim = false;
+    feeBreakdownReady = false;
+    txDetailsReady = false;
     void runSimulation();
   });
 
@@ -954,11 +949,15 @@ function renderTxDetails(sim: SimulatePendingTxResult | null): HTMLElement {
   const inner = document.createElement("div");
   inner.className = "card";
 
-  const instructions = sim?.instructions ?? [];
+  let instructions: SimulateTxInstruction[] = sim?.instructions ?? [];
+  if (!instructions.length && txRawHex) {
+    const raw = bytesFromHexCompact(txRawHex);
+    if (raw) instructions = instructionsFromTxBytes(raw);
+  }
   if (!instructions.length) {
     const p = document.createElement("p");
     p.className = "muted-center";
-    p.textContent = tr("approval.cannotListIx");
+    p.textContent = sim ? tr("approval.cannotListIx") : tr("approval.querying");
     inner.append(p);
   } else {
     instructions.forEach((ix, i) => {
@@ -1037,12 +1036,33 @@ function renderTxDetails(sim: SimulatePendingTxResult | null): HTMLElement {
 
 function renderSignTransactionBody(sim: SimulatePendingTxResult | null, loading: boolean): void {
   if (isSendStatusLocked()) return;
-  signBody.innerHTML = "";
-  const notice = renderSimulationNotice(sim, shellLocale);
-  if (notice) signBody.append(notice);
-  signBody.append(renderDeltaCard(sim, loading));
-  signBody.append(renderFeeCard(sim, loading));
-  signBody.append(renderTxDetails(sim));
+  if (!signTxBodyReady) {
+    const feeCard = renderFeeCard(sim, loading);
+    mountSignTxBodyShell(signBody, {
+      locale: shellLocale,
+      tr,
+      onRetry: () => void runSimulation(),
+      retryDisabled: retrySimDisabled,
+    }, feeCard, renderTxDetails(sim));
+    signTxBodyReady = true;
+  } else {
+    syncRetryDisabled(retrySimDisabled());
+    const r = getSignTxBodyRefs();
+    if (r && (cuApplyBusy || (!loading && sim != null && !txDetailsReady))) {
+      r.detailsSlot.replaceChildren(renderTxDetails(sim));
+      if (!loading && sim != null) txDetailsReady = true;
+    }
+    const rFee = getSignTxBodyRefs();
+    if (rFee && (cuApplyBusy || (!loading && sim != null && !feeBreakdownReady))) {
+      rFee.feeSlot.replaceChildren(renderFeeCard(sim, loading));
+      if (!loading && sim != null) feeBreakdownReady = true;
+    }
+  }
+  paintDeltaOnly(sim, loading);
+  if (!feeFrozenForSim || cuApplyBusy) {
+    refreshFeeTotal(sim, loading);
+    if (!loading && hasCuPair()) feeFrozenForSim = true;
+  }
 }
 
 function accountMetaForPending(
@@ -1062,8 +1082,13 @@ async function runSimulation(): Promise<void> {
   if (!requestId || !pending || !isSignTxKind(pending.kind)) return;
   if (isSendStatusLocked()) return;
   const myGen = ++simGen;
+  const forceFull = !signTxBodyReady || cuApplyBusy;
   simulating = true;
-  renderSignTransactionBody(lastSim, true);
+  if (forceFull) {
+    renderSignTransactionBody(lastSim, true);
+  } else {
+    paintDeltaOnly(lastSim, true);
+  }
 
   const payload: { requestId: string; cuLimit?: number; cuPrice?: number } = { requestId };
   if (hasCuPair()) {
@@ -1143,6 +1168,7 @@ async function renderSignShell(
     return;
   }
 
+  pendingOriginFull = p.origin;
   signOrigin.textContent = displayOrigin(p.origin);
   const meta = accountMetaForPending(state.accounts, p.signAccountId);
   if (!meta) {
@@ -1175,8 +1201,25 @@ async function renderSignShell(
     draftPriceStr = "";
     cuApplyBusy = false;
     feeDetailsOpen = false;
+    signTxBodyReady = false;
+    feeFrozenForSim = false;
+    feeBreakdownReady = false;
+    txDetailsReady = false;
+    lastDeltaFingerprint = "";
+    disposeSignTxBody();
     renderSignTransactionBody(null, true);
     if (requestId) attachTxAiToSignShell(viewSign, requestId, shellLocale);
+    startAutoSim(
+      () => void runSimulation(),
+      () =>
+        !requestId ||
+        !pending ||
+        !isSignTxKind(pending.kind) ||
+        simulating ||
+        retrySimDisabled() ||
+        isSendStatusLocked() ||
+        requestEnded,
+    );
     void runSimulation();
   }
 
@@ -1383,6 +1426,25 @@ function wireShellEvents(): void {
     { signal },
   );
 
+  if (btnCopySite) {
+    const COPY_SVG = btnCopySite.querySelector("svg")?.outerHTML ?? "";
+    const CHECK_SVG =
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7"/></svg>';
+    btnCopySite.addEventListener(
+      "click",
+      () => {
+        if (!pendingOriginFull) return;
+        void navigator.clipboard.writeText(pendingOriginFull).then(() => {
+          btnCopySite!.innerHTML = CHECK_SVG;
+          window.setTimeout(() => {
+            if (btnCopySite) btnCopySite.innerHTML = COPY_SVG;
+          }, 1600);
+        });
+      },
+      { signal },
+    );
+  }
+
   signReject.addEventListener("click", () => void resolve("reject"), { signal });
   signApprove.addEventListener("click", () => void resolve("approve"), { signal });
   legacyReject.addEventListener("click", () => void resolve("reject"), { signal });
@@ -1432,6 +1494,13 @@ function wireShellEvents(): void {
 
 export function disposeApprovalShell(): void {
   stopTxAiWatch();
+  stopAutoSim();
+  disposeSignTxBody();
+  signTxBodyReady = false;
+  feeFrozenForSim = false;
+  feeBreakdownReady = false;
+  txDetailsReady = false;
+  lastDeltaFingerprint = "";
   if (shellDomBound) {
     viewSign.classList.remove("send-status-mode");
   }
@@ -1522,6 +1591,11 @@ export function mountApprovalShell(config: ApprovalShellConfig, root: ParentNode
   legacyReject = q(root, "legacy-reject");
   legacyApprove = q(root, "legacy-approve");
   btnCloseExpired = q(root, "btn-close-expired");
+  try {
+    btnCopySite = q<HTMLButtonElement>(root, "btn-copy-site");
+  } catch {
+    btnCopySite = null;
+  }
   shellDomBound = true;
 
   hideAll();

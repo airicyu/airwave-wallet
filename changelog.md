@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.32.0 — 2026-10-11
+
+簽署審批模擬改用交易自己的 blockhash（不再 `replaceRecentBlockhash`）；頁面可見時每 3 秒只刷新「預期變動」。失敗文案在該卡內；重新整理與 Inspector 從第一屏並排。交易費由簽名費與 CU 在當地計算，可展開明細；模擬往返不改費用文字。站點置中、過長省略、可複製完整 origin；帳戶 widget 下分隔線。AI 改標題下單列卡（分析中右側「AI 分析中」；完成後風險指數＋report；逾時 60s／單次 LLM 55s 顯示「分析逾時」、其他失敗「分析沒有完成」，無正文不開 report）；overlay 標題下固定免責句、底列回到頂部。Settings 的 AI 分析開關預設 on（仍須 OpenRouter key）。AI `simulate` tool 仍換 blockhash。
+
 ## 0.31.0 — 2026-10-11
 
 建置鏈升到 Vite 8.3.4（Rolldown）與 `@vitejs/plugin-react` 5.2.0，TypeScript 7.0.2；`@crxjs/vite-plugin` 維持 2.7.1。`wallet` 直接依賴改精確版號。Content script 與 inject 入口改名，避免 Rolldown 同檔名 chunk 撞車。擴充頁 HTML 的 `/assets/` 與 `crossorigin` 改寫成相對路徑。Rolldown 會把 service worker 進入點分享給擴充頁，背景監聽只在 service worker 註冊，否則審批頁會先回失敗、交易 AI 只走一輪。簽署、送出與 AI 多輪到 Decisions 已手測。過期 blockhash 的失敗文案本版不改。

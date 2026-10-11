@@ -159,9 +159,12 @@ export function ConnectPage({
           <div className="bar-subpage-title">{t(locale, "page.connect")}</div>
         </div>
       </header>
-      <div className="flow-page-body">
-        <p className="muted">{origin}</p>
-        <p>{t(locale, "approval.connectLead")}</p>
+      <div className="flow-page-body connect-consent">
+        <div className="connect-site-card">
+          <span className="connect-site-label">{t(locale, "approval.site")}</span>
+          <span className="connect-origin" title={origin}>{origin}</span>
+        </div>
+        <p className="connect-lead">{t(locale, "approval.connectLead")}</p>
         {error ? <p className="inline-error">{error}</p> : null}
       </div>
       <footer className="approval-dock">

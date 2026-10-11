@@ -98,7 +98,7 @@ export const DEFAULT_SETTINGS: Settings = {
   openRouterApiKey: "",
   openRouterModel: DEFAULT_REPORT_MODEL,
   openRouterDecisionsModel: DEFAULT_DECISIONS_MODEL,
-  txAiAnalysisEnabled: false,
+  txAiAnalysisEnabled: true,
   defaultCuPrice: 25_000,
   locale: "zh-Hant",
   shell: "window",

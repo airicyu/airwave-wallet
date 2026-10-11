@@ -266,14 +266,14 @@ const messages = {
     "en": "Not set",
   },
   "settings.hub.txAi": {
-    "zh-Hant": "交易 AI 分析",
-    "zh-Hans": "交易 AI 分析",
-    "en": "Transaction AI",
+    "zh-Hant": "AI 設定",
+    "zh-Hans": "AI 设置",
+    "en": "AI settings",
   },
   "nav.settingsTxAi": {
-    "zh-Hant": "交易 AI 分析",
-    "zh-Hans": "交易 AI 分析",
-    "en": "Transaction AI",
+    "zh-Hant": "AI 設定",
+    "zh-Hans": "AI 设置",
+    "en": "AI settings",
   },
   "settings.txAiAnalysis.enable": {
     "zh-Hant": "啟用",
@@ -340,6 +340,41 @@ const messages = {
     "zh-Hans": "AI 分析中",
     "en": "Analyzing",
   },
+  "approval.txAi.rowLabel": {
+    "zh-Hant": "AI分析",
+    "zh-Hans": "AI分析",
+    "en": "AI analysis",
+  },
+  "approval.txAi.riskIndex.low": {
+    "zh-Hant": "風險指數: 低",
+    "zh-Hans": "风险指数: 低",
+    "en": "Risk index: Low",
+  },
+  "approval.txAi.riskIndex.watch": {
+    "zh-Hant": "風險指數: 留意",
+    "zh-Hans": "风险指数: 留意",
+    "en": "Risk index: Watch",
+  },
+  "approval.txAi.riskIndex.high": {
+    "zh-Hant": "風險指數: 高",
+    "zh-Hans": "风险指数: 高",
+    "en": "Risk index: High",
+  },
+  "approval.txAi.riskIndex.unknown": {
+    "zh-Hant": "風險指數: 未知",
+    "zh-Hans": "风险指数: 未知",
+    "en": "Risk index: Unknown",
+  },
+  "approval.txAi.backToTop": {
+    "zh-Hant": "回到頂部",
+    "zh-Hans": "回到顶部",
+    "en": "Back to top",
+  },
+  "approval.copySite": {
+    "zh-Hant": "複製站點",
+    "zh-Hans": "复制站点",
+    "en": "Copy site",
+  },
   "approval.txAi.level.low": {
     "zh-Hant": "等級低",
     "zh-Hans": "等级低",
@@ -390,10 +425,35 @@ const messages = {
     "zh-Hans": "关闭分析报告",
     "en": "Close analysis",
   },
+  "approval.txAi.reportDisclaimer": {
+    "zh-Hant": "以下為 AI 生成，僅供參考；請自行評估風險，本錢包不為此負責。",
+    "zh-Hans": "以下为 AI 生成，仅供参考；请自行评估风险，本钱包不为此负责。",
+    "en": "AI-generated for reference only. You accept the risk; this wallet is not liable.",
+  },
   "approval.txAi.failed": {
     "zh-Hant": "分析沒有完成",
     "zh-Hans": "分析没有完成",
     "en": "Analysis did not finish",
+  },
+  "approval.txAi.rowTimedOut": {
+    "zh-Hant": "分析逾時",
+    "zh-Hans": "分析超时",
+    "en": "Timed out",
+  },
+  "approval.txAi.reportEmpty": {
+    "zh-Hant": "沒有可顯示的報告內容。",
+    "zh-Hans": "没有可显示的报告内容。",
+    "en": "No report content to show.",
+  },
+  "approval.txAi.reportTimeout": {
+    "zh-Hant": "超過約 60 秒未完成，已停止。",
+    "zh-Hans": "超过约 60 秒未完成，已停止。",
+    "en": "Stopped after about 60 seconds.",
+  },
+  "approval.txAi.reportSlow": {
+    "zh-Hant": "模型或網路過慢，分析未完成。",
+    "zh-Hans": "模型或网络过慢，分析未完成。",
+    "en": "Model or network was too slow.",
   },
   "settings.network.aria": {
     "zh-Hant": "目前網路",
