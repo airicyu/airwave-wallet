@@ -111,7 +111,7 @@ chrome.runtime.onMessage.addListener((message) => {
   }
 });
 
-import injectUrl from "../inject/index.ts?script&module";
+import injectUrl from "../inject/inject.ts?script&module";
 
 const script = document.createElement("script");
 script.type = "module";

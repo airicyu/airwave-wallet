@@ -11,5 +11,5 @@ export async function openPopout(requestId: string): Promise<void> {
     height: 640,
     focused: true,
   });
-  if (win.id != null) bindPopoutWindow(win.id, requestId);
+  if (win?.id != null) bindPopoutWindow(win.id, requestId);
 }

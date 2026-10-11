@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.31.0 — 2026-10-11
+
+建置鏈升到 Vite 8.3.4（Rolldown）與 `@vitejs/plugin-react` 5.2.0，TypeScript 7.0.2；`@crxjs/vite-plugin` 維持 2.7.1。`wallet` 直接依賴改精確版號。Content script 與 inject 入口改名，避免 Rolldown 同檔名 chunk 撞車。擴充頁 HTML 的 `/assets/` 與 `crossorigin` 改寫成相對路徑。Rolldown 會把 service worker 進入點分享給擴充頁，背景監聽只在 service worker 註冊，否則審批頁會先回失敗、交易 AI 只走一輪。簽署、送出與 AI 多輪到 Decisions 已手測。過期 blockhash 的失敗文案本版不改。
+
 ## 0.29.0 — 2026-10-10
 
 Mainnet 必須自備 JSON-RPC，不再打官方公用節點。首次：選語言 → 設密碼 → RPC 引導（略過或設定才結束）。Home 未就緒停住。Helius／Jupiter 仍選填，不當 RPC 後備。Devnet 仍可用官方公用 RPC。

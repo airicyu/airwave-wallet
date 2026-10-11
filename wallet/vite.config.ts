@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { crx } from "@crxjs/vite-plugin";
-import manifest from "./manifest.config";
+import manifest from "./manifest.config.ts";
 
 const walletDir = path.dirname(fileURLToPath(import.meta.url));
 
@@ -12,13 +12,15 @@ export default defineConfig({
     react(),
     crx({ manifest }),
     {
-      name: "sandbox-relative-assets",
+      name: "extension-relative-assets",
       transformIndexHtml: {
         order: "post",
         handler(html, ctx) {
           const filename = ctx.filename?.replace(/\\/g, "/") ?? "";
-          if (!filename.includes("/sandbox/")) return html;
-          return html.replaceAll('="/assets/', '="../../assets/');
+          if (!/\/src\/[^/]+\/[^/]+\.html$/.test(filename)) return html;
+          return html
+            .replaceAll('="/assets/', '="../../assets/')
+            .replaceAll(" crossorigin", "");
         },
       },
     },

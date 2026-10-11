@@ -42,6 +42,7 @@
 | [0.28.0](./0.28.0/INDEX.md) | shipped | Home Activity：捲到底載入更舊紀錄、本地時間、token icon／symbol |
 | [0.29.0](./0.29.0/INDEX.md) | shipped | Mainnet RPC 必填；官方公用節點不當後備；首次語言／密碼／RPC 引導 |
 | [0.30.0](./0.30.0/INDEX.md) | planned | 簽署 AI 分析：sandbox harness、Decisions 等級、Settings OpenRouter |
+| [0.31.0](./0.31.0/INDEX.md) | shipped | Vite 8／plugin-react 5／TypeScript 7；service worker 監聽不在擴充頁執行 |
 
 **版本號：** `x.y.z` 的 **patch**（例如 **0.3.1**）留給該 minor 的 **bugfix**，不排新功能。新功能走下一個 **minor**（0.3.0 → 0.4.0 → 0.5.0）。
 
