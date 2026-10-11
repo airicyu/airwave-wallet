@@ -651,6 +651,14 @@ export function AboutHub(): JSX.Element {
             </span>
           </button>
         </li>
+        <li>
+          <button type="button" className="settings-hub-row" onClick={() => navigateTo("about-privacy")}>
+            <span className="hub-label">{t("about.privacy")}</span>
+            <span className="kind-chev" aria-hidden="true">
+              ›
+            </span>
+          </button>
+        </li>
       </ul>
     </>
   );

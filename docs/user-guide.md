@@ -4,7 +4,7 @@ For people who want to **start using Airwave**. Build steps: [dev-docs/setup.md]
 
 Airwave is a developer preview: build from this repo and load it as an unpacked Chrome extension. It is not a Chrome Web Store listing.
 
-In-product disclaimer and terms: [legal/disclaimer.md](./legal/disclaimer.md), [legal/terms-of-use.md](./legal/terms-of-use.md).
+In-product disclaimer, terms, and privacy policy: [legal/disclaimer.md](./legal/disclaimer.md), [legal/terms-of-use.md](./legal/terms-of-use.md), [legal/privacy-policy.md](./legal/privacy-policy.md).
 
 **Do not** paste seed phrases, private keys, the wallet password, or any API key into chat, issues, or this repository.
 

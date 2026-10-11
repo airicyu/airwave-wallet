@@ -28,6 +28,7 @@ export const BACK_PARENT: Partial<Record<View, View>> = {
   "settings-password": "settings",
   "about-disclaimer": "about",
   "about-terms": "about",
+  "about-privacy": "about",
   settings: "home-token",
   "connected-sites": "home-token",
   about: "home-token",

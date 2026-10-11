@@ -1,0 +1,121 @@
+# 隱私權政策
+
+生效日：2026-10-12
+
+Airwave 是在你瀏覽器裡運作的非託管 Solana 錢包擴充功能。**我們不營運自有後端、不開帳戶系統、不蒐集分析、不賣資料、不以你的資料投放廣告。** 本政策說明擴充功能在本機處理什麼資料、以及在哪些情況下會把資料送到你選擇的第三方。
+
+## 單一用途
+
+Airwave 的單一用途是：讓你在本機保管 Solana 金鑰、檢視持倉與活動、以及對網站的連線／簽名／送出請求做審批。權限與資料處理只服務這個用途。
+
+## 我們（開發者）收不到什麼
+
+安裝、解鎖、簽名或送出時，資料**不會**送到 Airwave 開發者的伺服器。我們沒有這類伺服器。Chrome Web Store 的安裝統計由 Google 處理，不在本政策範圍。
+
+## 本機儲存
+
+以下資料寫在這台裝置上的 `chrome.storage`，不會同步到我們：
+
+- **保管庫：** 助記詞與私鑰經錢包密碼加密後存放（password-boxed vault）。解鎖用的工作金鑰只在 `chrome.storage.session`，瀏覽器關閉即清除，不以明文長期寫入磁碟。
+- **帳戶中繼資料：** 名稱、公鑰、帳戶類型、聚合成員。
+- **設定：** 網路、你填的 JSON-RPC URL、選填的 Helius API URL、Jupiter API key、OpenRouter API key 與模型、語言、CU 預設等。
+- **已連線網站：** 你批准過的網站 origin 與對應帳戶。
+
+移除擴充功能即刪除上述本機資料。鏈上交易與第三方帳本不會因此消失。
+
+## 何時會離開這台裝置
+
+只在提供錢包功能時，且只送到**你設定或你點開**的端點。傳輸使用 HTTPS。**助記詞、私鑰、錢包密碼不會離開裝置，也不會送給任何第三方。**
+
+| 去向 | 何時 | 會送出的資料 |
+|------|------|----------------|
+| 你設定的 JSON-RPC（Mainnet 必填；Devnet 可用官方公用節點） | 餘額、模擬、送出、帳戶查詢 | 公鑰、交易 bytes、簽名、一般 RPC 讀寫 |
+| [Helius](https://www.helius.dev/)（選填） | 你貼了 Helius API URL 之後：代幣名稱／圖示、Mainnet Activity | 公鑰、交易簽名；API key 隨你貼的 URL 交給 Helius |
+| [Jupiter](https://jup.ag/)（選填 key） | Mainnet 代幣顯示名稱、圖示、驗證狀態 | mint 位址；若你填了 key 則一併送出 |
+| [OpenRouter](https://openrouter.ai/)（選填） | 你開啟簽署 AI 並填了 key | 交易解讀、模擬結果、相關公鑰與帳戶資料的唯讀分析內容；key 只當 `Authorization` 由 service worker 送出。分析跑在無 `chrome.*`、無網路的 isolated sandbox；sandbox 看不到保管庫、不能簽名 |
+| 你點開的分頁 | Explorer、Helius Orb、Helius 註冊等 | 該連結上的公開資訊（例如交易簽名） |
+
+第三方各自有自己的隱私權政策。我們無法控制他們如何處理你送給他們的資料。
+
+Content script 會在你造訪的網站注入 Wallet Standard，以便該頁請求連線或簽名。我們**不**刮取頁面內容做分析。批准連線時，該站 origin 存在本機。
+
+## 你的控制
+
+- 可在設定中清空或改寫 RPC、Helius、Jupiter、OpenRouter 欄位。
+- 可中斷已連線網站。
+- 可隨時移除擴充功能以刪除本機保管庫與設定。
+- 忘記錢包密碼即無法解密既有保管庫；我們無法代為復原。
+
+## Limited Use
+
+Airwave 遵守 Chrome Web Store 的 User Data Policy，包括 Limited Use：我們不以使用者資料投放個人化廣告、不出售資料、不以與錢包功能無關的方式轉移資料。開發者無法讀取你的保管庫或鏈上請求內容，因為那些資料不到我們的伺服器。
+
+## 變更
+
+本政策更新後自發布日起生效。繼續使用即表示你知悉更新後的政策。
+
+## 聯絡
+
+設定 → 關於此應用，或本倉庫的 GitHub Issues。請勿在 Issues 或郵件貼上助記詞、私鑰、密碼或 API key。
+
+---
+
+## English
+
+Effective date: 2026-10-12
+
+Airwave is non-custodial Solana wallet software that runs in your browser. **We do not operate our own backend, do not run user accounts, do not collect analytics, do not sell data, and do not use your data for advertising.** This policy describes what the extension stores on this device and when data is sent to third parties **you** configure or open.
+
+## Single purpose
+
+Airwave’s single purpose is to keep Solana keys on this device, show holdings and activity, and let you approve connect / sign / send requests from sites. Permissions and data handling exist only for that purpose.
+
+## What we (the developers) do not receive
+
+Nothing you do in the wallet is sent to Airwave developer servers. We do not operate those servers. Chrome Web Store install statistics are handled by Google and are outside this policy.
+
+## Stored on this device
+
+The following stay in `chrome.storage` on this machine and are not synced to us:
+
+- **Vault:** seed phrases and private keys encrypted with your wallet password (password-boxed vault). The unlock working key lives only in `chrome.storage.session`, is cleared when the browser closes, and is not kept in plaintext on disk for the long term.
+- **Account metadata:** names, public keys, account kinds, Combined members.
+- **Settings:** cluster, JSON-RPC URLs you enter, optional Helius API URL, Jupiter API key, OpenRouter API key and models, language, default CU price, and similar.
+- **Connected sites:** origins you approved and the account they use.
+
+Uninstalling the extension deletes this local data. On-chain history and third-party records are not deleted.
+
+## When data leaves this device
+
+Only to provide wallet features, and only to endpoints **you set or you open**. Transport is HTTPS. **Seed phrases, private keys, and the wallet password never leave this device and are never sent to any third party.**
+
+| Destination | When | What is sent |
+|-------------|------|----------------|
+| JSON-RPC you configure (required on Mainnet; Devnet may use the public official node) | Balances, simulation, send, account reads | Public keys, transaction bytes, signatures, ordinary RPC reads/writes |
+| [Helius](https://www.helius.dev/) (optional) | After you paste a Helius API URL: token names / icons, Mainnet Activity | Public keys, transaction signatures; the API key travels with the URL you pasted |
+| [Jupiter](https://jup.ag/) (optional key) | Mainnet token names, icons, verification | Mint addresses; your key if you entered one |
+| [OpenRouter](https://openrouter.ai/) (optional) | Transaction AI on, with a key | Read-only analysis of decoded transactions, simulation results, and related public keys / account data; the key is sent only as `Authorization` from the service worker. Analysis runs in an isolated sandbox with no `chrome.*` and no network; the sandbox cannot see the vault and cannot sign |
+| Tabs you open | Explorer, Helius Orb, Helius signup, and similar | Public information on that URL (for example a transaction signature) |
+
+Those parties have their own privacy policies. We cannot control how they handle data you send them.
+
+A content script injects Wallet Standard on sites you visit so a page can request connect or sign. We **do not** scrape page content for analytics. When you approve a connection, that origin is stored locally.
+
+## Your controls
+
+- Clear or replace RPC, Helius, Jupiter, and OpenRouter fields in Settings.
+- Disconnect connected sites.
+- Remove the extension at any time to delete the local vault and settings.
+- If you forget the wallet password, existing vault data cannot be decrypted. We cannot recover it.
+
+## Limited Use
+
+Airwave complies with the Chrome Web Store User Data Policy, including Limited Use: we do not use user data for personalized ads, do not sell it, and do not transfer it except as needed for the wallet’s single purpose. Developers cannot read your vault or on-chain requests, because that data never reaches our servers.
+
+## Changes
+
+Updates apply from the date they are published. Continued use means you are aware of the updated policy.
+
+## Contact
+
+Settings → About this app, or GitHub Issues on this repository. Do not paste seed phrases, private keys, passwords, or API keys into issues or email.

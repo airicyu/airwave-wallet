@@ -54,6 +54,7 @@ export type View =
   | "about"
   | "about-disclaimer"
   | "about-terms"
+  | "about-privacy"
   | "connected-sites";
 
 export const SUBPAGE_TITLE_KEYS: Record<Exclude<View, "home-token" | "home-activity" | "rpc-guide">, MessageKey> = {
@@ -80,6 +81,7 @@ export const SUBPAGE_TITLE_KEYS: Record<Exclude<View, "home-token" | "home-activ
   about: "nav.about",
   "about-disclaimer": "nav.aboutDisclaimer",
   "about-terms": "nav.aboutTerms",
+  "about-privacy": "nav.aboutPrivacy",
   "connected-sites": "nav.connectedSites",
   "token-detail": "nav.tokenDetail",
   "token-send": "nav.tokenSend",

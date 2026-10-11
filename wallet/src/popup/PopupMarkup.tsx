@@ -1,6 +1,7 @@
 import type { JSX } from "react";
 import disclaimerMd from "../../../docs/legal/disclaimer.md?raw";
 import termsMd from "../../../docs/legal/terms-of-use.md?raw";
+import privacyMd from "../../../docs/legal/privacy-policy.md?raw";
 import {
   AccountsList,
   CombinedCreateScreen,
@@ -595,6 +596,14 @@ export function PopupMarkup(): JSX.Element {
             <section id="screen-about-terms" className="screen">
               <article id="legal-terms" className="legal-doc">
                 <LegalDoc markdown={termsMd} />
+              </article>
+            </section>
+          ) : null}
+
+          {currentView === "about-privacy" ? (
+            <section id="screen-about-privacy" className="screen">
+              <article id="legal-privacy" className="legal-doc">
+                <LegalDoc markdown={privacyMd} />
               </article>
             </section>
           ) : null}

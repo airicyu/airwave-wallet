@@ -1,6 +1,6 @@
 /**
- * Generated UI copy table (zh-Hant / zh-Hans / en).
- * Do not edit by hand; run scripts/gen-ui-messages.mjs.
+ * UI copy table (zh-Hant / zh-Hans / en). Each key must have all three locales.
+ * Edit this file; there is no generator.
  */
 import type { UiLocale } from "./storage-keys";
 
@@ -109,6 +109,11 @@ const messages = {
     "zh-Hant": "使用條款",
     "zh-Hans": "使用条款",
     "en": "Terms of use",
+  },
+  "nav.aboutPrivacy": {
+    "zh-Hant": "隱私權政策",
+    "zh-Hans": "隐私权政策",
+    "en": "Privacy policy",
   },
   "nav.connectedSites": {
     "zh-Hant": "已連線網站",
@@ -1109,6 +1114,11 @@ const messages = {
     "zh-Hant": "使用條款",
     "zh-Hans": "使用条款",
     "en": "Terms of use",
+  },
+  "about.privacy": {
+    "zh-Hant": "隱私權政策",
+    "zh-Hans": "隐私权政策",
+    "en": "Privacy policy",
   },
   "accounts.memberCount": {
     "zh-Hant": "{count} 個成員地址",
