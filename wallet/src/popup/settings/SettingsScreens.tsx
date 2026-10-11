@@ -24,6 +24,7 @@ import {
   patchSettingsPartial,
   persistHeliusField,
   persistJupiterField,
+  txAiHubSummary,
   PUBLIC_RPC_BY_CLUSTER,
   rpcOptionKey,
   submitChangePassword,
@@ -73,6 +74,14 @@ export function SettingsHub({ settings }: { settings: PublicSettings }): JSX.Ele
           <span className="hub-label">{t("settings.hub.apiKeys")}</span>
           <span className="hub-summary" id="hub-summary-keys">
             {apiKeysHubSummary(settings, locale)}
+          </span>
+        </button>
+      </li>
+      <li>
+        <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-tx-ai")}>
+          <span className="hub-label">{t("settings.hub.txAi")}</span>
+          <span className="hub-summary" id="hub-summary-tx-ai">
+            {txAiHubSummary(settings, locale)}
           </span>
         </button>
       </li>

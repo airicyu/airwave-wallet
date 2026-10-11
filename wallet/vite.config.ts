@@ -8,7 +8,21 @@ import manifest from "./manifest.config";
 const walletDir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  plugins: [react(), crx({ manifest })],
+  plugins: [
+    react(),
+    crx({ manifest }),
+    {
+      name: "sandbox-relative-assets",
+      transformIndexHtml: {
+        order: "post",
+        handler(html, ctx) {
+          const filename = ctx.filename?.replace(/\\/g, "/") ?? "";
+          if (!filename.includes("/sandbox/")) return html;
+          return html.replaceAll('="/assets/', '="../../assets/');
+        },
+      },
+    },
+  ],
   server: {
     fs: {
       allow: [walletDir, path.resolve(walletDir, "../docs/legal")],
@@ -20,6 +34,8 @@ export default defineConfig({
         popup: "src/popup/index.html",
         sidepanel: "src/sidepanel/index.html",
         popout: "src/popout/index.html",
+        offscreen: "src/offscreen/index.html",
+        sandbox: "src/sandbox/index.html",
       },
     },
   },

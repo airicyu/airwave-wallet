@@ -2,13 +2,13 @@
 
 構想尚未排進某版 INDEX，**不是契約**。排程後以該版 INDEX 為準。
 
-> 2026-10-10：簽署安全評估的錢包卡已從 0.28.0 **撤排程**，等本項有可用 runtime 再重新排版。  
-> POC 仍在 `test-web/sign-risk.html`（flags → 一次 chat）。與 [簽署交易 AI 安全評估](./sign-tx-ai-security-eval.md) 的關係：harness 先；審批卡後。
+> 2026-10-10：產品排程見 **[0.30.0](../0.30.0/INDEX.md)**——本倉抄 loop、**真 sandbox**、host 代打 LLM／Decisions。  
+> POC：`test-web/sign-risk.html`。詳見 [bubble-harness-handoff](./bubble-harness-handoff.md)。
 
 ## 現況
 
-- **POC**：本地 decode + 規則 flags（+ 可選 RPC）→ JSON → 一次 OpenRouter 報告。模型不能再打 tool。
-- **bubble-harness** 倉庫：[airicyu/bubble-harness](https://github.com/airicyu/bubble-harness)（獨立 npm／JS library）。錢包擴充本體暫不實作評估卡。
+- **POC**：vendored bubble-harness 多輪 tool；研究用。
+- **產品（0.30.0）**：不依賴 npm 套件出貨；所需 source 進 `wallet/`，sandbox 跑 loop。旁倉 [airicyu/bubble-harness](https://github.com/airicyu/bubble-harness) 當參考。
 
 ## 產品意向
 

@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { App } from "../popup/App";
 import { SIDEBAR_SURFACE_PORT } from "../shared/shell-constants";
 import "../popout/style.css";
+import "../approval/tx-ai.css";
 import "../popup/style.css";
 
 document.documentElement.classList.add("wallet-shell-surface");

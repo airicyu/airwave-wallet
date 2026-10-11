@@ -66,6 +66,7 @@ import {
   RpcScreen,
   SettingsHub,
 } from "./settings/SettingsScreens";
+import { TxAiSettingsScreen } from "./settings/TxAiSettingsScreen";
 import { usePopupContext } from "./state/PopupContext";
 import { useT } from "./state/useT";
 import { useDock } from "./state/dock";
@@ -207,7 +208,7 @@ export function PopupMarkup(): JSX.Element {
           inert={flowCovered}
         >
       <div id="shell" className="shell">
-        <header className="top-bar" id="top-bar" hidden={currentView === "close-empty-sending" || currentView === "rpc-guide"}>
+        <header className="top-bar" id="top-bar" hidden={currentView === "close-empty-sending" || currentView === "rpc-guide" || currentView === "send-approval"}>
           <div className="bar-home" id="bar-home" hidden={!home}>
             <div className="bar-wallet-group">
               <div className="bar-wallet">
@@ -555,6 +556,12 @@ export function PopupMarkup(): JSX.Element {
           {currentView === "settings-keys" ? (
             <section id="screen-settings-keys" className="screen">
               <KeysScreen settings={wallet.settings} />
+            </section>
+          ) : null}
+
+          {currentView === "settings-tx-ai" ? (
+            <section id="screen-settings-tx-ai" className="screen">
+              <TxAiSettingsScreen settings={wallet.settings} />
             </section>
           ) : null}
 

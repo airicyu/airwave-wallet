@@ -8,6 +8,7 @@ export const SYSTEM = "11111111111111111111111111111111";
 export const TOKEN = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 export const TOKEN_2022 = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
 
+/** Fully decoded common system programs (instruction parsers below). */
 const KNOWN: Record<string, string> = {
   [SYSTEM]: "System",
   [TOKEN]: "Token",
@@ -18,19 +19,47 @@ const KNOWN: Record<string, string> = {
   Memo1UhkJRfHyvLMcVucJyeXtyXNSDyzPVsqVQ5m5: "Memo v1",
 };
 
+/**
+ * Label-only: common mainnet DEX／router programs. Named in decode output but
+ * ix args are not parsed; does NOT emit unknown_program (not the same as malware).
+ */
+const LABELED: Record<string, string> = {
+  cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG: "Meteora DAMM v2",
+  LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo: "Meteora DLMM",
+  Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB: "Meteora DAMM v1",
+  dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN: "Meteora DBC",
+  pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA: "Pump.fun AMM",
+  "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P": "Pump.fun",
+  JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4: "Jupiter v6",
+  DF1ow4tspfHX9JwWJsAb9epbkA8hmpSEAtxXy1V27QBH: "DFlow Aggregator v4",
+  whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc: "Orca Whirlpool",
+  CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK: "Raydium CLMM",
+  "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8": "Raydium AMM v4",
+};
+
 const AUTH_TYPE = ["MintTokens", "FreezeAccount", "AccountOwner", "CloseAccount"] as const;
 const U64_MAX = "18446744073709551615";
 
-export const CONTEXT = `你在看一筆 Solana 交易，做安全性說明。
+export const CONTEXT = `你在看一筆 Solana 交易，做安全性說明。本頁經 bubble-harness 提供唯讀 tools；請用 tools 查事實，不要臆造鏈上資料。
 
-JSON 裡的 instructions 與 flags 是本頁程式從位元組解出來的。chainAccounts 若存在，是 RPC 回傳再由本頁解 token 帳戶布局，不是你的推測。不要重解 hex、不要改 flags。
+可用 host tools：
+- decode_message：解交易位元組 → feePayer、instructions、確定性 flags（必先呼叫）
+- get_accounts：RPC 查帳戶並解析 token 布局（可省略 pubkeys，改用上次 decode 的 keys）
+- simulate：對 session wire 做 simulateTransaction（僅參考，不是安全證明）
+- rpc_get_balance / rpc_get_account_info / rpc_get_multiple_accounts / rpc_get_token_accounts_by_owner / rpc_get_signatures_for_address / rpc_get_transaction / rpc_get_latest_blockhash：各一 tool、參數 schema 已固定（不要自造 JSON-RPC params 陣列）
+
+關於 simulate：本頁常載入**已上鏈／過期**的 mainnet wire。對現況重播失敗（blockhash、帳戶已關、池子流動性變了、ProgramFailedToComplete 等）**很常見**，多半不是「這筆本來就危險」。不要只因 simulate err 就抬高等級；用它輔助看 logs／未知 program，安全判斷仍以 decode flags 與帳戶權限為主。
+
+本地樣本會借用 mainnet 公開地址方便 RPC 查到帳戶；**其餘額／歷史交易是環境噪音，不是這筆草稿的劇情**。不要為了查「這是誰的錢包」去追 getSignatures／getTransaction；以 decode flags 與本筆帳戶角色為主。
+
+不要重解 hex、不要改 flags。數字與帳戶欄位只信 tool 回傳。
 
 帳戶的 ixRole（source、delegate、owner 等）是依已知指令帳戶順序標的。
 
 Token SetAuthority 的 authorityType 名稱已寫在 decoded：MintTokens、FreezeAccount、AccountOwner、CloseAccount。
 
 旗標意義：
-- unknown_program：program 不在本頁已知名單。
+- unknown_program：program **不在本頁白名單／標籤表**（僅代表解碼器不認得，不是「惡意」）。Jupiter／Meteora／Raydium／Orca／Pump 等常見 DEX 若已標名則**不會**出此旗標；未標名的常見協議也可能出現。**不要只因 unknown_program 就抬高等級**（產品意向：info）。
 - durable_nonce：第一條是 System AdvanceNonceAccount。
 - lookup_account_unchecked：有帳戶 index 超出已展開的 keys。
 - system_assign：System Assign／AssignWithSeed。
@@ -40,9 +69,9 @@ Token SetAuthority 的 authorityType 名稱已寫在 decoded：MintTokens、Free
 - close_account_external：CloseAccount destination 不是 signer。
 - owner_mismatch：鏈上 token account owner 與指令上的 owner／authority 不一致。
 
-缺資料就寫未知。不要寫成安全。不要叫使用者核准或拒絕。不要寫思考過程。
+缺資料就寫未知。不要寫成安全。不要叫使用者核准或拒絕。不要寫思考過程（禁止 Hmm／Wait／Anyway／So the… 等英文自言自語）。
 
-用繁體中文，200 字以內。四段：這筆在做什麼；點出 flags；缺什麼資料；最後一行只寫等級：低、留意、高、未知。`;
+結束 tool 後，最後一則回覆必須**只**是繁體中文報告（不要英文開場、不要 I'll start／Let me…）。200 字以內。四段：這筆在做什麼；點出 flags；缺什麼資料；最後一行只寫等級：低、留意、高、未知。`;
 
 export type Flag = { id: string; detail?: string };
 
@@ -92,7 +121,7 @@ type ParsedIx = {
 };
 
 export type ParsedMessage = {
-  version: "legacy" | 0;
+  version: "legacy" | 0 | 1;
   numSignerAccounts: number;
   numReadonlySignerAccounts: number;
   numReadonlyNonSignerAccounts: number;
@@ -103,9 +132,26 @@ export type ParsedMessage = {
   instructions: ParsedIx[];
 };
 
+/**
+ * Strip the signature prefix from a serialized transaction, or return the
+ * bytes as-is when they already look like a versioned message.
+ *
+ * Full wire: compact-u16 sig count (almost always &lt; 0x80) + 64×n sigs + message.
+ * Versioned message: first byte 0x80|version (e.g. 0x80 v0, 0x81 v1). Some RPC
+ * payloads / encodings effectively start at the message; treating 0x81 as a
+ * shortvec sig-count peels tens of KB and yields an empty decode.
+ */
 export function messageBytesFromWire(wire: Uint8Array): Uint8Array {
+  if (wire.length === 0) return wire;
+  if ((wire[0] ?? 0) >= 0x80) {
+    return wire;
+  }
   const n = compactU16(wire, 0);
-  return wire.subarray(n.next + n.value * 64);
+  const messageStart = n.next + n.value * 64;
+  if (messageStart > wire.length) {
+    throw new Error("transaction wire shorter than signature region");
+  }
+  return wire.subarray(messageStart);
 }
 
 function readKeysAndIxs(bytes: Uint8Array, o: number): {
@@ -140,8 +186,13 @@ function readKeysAndIxs(bytes: Uint8Array, o: number): {
 }
 
 export function parseCompiledMessage(bytes: Uint8Array, loaded?: LoadedAddresses): ParsedMessage {
-  const versioned = (bytes[0] ?? 0) >= 0x80;
-  if (versioned && (bytes[0] ?? 0) !== 0x80) throw new Error("只解析 legacy 或 version 0 message");
+  const prefix = bytes[0] ?? 0;
+  const versioned = prefix >= 0x80;
+  const txVersion = versioned ? (prefix & 0x7f) : null;
+  // RPC may return v0 or v1; layout after the version byte matches v0 for our purposes.
+  if (versioned && txVersion !== 0 && txVersion !== 1) {
+    throw new Error(`只解析 legacy／version 0／1 message（收到 version ${txVersion}）`);
+  }
   let o = versioned ? 1 : 0;
   const numSignerAccounts = bytes[o++] ?? 0;
   const numReadonlySignerAccounts = bytes[o++] ?? 0;
@@ -159,7 +210,7 @@ export function parseCompiledMessage(bytes: Uint8Array, loaded?: LoadedAddresses
     ? [...body.accounts, ...loadedWritable, ...loadedReadonly]
     : body.accounts;
   return {
-    version: versioned ? 0 : "legacy",
+    version: versioned ? (txVersion as 0 | 1) : "legacy",
     numSignerAccounts,
     numReadonlySignerAccounts,
     numReadonlyNonSignerAccounts,
@@ -254,8 +305,7 @@ function ixRoles(programId: string, name: string): string[] | undefined {
   return undefined;
 }
 
-export function staticFlagsFromMessage(message: Uint8Array, loaded?: LoadedAddresses): StaticFlags {
-  const parsed = parseCompiledMessage(message, loaded);
+function staticFlagsFromParsed(parsed: ParsedMessage): StaticFlags {
   const flags: Flag[] = [];
   const seen = new Set<string>();
   const push = (id: string, detail?: string): void => {
@@ -276,7 +326,8 @@ export function staticFlagsFromMessage(message: Uint8Array, loaded?: LoadedAddre
     }
     const programId = parsed.accounts[ix.programIndex] ?? "未解析";
     const known = KNOWN[programId];
-    if (!known) push("unknown_program", programId);
+    const labeled = LABELED[programId];
+    if (!known && !labeled) push("unknown_program", programId);
     const data = ix.data;
     if (index === 0 && programId === SYSTEM && data.length === 4 && u32(data, 0) === 4) {
       push("durable_nonce");
@@ -310,7 +361,7 @@ export function staticFlagsFromMessage(message: Uint8Array, loaded?: LoadedAddre
     return {
       index,
       programId,
-      program: known ?? "unknown",
+      program: known ?? labeled ?? "unknown",
       name: meta.name,
       decoded: meta.decoded,
       accounts: ix.accountIndices.map((accountIndex, i) => {
@@ -331,6 +382,50 @@ export function staticFlagsFromMessage(message: Uint8Array, loaded?: LoadedAddre
     instructions,
     flags,
   };
+}
+
+export function staticFlagsFromMessage(message: Uint8Array, loaded?: LoadedAddresses): StaticFlags {
+  return staticFlagsFromParsed(parseCompiledMessage(message, loaded));
+}
+
+/** RPC `encoding=json` message (v0／v1). Prefer this over binary peel for chain loads. */
+export type RpcJsonMessage = {
+  accountKeys: Array<string | { pubkey: string }>;
+  header: {
+    numRequiredSignatures: number;
+    numReadonlySignedAccounts: number;
+    numReadonlyUnsignedAccounts: number;
+  };
+  instructions: Array<{
+    programIdIndex: number;
+    accounts: number[];
+    data: string;
+  }>;
+};
+
+export function staticFlagsFromRpcJsonMessage(
+  message: RpcJsonMessage,
+  loaded?: LoadedAddresses,
+): StaticFlags {
+  const staticKeys = message.accountKeys.map((k) => (typeof k === "string" ? k : k.pubkey));
+  const loadedWritable = loaded?.writable ?? [];
+  const loadedReadonly = loaded?.readonly ?? [];
+  const parsed: ParsedMessage = {
+    version: 0,
+    numSignerAccounts: message.header.numRequiredSignatures,
+    numReadonlySignerAccounts: message.header.numReadonlySignedAccounts,
+    numReadonlyNonSignerAccounts: message.header.numReadonlyUnsignedAccounts,
+    staticKeyCount: staticKeys.length,
+    loadedWritableCount: loadedWritable.length,
+    hasAddressLookups: loadedWritable.length + loadedReadonly.length > 0,
+    accounts: [...staticKeys, ...loadedWritable, ...loadedReadonly],
+    instructions: message.instructions.map((ix) => ({
+      programIndex: ix.programIdIndex,
+      accountIndices: ix.accounts,
+      data: bs58.decode(ix.data),
+    })),
+  };
+  return staticFlagsFromParsed(parsed);
 }
 
 export function applyOwnerMismatch(summary: StaticFlags, tokenOwnerByAccount: Map<string, string>): void {

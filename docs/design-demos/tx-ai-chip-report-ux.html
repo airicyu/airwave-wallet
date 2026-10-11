@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — AI 分析：展開 vs overlay（概念稿）</title>
+    <!--
+      控件：右下聊天鈕。點開 overlay 報告。
+      非正式契約；未同意前不要改 wallet/ 產品碼。
+    -->
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --ok: #4ecb8d;
+        --watch: #d4a24c;
+        --unknown: #7a8694;
+        --phone-w: 384px;
+        --phone-h: 600px;
+        --radius: 12px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1100px; margin: 0 auto; padding: 28px 20px 64px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 8px; max-width: 58rem; font-size: 0.92rem; }
+      .note { color: var(--text-dim); font-size: 0.82rem; margin: 0 0 16px; max-width: 58rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+      .chip-btn {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 7px 13px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      .chip-btn.active { border-color: var(--accent); background: #1a2838; }
+      .col h2 { margin: 0 0 6px; font-size: 1rem; }
+      .col .why { margin: 0 0 10px; font-size: 0.78rem; color: var(--text-dim); }
+      .phone {
+        position: relative;
+        width: var(--phone-w);
+        height: var(--phone-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .body {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 14px 14px 16px;
+      }
+      .body::-webkit-scrollbar { width: 6px; }
+      .body::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 4px; }
+      .wallet-row { display: flex; margin: 0 0 10px; }
+      .wallet {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        width: max-content;
+        padding: 4px 6px 4px 4px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+      }
+      .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+      }
+      .wallet b { font-size: 0.82rem; padding: 0 6px; font-weight: 600; }
+      .site-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 8px;
+        min-width: 0;
+        padding-right: 120px;
+      }
+      .site-line .k { font-size: 0.68rem; color: var(--text-dim); flex-shrink: 0; }
+      .site-line kbd {
+        min-width: 0;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        color: var(--text-muted);
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .ai-float {
+        position: absolute;
+        right: 14px;
+        top: 68px;
+        z-index: 4;
+        pointer-events: none;
+      }
+      .ai-float .ai-chip { pointer-events: auto; }
+      .ai-chip {
+        display: inline-flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        width: auto;
+        height: auto;
+        padding: 8px 13px 8px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        cursor: pointer;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.42), 0 2px 6px rgba(0, 0, 0, 0.28);
+        position: relative;
+      }
+      .ai-chip .word {
+        font-size: 1.07rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        line-height: 1;
+        color: var(--text);
+      }
+      .ai-chip[data-level="running"] { cursor: default; }
+      .ai-chip .mark {
+        position: relative;
+        width: 29px;
+        height: 29px;
+        border: 0;
+        background: transparent;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .ai-chip .mark.ready { overflow: visible; }
+      .ai-chip .mark svg.doc {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        position: relative;
+        z-index: 1;
+      }
+      .ai-chip[data-level="low"] { color: var(--ok); }
+      .ai-chip[data-level="watch"] { color: var(--watch); }
+      .ai-chip[data-level="high"] { color: #e8a0a0; }
+      .ai-chip[data-level="unknown"],
+      .ai-chip[data-level="running"] { color: var(--unknown); }
+
+      .radar-sweep {
+        position: absolute;
+        inset: -20%;
+        background: conic-gradient(from 0deg, transparent 0 62%, rgba(154, 167, 180, 0.08) 78%, rgba(232, 238, 244, 0.55) 100%);
+        animation: spin 1.35s linear infinite;
+      }
+      .radar-rings {
+        position: relative;
+        z-index: 1;
+        width: 21px;
+        height: 21px;
+        border-radius: 50%;
+        border: 1px solid rgba(154, 167, 180, 0.45);
+        box-shadow: inset 0 0 0 3px var(--bg), inset 0 0 0 4px rgba(154, 167, 180, 0.28);
+      }
+      .radar-rings::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 3px;
+        height: 3px;
+        margin: -1.5px 0 0 -1.5px;
+        border-radius: 50%;
+        background: var(--text-muted);
+      }
+
+      .ai-chip .mark.ready { overflow: visible; }
+      .ai-chip .mark.ready::after {
+        content: "";
+        position: absolute;
+        inset: -3px;
+        border-radius: 50%;
+        box-shadow: 0 0 8px 2px currentColor;
+        opacity: 0.18;
+        pointer-events: none;
+        animation: ready-shine 1.3s linear infinite alternate;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @keyframes ready-shine {
+        from { opacity: 0.16; }
+        to { opacity: 0.88; }
+      }
+      .page-title {
+        margin: 0 0 12px;
+        text-align: center;
+        font-size: 1.05rem;
+        font-weight: 650;
+      }
+      .card {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        padding: 10px 12px;
+        margin: 0 0 8px;
+        font-size: 0.78rem;
+      }
+      .card .row { display: flex; justify-content: space-between; color: var(--text-muted); }
+      .neg { color: #e8a0a0; }
+      .hint { color: var(--text-dim); font-size: 0.72rem; margin: 6px 0 0; }
+      .report {
+        border: 1px solid var(--stroke-soft);
+        background: var(--bg);
+        border-radius: 10px;
+        padding: 12px;
+        margin: 0 0 10px;
+      }
+      .report p { margin: 0 0 10px; font-size: 0.8rem; color: var(--text-muted); }
+      .report p:last-child { margin-bottom: 0; }
+      .report .k { display: block; font-size: 0.68rem; color: var(--text-dim); font-weight: 650; margin-bottom: 2px; }
+      .veil {
+        position: absolute;
+        inset: 0;
+        background: var(--bg);
+        overflow: auto;
+        animation: chat-up 0.22s ease-out;
+      }
+      .veil::-webkit-scrollbar { width: 6px; }
+      .veil::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 4px; }
+      .sheet {
+        min-height: 100%;
+        background: var(--bg);
+        padding: 12px 14px 16px;
+      }
+      @keyframes chat-up {
+        from { transform: translateY(18px); opacity: 0.55; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .sheet-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .sheet-head h3 { margin: 0; flex: 1; font-size: 0.88rem; }
+      .x {
+        width: 28px;
+        height: 28px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--fill);
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 1rem;
+      }
+      .dock {
+        flex-shrink: 0;
+        padding: 10px 12px 12px;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        display: flex;
+        gap: 8px;
+      }
+      .dock button {
+        border-radius: 10px;
+        padding: 10px;
+        font-weight: 700;
+        font-size: 0.84rem;
+        cursor: default;
+      }
+      .ghost { flex: 0 0 38%; border: 1px solid var(--stroke); background: transparent; color: var(--text-muted); }
+      .primary { flex: 1; border: 0; background: var(--accent); color: #061018; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>AI 分析：右上懸浮＋overlay</h1>
+      <p class="lede">
+        右上一張小卡（陰影），卡內是狀態圖示＋「AI」。上緣對齊站點列，捲動時不動。點開 overlay；打開時隱藏卡。
+      </p>
+      <p class="note">概念稿。切「分析中／已完成」；完成後點 AI 開報告。</p>
+      <div class="controls">
+        <button type="button" class="chip-btn" data-phase="running">分析中</button>
+        <button type="button" class="chip-btn active" data-phase="done">已完成（可點）</button>
+      </div>
+      <section class="col">
+        <div class="phone" id="phone-overlay"></div>
+      </section>
+    </div>
+    <script>
+      const REPORT_ICON = `<path d="M7 4.5h7l3.5 3.5V19.5H7z"/><path d="M14 4.5V8h3.5"/><path d="M9.5 12h5"/><path d="M9.5 15h5"/>`;
+      const REPORT = [
+        ["這筆在做什麼", "這是一筆小額 SOL 轉出，沒有看到代幣授權或帳戶權限交給別人。"],
+        ["為什麼是這個等級", "模擬差額只有手續費級距的 lamports；解出的指令都是系統轉帳與計算預算。"],
+        ["還缺什麼", "沒有再核對收款地址是不是你常用的。等級低不代表可以放心按。"],
+        ["補充", "報告有意寫長，用來看捲軸。展開時卡片被推下去；overlay 時底下那疊高度不變，關掉後捲動位置還在。 ".repeat(8)],
+      ];
+
+      let phase = "done";
+      let overlayOpen = false;
+      let overlayScroll = 0;
+
+      function reportHtml() {
+        return REPORT.map(([k, v]) => `<p><span class="k">${k}</span>${v}</p>`).join("");
+      }
+
+      function placeFloat(phone) {
+        const float = phone.querySelector(".ai-float");
+        const site = phone.querySelector(".site-line");
+        if (!float || !site) return;
+        const top = site.getBoundingClientRect().top - phone.getBoundingClientRect().top;
+        float.style.top = `${Math.max(8, top)}px`;
+      }
+
+      function chipHtml() {
+        if (phase === "running") {
+          return `<span class="ai-chip" data-level="running" role="status"><span class="mark"><span class="radar-sweep"></span><span class="radar-rings"></span></span><span class="word">AI</span></span>`;
+        }
+        return `<button type="button" class="ai-chip" data-level="low" data-open><span class="mark ready"><svg class="doc" viewBox="0 0 24 24">${REPORT_ICON}</svg></span><span class="word">AI</span></button>`;
+      }
+
+      function stackHtml() {
+        return `
+          <div class="stack">
+            <div class="wallet-row"><div class="wallet"><span class="avatar">I</span><b>Imported 1</b></div></div>
+            <div class="site-line">
+              <span class="k">站點</span>
+              <kbd>http://localhost:5173</kbd>
+            </div>
+            <h3 class="page-title">簽署交易</h3>
+            <div class="card"><div class="row"><span>預期變動</span></div><div class="row"><span>SOL</span><span class="neg">−0.000005013</span></div></div>
+            <div class="card"><div class="row"><span>交易費</span><span>0.000005013 SOL</span></div><p class="hint">▸ 簽名費 · CU</p></div>
+            <p class="hint">▸ 交易明細 · 指令</p>
+            <div class="card"><div class="row"><span>1 Compute Budget</span><span>Set CU price</span></div></div>
+            <div class="card"><div class="row"><span>2 Compute Budget</span><span>Set CU limit</span></div></div>
+            <div class="card"><div class="row"><span>3 Associated Token</span><span>Create idempotent</span></div></div>
+            <div class="card"><div class="row"><span>4 Token</span><span>TransferChecked</span></div></div>
+            <div class="card"><div class="row"><span>5 Jupiter</span><span>Route swap</span></div></div>
+            <div class="card"><div class="row"><span>6 Token</span><span>Close account</span></div></div>
+            <div class="card"><div class="row"><span>7 Memo</span><span>airwave-demo</span></div></div>
+          </div>`;
+      }
+
+      function dock() {
+        return `<div class="dock"><button class="ghost" type="button">拒絕</button><button class="primary" type="button">批准</button></div>`;
+      }
+
+      function paintOverlay() {
+        const phone = document.getElementById("phone-overlay");
+        const veil = overlayOpen
+          ? `<div class="veil" data-veil>
+              <div class="sheet">
+                <div class="sheet-head">
+                  <h3>AI 分析</h3>
+                  <button type="button" class="x" data-close aria-label="關閉">×</button>
+                </div>
+                <div class="report">${reportHtml()}</div>
+              </div>
+            </div>`
+          : "";
+        const fab = overlayOpen ? "" : `<div class="ai-float">${chipHtml()}</div>`;
+        phone.innerHTML = `<div class="body">${stackHtml()}${veil}</div>${fab}${dock()}`;
+        const body = phone.querySelector(".body");
+        const veilEl = phone.querySelector("[data-veil]");
+        if (overlayOpen && veilEl) {
+          body.style.overflow = "hidden";
+          veilEl.scrollTop = overlayScroll;
+          veilEl.addEventListener("scroll", () => {
+            overlayScroll = veilEl.scrollTop;
+          });
+          veilEl.addEventListener("click", (e) => {
+            if (e.target === veilEl) {
+              overlayOpen = false;
+              overlayScroll = 0;
+              paintOverlay();
+            }
+          });
+          phone.querySelector("[data-close]").addEventListener("click", () => {
+            overlayOpen = false;
+            overlayScroll = 0;
+            paintOverlay();
+          });
+        } else {
+          body.style.overflow = "auto";
+        }
+        placeFloat(phone);
+        phone.querySelector("[data-open]")?.addEventListener("click", () => {
+          overlayOpen = true;
+          paintOverlay();
+        });
+      }
+
+      function paintAll() {
+        paintOverlay();
+      }
+
+      document.querySelectorAll("[data-phase]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          phase = btn.dataset.phase;
+          overlayOpen = false;
+          document.querySelectorAll("[data-phase]").forEach((b) => b.classList.toggle("active", b === btn));
+          paintAll();
+        });
+      });
+      paintAll();
+    </script>
+  </body>
+</html>

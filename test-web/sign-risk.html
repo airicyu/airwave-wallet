@@ -17,8 +17,10 @@
       <p><a href="/">← 回到 test-web 連線頁</a></p>
       <h1>簽署安全評估 POC</h1>
       <p>
-        與錢包連線頁分開。OpenRouter key 與 RPC URL 只留在這個欄位，不會寫進檔案或 localStorage。
-        RPC 經本機 Vite 轉送，避免瀏覽器 CORS。查 mainnet 請用對應 RPC。
+        與錢包連線頁分開。本頁用 vendored <code>bubble-harness</code> 多輪 tool loop
+        （decode／get_accounts／simulate／各 <code>rpc_get_*</code>）。
+        本地樣本用 <strong>mainnet 公開地址</strong>組草稿（非可簽名），方便 RPC 查到帳戶；請配 mainnet RPC。
+        OpenRouter key 與 RPC URL 只留在這個欄位，不會寫進檔案或 localStorage。
       </p>
       <label>
         領域說明（送給模型的固定 context）
@@ -57,19 +59,40 @@
       <label>
         模型
         <select id="risk-model">
-          <option value="moonshotai/kimi-k2-0905">Kimi K2 0905</option>
-          <option value="~deepseek/deepseek-flash-latest">DeepSeek Flash latest</option>
+          <option value="~deepseek/deepseek-flash-latest" selected>DeepSeek Flash latest</option>
           <option value="~deepseek/deepseek-pro-latest">DeepSeek Pro latest</option>
+          <option value="moonshotai/kimi-k2-0905">Kimi K2 0905</option>
+          <option value="z-ai/glm-5.3-flash">GLM 5.3 Flash</option>
         </select>
       </label>
       <label>
         OpenRouter API key
         <input id="risk-key" type="password" autocomplete="off" spellcheck="false" />
       </label>
-      <button id="risk-ask" type="button">詢問 OpenRouter</button>
+      <button id="risk-ask" type="button">用 harness 分析（多輪 tool）</button>
+      <hr />
+      <h2>Decisions 定級（不經 harness）</h2>
+      <p>
+        Host 直接 <code>POST /api/alpha/decisions</code>。可先打 canned sample 驗證模型 id，
+        或用上一則 harness 報告＋目前 flags 定級（含本地下限抬級）。
+      </p>
+      <label>
+        Decisions 模型
+        <select id="risk-decisions-model"></select>
+      </label>
+      <label>
+        Canned sample
+        <select id="risk-decisions-sample"></select>
+      </label>
+      <button id="risk-decisions-sample-run" type="button">打 sample（Decisions）</button>
+      <button id="risk-decisions-last-run" type="button">用上一則 harness 報告定級</button>
+      <h3>Decisions 結果</h3>
+      <pre id="risk-decisions-out"></pre>
       <p id="risk-status"></p>
-      <h3>送給模型的摘要</h3>
+      <h3>目前交易摘要（手動／tool 解碼後）</h3>
       <pre id="risk-flags"></pre>
+      <h3>Tool 軌跡</h3>
+      <pre id="risk-trace"></pre>
       <h3>模型回覆</h3>
       <pre id="risk-answer"></pre>
     </main>

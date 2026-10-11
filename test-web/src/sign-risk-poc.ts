@@ -1,15 +1,13 @@
 /**
- * test-web only: build unsigned demo transactions and ask OpenRouter for a
- * security read from decoded flags. Not the wallet approval path.
+ * test-web only: build unsigned demo transactions from mainnet fixture pubkeys
+ * and run bubble-harness tool loop. Not the wallet approval path.
  */
-import { createKeyPairFromPrivateKeyBytes } from "@solana/keys";
 import { AccountRole, type Instruction } from "@solana/instructions";
 import {
   address,
   appendTransactionMessageInstruction,
   compileTransactionMessage,
   createTransactionMessage,
-  getAddressFromPublicKey,
   getCompiledTransactionMessageEncoder,
   pipe,
   setTransactionMessageFeePayer,
@@ -21,16 +19,25 @@ import bs58 from "bs58";
 import {
   applyOwnerMismatch,
   CONTEXT,
-  messageBytesFromWire,
   parseV0Message,
   staticFlagsFromMessage,
+  staticFlagsFromRpcJsonMessage,
   SYSTEM,
   TOKEN,
   type Flag,
   type LoadedAddresses,
+  type RpcJsonMessage,
   type StaticFlags,
 } from "./sign-risk-decode";
 import { fetchChainAccounts, fetchTransaction, type ChainAccount } from "./sign-risk-rpc";
+import {
+  DECISIONS_MODELS,
+  DECISIONS_SAMPLES,
+  DEFAULT_DECISIONS_MODEL,
+  formatDecisionsView,
+  gradeWithDecisions,
+} from "./sign-risk-decisions";
+import { formatLoopEvent, runSignRiskHarness } from "./sign-risk-harness";
 
 const BLOCKHASH = "11111111111111111111111111111111" as Blockhash;
 const RECENT_BLOCKHASHES = "SysvarRecentB1ockHashes11111111111111111111";
@@ -53,14 +60,35 @@ type Built = {
   staticFlags: StaticFlags;
   loaded?: LoadedAddresses;
   chainAccounts?: ChainAccount[];
+  /** Set for RPC loads so harness decode skips v1-incompatible binary peel. */
+  rpcJsonMessage?: RpcJsonMessage;
 };
 
 type DemoKeys = {
   payer: Address;
   other: Address;
-  nonce: Address;
+  /** Real mainnet token account (WSOL ATA) so get_accounts can find mint/owner. */
+  tokenAccount: Address;
+  /** Real system account used as AdvanceNonceAccount target in the durable-nonce sample. */
+  nonceAccount: Address;
   unknownProgram: Address;
 };
+
+/**
+ * Public mainnet addresses (not keys we control). Draft txs only — for RPC
+ * get_accounts to return found:true. Verified 2026-10-10 against public RPC:
+ * Raydium authority + its WSOL ATA; counterparty wallets with SOL.
+ */
+function mainnetFixtureKeys(): DemoKeys {
+  return {
+    payer: address("5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1"),
+    other: address("54VRaFqHRqbjE3pY6kHvtS42sPoFPFvkzKpSzfKwfUCr"),
+    tokenAccount: address("DQyrAcCrDXQ7NeoqGgDCZwBvWDcYmFCjSb9JtteuvPpz"),
+    nonceAccount: address("9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM"),
+    // Synthetic program id so unknown_program still fires (not in LABELED).
+    unknownProgram: address("DecafSo1111111111111111111111111111111111111"),
+  };
+}
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -106,22 +134,6 @@ function maskedWire(message: Uint8Array, numSigners: number): Uint8Array {
   return out;
 }
 
-async function demoKeys(): Promise<DemoKeys> {
-  async function fromFill(n: number): Promise<Address> {
-    const seed = new Uint8Array(32);
-    seed[0] = n;
-    const pair = await createKeyPairFromPrivateKeyBytes(seed, true);
-    return address(await getAddressFromPublicKey(pair.publicKey));
-  }
-  const [payer, other, nonce, unknownProgram] = await Promise.all([
-    fromFill(1),
-    fromFill(2),
-    fromFill(3),
-    fromFill(9),
-  ]);
-  return { payer, other, nonce, unknownProgram };
-}
-
 function transferData(lamports: bigint): Uint8Array {
   const data = new Uint8Array(12);
   const view = new DataView(data.buffer);
@@ -149,7 +161,7 @@ function buildInstructions(id: ScenarioId, keys: DemoKeys): Instruction[] {
       instruction(
         SYSTEM,
         [
-          { pubkey: keys.nonce, role: AccountRole.WRITABLE },
+          { pubkey: keys.nonceAccount, role: AccountRole.WRITABLE },
           { pubkey: address(RECENT_BLOCKHASHES), role: AccountRole.READONLY },
           payer,
         ],
@@ -167,12 +179,12 @@ function buildInstructions(id: ScenarioId, keys: DemoKeys): Instruction[] {
     data[1] = 2;
     new DataView(data.buffer).setUint32(2, 1, true);
     data.set(bs58.decode(keys.other), 6);
-    return [instruction(TOKEN, [{ pubkey: keys.nonce, role: AccountRole.WRITABLE }, payer], data)];
+    return [instruction(TOKEN, [{ pubkey: keys.tokenAccount, role: AccountRole.WRITABLE }, payer], data)];
   }
   if (id === "unlimited-approve") {
     return [
       instruction(TOKEN, [
-        { pubkey: keys.nonce, role: AccountRole.WRITABLE },
+        { pubkey: keys.tokenAccount, role: AccountRole.WRITABLE },
         { pubkey: keys.other, role: AccountRole.READONLY },
         payer,
       ], approveData(U64_MAX)),
@@ -181,21 +193,26 @@ function buildInstructions(id: ScenarioId, keys: DemoKeys): Instruction[] {
   if (id === "close-account") {
     return [
       instruction(TOKEN, [
-        { pubkey: keys.nonce, role: AccountRole.WRITABLE },
+        { pubkey: keys.tokenAccount, role: AccountRole.WRITABLE },
         { pubkey: keys.other, role: AccountRole.WRITABLE },
         payer,
       ], new Uint8Array([9])),
     ];
   }
   if (id === "system-assign") {
+    // System Assign: exactly one account, and it must sign. newOwner = synthetic
+    // program (not a wallet). Do not use the whale nonceAccount — ambient 10M SOL
+    // distracts the model into unrelated history.
     const data = new Uint8Array(36);
     new DataView(data.buffer).setUint32(0, 1, true);
-    data.set(bs58.decode(keys.other), 4);
-    return [instruction(SYSTEM, [{ pubkey: keys.nonce, role: AccountRole.WRITABLE }, payer], data)];
+    data.set(bs58.decode(keys.unknownProgram), 4);
+    return [
+      instruction(SYSTEM, [{ pubkey: keys.other, role: AccountRole.WRITABLE_SIGNER }], data),
+    ];
   }
   return [
     instruction(TOKEN, [
-      { pubkey: keys.nonce, role: AccountRole.WRITABLE },
+      { pubkey: keys.tokenAccount, role: AccountRole.WRITABLE },
       { pubkey: keys.other, role: AccountRole.READONLY },
       payer,
     ], approveData(1n)),
@@ -279,12 +296,31 @@ export function mountSignRiskPoc(): void {
   const context = el<HTMLTextAreaElement>("risk-context");
   const flagsOut = el<HTMLPreElement>("risk-flags");
   const answer = el<HTMLPreElement>("risk-answer");
+  const trace = el<HTMLPreElement>("risk-trace");
+  const decisionsOut = el<HTMLPreElement>("risk-decisions-out");
   const status = el<HTMLParagraphElement>("risk-status");
   const ask = el<HTMLButtonElement>("risk-ask");
+  const decisionsModel = el<HTMLSelectElement>("risk-decisions-model");
+  const decisionsSample = el<HTMLSelectElement>("risk-decisions-sample");
   context.value = CONTEXT;
 
-  const keysPromise = demoKeys();
+  for (const model of DECISIONS_MODELS) {
+    const opt = document.createElement("option");
+    opt.value = model.id;
+    opt.textContent = model.label;
+    if (model.id === DEFAULT_DECISIONS_MODEL) opt.selected = true;
+    decisionsModel.appendChild(opt);
+  }
+  for (const sample of DECISIONS_SAMPLES) {
+    const opt = document.createElement("option");
+    opt.value = sample.id;
+    opt.textContent = sample.label;
+    decisionsSample.appendChild(opt);
+  }
+
+  const keys = mainnetFixtureKeys();
   let latest: Built | null = null;
+  let lastHarnessReport = "";
 
   function show(): void {
     if (!latest) return;
@@ -293,10 +329,9 @@ export function mountSignRiskPoc(): void {
 
   async function refresh(): Promise<void> {
     try {
-      const keys = await keysPromise;
       latest = buildPayload(readScenario(), readWire(), keys);
       show();
-      status.textContent = `組好樣本 ${latest.wireForm}（尚未查 RPC）`;
+      status.textContent = `組好 mainnet 草稿 ${latest.wireForm}（公開地址；尚未查 RPC）`;
     } catch (error) {
       latest = null;
       flagsOut.textContent = error instanceof Error ? error.message : String(error);
@@ -321,18 +356,18 @@ export function mountSignRiskPoc(): void {
     }
     status.textContent = "載入交易…";
     try {
-      const { wire, loaded } = await fetchTransaction(rpcUrl, signature);
-      const message = messageBytesFromWire(wire);
-      const staticFlags = staticFlagsFromMessage(message, loaded);
+      const { wire, loaded, jsonMessage } = await fetchTransaction(rpcUrl, signature);
+      const staticFlags = staticFlagsFromRpcJsonMessage(jsonMessage, loaded);
       latest = {
         wireForm: "rpc-wire",
         transactionBase64: bytesBase64(wire),
         staticFlags,
         loaded,
+        rpcJsonMessage: jsonMessage,
       };
       latest = await attachChain(latest, rpcUrl);
       show();
-      status.textContent = `已載入鏈上交易（${latest.chainAccounts?.length ?? 0} 個帳戶）`;
+      status.textContent = `已載入鏈上交易（${latest.staticFlags.instructions.length} ix，${latest.chainAccounts?.length ?? 0} 個帳戶）`;
     } catch (error) {
       status.textContent = "載入交易失敗";
       answer.textContent = error instanceof Error ? error.message : String(error);
@@ -362,6 +397,7 @@ export function mountSignRiskPoc(): void {
 
   ask.addEventListener("click", async () => {
     answer.textContent = "";
+    trace.textContent = "";
     const key = el<HTMLInputElement>("risk-key").value.trim();
     if (!key) {
       status.textContent = "先填 OpenRouter API key";
@@ -374,52 +410,119 @@ export function mountSignRiskPoc(): void {
     const model = el<HTMLSelectElement>("risk-model").value;
     const rpcUrl = el<HTMLInputElement>("risk-rpc").value.trim();
     ask.disabled = true;
-    status.textContent = `呼叫 ${model}…`;
+    status.textContent = `harness → ${model}…`;
+    const live: string[] = [];
     try {
-      if (rpcUrl && !latest.chainAccounts) {
-        status.textContent = "先查帳戶…";
-        latest = await attachChain(latest, rpcUrl);
+      // Do not pre-fetch accounts: the model should call get_accounts via tools.
+      const view = await runSignRiskHarness({
+        session: {
+          transactionBase64: latest.transactionBase64,
+          wireForm: latest.wireForm,
+          loaded: latest.loaded,
+          rpcUrl,
+          rpcJsonMessage: latest.rpcJsonMessage,
+        },
+        systemMessage: context.value,
+        apiKey: key,
+        model,
+        onEvent: (event) => {
+          const line = formatLoopEvent(event);
+          if (line) {
+            live.push(line);
+            trace.textContent = live.join("\n\n");
+          }
+          if (event.type === "step") {
+            status.textContent = `harness → ${model}… step ${event.step}/${event.maxSteps}`;
+          } else if (event.type === "tool") {
+            status.textContent = `tool ${event.toolCall.function.name}…`;
+          } else if (event.type === "assistant" && event.message.tool_calls?.length) {
+            status.textContent = `呼叫 tools…`;
+          }
+        },
+      });
+      if (view.lastDecode) {
+        latest = {
+          ...latest,
+          staticFlags: view.lastDecode,
+          ...(view.lastAccounts ? { chainAccounts: view.lastAccounts } : {}),
+        };
         show();
       }
-      status.textContent = `呼叫 ${model}…`;
-      const response = await fetch("/openrouter/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${key}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": location.origin,
-          "X-Title": "Airwave sign-risk poc",
-        },
-        body: JSON.stringify({
-          model,
-          temperature: 0,
-          max_tokens: 900,
-          messages: [
-            { role: "system", content: context.value },
-            { role: "user", content: JSON.stringify(modelInput(latest)) },
-          ],
-        }),
-      });
-      const raw = await response.text();
-      const shown = raw.replaceAll(key, "[redacted]");
-      if (!response.ok) {
-        status.textContent = `OpenRouter HTTP ${response.status}`;
-        answer.textContent = shown.slice(0, 2000);
-        return;
-      }
-      const json = JSON.parse(shown) as {
-        model?: string;
-        choices?: Array<{ message?: { content?: string } }>;
-      };
-      const message = json.choices?.[0]?.message;
-      const text = (message?.content ?? "").trim();
-      status.textContent = json.model ? `回覆模型 ${json.model}` : "已回覆";
-      answer.textContent = text || shown.slice(0, 2000);
+      trace.textContent = view.trace || "(no events)";
+      lastHarnessReport = view.finalText || "";
+      answer.textContent = lastHarnessReport || "(empty assistant content)";
+      status.textContent = `完成：${view.stopReason}，${view.steps} 步`;
     } catch (error) {
-      status.textContent = "呼叫失敗";
+      status.textContent = "harness 失敗";
       answer.textContent = error instanceof Error ? error.message : String(error);
     } finally {
       ask.disabled = false;
     }
   });
+
+  async function runDecisions(
+    source: "sample" | "last",
+    btn: HTMLButtonElement,
+  ): Promise<void> {
+    const key = el<HTMLInputElement>("risk-key").value.trim();
+    if (!key) {
+      status.textContent = "先填 OpenRouter API key";
+      return;
+    }
+    const model = decisionsModel.value.trim() || DEFAULT_DECISIONS_MODEL;
+    btn.disabled = true;
+    decisionsOut.textContent = "";
+    try {
+      if (source === "sample") {
+        const sample = DECISIONS_SAMPLES.find((s) => s.id === decisionsSample.value);
+        if (!sample) {
+          status.textContent = "找不到 sample";
+          return;
+        }
+        status.textContent = `Decisions → ${model}（${sample.id}）…`;
+        const view = await gradeWithDecisions({
+          apiKey: key,
+          model,
+          reportText: sample.reportText,
+          flags: sample.flags,
+          kind: sample.kind,
+          locale: sample.locale,
+        });
+        decisionsOut.textContent = formatDecisionsView(view, sample);
+        status.textContent = view.error
+          ? `Decisions 失敗：${view.error}`
+          : `Decisions：${view.decisionsLevel} → 顯示 ${view.displayLevel}`;
+        return;
+      }
+
+      if (!lastHarnessReport.trim()) {
+        status.textContent = "尚未有 harness 報告；先跑分析或改打 sample";
+        return;
+      }
+      const flags = (latest?.staticFlags.flags ?? []).map((f) => f.id);
+      status.textContent = `Decisions → ${model}（last report）…`;
+      const view = await gradeWithDecisions({
+        apiKey: key,
+        model,
+        reportText: lastHarnessReport,
+        flags,
+        kind: "signTransaction",
+        locale: "zh-Hant",
+      });
+      decisionsOut.textContent = formatDecisionsView(view);
+      status.textContent = view.error
+        ? `Decisions 失敗：${view.error}`
+        : `Decisions：${view.decisionsLevel} → 顯示 ${view.displayLevel}`;
+    } catch (error) {
+      status.textContent = "Decisions 失敗";
+      decisionsOut.textContent = error instanceof Error ? error.message : String(error);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  const sampleBtn = el<HTMLButtonElement>("risk-decisions-sample-run");
+  const lastBtn = el<HTMLButtonElement>("risk-decisions-last-run");
+  sampleBtn.addEventListener("click", () => void runDecisions("sample", sampleBtn));
+  lastBtn.addEventListener("click", () => void runDecisions("last", lastBtn));
 }

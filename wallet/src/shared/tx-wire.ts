@@ -13,6 +13,16 @@ export function encodeWireTransaction(tx: ReturnType<typeof decodeWireTransactio
   return new Uint8Array(getTransactionEncoder().encode(tx));
 }
 
+/** Copy wire bytes with every signature slot cleared (64 zero bytes on encode). For AI/RPC reads only. */
+export function stripWireSignatures(bytes: Uint8Array): Uint8Array {
+  const tx = decodeWireTransaction(bytes);
+  const signatures = { ...tx.signatures };
+  for (const address of Object.keys(signatures)) {
+    signatures[address as keyof typeof signatures] = null;
+  }
+  return encodeWireTransaction({ ...tx, signatures });
+}
+
 export async function partiallySignWireTransaction(
   txBytes: Uint8Array,
   signer: KeyPairSigner,

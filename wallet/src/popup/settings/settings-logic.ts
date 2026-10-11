@@ -13,6 +13,7 @@ import {
   type UiLocale,
 } from "../../shared/storage-keys";
 import { apiErrorMessage, messageForErrorCode, t } from "../../shared/ui-i18n";
+import { decisionsModelLabelKey } from "../../shared/tx-ai";
 import type { MessageKey } from "../../shared/ui-messages";
 import type { State } from "../types";
 
@@ -33,7 +34,7 @@ export function rpcFingerprint(settings: PublicSettings): string {
 }
 
 export function settingsFingerprint(settings: PublicSettings): string {
-  return `${settings.cluster}|${rpcFingerprint(settings)}|${settings.heliusConfigured}|${settings.jupiterConfigured}|${settings.defaultCuPrice}`;
+  return `${settings.cluster}|${rpcFingerprint(settings)}|${settings.heliusConfigured}|${settings.jupiterConfigured}|${settings.openRouterConfigured}|${settings.openRouterModel}|${settings.openRouterDecisionsModel}|${settings.txAiAnalysisEnabled}|${settings.defaultCuPrice}`;
 }
 
 export function cloneRpcByCluster(
@@ -71,13 +72,22 @@ export function rpcOptionKey(cluster: Cluster, isPublic: boolean, url: string): 
   return isPublic ? `${cluster}:public` : `${cluster}:${url}`;
 }
 
-async function readStoredIntegrationSecrets(): Promise<{ jupiterApiKey: string; heliusApiUrl: string }> {
+async function readStoredIntegrationSecrets(): Promise<{
+  jupiterApiKey: string;
+  heliusApiUrl: string;
+  openRouterApiKey: string;
+}> {
   const res = await sendExtensionRequest("wallet.readIntegrationSecrets", {});
-  if (!res.ok) return { jupiterApiKey: "", heliusApiUrl: "" };
-  const result = (res.result ?? {}) as { jupiterApiKey?: string; heliusApiUrl?: string };
+  if (!res.ok) return { jupiterApiKey: "", heliusApiUrl: "", openRouterApiKey: "" };
+  const result = (res.result ?? {}) as {
+    jupiterApiKey?: string;
+    heliusApiUrl?: string;
+    openRouterApiKey?: string;
+  };
   return {
     jupiterApiKey: result.jupiterApiKey ?? "",
     heliusApiUrl: result.heliusApiUrl ?? "",
+    openRouterApiKey: result.openRouterApiKey ?? "",
   };
 }
 
@@ -87,6 +97,12 @@ export function apiKeysHubSummary(settings: PublicSettings, locale: UiLocale): s
   if (h && j) return t(locale, "settings.hub.keysConfigured");
   if (h || j) return t(locale, "settings.hub.keysPartial");
   return t(locale, "settings.hub.keysUnset");
+}
+
+export function txAiHubSummary(settings: PublicSettings, locale: UiLocale): string {
+  if (!settings.txAiAnalysisEnabled) return t(locale, "settings.txAiAnalysis.off");
+  const model = t(locale, decisionsModelLabelKey(settings.openRouterDecisionsModel));
+  return t(locale, "settings.txAiAnalysis.onSummary", { model });
 }
 
 export function changePasswordCanSubmit(current: string, next: string, confirm: string): boolean {
@@ -158,6 +174,19 @@ export async function persistJupiterField(args: {
   if (jupiterApiKey === MASKED_SECRET_DISPLAY) jupiterApiKey = stored;
   if (jupiterApiKey === stored) return false;
   await patchSettingsPartial({ jupiterApiKey }, args.io, args.locale);
+  return true;
+}
+
+export async function persistOpenRouterField(args: {
+  draft: string;
+  io: SettingsIo;
+  locale: UiLocale;
+}): Promise<boolean> {
+  const stored = (await readStoredIntegrationSecrets()).openRouterApiKey;
+  let openRouterApiKey = args.draft.trim();
+  if (openRouterApiKey === MASKED_SECRET_DISPLAY) openRouterApiKey = stored;
+  if (openRouterApiKey === stored) return false;
+  await patchSettingsPartial({ openRouterApiKey }, args.io, args.locale);
   return true;
 }
 

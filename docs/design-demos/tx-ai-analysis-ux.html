@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 交易 AI 分析控件（0.30.0 概念稿）</title>
+    <!--
+      0.30.0 UI 意向：審批卡小控件（運算中 → 等級 icon）＋點擊展開報告；
+      Settings：OpenRouter key／報告模型／Decisions 模型／開關。
+      非正式契約；衝突以 docs/roadmap/0.30.0/INDEX.md 為準。
+    -->
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --accent-dim: #2a6ea8;
+        --danger: #c75050;
+        --ok: #4ecb8d;
+        --watch: #d4a24c;
+        --unknown: #7a8694;
+        --popup-w: 420px;
+        --popup-h: 640px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1280px; margin: 0 auto; padding: 28px 20px 64px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 8px; max-width: 54rem; font-size: 0.92rem; }
+      .note { color: var(--text-dim); font-size: 0.82rem; margin: 0 0 20px; max-width: 54rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; }
+      .chip {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 7px 13px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      .chip:hover { border-color: var(--text-dim); }
+      .chip.active { border-color: var(--accent); background: #1a2838; }
+      .layout {
+        display: grid;
+        grid-template-columns: var(--popup-w) 1fr;
+        gap: 28px;
+        align-items: start;
+      }
+      @media (max-width: 960px) { .layout { grid-template-columns: 1fr; } }
+      .phone-cap { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+      .bar-wallet {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        flex: 1;
+        padding: 5px 12px 5px 5px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+      }
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+      }
+      .bar-wallet-text { min-width: 0; flex: 1; }
+      .bar-wallet-name {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .bar-wallet-addr {
+        display: block;
+        font-size: 0.68rem;
+        color: var(--text-muted);
+        font-family: var(--mono);
+      }
+      .icon-btn {
+        flex-shrink: 0;
+        width: 34px;
+        height: 34px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .icon-btn svg {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+      }
+      .icon-btn:hover {
+        background: var(--fill);
+        border-color: var(--stroke);
+        color: var(--text);
+      }
+      .body {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 14px 12px 16px;
+      }
+      .body::-webkit-scrollbar { width: 6px; }
+      .body::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 4px; }
+      .dock {
+        flex-shrink: 0;
+        padding: 10px 12px 12px;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        display: flex;
+        gap: 8px;
+      }
+      .dock .ghost {
+        flex: 0 0 38%;
+        border: 1px solid var(--stroke);
+        background: transparent;
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .dock .primary {
+        flex: 1;
+        border: 0;
+        background: var(--accent);
+        color: #061018;
+        font-weight: 700;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .page-title {
+        margin: 0 0 12px;
+        text-align: center;
+        font-size: 1.05rem;
+        font-weight: 650;
+      }
+      .site-line {
+        justify-content: flex-start;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 10px;
+        min-width: 0;
+      }
+      .site-k { flex-shrink: 0; font-size: 0.72rem; color: var(--text-dim); }
+      .site-code {
+        min-width: 0;
+        padding: 1px 6px;
+        border-radius: 4px;
+        border: 1px solid var(--stroke-soft);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text-muted);
+        font-family: var(--mono);
+        font-size: 0.74rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* —— AI widget —— */
+      .ai-block { margin: 0 0 12px; }
+      .ai-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+        text-align: left;
+      }
+      .ai-row:hover { border-color: var(--text-dim); }
+      .ai-row:focus-visible {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .ai-row[data-level="running"] { cursor: default; }
+      .ai-row[data-level="running"]:hover { border-color: var(--stroke); }
+      .ai-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+      }
+      .ai-mark svg {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.85;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .ai-row[data-level="low"] .ai-mark {
+        color: var(--ok);
+        border-color: #2f5a45;
+        background: #14241c;
+      }
+      .ai-row[data-level="watch"] .ai-mark {
+        color: var(--watch);
+        border-color: #5a4a28;
+        background: #241c12;
+      }
+      .ai-row[data-level="high"] .ai-mark {
+        color: #e8a0a0;
+        border-color: #4a2a2a;
+        background: #1a1416;
+      }
+      .ai-row[data-level="unknown"] .ai-mark,
+      .ai-row[data-level="running"] .ai-mark {
+        color: var(--unknown);
+        border-color: var(--stroke);
+        background: var(--bg);
+      }
+      .ai-copy { min-width: 0; flex: 1; }
+      .ai-label {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 650;
+        color: var(--text);
+      }
+      .ai-sub {
+        display: block;
+        margin-top: 1px;
+        font-size: 0.68rem;
+        color: var(--text-dim);
+      }
+      .ai-chev {
+        flex-shrink: 0;
+        color: var(--text-dim);
+        width: 16px;
+        height: 16px;
+      }
+      .ai-chev svg {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+      }
+      .ai-row[aria-expanded="true"] .ai-chev {
+        transform: rotate(180deg);
+        color: var(--text-muted);
+      }
+      .ai-spin {
+        width: 14px;
+        height: 14px;
+        border: 2px solid var(--stroke);
+        border-top-color: var(--text-muted);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      .ai-panel {
+        margin-top: 6px;
+        border: 1px solid var(--stroke-soft);
+        border-radius: var(--radius-sm);
+        background: var(--bg);
+        padding: 10px 12px;
+      }
+      .ai-panel p {
+        margin: 0 0 8px;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+      .ai-panel p:last-child { margin-bottom: 0; }
+      .ai-panel .k {
+        display: block;
+        font-size: 0.68rem;
+        color: var(--text-dim);
+        margin-bottom: 2px;
+        font-weight: 600;
+      }
+
+      .sim-stage {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        padding: 12px 14px;
+        margin-bottom: 12px;
+      }
+      .sim-head {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0 0 8px;
+      }
+      .sim-head h3 {
+        margin: 0;
+        flex: 1;
+        font-size: 0.82rem;
+        font-weight: 650;
+      }
+      .sim-status { font-size: 0.72rem; color: var(--ok); }
+      .bal { list-style: none; margin: 0; padding: 0; }
+      .bal li {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 0;
+        border-top: 1px solid var(--stroke-soft);
+        font-size: 0.9rem;
+      }
+      .bal li:first-child { border-top: 0; padding-top: 0; }
+      .bal .plus { color: var(--ok); font-weight: 650; }
+      .bal .minus { color: #e8a0a0; font-weight: 650; }
+
+      .card {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        overflow: hidden;
+        margin-bottom: 12px;
+      }
+      .ix {
+        display: grid;
+        grid-template-columns: 22px 1fr;
+        gap: 8px;
+        padding: 10px 12px;
+        border-top: 1px solid var(--stroke-soft);
+      }
+      .ix:first-child { border-top: 0; }
+      .ix .n { font-size: 0.68rem; color: var(--text-dim); padding-top: 2px; }
+      .ix .prog { font-size: 0.78rem; font-weight: 600; }
+      .ix .desc { margin: 2px 0 0; font-size: 0.78rem; color: var(--text-muted); }
+
+      .legend {
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        padding: 14px 16px;
+      }
+      .legend h2 {
+        margin: 0 0 10px;
+        font-size: 0.95rem;
+        font-weight: 650;
+      }
+      .legend ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .legend li {
+        display: grid;
+        grid-template-columns: 36px 72px 1fr;
+        gap: 10px;
+        align-items: center;
+        padding: 8px 0;
+        border-top: 1px solid var(--stroke-soft);
+        font-size: 0.82rem;
+      }
+      .legend li:first-child { border-top: 0; padding-top: 0; }
+      .legend .swatch {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--stroke);
+      }
+      .legend .swatch svg {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.85;
+      }
+      .legend .swatch.low { color: var(--ok); border-color: #2f5a45; background: #14241c; }
+      .legend .swatch.watch { color: var(--watch); border-color: #5a4a28; background: #241c12; }
+      .legend .swatch.high { color: #e8a0a0; border-color: #4a2a2a; background: #1a1416; }
+      .legend .swatch.unknown { color: var(--unknown); }
+      .legend .name { font-weight: 650; }
+      .legend .desc { color: var(--text-muted); font-size: 0.78rem; }
+      .legend .rules {
+        margin: 14px 0 0;
+        padding-top: 12px;
+        border-top: 1px solid var(--stroke-soft);
+        color: var(--text-dim);
+        font-size: 0.78rem;
+      }
+      .legend .rules strong { color: var(--text-muted); font-weight: 600; }
+
+      /* Settings phone */
+      .set-top h2 {
+        margin: 0;
+        flex: 1;
+        font-size: 0.95rem;
+        font-weight: 650;
+        text-align: center;
+      }
+      .set-list { display: flex; flex-direction: column; gap: 6px; }
+      .set-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 12px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+      }
+      .set-row .t { flex: 1; min-width: 0; }
+      .set-row .name { display: block; font-size: 0.88rem; font-weight: 600; }
+      .set-row .sum { display: block; font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+      .set-field { margin: 0 0 14px; }
+      .set-field > label {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        margin-bottom: 5px;
+      }
+      .set-field select {
+        width: 100%;
+        padding: 9px 10px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--stroke);
+        background: var(--fill);
+        color: var(--text);
+        font: inherit;
+        font-size: 0.86rem;
+      }
+      .set-field select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      /* Same secret-row pattern as settings-hub-ux (Helius / Jupiter). */
+      .secret-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+      }
+      .secret-row input[type="text"] {
+        flex: 1;
+        min-width: 0;
+        background: var(--bg);
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        color: var(--text);
+        font: inherit;
+        font-size: 0.82rem;
+        font-family: var(--mono);
+        padding: 8px 10px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .secret-row input[type="text"]:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .mask-pill {
+        flex: 1 1 auto;
+        min-width: 0;
+        background: var(--bg);
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--text-muted);
+      }
+      .mask-pill.revealed { color: var(--text); }
+      .secret-row .icon-btn {
+        flex: 0 0 34px;
+        width: 34px;
+        height: 34px;
+      }
+      .secret-row .icon-btn.on { color: var(--accent); }
+      .secret-row .icon-btn.muted { color: var(--text-dim); }
+      .secret-row .icon-btn.danger:hover { color: #e8a0a0; border-color: #4a2a2a; }
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        margin-bottom: 14px;
+      }
+      .toggle-row .name { font-size: 0.88rem; font-weight: 600; }
+      .switch {
+        width: 42px;
+        height: 24px;
+        border-radius: 999px;
+        border: 1px solid #2f5a45;
+        background: #1a3a2a;
+        position: relative;
+        flex-shrink: 0;
+      }
+      .switch::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 20px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--ok);
+      }
+      .section-title {
+        margin: 4px 0 8px;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>交易 AI 分析控件（0.30.0）</h1>
+      <p class="lede">
+        審批 popout：條件滿足時顯示小控件——運算中 → 等級 icon；點擊展開／收合報告。
+        不擋模擬與核准。Settings：OpenRouter、報告模型、Decisions 模型、開關。
+      </p>
+      <p class="note">
+        概念稿，非正式契約。色票對齊既有 sign-transaction demo。請 owner review 後再改產品 CSS。
+      </p>
+
+      <div class="controls" id="scene-chips" role="tablist" aria-label="場景">
+        <button type="button" class="chip active" data-scene="sign-running">審批 · 運算中</button>
+        <button type="button" class="chip" data-scene="sign-low">審批 · 低</button>
+        <button type="button" class="chip" data-scene="sign-watch">審批 · 留意（展開）</button>
+        <button type="button" class="chip" data-scene="sign-high">審批 · 高</button>
+        <button type="button" class="chip" data-scene="sign-unknown">審批 · 未知</button>
+        <button type="button" class="chip" data-scene="settings-hub">Settings 樞紐</button>
+        <button type="button" class="chip" data-scene="settings-ai">Settings · AI（key 已設）</button>
+        <button type="button" class="chip" data-scene="settings-ai-empty">Settings · AI（key 空）</button>
+        <button type="button" class="chip" data-scene="settings-ai-reveal">Settings · AI（Reveal）</button>
+      </div>
+
+      <div class="layout">
+        <div>
+          <div class="phone-cap" id="phone-cap">簽署交易 · AI 運算中</div>
+          <div class="phone" id="phone" aria-live="polite"></div>
+        </div>
+        <aside class="legend">
+          <h2>等級 icon</h2>
+          <ul>
+            <li>
+              <span class="swatch low" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V6l7-3z"/><path d="M9.2 12.2l1.8 1.8 3.8-4"/></svg>
+              </span>
+              <span class="name">低</span>
+              <span class="desc">常見轉帳／swap；無危險 flags</span>
+            </li>
+            <li>
+              <span class="swatch watch" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 4.3L2.8 18a1.5 1.5 0 001.3 2.2h16a1.5 1.5 0 001.3-2.2L13.7 4.3a1.5 1.5 0 00-2.6 0z"/></svg>
+              </span>
+              <span class="name">留意</span>
+              <span class="desc">無限 approve、改權限等——仍可核准</span>
+            </li>
+            <li>
+              <span class="swatch high" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><path d="M12 16.5h.01"/></svg>
+              </span>
+              <span class="name">高</span>
+              <span class="desc">owner mismatch／所有權外送等——仍可核准</span>
+            </li>
+            <li>
+              <span class="swatch unknown" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 014.2 1.8c0 1.5-2.2 2-2.2 3.2"/><path d="M12 17h.01"/></svg>
+              </span>
+              <span class="name">未知</span>
+              <span class="desc">失敗／逾時／缺資料；灰標</span>
+            </li>
+          </ul>
+          <p class="rules">
+            <strong>版面：</strong>控件在站點列下方、模擬卡上方（捲動區內）。殼底拒絕／核准永遠可用。<br />
+            <strong>互動：</strong>完成態整列可點展開報告；再點收合；不重跑。運算中不可點。<br />
+            <strong>無開關／無 key：</strong>整列不出現。<br />
+            <strong>本版不做：</strong>再分析鈕、以等級禁用核准、報告 persist。<br />
+            <strong>OpenRouter API key：</strong>與 Helius URL／Jupiter key 同一套——
+            <code>type="text"</code>、有值顯示 <code>••••••</code>、Reveal／編輯／清除圖示、
+            空列可貼上＋確認；不要 <code>type="password"</code>、不要「已設定」、不要露出後 4。
+          </p>
+        </aside>
+      </div>
+    </div>
+
+    <template id="tpl-icons">
+      <svg class="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V6l7-3z"/><path d="M9.2 12.2l1.8 1.8 3.8-4"/></svg>
+      <svg class="i-warn" viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 4.3L2.8 18a1.5 1.5 0 001.3 2.2h16a1.5 1.5 0 001.3-2.2L13.7 4.3a1.5 1.5 0 00-2.6 0z"/></svg>
+      <svg class="i-high" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><path d="M12 16.5h.01"/></svg>
+      <svg class="i-unk" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 014.2 1.8c0 1.5-2.2 2-2.2 3.2"/><path d="M12 17h.01"/></svg>
+      <svg class="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+      <svg class="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+      <svg class="i-menu" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/></svg>
+      <svg class="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 10-2.3 5.5"/><path d="M20 5v5h-5"/></svg>
+      <svg class="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+      <svg class="i-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 10.6A3 3 0 0 0 12 15a3 3 0 0 0 2.4-4.4M9.9 5.2A11 11 0 0 1 12 5c6.5 0 10 7 10 7a16 16 0 0 1-3.2 4.1M6.1 6.1A16 16 0 0 0 2 12s3.5 7 10 7c1.5 0 2.9-.3 4.1-.8"/></svg>
+      <svg class="i-edit" viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16v4Z"/><path d="M13 7l4 4"/></svg>
+      <svg class="i-check" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+      <svg class="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M8 7v12h8V7"/></svg>
+    </template>
+
+    <script>
+      const REPORTS = {
+        low: {
+          label: "風險偏低",
+          sub: "點開看 AI 摘要",
+          body: [
+            ["這筆在做什麼", "透過已知 DEX 聚合器交換代幣；付費者簽署一般 swap。"],
+            ["旗標", "無危險旗標。"],
+            ["缺什麼", "無。"],
+          ],
+        },
+        watch: {
+          label: "建議留意",
+          sub: "含無限額授權",
+          body: [
+            ["這筆在做什麼", "Token Approve，授權數量為 u64 最大值（等同無限額）。"],
+            ["旗標", "unlimited_approve。"],
+            ["缺什麼", "未確認 delegate 是否為信任協議。"],
+          ],
+        },
+        high: {
+          label: "風險偏高",
+          sub: "帳戶擁有者不一致",
+          body: [
+            ["這筆在做什麼", "操作代幣帳戶，但鏈上 token owner 與簽署者不一致。"],
+            ["旗標", "owner_mismatch。"],
+            ["缺什麼", "無。"],
+          ],
+        },
+        unknown: {
+          label: "尚無法判定",
+          sub: "資料不足或評估失敗",
+          body: [
+            ["這筆在做什麼", "呼叫未標名 program；指令資料未完整解出。"],
+            ["旗標", "unknown_program（僅代表解碼器不認得）。"],
+            ["缺什麼", "帳戶與模擬結果未齊。"],
+          ],
+        },
+      };
+
+      const phone = document.getElementById("phone");
+      const phoneCap = document.getElementById("phone-cap");
+      const chips = document.getElementById("scene-chips");
+
+      function svg(name) {
+        const tpl = document.getElementById("tpl-icons");
+        const node = tpl.content.querySelector(`.${name}`);
+        return node ? node.cloneNode(true) : document.createElement("span");
+      }
+
+      function walletTop() {
+        return `
+          <div class="top">
+            <div class="bar-wallet">
+              <span class="avatar">A</span>
+              <span class="bar-wallet-text">
+                <span class="bar-wallet-name">Account 1</span>
+                <span class="bar-wallet-addr">7xKXtg…9PqR</span>
+              </span>
+            </div>
+          </div>`;
+      }
+
+      function signScaffold(aiHtml) {
+        return `
+          ${walletTop()}
+          <div class="body">
+            <h1 class="page-title">簽署交易</h1>
+            <div class="site-line">
+              <span class="site-k">網站</span>
+              <code class="site-code">https://app.example.swap</code>
+            </div>
+            ${aiHtml}
+            <div class="sim-stage">
+              <div class="sim-head">
+                <h3>模擬結果</h3>
+                <span class="sim-status">成功</span>
+                <button type="button" class="icon-btn" title="重新整理" aria-label="重新整理"></button>
+              </div>
+              <ul class="bal">
+                <li><span>SOL</span><span class="minus">−0.012</span></li>
+                <li><span>USDC</span><span class="plus">+2.40</span></li>
+              </ul>
+            </div>
+            <div style="margin:0 0 6px;font-size:0.72rem;color:var(--text-dim);font-weight:600">交易明細</div>
+            <div class="card">
+              <div class="ix"><span class="n">1</span><div><div class="prog">Compute Budget</div><p class="desc">Set compute unit price</p></div></div>
+              <div class="ix"><span class="n">2</span><div><div class="prog">Jupiter</div><p class="desc">Route swap</p></div></div>
+            </div>
+          </div>
+          <div class="dock">
+            <button type="button" class="ghost">拒絕</button>
+            <button type="button" class="primary">核准</button>
+          </div>`;
+      }
+
+      function aiRow(level, { expanded = false } = {}) {
+        if (level === "running") {
+          return `
+            <div class="ai-block">
+              <div class="ai-row" data-level="running" role="status">
+                <span class="ai-mark"><span class="ai-spin" aria-hidden="true"></span></span>
+                <span class="ai-copy">
+                  <span class="ai-label">AI 分析中</span>
+                </span>
+              </div>
+            </div>`;
+        }
+        const r = REPORTS[level];
+        const icon =
+          level === "low" ? "i-shield" : level === "watch" ? "i-warn" : level === "high" ? "i-high" : "i-unk";
+        const panel = expanded
+          ? `<div class="ai-panel" id="ai-panel">
+              ${r.body
+                .map(
+                  ([k, v]) => `<p><span class="k">${k}</span>${v}</p>`,
+                )
+                .join("")}
+            </div>`
+          : "";
+        return `
+          <div class="ai-block">
+            <button type="button" class="ai-row" data-level="${level}" aria-expanded="${expanded}" aria-controls="ai-panel" id="ai-toggle">
+              <span class="ai-mark"></span>
+              <span class="ai-copy">
+                <span class="ai-label">${r.label}</span>
+                <span class="ai-sub">${r.sub}</span>
+              </span>
+              <span class="ai-chev" aria-hidden="true"></span>
+            </button>
+            ${panel}
+          </div>`;
+      }
+
+      function renderSign(level, expanded) {
+        phone.innerHTML = signScaffold(aiRow(level, { expanded }));
+        const refresh = phone.querySelector(".sim-head .icon-btn");
+        if (refresh) refresh.append(svg("i-refresh"));
+        const mark = phone.querySelector(".ai-mark");
+        const chev = phone.querySelector(".ai-chev");
+        if (level !== "running" && mark) {
+          const icon =
+            level === "low" ? "i-shield" : level === "watch" ? "i-warn" : level === "high" ? "i-high" : "i-unk";
+          mark.append(svg(icon));
+        }
+        if (chev) chev.append(svg("i-chev"));
+        const toggle = phone.querySelector("#ai-toggle");
+        if (toggle) {
+          toggle.addEventListener("click", () => {
+            const next = toggle.getAttribute("aria-expanded") !== "true";
+            renderScene(`sign-${level}`, next);
+          });
+        }
+      }
+
+      function renderSettingsHub() {
+        phone.innerHTML = `
+          <div class="top set-top">
+            <button type="button" class="icon-btn" title="返回" aria-label="返回"></button>
+            <h2>設定</h2>
+            <button type="button" class="icon-btn" title="選單" aria-label="選單"></button>
+          </div>
+          <div class="body">
+            <div class="set-list">
+              <div class="set-row"><span class="t"><span class="name">語言</span><span class="sum">繁體中文</span></span></div>
+              <div class="set-row"><span class="t"><span class="name">網路</span><span class="sum">Mainnet</span></span></div>
+              <div class="set-row"><span class="t"><span class="name">RPC</span><span class="sum">目前 · 自訂</span></span></div>
+              <div class="set-row"><span class="t"><span class="name">API keys</span><span class="sum">部分設定</span></span></div>
+              <div class="set-row" style="border-color:var(--accent)"><span class="t"><span class="name">交易 AI 分析</span><span class="sum">已開啟 · LiquidAI d1</span></span></div>
+              <div class="set-row"><span class="t"><span class="name">錢包密碼</span><span class="sum"></span></span></div>
+            </div>
+          </div>`;
+        const btns = phone.querySelectorAll(".icon-btn");
+        btns[0]?.append(svg("i-back"));
+        btns[1]?.append(svg("i-menu"));
+      }
+
+      const FAKE_OR_KEY = "sk-or-demo-not-a-real-key";
+      let orKey = FAKE_OR_KEY;
+      let orReveal = false;
+      let orEditing = false;
+      let orDraft = "";
+
+      function openRouterSecretHtml() {
+        const label = "OpenRouter API key";
+        if (orEditing || !orKey) {
+          const val = orEditing ? orDraft : "";
+          return `<div class="set-field">
+            <label>${label}</label>
+            <div class="secret-row">
+              <input type="text" id="or-draft" value="${val.replace(/"/g, "&quot;")}" placeholder="API key" autocomplete="off" spellcheck="false" />
+              <button type="button" class="icon-btn" id="or-confirm" title="確認" aria-label="確認"></button>
+            </div>
+          </div>`;
+        }
+        const display = orReveal ? orKey : "••••••";
+        return `<div class="set-field">
+          <label>${label}</label>
+          <div class="secret-row">
+            <div class="mask-pill${orReveal ? " revealed" : ""}">${display}</div>
+            <button type="button" class="icon-btn${orReveal ? " on" : ""}" id="or-reveal" title="${orReveal ? "遮罩" : "顯示"}" aria-label="${orReveal ? "遮罩" : "顯示"}"></button>
+            <button type="button" class="icon-btn muted" id="or-edit" title="編輯" aria-label="編輯"></button>
+            <button type="button" class="icon-btn muted danger" id="or-clear" title="清除" aria-label="清除"></button>
+          </div>
+        </div>`;
+      }
+
+      function bindOpenRouterSecret() {
+        const confirm = phone.querySelector("#or-confirm");
+        if (confirm) {
+          confirm.append(svg("i-check"));
+          confirm.addEventListener("click", () => {
+            const input = phone.querySelector("#or-draft");
+            orKey = (input?.value ?? "").trim();
+            orEditing = false;
+            orReveal = false;
+            orDraft = "";
+            renderSettingsAi();
+          });
+        }
+        const reveal = phone.querySelector("#or-reveal");
+        if (reveal) {
+          reveal.append(svg(orReveal ? "i-eye-off" : "i-eye"));
+          reveal.addEventListener("click", () => {
+            orReveal = !orReveal;
+            renderSettingsAi();
+          });
+        }
+        const edit = phone.querySelector("#or-edit");
+        if (edit) {
+          edit.append(svg("i-edit"));
+          edit.addEventListener("click", () => {
+            orEditing = true;
+            orDraft = orKey;
+            orReveal = false;
+            renderSettingsAi();
+          });
+        }
+        const clear = phone.querySelector("#or-clear");
+        if (clear) {
+          clear.append(svg("i-trash"));
+          clear.addEventListener("click", () => {
+            orKey = "";
+            orReveal = false;
+            orEditing = false;
+            orDraft = "";
+            renderSettingsAi();
+          });
+        }
+      }
+
+      function renderSettingsAi() {
+        phone.innerHTML = `
+          <div class="top set-top">
+            <button type="button" class="icon-btn" id="ai-back" title="返回" aria-label="返回"></button>
+            <h2>交易 AI 分析</h2>
+            <span style="width:34px"></span>
+          </div>
+          <div class="body">
+            <div class="toggle-row">
+              <span class="name">啟用</span>
+              <span class="switch" role="switch" aria-checked="true" title="開啟"></span>
+            </div>
+            ${openRouterSecretHtml()}
+            <div class="set-field">
+              <label for="or-model">報告模型</label>
+              <select id="or-model">
+                <option selected>DeepSeek Flash latest</option>
+                <option>DeepSeek Pro latest</option>
+                <option>Kimi K2 0905</option>
+                <option>GLM 5.3 Flash</option>
+              </select>
+            </div>
+            <div class="set-field">
+              <label for="or-dec">定級模型</label>
+              <select id="or-dec">
+                <option selected>LiquidAI d1</option>
+                <option>Nace.AI Drex v1.5</option>
+              </select>
+            </div>
+          </div>`;
+        phone.querySelector("#ai-back")?.append(svg("i-back"));
+        phone.querySelector("#ai-back")?.addEventListener("click", () => renderScene("settings-hub"));
+        bindOpenRouterSecret();
+      }
+
+      const CAPS = {
+        "sign-running": "簽署交易 · AI 運算中",
+        "sign-low": "簽署交易 · 等級低（收合）",
+        "sign-watch": "簽署交易 · 留意（展開報告）",
+        "sign-high": "簽署交易 · 等級高",
+        "sign-unknown": "簽署交易 · 未知",
+        "settings-hub": "Settings 樞紐 · 多一列「交易 AI 分析」",
+        "settings-ai": "Settings · AI（key 遮罩，同 Helius／Jupiter）",
+        "settings-ai-empty": "Settings · AI（key 空＋確認）",
+        "settings-ai-reveal": "Settings · AI（Reveal 全文）",
+      };
+
+      function renderScene(scene, forceExpanded) {
+        phoneCap.textContent = CAPS[scene] ?? scene;
+        chips.querySelectorAll(".chip").forEach((c) => {
+          c.classList.toggle("active", c.dataset.scene === scene);
+        });
+        if (scene === "settings-hub") return renderSettingsHub();
+        if (scene === "settings-ai" || scene === "settings-ai-empty" || scene === "settings-ai-reveal") {
+          if (scene === "settings-ai-empty") {
+            orKey = "";
+            orReveal = false;
+            orEditing = false;
+            orDraft = "";
+          } else if (scene === "settings-ai-reveal") {
+            orKey = FAKE_OR_KEY;
+            orReveal = true;
+            orEditing = false;
+          } else {
+            orKey = FAKE_OR_KEY;
+            orReveal = false;
+            orEditing = false;
+          }
+          return renderSettingsAi();
+        }
+        const level = scene.replace("sign-", "");
+        const expanded =
+          forceExpanded !== undefined ? forceExpanded : level === "watch";
+        renderSign(level, expanded);
+      }
+
+      chips.addEventListener("click", (e) => {
+        const btn = e.target.closest(".chip");
+        if (!btn) return;
+        renderScene(btn.dataset.scene);
+      });
+
+      renderScene("sign-running");
+    </script>
+  </body>
+</html>

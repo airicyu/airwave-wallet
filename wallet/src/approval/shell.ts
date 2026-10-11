@@ -25,6 +25,7 @@ import { accountVisualKind, paintAccountKindMark } from "../shared/account-kind-
 import type { AccountMeta } from "../shared/storage-keys";
 import { SESSION_UNLOCKED } from "../shared/storage-keys";
 import { renderSimulationNotice } from "./cards";
+import { attachTxAiToSignShell, stopTxAiWatch } from "./tx-ai-widget";
 import { copyPublicKeyWithFeedback } from "../shared/copy-pk-feedback";
 import { SEND_STATUS_AURORA_SVG } from "../shared/send-status-mark";
 import {
@@ -1175,6 +1176,7 @@ async function renderSignShell(
     cuApplyBusy = false;
     feeDetailsOpen = false;
     renderSignTransactionBody(null, true);
+    if (requestId) attachTxAiToSignShell(viewSign, requestId, shellLocale);
     void runSimulation();
   }
 
@@ -1429,6 +1431,7 @@ function wireShellEvents(): void {
 }
 
 export function disposeApprovalShell(): void {
+  stopTxAiWatch();
   if (shellDomBound) {
     viewSign.classList.remove("send-status-mode");
   }

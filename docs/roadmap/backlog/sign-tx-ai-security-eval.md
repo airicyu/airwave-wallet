@@ -1,9 +1,8 @@
 # 簽署交易：AI 安全評估 — backlog
 
-構想**尚未排程**，不是契約。曾排進 0.28.0（確定性旗標 → 一次 LLM 報告），**2026-10-10 撤排程**。錢包審批卡等到 [bubble-harness](./bubble-harness-runtime.md) 完成後**一次做完**（旗標下限 + 多輪唯讀分析），不要先出蓋印短文卡。
+構想已排進 **[0.30.0](../0.30.0/INDEX.md)**（`planned` 提案稿）。契約以該版 INDEX 為準。曾排進 0.28.0 後撤；不要再開 0.28.0 審批卡。
 
-> 2026-10-08 對齊方向；2026-10-10 POC 與撤排程。  
-> **不要**再開 0.28.0 實作審批卡，除非新的 INDEX 明文排程。
+> 2026-10-10：POC 多輪 harness；產品定案含 **manifest sandbox**、Decisions 定級、locale 報告、approve／reject 丟棄結果。
 
 ## 為何不先出「旗標＋一次短文」
 
@@ -23,7 +22,7 @@
 
 簽署審批已有模擬差額、靜態 common ix decode（[0.19.0](../0.19.0/INDEX.md)），**沒有**簽名前安全掃描卡。Durable nonce 獨立 notice 仍見 [簽署交易 Durable Nonce 提醒](./sign-tx-durable-nonce-alert.md)。
 
-POC：`test-web/sign-risk.html`（連線頁是 `test-web/index.html`）。可組樣本、貼 mainnet signature、經 Vite `/solana-rpc` 轉送 `getTransaction`／`getMultipleAccounts`、一次 OpenRouter chat。
+POC：`test-web/sign-risk.html`（連線頁是 `test-web/index.html`）。2026-10-10：已接 vendored bubble-harness 多輪 tool（decode／get_accounts／simulate／`rpc_get_*`）；手測覺得 **DeepSeek Flash latest**（`~deepseek/deepseek-flash-latest`）可取，頁面預設此模型。仍是研究 POC，**不是**產品路徑。
 
 ## 硬約束（任一未來版本仍有效）
 

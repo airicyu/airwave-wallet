@@ -16,8 +16,16 @@ import { pendingTimeoutHandlers } from "./send";
 import { registerWalletShellListeners } from "./shell";
 import * as session from "./session";
 import { ensureLocalMigrated } from "./storage";
+import { installTxAiAssess, maybeStartTxAi } from "./tx-ai/assess";
+import { handleTxAiBridge, isTxAiOffscreenSender } from "./tx-ai/bridge";
+import { setPendingAddedHook } from "./pending";
+import { TX_AI_BRIDGE_KIND, type TxAiBridgeMessage } from "../shared/tx-ai-protocol";
 
 registerWalletShellListeners();
+installTxAiAssess();
+setPendingAddedHook((id) => {
+  maybeStartTxAi(id);
+});
 void chrome.storage.session.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" }).catch(() => {});
 void ensureLocalMigrated();
 
@@ -63,6 +71,20 @@ async function dispatch(
   }
   return handleWalletCommand(req, sender);
 }
+
+chrome.runtime.onMessage.addListener((message: TxAiBridgeMessage, sender, sendResponse) => {
+  if (message?.kind !== TX_AI_BRIDGE_KIND) return false;
+  if (!isTxAiOffscreenSender(sender)) {
+    sendResponse({ kind: TX_AI_BRIDGE_KIND, op: "assess.fail", message: "rejected" });
+    return true;
+  }
+  void handleTxAiBridge(message)
+    .then(sendResponse)
+    .catch(() => {
+      sendResponse({ kind: TX_AI_BRIDGE_KIND, op: "assess.fail", message: "rejected" });
+    });
+  return true;
+});
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.kind !== "airwave-ext-req") return false;

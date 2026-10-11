@@ -10,5 +10,6 @@
     "noEmit": true,
     "types": ["chrome", "react", "react-dom"],
   },
-  "include": ["src", "src/vite-env.d.ts"]
+  "include": ["src", "src/vite-env.d.ts"],
+  "exclude": ["src/**/*.test.ts"]
 }

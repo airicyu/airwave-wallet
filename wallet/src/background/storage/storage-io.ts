@@ -17,6 +17,7 @@ import {
   type UiLocale,
 } from "../../shared/storage-keys";
 import { normalizeDefaultCuPrice } from "../simulate";
+import { normalizeDecisionsModel, normalizeReportModel } from "../../shared/tx-ai";
 import type { VaultBlob } from "../../shared/crypto-vault";
 
 export async function readSettings(): Promise<Settings> {
@@ -66,6 +67,10 @@ export function normalizeSettings(raw: Partial<Settings> | undefined): Settings 
     rpcUrl: effectiveRpcUrl(cluster, rpcByCluster[cluster]),
     heliusApiUrl: typeof raw?.heliusApiUrl === "string" ? raw.heliusApiUrl : "",
     jupiterApiKey: typeof raw?.jupiterApiKey === "string" ? raw.jupiterApiKey : "",
+    openRouterApiKey: typeof raw?.openRouterApiKey === "string" ? raw.openRouterApiKey : "",
+    openRouterModel: normalizeReportModel(raw?.openRouterModel),
+    openRouterDecisionsModel: normalizeDecisionsModel(raw?.openRouterDecisionsModel),
+    txAiAnalysisEnabled: raw?.txAiAnalysisEnabled === true,
     defaultCuPrice: normalizeDefaultCuPrice(raw?.defaultCuPrice),
     locale: normalizeUiLocale(raw?.locale),
     shell: normalizeShellMode(raw?.shell),

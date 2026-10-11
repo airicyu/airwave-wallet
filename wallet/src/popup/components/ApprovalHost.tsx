@@ -29,11 +29,6 @@ export function buildApprovalRootHtml(t: (key: MessageKey) => string): string {
               </section>
               <div id="appr-view-sign" class="approval-sign-shell" hidden>
                 <div class="approval-sign-scroll">
-                  <div class="site-row">
-                    <span class="site-label">${t("approval.site")}</span>
-                    <span class="site-chip" id="appr-sign-origin"></span>
-                  </div>
-                  <h2 class="page-title" id="appr-sign-page-title">${t("approval.signTx")}</h2>
                   <div class="bar-wallet-group compact">
                     <div class="bar-wallet static-wallet">
                       <span class="avatar" id="appr-sign-avatar" aria-hidden="true">A</span>
@@ -46,6 +41,11 @@ export function buildApprovalRootHtml(t: (key: MessageKey) => string): string {
                       </button>
                     </div>
                   </div>
+                  <div class="site-row">
+                    <span class="site-label">${t("approval.site")}</span>
+                    <span class="site-chip" id="appr-sign-origin"></span>
+                  </div>
+                  <h2 class="page-title" id="appr-sign-page-title">${t("approval.signTx")}</h2>
                   <div id="appr-sign-body"></div>
                   <p id="appr-sign-error" class="inline-error" hidden></p>
                 </div>

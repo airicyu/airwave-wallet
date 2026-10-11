@@ -607,6 +607,41 @@ h1.first-run-name,
   width: 100%;
 }
 
+.approval-sign-scroll .bar-wallet-group {
+  width: max-content;
+  max-width: 100%;
+  margin: 0 0 10px;
+}
+
+.approval-sign-scroll .site-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.approval-sign-scroll .site-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.approval-sign-scroll .site-chip {
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke-soft);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .approval-root {
   flex: 1;
   min-height: 0;

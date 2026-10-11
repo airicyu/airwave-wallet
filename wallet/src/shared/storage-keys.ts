@@ -3,6 +3,7 @@
  * Does not read or write storage records (see background storage-io).
  */
 import { resolveHeliusApiTarget } from "./helius-api-target";
+import { DEFAULT_DECISIONS_MODEL, DEFAULT_REPORT_MODEL } from "./tx-ai";
 export const STORAGE = {
   settings: "airwave.settings.v1",
   accounts: "airwave.accounts.v1",
@@ -40,6 +41,11 @@ export type Settings = {
   rpcByCluster: Record<Cluster, ClusterRpcConfig>;
   heliusApiUrl: string;
   jupiterApiKey: string;
+  /** OpenRouter key for transaction AI. Omitted from public settings. */
+  openRouterApiKey: string;
+  openRouterModel: string;
+  openRouterDecisionsModel: string;
+  txAiAnalysisEnabled: boolean;
   /** micro-lamports per CU; default CU price for unsigned signTransaction. */
   defaultCuPrice: number;
   locale: UiLocale;
@@ -89,6 +95,10 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   heliusApiUrl: "",
   jupiterApiKey: "",
+  openRouterApiKey: "",
+  openRouterModel: DEFAULT_REPORT_MODEL,
+  openRouterDecisionsModel: DEFAULT_DECISIONS_MODEL,
+  txAiAnalysisEnabled: false,
   defaultCuPrice: 25_000,
   locale: "zh-Hant",
   shell: "window",
@@ -132,17 +142,19 @@ export function customRpcForCluster(url: string, cluster: Cluster): string {
   return t;
 }
 
-export type PublicSettings = Omit<Settings, "jupiterApiKey" | "heliusApiUrl"> & {
+export type PublicSettings = Omit<Settings, "jupiterApiKey" | "heliusApiUrl" | "openRouterApiKey"> & {
   jupiterConfigured: boolean;
   heliusConfigured: boolean;
+  openRouterConfigured: boolean;
 };
 
 export function toPublicSettings(settings: Settings): PublicSettings {
-  const { jupiterApiKey, heliusApiUrl, ...rest } = settings;
+  const { jupiterApiKey, heliusApiUrl, openRouterApiKey, ...rest } = settings;
   return {
     ...rest,
     jupiterConfigured: jupiterApiKey.trim().length > 0,
     heliusConfigured: resolveHeliusApiTarget(heliusApiUrl) != null,
+    openRouterConfigured: openRouterApiKey.trim().length > 0,
   };
 }
 

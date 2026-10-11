@@ -12,7 +12,7 @@
 
 - 主表面是 Chrome **工具列 action popup**（`default_popup`，寬約 **422px**、高約 **600px**）或 **Chrome 側欄**（內容 **寬高 100%** 跟面板）。**不要**用 `chrome.windows.create` 另開錢包獨立窗當主殼。審批 popout（網站簽名獨立窗）仍約 **420×640**，不算主表面。所有列、按鈕、輸入須在當下主表面寬度內可掃、可點；側欄拉寬時內容跟著拉滿，**禁止** 422px 置中固定欄。
 - 一屏只做一件事。第一層是 **選項列表**（Accounts 的 Add、Settings 的分區）；選了再進 **操作頁或展開列**。禁止把產生／匯入／觀察／Combined 的表單全攤在同一頁。
-- 頂欄沿用方案 A：Home 為 widget；子頁為 **Back + 標題 + Menu**。Bottom Token／Activity **只**在 Home。Devnet 時在頂欄**下方**一條橙底狀態列寫 `Devnet`（Mainnet 不標）；不要把徽章塞進帳戶 pill 旁。Home 頂欄圖示（切到側欄、關閉側欄、選單）預設無底框，hover／focus 才顯底。側欄那顆是關側欄，不程式化打開工具列 popup。鎖定錢包在選單內，不在 Home 頂欄放鎖圖示。選單項圖示在左、文字在右；選單觸發為直向三點，不是三橫。
+- 頂欄沿用方案 A：Home 為 widget；子頁為 **Back + 標題 + Menu**。**簽署確認例外：** 錢包送出確認、側欄／popup 的 dApp 審批 overlay、審批 popout **沒有** Home 頂欄；帳戶 pill 在內容區 **第一列、hug 寬、靠左**；站點為標籤＋值同一列靠左。Bottom Token／Activity **只**在 Home。Devnet 時在頂欄**下方**一條橙底狀態列寫 `Devnet`（Mainnet 不標）；不要把徽章塞進帳戶 pill 旁。Home 頂欄圖示（切到側欄、關閉側欄、選單）預設無底框，hover／focus 才顯底。側欄那顆是關側欄，不程式化打開工具列 popup。鎖定錢包在選單內，不在 Home 頂欄放鎖圖示。選單項圖示在左、文字在右；選單觸發為直向三點，不是三橫。
 - 色票與圓角對齊 [`design-demos/wallet-030-ui-concepts.html`](design-demos/wallet-030-ui-concepts.html) 的 CSS 變數（`--bg`、`--fill`、`--accent` 等）。不要另開一套高對比主題。
 - **頁殼（popup 與 popout 每一個有頂欄／殼底主行動的新 SCREEN 都要過這關，不是某一版特例）：**
   1. 整窗 **直欄 flex**，`html`／`body`／頁根 **高度 100%、`overflow: hidden`**。禁止整份文件跟著內容長高、讓視窗捲軸捲走頂欄與底欄。
@@ -22,6 +22,7 @@
   5. **禁止**用 `position: fixed`／`absolute`／`sticky` 冒充頁殼。沒有頁級主行動的選項列表不畫底列。
 - **鎖定／解鎖全屏：** 無頂欄、無殼底 dock。垂直置中：產品圖（`public/icon128.png`，64px 圓角）＋置中標題 Airwave＋鎖定說明（catalog，如 `unlock.lead`）＋全寬密碼欄＋內容區主按鈕（catalog，如 `unlock.submit`）。首次建立密碼用同一套置中（無鎖定說明）。關於頁在版本列上方放 40px 同一張圖。Home 頂欄與簽署主畫面不放產品圖。解鎖標題與送出／收回租金「確認中」標題 **不要**加 `letter-spacing: 0.02em`（漢字會被拉開）。背景為中檔 Solana 北極光（左下 `#9945FF` 11%、右上 `#14F195` 8%、中下 `#5B8CFF` 7% 光斑），**不要**正中 `--accent` 光。欄位 `--fill` 底、focus `--accent` 邊框且 `outline: none`。主按鈕 `flex: none; width: 100%`，禁止沿用殼底批准的 `flex: 1`。錢包密碼用類 B 遮罩（`type="text"` + `-webkit-text-security`）。popup／popout／審批鎖定同一套。概念稿：[`design-demos/unlock-aurora-ux.html`](design-demos/unlock-aurora-ux.html)「中檔」。
 - **錢包送出確認中／已確認：** **禁止**帶邊框大卡、也**不要**解鎖頁那種 radial 漸變底。確認中：置中 112px Solana 經典色 dash-ring（頭 `#14F195`、中 `#5B8CFF`、尾 `#9945FF`），dash 從 0 伸長再被 offset 抽走、重來（旋轉 4s、伸縮 2.4s）；標題與說明走 catalog（如 `approval.confirming`、`approval.waitingChain`）。已確認：同一位置換成 `--ok` 勾＋catalog 已確認文案＋可選簽名前 4…後 4，**停留 1s** 再 auto-exit。語意仍是同一畫面轉換。概念稿：[`design-demos/send-status-spinner-ux.html`](design-demos/send-status-spinner-ux.html) 右側。
+- **先定組件層次，再掛碼。** 一頁裡有幾塊、誰是誰的孩子、生命週期跟哪一層走、誰有權拆誰的 DOM——這是設計，不是實作時順便決定。掛之前問：這塊活在「這一頁／這次請求」，還是活在「這一輪重繪」？父層重畫時，子層該更新內容，還是根本不該被拆掉？沒想清楚就往現成會重畫的函式裡塞，樹是碰巧長出來的。
 
 ---
 
@@ -87,6 +88,7 @@ Icon 用現有 stroke SVG 風格（約 16–18px、2px stroke），按鈕熱區�
 - 欄位只要 **標籤 + 輸入**；placeholder 最多幾個字（「留空＝不用」）。欄位下方不要再跟一段 hint。
 - 區塊標題只要名詞（「RPC」「Helius」），不要括號裡的教學（「選填」「清單互不共用」）。
 - 錯誤才用短句；空狀態才解釋下一步。平時畫面保持安靜。
+- **用 UX 說話，不要 NPC 旁白。** 語意若已由版面成立，禁止再加一句解釋給使用者聽。例：分析／模擬進行中、批准與拒絕仍可按 → 使用者已能直覺「這不擋」；不要再寫「可不候，仍可核准或拒絕」。狀態給 spinner／短標，主行動給按鈕。多餘的副標是 noise。垂直空間貴，不為無意義的說明換行。
 - **RPC／Helius 限流（429、Kit `#8100002` 等）：** 用底部 **toast**（沿用 `#error`／`.toast-error`，約 4 秒自動消失、可點關閉），文案走 catalog（如 `error.rpcRateLimit`）。**禁止**在持倉列表下顯示 `npx @solana/errors decode` 或整段 base64。有快取持倉時列表照常顯示。概念稿：[`design-demos/rpc-rate-limit-toast-ux.html`](design-demos/rpc-rate-limit-toast-ux.html)。
 
 ---

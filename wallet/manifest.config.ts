@@ -19,7 +19,14 @@ export default defineManifest({
     service_worker: "src/background/index.ts",
     type: "module",
   },
-  permissions: ["storage", "tabs", "sidePanel"],
+  permissions: ["storage", "tabs", "sidePanel", "offscreen"],
+  sandbox: {
+    pages: ["src/sandbox/index.html"],
+  },
+  content_security_policy: {
+    extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'",
+    sandbox: "sandbox allow-scripts; script-src 'self'; object-src 'none'; connect-src 'none'",
+  },
   side_panel: {
     default_path: "src/sidepanel/index.html",
   },

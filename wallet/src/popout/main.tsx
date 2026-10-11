@@ -4,6 +4,7 @@
  */
 import { createRoot } from "react-dom/client";
 import { mountApprovalShell } from "../approval/shell";
+import "../approval/tx-ai.css";
 import { ConnectPage } from "../flow/ConnectPage";
 import { brandIconUrl } from "../shared/brand-icon";
 import type { PendingRecord } from "../shared/commands";

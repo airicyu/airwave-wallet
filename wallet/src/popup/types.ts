@@ -48,6 +48,7 @@ export type View =
   | "settings-network"
   | "settings-rpc"
   | "settings-keys"
+  | "settings-tx-ai"
   | "settings-cu-price"
   | "settings-password"
   | "about"
@@ -73,6 +74,7 @@ export const SUBPAGE_TITLE_KEYS: Record<Exclude<View, "home-token" | "home-activ
   "settings-network": "nav.settingsNetwork",
   "settings-rpc": "nav.settingsRpc",
   "settings-keys": "nav.settingsKeys",
+  "settings-tx-ai": "nav.settingsTxAi",
   "settings-cu-price": "nav.settingsCuPrice",
   "settings-password": "nav.settingsPassword",
   about: "nav.about",

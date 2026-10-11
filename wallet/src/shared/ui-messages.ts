@@ -265,6 +265,136 @@ const messages = {
     "zh-Hans": "未设定",
     "en": "Not set",
   },
+  "settings.hub.txAi": {
+    "zh-Hant": "交易 AI 分析",
+    "zh-Hans": "交易 AI 分析",
+    "en": "Transaction AI",
+  },
+  "nav.settingsTxAi": {
+    "zh-Hant": "交易 AI 分析",
+    "zh-Hans": "交易 AI 分析",
+    "en": "Transaction AI",
+  },
+  "settings.txAiAnalysis.enable": {
+    "zh-Hant": "啟用",
+    "zh-Hans": "启用",
+    "en": "On",
+  },
+  "settings.txAiAnalysis.off": {
+    "zh-Hant": "關閉",
+    "zh-Hans": "关闭",
+    "en": "Off",
+  },
+  "settings.txAiAnalysis.onSummary": {
+    "zh-Hant": "已開啟 · {model}",
+    "zh-Hans": "已开启 · {model}",
+    "en": "On · {model}",
+  },
+  "settings.openRouter.apiKey": {
+    "zh-Hant": "OpenRouter API key",
+    "zh-Hans": "OpenRouter API key",
+    "en": "OpenRouter API key",
+  },
+  "settings.openRouter.model": {
+    "zh-Hant": "報告模型",
+    "zh-Hans": "报告模型",
+    "en": "Report model",
+  },
+  "settings.openRouter.model.deepseekFlash": {
+    "zh-Hant": "DeepSeek Flash latest",
+    "zh-Hans": "DeepSeek Flash latest",
+    "en": "DeepSeek Flash latest",
+  },
+  "settings.openRouter.model.deepseekPro": {
+    "zh-Hant": "DeepSeek Pro latest",
+    "zh-Hans": "DeepSeek Pro latest",
+    "en": "DeepSeek Pro latest",
+  },
+  "settings.openRouter.model.kimi": {
+    "zh-Hant": "Kimi K2 0905",
+    "zh-Hans": "Kimi K2 0905",
+    "en": "Kimi K2 0905",
+  },
+  "settings.openRouter.model.glm": {
+    "zh-Hant": "GLM 5.3 Flash",
+    "zh-Hans": "GLM 5.3 Flash",
+    "en": "GLM 5.3 Flash",
+  },
+  "settings.openRouter.decisionsModel": {
+    "zh-Hant": "定級模型",
+    "zh-Hans": "定级模型",
+    "en": "Grading model",
+  },
+  "settings.openRouter.decisionsModel.d1": {
+    "zh-Hant": "LiquidAI d1",
+    "zh-Hans": "LiquidAI d1",
+    "en": "LiquidAI d1",
+  },
+  "settings.openRouter.decisionsModel.drex": {
+    "zh-Hant": "Nace.AI Drex v1.5",
+    "zh-Hans": "Nace.AI Drex v1.5",
+    "en": "Nace.AI Drex v1.5",
+  },
+  "approval.txAi.running": {
+    "zh-Hant": "AI 分析中",
+    "zh-Hans": "AI 分析中",
+    "en": "Analyzing",
+  },
+  "approval.txAi.level.low": {
+    "zh-Hant": "等級低",
+    "zh-Hans": "等级低",
+    "en": "Low",
+  },
+  "approval.txAi.level.watch": {
+    "zh-Hant": "留意",
+    "zh-Hans": "留意",
+    "en": "Watch",
+  },
+  "approval.txAi.level.high": {
+    "zh-Hant": "等級高",
+    "zh-Hans": "等级高",
+    "en": "High",
+  },
+  "approval.txAi.level.unknown": {
+    "zh-Hant": "尚無法判定",
+    "zh-Hans": "尚无法判定",
+    "en": "Unknown",
+  },
+  "approval.txAi.levelHint.low": {
+    "zh-Hant": "未見權限外送",
+    "zh-Hans": "未见权限外送",
+    "en": "No privilege handoff seen",
+  },
+  "approval.txAi.levelHint.watch": {
+    "zh-Hant": "有權限變更，請看報告",
+    "zh-Hans": "有权限变更，请看报告",
+    "en": "Privilege change — read the report",
+  },
+  "approval.txAi.levelHint.high": {
+    "zh-Hant": "帳戶控制可能外流",
+    "zh-Hans": "账户控制可能外流",
+    "en": "Account control may leave you",
+  },
+  "approval.txAi.levelHint.unknown": {
+    "zh-Hant": "資料不足或評估失敗",
+    "zh-Hans": "资料不足或评估失败",
+    "en": "Not enough data, or grading failed",
+  },
+  "approval.txAi.openReport": {
+    "zh-Hant": "開啟分析報告",
+    "zh-Hans": "开启分析报告",
+    "en": "Open analysis",
+  },
+  "approval.txAi.closeReport": {
+    "zh-Hant": "關閉分析報告",
+    "zh-Hans": "关闭分析报告",
+    "en": "Close analysis",
+  },
+  "approval.txAi.failed": {
+    "zh-Hant": "分析沒有完成",
+    "zh-Hans": "分析没有完成",
+    "en": "Analysis did not finish",
+  },
   "settings.network.aria": {
     "zh-Hant": "目前網路",
     "zh-Hans": "当前网络",

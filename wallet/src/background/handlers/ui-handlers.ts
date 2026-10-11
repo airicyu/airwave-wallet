@@ -13,6 +13,7 @@ import { jsonRpcMissing } from "../../shared/storage-keys";
 import { getExposedPublicKey } from "../../shared/accounts";
 import { finishConnect, finishSignMessage, finishSignTransaction } from "../pending";
 import { getPending, unbindPopoutByRequest } from "../pending";
+import { getTxAiAssessState, discardTxAi } from "../tx-ai/runtime";
 import { readAccounts, readSettings } from "../storage";
 import { respond } from "../messaging";
 import { broadcastWalletSendSettled, walletSendNotify } from "../send";
@@ -42,7 +43,7 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
       kind: "airwave-ext-res",
       requestId: req.requestId,
       ok: true,
-      result: p,
+      result: { ...p, txAi: getTxAiAssessState(requestId) ?? { status: "idle" } },
     });
   }
 
@@ -105,6 +106,7 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
         });
       }
       const settings = await readSettings();
+      discardTxAi(requestId);
       void runWalletSendAfterApprove(requestId, settings.rpcUrl, kp, walletSendNotify);
       return respond({
         kind: "airwave-ext-res",
@@ -160,6 +162,7 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
         });
       }
       const settings = await readSettings();
+      discardTxAi(requestId);
       void runWalletSendAfterApprove(requestId, settings.rpcUrl, kp, walletSendNotify);
       return respond({
         kind: "airwave-ext-res",

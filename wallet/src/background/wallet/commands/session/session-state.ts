@@ -49,6 +49,7 @@ export async function handleReadIntegrationSecrets(req: ExtensionRequest): Promi
     result: {
       jupiterApiKey: settings.jupiterApiKey,
       heliusApiUrl: settings.heliusApiUrl,
+      openRouterApiKey: settings.openRouterApiKey,
     },
   });
 }

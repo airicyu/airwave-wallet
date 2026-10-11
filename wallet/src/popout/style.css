@@ -239,7 +239,10 @@ input.wallet-pwd-masked {
   align-items: center;
   gap: 2px;
   min-width: 0;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 0 10px;
 }
 
 .bar-wallet {
@@ -351,9 +354,10 @@ input.wallet-pwd-masked {
 
 .site-row {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 6px;
+  justify-content: flex-start;
+  gap: 8px;
   margin-bottom: 16px;
 }
 
