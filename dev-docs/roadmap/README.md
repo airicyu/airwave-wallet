@@ -46,6 +46,7 @@
 | [0.31.0](./0.31.0/INDEX.md) | shipped | Vite 8／plugin-react 5／TypeScript 7；service worker 監聽不在擴充頁執行 |
 | [0.32.0](./0.32.0/INDEX.md) | shipped | 審批模擬用交易 blockhash；每 3 秒只更新預期變動；交易費本地計算；站點置中可複製；AI 單列卡與逾時 UX |
 | [0.33.0](./0.33.0/INDEX.md) | shipped | 預期變動列：Jupiter 圖示／symbol；固定信任盾欄；anti-spoof 主標規則 |
+| [0.34.0](./0.34.0/INDEX.md) | shipped | 簽署 AI：preflight 進 prompt；OpenRouter 僅移除 decode／simulate；保留 get_accounts 等；AI 不理會審批 blockhash 失效 |
 
 **版本號：** `x.y.z` 的 **patch**（例如 **0.3.1**）留給該 minor 的 **bugfix**，不排新功能。新功能走下一個 **minor**（0.3.0 → 0.4.0 → 0.5.0）。
 

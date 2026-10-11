@@ -61,7 +61,9 @@ The transaction approval page (including in-wallet send confirm):
 
 Settings → AI settings: add an [OpenRouter](https://openrouter.ai/) API key and turn it on. Signing a transaction then starts one read-only assess.
 
+- Before the model runs, the service worker preflights decode, approval-style simulate (the transaction’s own blockhash), and token-source accounts into the first prompt. The model cannot call `decode_message` or `simulate` again; it can still use `get_accounts`, `rpc_get_multiple_accounts`, and other read-only RPC tools for follow-up.
 - The loop runs in a **manifest sandbox** (no `chrome.*`, no network). The service worker performs model and RPC calls.
+- Approval **expected changes** may show `BlockhashNotFound` when the transaction’s blockhash expired; **transaction AI keeps running** and the report stays available (read-only insight; approve still follows the simulation card).
 - A single **AI analysis** row sits under the approval title. When done it shows a risk index; tap to open the report overlay.
 - It never blocks approve, does not rerun on simulation refresh, and does not persist the report to storage.
 - Current architecture: [research/extension-runtime-and-tx-ai.en.html](../dev-docs/research/extension-runtime-and-tx-ai.en.html) ([中文](../dev-docs/research/extension-runtime-and-tx-ai.html)).

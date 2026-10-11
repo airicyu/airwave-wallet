@@ -7,6 +7,8 @@ import { TX_AI_BRIDGE_KIND, type TxAiBridgeMessage, type TxAiChatMessage } from 
 import { normalizeReportModel } from "../../shared/tx-ai";
 import { readSettings } from "../storage";
 import { resolveTxAiLoop, rememberDecodePubkeys } from "./assess";
+import { pubkeysFromTxAiDecode } from "./preflight";
+import type { TxAiDecode } from "./local-flags";
 import { executeHostTool } from "./host-tools";
 import { openRouterChat } from "./openrouter";
 import { activeTxAiRequestId, getTxAiSession } from "./runtime";
@@ -16,8 +18,11 @@ export function isTxAiOffscreenSender(sender: chrome.runtime.MessageSender): boo
   return (sender.url ?? "").includes("offscreen");
 }
 
+/** Preflight already covers decode + simulate; keep account tools for follow-up reads. */
+const PREFLIGHT_HOST_TOOLS = new Set(["decode_message", "simulate"]);
+
 function chatTools(): unknown[] {
-  return SANDBOX_TOOL_SCHEMAS.map((tool) => ({
+  return SANDBOX_TOOL_SCHEMAS.filter((tool) => !PREFLIGHT_HOST_TOOLS.has(tool.name)).map((tool) => ({
     type: "function",
     function: {
       name: tool.name,
@@ -66,17 +71,11 @@ function sanitizeMessages(raw: unknown): TxAiChatMessage[] | null {
   return out;
 }
 
-function pubkeysFromDecode(body: unknown): string[] {
+function pubkeysFromDecodeBody(body: unknown): string[] {
   if (!body || typeof body !== "object") return [];
-  const instructions = (body as { instructions?: { accounts?: { pubkey?: string }[] }[] }).instructions;
+  const instructions = (body as { instructions?: TxAiDecode["instructions"] }).instructions;
   if (!Array.isArray(instructions)) return [];
-  const keys = new Set<string>();
-  for (const ix of instructions) {
-    for (const account of ix.accounts ?? []) {
-      if (typeof account.pubkey === "string" && account.pubkey !== "unresolved") keys.add(account.pubkey);
-    }
-  }
-  return [...keys];
+  return pubkeysFromTxAiDecode({ feePayer: "", instructions, flags: [], tokenSources: [] });
 }
 
 export async function handleTxAiBridge(message: TxAiBridgeMessage): Promise<TxAiBridgeMessage> {
@@ -104,9 +103,12 @@ export async function handleTxAiBridge(message: TxAiBridgeMessage): Promise<TxAi
       snapshot: session.snapshot,
       rpcUrl: (await readSettings()).rpcUrl,
       decodedPubkeys: session.decodedPubkeys,
+      preflightManifest: session.preflightManifest,
+      preflightFeePayer: session.preflightFeePayer,
+      preflightFeePayerBalanceLamports: session.preflightFeePayerBalanceLamports,
       signal: session.abort.signal,
     });
-    if (name === "decode_message") rememberDecodePubkeys(requestId, pubkeysFromDecode(body));
+    if (name === "decode_message") rememberDecodePubkeys(requestId, pubkeysFromDecodeBody(body));
     return { kind: TX_AI_BRIDGE_KIND, op: "tool.result", correlationId: message.correlationId, ok: true, body };
   }
   if (message.op === "llm.chat") {

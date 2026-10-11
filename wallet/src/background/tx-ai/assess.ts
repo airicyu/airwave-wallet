@@ -10,7 +10,7 @@ import { getPending } from "../pending/pending";
 import { getWorkingTx } from "../pending/sign-tx-pending-state";
 import { readSettings } from "../storage";
 import { stripWireSignatures } from "../../shared/tx-wire";
-import { enrichFlags } from "./host-tools";
+import { formatTxAiPreflightForPrompt, pubkeysFromTxAiDecode, runTxAiPreflight } from "./preflight";
 import { gradeReport } from "./openrouter";
 import {
   activeTxAiRequestId,
@@ -120,11 +120,27 @@ async function pump(): Promise<void> {
 async function runSession(session: TxAiSession): Promise<void> {
   const { requestId } = session;
   setTxAiState(requestId, { status: "running", startedAt: Date.now() });
-  const wall = setTimeout(() => session.abort.abort(), TX_AI_WALL_MS);
+  let wall: ReturnType<typeof setTimeout> | undefined;
   try {
-    await ensureOffscreen();
     const settings = await readSettings();
-    const prompt = buildAssessPrompt(settings.locale, session.kind);
+    const preflight = await runTxAiPreflight(session.snapshot, settings.rpcUrl, session.abort.signal);
+    if (!getTxAiSession(requestId)) return;
+    session.preflightEnriched = preflight.enriched;
+    const manifestList = preflight.enriched.accountsRead?.preflightPubkeys ?? [];
+    session.preflightManifest = manifestList.length ? new Set(manifestList) : undefined;
+    session.preflightFeePayer = preflight.enriched.decode.feePayer || undefined;
+    session.preflightFeePayerBalanceLamports = preflight.enriched.accountsRead?.feePayerBalanceLamports;
+    noteDecodedPubkeys(
+      requestId,
+      manifestList.length > 0 ? manifestList : pubkeysFromTxAiDecode(preflight.enriched.decode),
+    );
+    await ensureOffscreen();
+    const prompt = buildAssessPrompt(
+      settings.locale,
+      session.kind,
+      formatTxAiPreflightForPrompt(preflight),
+    );
+    wall = setTimeout(() => session.abort.abort(), TX_AI_WALL_MS);
     const started = await sendToOffscreen(
       {
         kind: TX_AI_BRIDGE_KIND,
@@ -137,6 +153,10 @@ async function runSession(session: TxAiSession): Promise<void> {
     );
     if (!started) throw new Error("offscreen");
     const loop = await waitForLoop(session);
+    if (wall !== undefined) {
+      clearTimeout(wall);
+      wall = undefined;
+    }
     if (!getTxAiSession(requestId)) return;
     if (!loop.ok) {
       setTxAiState(requestId, { status: "error", message: loop.message });
@@ -147,7 +167,11 @@ async function runSession(session: TxAiSession): Promise<void> {
       setTxAiState(requestId, { status: "error", message: "empty" });
       return;
     }
-    const enriched = await enrichFlags(session.snapshot, settings.rpcUrl, session.abort.signal);
+    const enriched = session.preflightEnriched;
+    if (!enriched) {
+      setTxAiState(requestId, { status: "error", message: "assess_failed" });
+      return;
+    }
     if (!getTxAiSession(requestId)) return;
     const chainBlocked = !settings.rpcUrl.trim() || enriched.chainRead === "failed" || session.abort.signal.aborted;
     if (chainBlocked) {
@@ -183,7 +207,7 @@ async function runSession(session: TxAiSession): Promise<void> {
       message: session.abort.signal.aborted ? "timeout" : "assess_failed",
     });
   } finally {
-    clearTimeout(wall);
+    if (wall !== undefined) clearTimeout(wall);
     releaseActiveTxAi(requestId);
     await sendToOffscreen({ kind: TX_AI_BRIDGE_KIND, op: "assess.abort", requestId });
     if (!txAiBusy()) await closeOffscreenIfIdle();

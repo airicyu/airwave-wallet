@@ -6,10 +6,19 @@ import { decodeWireTransaction } from "../../shared/tx-wire";
 import { simulateTransactionRpc } from "../simulate/simulate-rpc";
 import { SimDeadline } from "../simulate/sim-deadline";
 import { hostToolVerdict, mentionsBannedRpc, type TxAiFlag } from "../../shared/tx-ai";
-import { applyOwnerMismatch, decodeWireTransaction as decodeForFlags, type TxAiDecode } from "./local-flags";
+import {
+  applyOwnerMismatch,
+  decodeWireTransaction as decodeForFlags,
+  resolvedAccountPubkeysForPrefetch,
+  type TxAiDecode,
+} from "./local-flags";
+import { fetchPrefetchAccounts, lamportsFromBalanceRpc, PREFETCH_ACCOUNTS_MAX } from "./prefetch-accounts";
 import { rpcRead, tokenOwnerFromParsedAccount } from "./rpc-read";
 
 const PUBKEY_CAP = 20;
+
+const PREFETCH_DUPLICATE_NOTE =
+  "Already in preflight getMultipleAccounts; use the Preflight accounts section in the user message.";
 
 function asRecord(args: unknown): Record<string, unknown> {
   if (args && typeof args === "object" && !Array.isArray(args)) return args as Record<string, unknown>;
@@ -33,11 +42,37 @@ function asPubkeys(value: unknown): string[] | null {
 
 export type ChainRead = "ok" | "failed" | "skipped";
 
+export type PreflightAccountsBlock = {
+  preflightPubkeys: string[];
+  pubkeys: string[];
+  accounts: unknown[];
+  feePayerBalanceLamports?: string;
+};
+
+function splitPrefetchDuplicates(
+  requested: string[],
+  manifest: ReadonlySet<string> | undefined,
+): { novel: string[]; skipped: string[] } {
+  if (!manifest?.size) return { novel: requested, skipped: [] };
+  const novel: string[] = [];
+  const skipped: string[] = [];
+  for (const pubkey of requested) {
+    if (manifest.has(pubkey)) skipped.push(pubkey);
+    else novel.push(pubkey);
+  }
+  return { novel, skipped };
+}
+
 export async function enrichFlags(
   bytes: Uint8Array,
   rpcUrl: string,
   signal?: AbortSignal,
-): Promise<{ decode: TxAiDecode; flags: TxAiFlag[]; chainRead: ChainRead }> {
+): Promise<{
+  decode: TxAiDecode;
+  flags: TxAiFlag[];
+  chainRead: ChainRead;
+  accountsRead?: PreflightAccountsBlock;
+}> {
   let decode: TxAiDecode;
   try {
     decode = decodeForFlags(bytes);
@@ -48,20 +83,40 @@ export async function enrichFlags(
       chainRead: "skipped",
     };
   }
-  const sources = [...new Set(decode.tokenSources.map((row) => row.source))].slice(0, PUBKEY_CAP);
-  if (!rpcUrl.trim() || sources.length === 0) return { decode, flags: decode.flags, chainRead: "skipped" };
-  const read = await rpcRead(rpcUrl, "getMultipleAccounts", [sources, { encoding: "jsonParsed" }], signal);
-  if (!read || typeof read !== "object" || !("result" in read)) {
-    return { decode, flags: decode.flags, chainRead: "failed" };
+  const prefetchPubkeys = resolvedAccountPubkeysForPrefetch(decode, PREFETCH_ACCOUNTS_MAX);
+  let feePayerBalanceLamports: string | undefined;
+  if (rpcUrl.trim() && decode.feePayer && decode.feePayer !== "unresolved") {
+    const balanceRead = await rpcRead(rpcUrl, "getBalance", [decode.feePayer], signal);
+    feePayerBalanceLamports = lamportsFromBalanceRpc(balanceRead);
   }
-  const value = (read as { result?: { value?: unknown[] } }).result?.value;
-  if (!Array.isArray(value)) return { decode, flags: decode.flags, chainRead: "failed" };
+  if (!rpcUrl.trim() || prefetchPubkeys.length === 0) {
+    return {
+      decode,
+      flags: decode.flags,
+      chainRead: "skipped",
+      accountsRead: feePayerBalanceLamports
+        ? { preflightPubkeys: [], pubkeys: [], accounts: [], feePayerBalanceLamports }
+        : undefined,
+    };
+  }
+  const fetched = await fetchPrefetchAccounts(rpcUrl, prefetchPubkeys, signal);
+  if (!fetched) return { decode, flags: decode.flags, chainRead: "failed" };
   const owners = new Map<string, string>();
-  sources.forEach((pubkey, index) => {
-    const owner = tokenOwnerFromParsedAccount(value[index]);
+  fetched.pubkeys.forEach((pubkey, index) => {
+    const owner = tokenOwnerFromParsedAccount(fetched.accounts[index]);
     if (owner) owners.set(pubkey, owner);
   });
-  return { decode, flags: applyOwnerMismatch(decode, owners), chainRead: "ok" };
+  return {
+    decode,
+    flags: applyOwnerMismatch(decode, owners),
+    chainRead: "ok",
+    accountsRead: {
+      preflightPubkeys: fetched.preflightPubkeys,
+      pubkeys: fetched.pubkeys,
+      accounts: fetched.accounts,
+      feePayerBalanceLamports,
+    },
+  };
 }
 
 export async function executeHostTool(args: {
@@ -70,6 +125,9 @@ export async function executeHostTool(args: {
   snapshot: Uint8Array;
   rpcUrl: string;
   decodedPubkeys: string[];
+  preflightManifest?: ReadonlySet<string>;
+  preflightFeePayer?: string;
+  preflightFeePayerBalanceLamports?: string;
   signal?: AbortSignal;
 }): Promise<unknown> {
   if (hostToolVerdict(args.name) !== "allow" || mentionsBannedRpc(args.toolArgs)) {
@@ -106,24 +164,51 @@ export async function executeHostTool(args: {
   if (args.name === "get_accounts") {
     const requested = asPubkeys(input.pubkeys) ?? args.decodedPubkeys.slice(0, PUBKEY_CAP);
     if (!requested.length) return { ok: false, error: "no pubkeys" };
-    return rpcRead(args.rpcUrl, "getMultipleAccounts", [requested.slice(0, PUBKEY_CAP), { encoding: "jsonParsed" }], args.signal);
+    const { novel, skipped } = splitPrefetchDuplicates(requested.slice(0, PUBKEY_CAP), args.preflightManifest);
+    if (novel.length === 0) {
+      return { ok: true, note: PREFETCH_DUPLICATE_NOTE, skipped_prefetch: skipped };
+    }
+    const read = await rpcRead(
+      args.rpcUrl,
+      "getMultipleAccounts",
+      [novel, { encoding: "jsonParsed" }],
+      args.signal,
+    );
+    if (skipped.length === 0) return read;
+    return { read, skipped_prefetch: skipped, note: PREFETCH_DUPLICATE_NOTE };
   }
   if (args.name === "rpc_get_balance") {
     const pubkey = asPubkey(input.pubkey);
     if (!pubkey) return { ok: false, error: "pubkey required" };
+    if (
+      args.preflightFeePayer &&
+      pubkey === args.preflightFeePayer &&
+      args.preflightFeePayerBalanceLamports
+    ) {
+      return { ok: true, result: { value: args.preflightFeePayerBalanceLamports }, note: PREFETCH_DUPLICATE_NOTE };
+    }
     return rpcRead(args.rpcUrl, "getBalance", [pubkey], args.signal);
   }
   if (args.name === "rpc_get_account_info") {
     const pubkey = asPubkey(input.pubkey);
     if (!pubkey) return { ok: false, error: "pubkey required" };
+    if (args.preflightManifest?.has(pubkey)) {
+      return { ok: true, note: PREFETCH_DUPLICATE_NOTE };
+    }
     const encoding = input.encoding === "jsonParsed" ? "jsonParsed" : "base64";
     return rpcRead(args.rpcUrl, "getAccountInfo", [pubkey, { encoding }], args.signal);
   }
   if (args.name === "rpc_get_multiple_accounts") {
     const pubkeys = asPubkeys(input.pubkeys);
     if (!pubkeys) return { ok: false, error: "pubkeys required" };
+    const { novel, skipped } = splitPrefetchDuplicates(pubkeys.slice(0, 100), args.preflightManifest);
+    if (novel.length === 0) {
+      return { ok: true, note: PREFETCH_DUPLICATE_NOTE, skipped_prefetch: skipped };
+    }
     const encoding = input.encoding === "jsonParsed" ? "jsonParsed" : "base64";
-    return rpcRead(args.rpcUrl, "getMultipleAccounts", [pubkeys.slice(0, 100), { encoding }], args.signal);
+    const read = await rpcRead(args.rpcUrl, "getMultipleAccounts", [novel, { encoding }], args.signal);
+    if (skipped.length === 0) return read;
+    return { read, skipped_prefetch: skipped, note: PREFETCH_DUPLICATE_NOTE };
   }
   if (args.name === "rpc_get_token_accounts_by_owner") {
     const owner = asPubkey(input.owner);

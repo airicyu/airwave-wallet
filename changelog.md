@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.34.0 — 2026-10-12
+
+簽署 AI：service worker 在 sandbox 前先跑 decode、與審批相同的 simulate（交易 blockhash）、分批 `getMultipleAccounts`（最多 60 個已解析帳戶 + fee payer balance），`preflightPubkeys` 寫進 prompt；模型勿重查 manifest 內 pubkey（host 回 note）。OpenRouter 僅移除 `decode_message`、`simulate`；其餘唯讀 RPC 僅補洞。定級重用 preflight。`TX_AI_MAX_STEPS` 8。審批預期變動 `BlockhashNotFound` **不**影響 AI 分析（可先看報告再讓 dApp 重送新交易）。
+
 ## 0.33.0 — 2026-10-12
 
 簽署審批「預期變動」每列改為固定信任盾（已驗證／未驗證）、圓形代幣圖、名稱與差額。Mainnet 模擬後由 service worker 以 Jupiter Tokens v2 補 icon／symbol／`isVerified`；未驗證列不以 symbol 當主標。Devnet 不打 Jupiter。0.32.0 的 3 秒刷新仍只更新預期變動內容區。

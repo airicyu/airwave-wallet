@@ -161,14 +161,19 @@ export async function runSandboxLoop(args: {
       }
       return text;
     }
-    for (const call of calls) {
-      if (args.signal.aborted) throw new Error("aborted");
-      let body: unknown;
-      try {
-        body = await args.executeTool(call.function.name, parseArgs(call.function.arguments));
-      } catch (error) {
-        body = { ok: false, error: error instanceof Error ? error.message : "tool failed" };
-      }
+    const toolResults = await Promise.all(
+      calls.map(async (call) => {
+        if (args.signal.aborted) throw new Error("aborted");
+        let body: unknown;
+        try {
+          body = await args.executeTool(call.function.name, parseArgs(call.function.arguments));
+        } catch (error) {
+          body = { ok: false, error: error instanceof Error ? error.message : "tool failed" };
+        }
+        return { call, body };
+      }),
+    );
+    for (const { call, body } of toolResults) {
       messages.push({
         role: "tool",
         tool_call_id: call.id,

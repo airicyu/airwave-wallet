@@ -3,6 +3,7 @@
  * Does not open the offscreen document or call OpenRouter.
  */
 import type { TxAiAssessState, TxAiKind } from "../../shared/tx-ai";
+import type { TxAiPreflightEnriched } from "./preflight";
 
 export type TxAiSession = {
   requestId: string;
@@ -10,6 +11,10 @@ export type TxAiSession = {
   snapshot: Uint8Array;
   abort: AbortController;
   decodedPubkeys: string[];
+  preflightEnriched?: TxAiPreflightEnriched;
+  preflightManifest?: ReadonlySet<string>;
+  preflightFeePayer?: string;
+  preflightFeePayerBalanceLamports?: string;
   state: TxAiAssessState;
 };
 

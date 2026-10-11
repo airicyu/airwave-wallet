@@ -173,6 +173,45 @@ export function decodeCompiledMessage(message: CompiledTransactionMessage): TxAi
   return { feePayer: keys[0] ?? "", instructions, flags, tokenSources };
 }
 
+const PREFETCH_SKIP_PUBKEYS = new Set<string>([
+  SYSTEM,
+  TOKEN,
+  TOKEN_2022,
+  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+  "ComputeBudget111111111111111111111111111111",
+  ...Object.keys(LABELED),
+]);
+
+/** Ordered pubkeys for host preflight getMultipleAccounts (signers and writables first). */
+export function resolvedAccountPubkeysForPrefetch(decode: TxAiDecode, cap = 60): string[] {
+  const ordered: string[] = [];
+  const seen = new Set<string>();
+  const add = (pubkey: string | undefined): void => {
+    if (!pubkey || pubkey === "unresolved" || PREFETCH_SKIP_PUBKEYS.has(pubkey) || seen.has(pubkey)) return;
+    seen.add(pubkey);
+    ordered.push(pubkey);
+  };
+  for (const row of decode.tokenSources) {
+    add(row.source);
+    add(row.owner);
+  }
+  add(decode.feePayer);
+  for (const ix of decode.instructions) {
+    for (const account of ix.accounts) {
+      if (account.signer) add(account.pubkey);
+    }
+  }
+  for (const ix of decode.instructions) {
+    for (const account of ix.accounts) {
+      if (account.writable) add(account.pubkey);
+    }
+  }
+  for (const ix of decode.instructions) {
+    for (const account of ix.accounts) add(account.pubkey);
+  }
+  return ordered.slice(0, cap);
+}
+
 export function applyOwnerMismatch(decode: TxAiDecode, ownerBySource: ReadonlyMap<string, string>): TxAiFlag[] {
   const flags = [...decode.flags];
   if (flags.some((flag) => flag.id === "owner_mismatch")) return flags;

@@ -57,9 +57,22 @@ export async function openRouterChat(args: {
   };
   const message = json.choices?.[0]?.message;
   if (!message) throw new Error("chat_empty");
+  const rawCalls = Array.isArray(message.tool_calls) ? message.tool_calls : [];
+  const tool_calls = rawCalls.length
+    ? rawCalls.map((tc, index) => {
+        const fn = tc.function;
+        const name = typeof fn?.name === "string" ? fn.name : "";
+        const args = typeof fn?.arguments === "string" ? fn.arguments : "{}";
+        const id =
+          typeof tc.id === "string" && tc.id.trim()
+            ? tc.id
+            : `call_${index}_${name || "tool"}`;
+        return { id, type: "function" as const, function: { name, arguments: args } };
+      })
+    : undefined;
   return {
     content: typeof message.content === "string" ? message.content : message.content ?? null,
-    tool_calls: Array.isArray(message.tool_calls) ? message.tool_calls : undefined,
+    tool_calls,
   };
 }
 
