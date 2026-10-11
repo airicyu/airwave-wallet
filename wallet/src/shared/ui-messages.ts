@@ -1535,6 +1535,16 @@ const messages = {
     "zh-Hans": "连接",
     "en": "Connect",
   },
+  "window.title.wallet": {
+    "zh-Hant": "錢包",
+    "zh-Hans": "钱包",
+    "en": "Wallet",
+  },
+  "window.title.approval": {
+    "zh-Hant": "審批",
+    "zh-Hans": "审批",
+    "en": "Approval",
+  },
   "approval.cannotSignTxAsMsg": {
     "zh-Hant": "不能把交易當成訊息簽署。",
     "zh-Hans": "不能把交易当成消息签署。",

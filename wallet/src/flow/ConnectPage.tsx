@@ -8,9 +8,16 @@ import { IconBack } from "../popup/components/StrokeIcon";
 import type { PendingRecord } from "../shared/commands";
 import { sendExtensionRequest } from "../shared/ext-api";
 import { SESSION_UNLOCKED, STORAGE } from "../shared/storage-keys";
+import { isPopoutApprovalUrl } from "../shared/shell-constants";
 import { apiErrorMessage, DEFAULT_UI_LOCALE, parseUiLocale, t } from "../shared/ui-i18n";
 import type { UiLocale } from "../shared/storage-keys";
+import { applyWindowChrome } from "../shared/window-chrome";
 import { UnlockForm } from "./UnlockForm";
+
+function applyConnectPopoutTitle(locale: UiLocale): void {
+  if (!isPopoutApprovalUrl(location.href)) return;
+  applyWindowChrome(locale, t(locale, "page.connect"));
+}
 
 export function ConnectPage({
   requestId,
@@ -32,7 +39,9 @@ export function ConnectPage({
   useEffect(() => {
     void chrome.storage.local.get(STORAGE.settings).then((data) => {
       const raw = data[STORAGE.settings] as { locale?: unknown } | undefined;
-      setLocale(parseUiLocale(raw?.locale));
+      const next = parseUiLocale(raw?.locale);
+      setLocale(next);
+      applyConnectPopoutTitle(next);
     });
   }, []);
 
@@ -66,9 +75,15 @@ export function ConnectPage({
 
   useEffect(() => {
     const onChanged = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
-      if (area !== "session") return;
-      if (!(SESSION_UNLOCKED in changes)) return;
-      setUnlocked(Boolean(changes[SESSION_UNLOCKED].newValue));
+      if (area === "session" && SESSION_UNLOCKED in changes) {
+        setUnlocked(Boolean(changes[SESSION_UNLOCKED].newValue));
+      }
+      if (area === "local" && STORAGE.settings in changes) {
+        const settings = changes[STORAGE.settings].newValue as { locale?: unknown } | undefined;
+        const next = parseUiLocale(settings?.locale);
+        setLocale(next);
+        applyConnectPopoutTitle(next);
+      }
     };
     chrome.storage.onChanged.addListener(onChanged);
     return () => chrome.storage.onChanged.removeListener(onChanged);

@@ -17,9 +17,11 @@ import {
 import type { MessageKey } from "../shared/ui-messages";
 import {
   PENDING_TIMEOUT_MS,
+  isInWalletShellHost,
   type PendingRecord,
   type UiHost,
 } from "../shared/commands";
+import { applyWindowChrome } from "../shared/window-chrome";
 import type { SimulatePendingTxResult, SimulateTxInstruction } from "../shared/simulate-pending-tx-types";
 import { instructionsFromTxBytes } from "../background/simulate/phase2-deltas";
 import { accountVisualKind, paintAccountKindMark } from "../shared/account-kind-visual";
@@ -71,11 +73,18 @@ export type ApprovalShellConfig = {
 };
 
 let shellLocale: UiLocale = DEFAULT_UI_LOCALE;
+let shellTitleKey: MessageKey | null = null;
 let settingsChangeListener: ((changes: Record<string, chrome.storage.StorageChange>, area: string) => void) | null =
   null;
 
 function tr(key: MessageKey, vars?: Record<string, string>): string {
   return t(shellLocale, key, vars);
+}
+
+function setPopoutWindowTitle(key: MessageKey): void {
+  shellTitleKey = key;
+  if (!shellConfig || isInWalletShellHost(shellConfig.host)) return;
+  applyWindowChrome(shellLocale, tr(key));
 }
 
 function progressUserMessage(code: string): string {
@@ -113,6 +122,9 @@ function applyShellLocaleToStaticChrome(): void {
   siteLabel.textContent = tr("approval.site");
   signPageTitle.textContent = tr("approval.signMsg");
   document.documentElement.lang = shellLocale;
+  if (shellTitleKey && shellConfig && !isInWalletShellHost(shellConfig.host)) {
+    applyWindowChrome(shellLocale, tr(shellTitleKey));
+  }
   const unlockLead = viewUnlock.querySelector(".unlock-lead");
   if (unlockLead) unlockLead.textContent = tr("unlock.lead");
   unlockPassword.placeholder = tr("unlock.passwordPlaceholder");
@@ -335,7 +347,7 @@ function enterWalletSendConfirming(): void {
   simGen += 1;
   signDock.hidden = true;
   setSendStatusChrome(true);
-  document.title = `Airwave — ${tr("approval.confirming")}`;
+  setPopoutWindowTitle("approval.confirming");
   signPageTitle.textContent = tr("approval.confirming");
   signError.hidden = true;
   const card = ensureSendStatusCard();
@@ -361,7 +373,7 @@ function restoreWalletSendReviewAfterError(): void {
   sendStatusPhase = "idle";
   setSendStatusChrome(false);
   signDock.hidden = false;
-  document.title = `Airwave — ${tr("approval.signTx")}`;
+  setPopoutWindowTitle("approval.signTx");
   signPageTitle.textContent = tr("approval.signTx");
   signError.hidden = true;
   if (lastSim) {
@@ -422,7 +434,7 @@ function enterWalletSendFailedPage(errorCode: string, extra?: SendFailUiExtra): 
   setSendStatusChrome(true);
   signDock.hidden = true;
   signError.hidden = true;
-  document.title = `Airwave — ${tr("approval.sendFailedTitle")}`;
+  setPopoutWindowTitle("approval.sendFailedTitle");
   signPageTitle.textContent = tr("approval.sendFailedTitle");
   const card = ensureSendStatusCard();
   card.classList.remove("is-pending", "is-confirmed");
@@ -518,7 +530,7 @@ function enterWalletSendConfirmedPage(signature?: string): void {
   setSendStatusChrome(true);
   signDock.hidden = true;
   signError.hidden = true;
-  document.title = `Airwave — ${tr("approval.approved")}`;
+  setPopoutWindowTitle("approval.approved");
   signPageTitle.textContent = tr("approval.approved");
   const card = ensureSendStatusCard();
   card.classList.remove("is-pending", "is-failed");
@@ -617,7 +629,7 @@ function showGone(): void {
     expiryTimer = null;
   }
   hideAll();
-  document.title = `Airwave — ${tr("approval.expired")}`;
+  setPopoutWindowTitle("approval.expired");
   goneTitle.textContent = tr("approval.expired");
   if (
     pending?.kind === "signTransaction" ||
@@ -642,7 +654,7 @@ function armExpiry(createdAt: number): void {
 
 function showLegacyConnect(p: PendingRecord): void {
   hideAll();
-  document.title = `Airwave — ${tr("approval.review")}`;
+  setPopoutWindowTitle("window.title.approval");
   viewLegacy.hidden = false;
   legacyOrigin.textContent = p.origin;
   legacyKind.textContent = tr("approval.connectLead");
@@ -1155,7 +1167,7 @@ async function renderSignShell(
   hideAll();
   setSendStatusChrome(false);
   const pageTitle = mode === "signTransaction" ? tr("approval.signTx") : tr("approval.signMsg");
-  document.title = `Airwave — ${pageTitle}`;
+  setPopoutWindowTitle(mode === "signTransaction" ? "approval.signTx" : "approval.signMsg");
   signPageTitle.textContent = pageTitle;
   viewSign.hidden = false;
   signDock.hidden = false;
@@ -1251,7 +1263,7 @@ async function renderSignShell(
 
 function showUnlockScreen(): void {
   hideAll();
-  document.title = `Airwave — ${tr("approval.review")}`;
+  setPopoutWindowTitle("window.title.approval");
   const becameVisible = viewUnlock.hidden;
   viewUnlock.hidden = false;
   unlockPassword.value = "";
@@ -1547,6 +1559,7 @@ export function disposeApprovalShell(): void {
     settingsChangeListener = null;
   }
   shellConfig = null;
+  shellTitleKey = null;
   requestId = null;
   mountRoot = null;
   pending = null;

@@ -73,7 +73,7 @@ Settings → AI settings: add an [OpenRouter](https://openrouter.ai/) API key an
 ## Shell and locale
 
 - The main shell is the toolbar **popup** or the Chrome **side panel**; you can switch between them.
-- UI languages: Traditional Chinese, Simplified Chinese, English (first row in Settings).
+- UI languages: Traditional Chinese, Simplified Chinese, English (first row in Settings). Window titles and `html lang` follow that language (no `Airwave —` prefix).
 - The hamburger menu has About, which embeds the same disclaimer and terms of use.
 
 ---

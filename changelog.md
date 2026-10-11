@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.35.0 — 2026-10-12
+
+視窗標題與 `html lang` 跟 Settings 語言對齊。popup／側欄／審批 popout 的 `document.title` 是單一語文 catalog 句（錢包／Wallet、審批／Approval、連線／Connect 等），不再前綴 `Airwave —`。殼內審批不改錢包窗名。sandbox／offscreen 未改。
+
 ## 0.34.0 — 2026-10-12
 
 簽署 AI：service worker 在 sandbox 前先跑 decode、與審批相同的 simulate（交易 blockhash）、分批 `getMultipleAccounts`（最多 60 個已解析帳戶 + fee payer balance），`preflightPubkeys` 寫進 prompt；模型勿重查 manifest 內 pubkey（host 回 note）。OpenRouter 僅移除 `decode_message`、`simulate`；其餘唯讀 RPC 僅補洞。定級重用 preflight。`TX_AI_MAX_STEPS` 8。審批預期變動 `BlockhashNotFound` **不**影響 AI 分析（可先看報告再讓 dApp 重送新交易）。

@@ -315,6 +315,8 @@ const entries = {
   "approval.site": triple("站點", "站点", "Site"),
   "approval.connectLead": triple("這個網站想連線到你的錢包", "这个网站想连接到你的钱包", "This site wants to connect to your wallet"),
   "page.connect": triple("連線", "连接", "Connect"),
+  "window.title.wallet": triple("錢包", "钱包", "Wallet"),
+  "window.title.approval": triple("審批", "审批", "Approval"),
   "approval.cannotSignTxAsMsg": triple("不能把交易當成訊息簽署。", "不能把交易当成消息签署。", "Cannot sign a transaction as a message."),
   "approval.goneTx": triple("這筆交易已不能簽署。", "这笔交易已不能签署。", "This transaction can no longer be signed."),
   "approval.goneMsg": triple("這筆訊息已不能簽署。", "这条消息已不能签署。", "This message can no longer be signed."),

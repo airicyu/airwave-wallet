@@ -10,6 +10,7 @@ import { brandIconUrl } from "../shared/brand-icon";
 import type { PendingRecord } from "../shared/commands";
 import { sendExtensionRequest } from "../shared/ext-api";
 import { DEFAULT_UI_LOCALE, parseUiLocale, t } from "../shared/ui-i18n";
+import { applyWindowChrome } from "../shared/window-chrome";
 import { STORAGE } from "../shared/storage-keys";
 
 const params = new URLSearchParams(location.search);
@@ -28,6 +29,8 @@ async function boot(): Promise<void> {
   } catch {
     /* ignore */
   }
+
+  applyWindowChrome(locale, t(locale, "window.title.approval"));
 
   const root = document.getElementById("root");
   if (!root) return;
