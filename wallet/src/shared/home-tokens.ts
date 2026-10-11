@@ -10,6 +10,9 @@ import { solanaRpcForUrl } from "./solana-rpc";
 
 export const WRAPPED_SOL_MINT = "So11111111111111111111111111111111111111112";
 export const NATIVE_SOL_ID = "native-sol";
+/** Official token-list logo for native SOL and wSOL (`WRAPPED_SOL_MINT`). */
+export const NATIVE_SOL_ICON_URL =
+  "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png";
 
 export type TokenProgramKind = "spl-token" | "token-2022";
 
@@ -137,6 +140,7 @@ export function buildHomeTokenRows(
       usdLabel: solUsd != null ? formatUsdLabel(solUsd) : "—",
       usdTotal: solUsd != null && Number.isFinite(solUsd) ? solUsd : undefined,
       iconLetter: "SO",
+      iconUrl: NATIVE_SOL_ICON_URL,
       decimals: 9,
     },
   ];
@@ -196,7 +200,7 @@ export function buildHomeTokenRows(
       usdLabel: mintUsd != null ? formatUsdLabel(mintUsd) : "—",
       usdTotal: mintUsd != null && Number.isFinite(mintUsd) ? mintUsd : undefined,
       iconLetter: iconLetterForSymbol(symbol),
-      iconUrl,
+      iconUrl: isWrappedSol ? NATIVE_SOL_ICON_URL : iconUrl,
       decimals,
       tokenProgram,
     });
@@ -220,6 +224,7 @@ export function buildHomeTokenRowsFromOwnerParsed(
       uiAmountLabel: solAmount.toLocaleString(undefined, { maximumFractionDigits: 9 }),
       usdLabel: "—",
       iconLetter: "SO",
+      iconUrl: NATIVE_SOL_ICON_URL,
       decimals: 9,
     },
   ];
@@ -261,6 +266,7 @@ export function buildHomeTokenRowsFromOwnerParsed(
       }),
       usdLabel: "—",
       iconLetter: iconLetterForSymbol(symbol),
+      iconUrl: isWrappedSol ? NATIVE_SOL_ICON_URL : undefined,
       decimals,
       tokenProgram,
     });

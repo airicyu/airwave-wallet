@@ -294,6 +294,7 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
       signerPubkey,
       settings.cluster,
       settings.defaultCuPrice,
+      settings.jupiterApiKey,
       { cuLimit: payload.cuLimit, cuPrice: payload.cuPrice },
     );
     if (!sim.ok) {

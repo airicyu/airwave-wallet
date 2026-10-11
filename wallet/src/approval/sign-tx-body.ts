@@ -2,7 +2,12 @@
  * Persistent sign-transaction body: delta card shell, inner content paint, and auto-sim timer.
  * Does not run RPC simulation or resolve pending requests.
  */
-import type { SimulatePendingTxResult } from "../shared/simulate-pending-tx-types";
+import { NATIVE_SOL_ICON_URL } from "../shared/home-tokens";
+import type {
+  SimulatePendingTxResult,
+  SimulateTxDelta,
+  SimulateTxDeltaDisplay,
+} from "../shared/simulate-pending-tx-types";
 import { messageForErrorCode, t, type UiLocale } from "../shared/ui-i18n";
 import type { MessageKey } from "../shared/ui-messages";
 import { formatSolFromLamports } from "./format";
@@ -180,7 +185,116 @@ export function deltaDisplayFingerprint(sim: SimulatePendingTxResult): string {
   }
   const deltas = sim.deltas ?? [];
   if (deltas.length === 0) return "ok:none";
-  return `ok:${deltas.map((d) => `${d.symbol}:${d.sign}:${d.amount}`).join("|")}`;
+  return `ok:${deltas.map((d) => `${d.kind}:${d.mint ?? ""}:${d.sign}:${d.amount}`).join("|")}`;
+}
+
+/** Includes Jupiter display fields so paint updates when enrichment changes without delta amounts changing. */
+export function deltaDisplayPaintFingerprint(sim: SimulatePendingTxResult): string {
+  if (sim.outcome !== "ok" || !sim.deltas) return deltaDisplayFingerprint(sim);
+  return sim.deltas
+    .map((d) => {
+      const disp = d.display;
+      if (!disp) {
+        return `${d.kind}:${d.mint ?? ""}:${d.sign}:${d.amount}:pending`;
+      }
+      return [
+        d.kind,
+        d.mint ?? "",
+        d.sign,
+        d.amount,
+        disp.trust,
+        disp.labelPrimary,
+        disp.amountSuffix,
+        disp.iconUrl ?? "",
+        disp.iconLetter,
+      ].join(":");
+    })
+    .join("|");
+}
+
+const TRUST_VERIFIED_SVG =
+  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" fill="currentColor"/><path d="M8.5 12.2l2.3 2.3 4.7-5" stroke="#0f1419" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+const TRUST_UNVERIFIED_SVG =
+  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" stroke="currentColor" stroke-width="1.8"/><path d="M9 12h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+
+function fallbackDisplay(d: SimulateTxDelta): SimulateTxDeltaDisplay {
+  if (d.kind === "native") {
+    return {
+      trust: "verified",
+      labelPrimary: "SOL",
+      amountSuffix: "SOL",
+      iconUrl: NATIVE_SOL_ICON_URL,
+      iconLetter: "SO",
+    };
+  }
+  const short = d.symbol;
+  return {
+    trust: "unverified",
+    labelPrimary: short,
+    amountSuffix: short,
+    iconLetter: short.slice(0, 2).toUpperCase() || "?",
+  };
+}
+
+function appendDeltaRow(
+  parent: HTMLElement,
+  d: SimulateTxDelta,
+  locale: UiLocale,
+): void {
+  const disp = d.display ?? fallbackDisplay(d);
+  const row = document.createElement("div");
+  row.className = "delta-row";
+
+  const trust = document.createElement("span");
+  const verified = disp.trust === "verified";
+  trust.className = `delta-trust ${verified ? "delta-trust--verified" : "delta-trust--unverified"}`;
+  trust.title = t(locale, verified ? "token.verified" : "token.notVerified");
+  trust.setAttribute("aria-label", trust.title);
+  trust.innerHTML = verified ? TRUST_VERIFIED_SVG : TRUST_UNVERIFIED_SVG;
+
+  const iconWrap = document.createElement("span");
+  iconWrap.className = "delta-token-icon";
+  if (disp.iconUrl) {
+    const img = document.createElement("img");
+    img.src = disp.iconUrl;
+    img.alt = "";
+    const letter = document.createElement("span");
+    letter.className = "delta-token-letter";
+    letter.textContent = disp.iconLetter;
+    letter.hidden = true;
+    img.addEventListener("error", () => {
+      img.remove();
+      letter.hidden = false;
+    });
+    iconWrap.append(img, letter);
+  } else {
+    const letter = document.createElement("span");
+    letter.className = "delta-token-letter";
+    letter.textContent = disp.iconLetter;
+    iconWrap.append(letter);
+  }
+
+  const label = document.createElement("div");
+  label.className = "delta-token-label";
+  const primary = document.createElement("div");
+  primary.className = "delta-token-primary";
+  primary.textContent = disp.labelPrimary;
+  label.append(primary);
+  if (disp.labelMintShort) {
+    const mintLine = document.createElement("div");
+    mintLine.className = "delta-token-mint";
+    mintLine.textContent = disp.labelMintShort;
+    label.append(mintLine);
+  }
+
+  const amt = document.createElement("span");
+  amt.className = `delta-amount ${d.sign}`;
+  const signChar = d.sign === "plus" ? "+" : "−";
+  amt.textContent = `${signChar}${d.amount} ${disp.amountSuffix}`;
+
+  row.append(trust, iconWrap, label, amt);
+  parent.append(row);
 }
 
 export function syncInspectorUrl(url: string | null | undefined): void {
@@ -276,15 +390,7 @@ export function paintDeltaInner(
     return;
   }
   for (const d of deltas) {
-    const row = document.createElement("div");
-    row.className = "delta-row";
-    const sym = document.createElement("span");
-    sym.textContent = d.symbol;
-    const amt = document.createElement("span");
-    amt.className = `delta-amount ${d.sign}`;
-    amt.textContent = `${d.sign === "plus" ? "+" : "−"}${d.amount} ${d.symbol}`;
-    row.append(sym, amt);
-    inner.append(row);
+    appendDeltaRow(inner, d, locale);
   }
 }
 

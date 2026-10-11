@@ -541,6 +541,7 @@ export async function getHomeTokensForOwners(
 export type MintDisplayMeta = {
   symbol?: string;
   iconUrl?: string;
+  isVerified?: boolean;
 };
 
 /** Mainnet: batch-fetch symbol/icon via Jupiter tokens v2 search. */
@@ -568,8 +569,12 @@ export async function lookupJupiterMintMetadata(
       for (const [mint, hit] of parseJupiterSearchArray(json)) {
         const symbol = hit.symbol?.trim();
         const iconUrl = hit.icon;
-        if (!symbol && !iconUrl) continue;
-        out.set(mint, { symbol: symbol || undefined, iconUrl });
+        if (!symbol && !iconUrl && hit.isVerified !== true) continue;
+        out.set(mint, {
+          symbol: symbol || undefined,
+          iconUrl,
+          isVerified: hit.isVerified === true ? true : undefined,
+        });
       }
     } catch {
       break;

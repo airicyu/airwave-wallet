@@ -49,7 +49,7 @@ Manual test dApp: [test-web](../test-web/README.md).
 
 The transaction approval page (including in-wallet send confirm):
 
-- **Expected changes**: simulates using this transaction’s own blockhash (does not replace it with the node’s latest). While the page is visible, that block refreshes about every 3 seconds.
+- **Expected changes**: simulates using this transaction’s own blockhash (does not replace it with the node’s latest). While the page is visible, that block refreshes about every 3 seconds. Each balance line shows a wallet trust shield, token icon, name (Jupiter symbol on Mainnet when verified; otherwise mint abbreviation), and amount.
 - **Fees**: computed locally from signature fees and CU, not from the simulation fee fields.
 - You can edit CU limit / price and open Solana Explorer Inspector.
 - A failed simulation (for example `BlockhashNotFound`) does not disable approve. Approve is disabled only when the transaction cannot be decoded.

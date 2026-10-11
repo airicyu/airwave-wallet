@@ -1,7 +1,19 @@
+export type SimulateTxDeltaDisplay = {
+  trust: "verified" | "unverified";
+  labelPrimary: string;
+  labelMintShort?: string;
+  amountSuffix: string;
+  iconUrl?: string;
+  iconLetter: string;
+};
+
 export type SimulateTxDelta = {
   symbol: string;
   amount: string;
   sign: "plus" | "minus";
+  kind: "native" | "spl";
+  mint?: string;
+  display?: SimulateTxDeltaDisplay;
 };
 
 export type SimulateTxIxAccount = {

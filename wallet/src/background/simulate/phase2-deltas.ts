@@ -207,6 +207,7 @@ function buildDeltas(
   const deltas: SimulateTxDelta[] = [];
   if (nativeDiff !== 0) {
     deltas.push({
+      kind: "native",
       symbol: "SOL",
       amount: (Math.abs(nativeDiff) / 1e9).toString(),
       sign: nativeDiff > 0 ? "plus" : "minus",
@@ -216,6 +217,8 @@ function buildDeltas(
     if (diff === 0n) continue;
     const abs = diff < 0n ? -diff : diff;
     deltas.push({
+      kind: "spl",
+      mint,
       symbol: shortPk(mint),
       amount: formatAmount(abs, decimals),
       sign: diff > 0n ? "plus" : "minus",

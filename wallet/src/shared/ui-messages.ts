@@ -1285,6 +1285,11 @@ const messages = {
     "zh-Hans": "Jupiter 已验证",
     "en": "Jupiter verified",
   },
+  "token.notVerified": {
+    "zh-Hant": "未驗證",
+    "zh-Hans": "未验证",
+    "en": "Not verified",
+  },
   "token.expandMembers": {
     "zh-Hant": "展開成員持倉",
     "zh-Hans": "展开成员持仓",

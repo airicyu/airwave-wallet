@@ -17,6 +17,7 @@ import {
   type WriteCuResult,
 } from "./compute-budget-tx";
 import { SimDeadline } from "./sim-deadline";
+import { enrichSimulateDeltas } from "./delta-display-enrich";
 import { runPhase2Simulation, type Phase2SimContext } from "./phase2-deltas";
 import { simulateTransactionRpc } from "./simulate-rpc";
 import {
@@ -136,6 +137,7 @@ async function runPhase2WithFees(
   cuLimit: number | null,
   cuPrice: number | null,
   cuEditable: boolean,
+  jupiterApiKey: string,
   cuWriteError?: string,
 ): Promise<SimulatePendingTxResult> {
   try {
@@ -154,7 +156,8 @@ async function runPhase2WithFees(
     };
   }
   const base = await runPhase2Simulation(ctx, txBytes, signer, cluster);
-  return attachFees(base, txBytes, cuLimit, cuPrice, cuEditable, cuWriteError);
+  const withFees = attachFees(base, txBytes, cuLimit, cuPrice, cuEditable, cuWriteError);
+  return enrichSimulateDeltas(withFees, cluster, jupiterApiKey);
 }
 
 export async function simulateSignTransaction(
@@ -164,6 +167,7 @@ export async function simulateSignTransaction(
   signerPubkey: string,
   cluster: Cluster,
   defaultCuPrice: number,
+  jupiterApiKey: string,
   payload: SimulateSignTxPayload,
 ): Promise<SimulateSignTxOutcome> {
   const seq = acceptSimulateRequest(requestId);
@@ -196,6 +200,7 @@ export async function simulateSignTransaction(
       parsedOriginal.limit,
       parsedOriginal.price,
       false,
+      jupiterApiKey,
     );
     return { ok: true, result, seq };
   }
@@ -221,6 +226,7 @@ export async function simulateSignTransaction(
         null,
         null,
         true,
+        jupiterApiKey,
         CU_WRITE_FAIL_CODE,
       );
       return { ok: true, result, seq };
@@ -239,6 +245,7 @@ export async function simulateSignTransaction(
       limit,
       price,
       true,
+      jupiterApiKey,
       cuErr,
     );
     return { ok: true, result, seq };
@@ -257,6 +264,7 @@ export async function simulateSignTransaction(
         null,
         null,
         true,
+        jupiterApiKey,
       );
       return { ok: true, result, seq };
     }
@@ -269,6 +277,7 @@ export async function simulateSignTransaction(
       parsed.limit,
       parsed.price,
       true,
+      jupiterApiKey,
     );
     return { ok: true, result, seq };
   }
@@ -286,6 +295,7 @@ export async function simulateSignTransaction(
       null,
       null,
       true,
+      jupiterApiKey,
       CU_WRITE_FAIL_CODE,
     );
     return { ok: true, result, seq };
@@ -310,6 +320,7 @@ export async function simulateSignTransaction(
     suggestedLimit,
     price,
     true,
+    jupiterApiKey,
     cuErr,
   );
   return { ok: true, result, seq };

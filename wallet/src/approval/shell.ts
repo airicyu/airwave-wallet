@@ -32,6 +32,7 @@ import {
   getSignTxBodyRefs,
   mountSignTxBodyShell,
   deltaDisplayFingerprint,
+  deltaDisplayPaintFingerprint,
   paintDeltaInner,
   startAutoSim,
   stopAutoSim,
@@ -200,6 +201,7 @@ let feeBreakdownReady = false;
 /** Transaction details were built before sim; refresh once when the first sim result arrives. */
 let txDetailsReady = false;
 let lastDeltaFingerprint = "";
+let lastDeltaPaintFingerprint = "";
 let pendingOriginFull = "";
 let btnCopySite: HTMLButtonElement | null = null;
 /** While pending/confirmed, do not let simulate or loadPending replace the review UI with a spinner. */
@@ -760,17 +762,28 @@ function paintDeltaOnly(sim: SimulatePendingTxResult | null, loading: boolean): 
   }
   if (!loading && sim) {
     const fp = deltaDisplayFingerprint(sim);
-    if (fp === lastDeltaFingerprint && r.deltaInner.childElementCount > 0) {
+    const paintFp = deltaDisplayPaintFingerprint(sim);
+    if (
+      fp === lastDeltaFingerprint &&
+      paintFp === lastDeltaPaintFingerprint &&
+      r.deltaInner.childElementCount > 0
+    ) {
       syncInspectorUrl(sim.inspectorUrl);
       syncRetryDisabled(retrySimDisabled());
       return;
     }
     paintDeltaInner(r.deltaInner, sim, false, shellLocale);
     lastDeltaFingerprint = fp;
+    lastDeltaPaintFingerprint = paintFp;
   } else {
     paintDeltaInner(r.deltaInner, sim, loading, shellLocale);
-    if (!loading && sim) lastDeltaFingerprint = deltaDisplayFingerprint(sim);
-    else if (!loading) lastDeltaFingerprint = "";
+    if (!loading && sim) {
+      lastDeltaFingerprint = deltaDisplayFingerprint(sim);
+      lastDeltaPaintFingerprint = deltaDisplayPaintFingerprint(sim);
+    } else if (!loading) {
+      lastDeltaFingerprint = "";
+      lastDeltaPaintFingerprint = "";
+    }
   }
   syncInspectorUrl(sim?.inspectorUrl ?? lastSim?.inspectorUrl);
   syncRetryDisabled(retrySimDisabled());
@@ -1206,6 +1219,7 @@ async function renderSignShell(
     feeBreakdownReady = false;
     txDetailsReady = false;
     lastDeltaFingerprint = "";
+    lastDeltaPaintFingerprint = "";
     disposeSignTxBody();
     renderSignTransactionBody(null, true);
     if (requestId) attachTxAiToSignShell(viewSign, requestId, shellLocale);
@@ -1501,6 +1515,7 @@ export function disposeApprovalShell(): void {
   feeBreakdownReady = false;
   txDetailsReady = false;
   lastDeltaFingerprint = "";
+  lastDeltaPaintFingerprint = "";
   if (shellDomBound) {
     viewSign.classList.remove("send-status-mode");
   }
