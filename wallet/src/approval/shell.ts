@@ -200,6 +200,8 @@ let simGen = 0;
 let lastAcceptedSimSeq = 0;
 let localCuLimit: number | null = null;
 let localCuPrice: number | null = null;
+/** After「套用 CU」, resimulate payloads include cuLimit/cuPrice; display-only values must not rewrite the tx. */
+let cuUserOverride = false;
 let txCuEditable = false;
 let cuDirty = false;
 let draftLimitStr = "";
@@ -932,6 +934,7 @@ function renderFeeCard(sim: SimulatePendingTxResult | null, loading: boolean): H
     const limit = parseCuFieldInput(limitInp.value);
     const price = parseCuFieldInput(priceInp.value);
     if (!cuPairInBounds(limit, price)) return;
+    cuUserOverride = true;
     localCuLimit = limit;
     localCuPrice = price;
     cuDirty = false;
@@ -1116,7 +1119,7 @@ async function runSimulation(): Promise<void> {
   }
 
   const payload: { requestId: string; cuLimit?: number; cuPrice?: number } = { requestId };
-  if (hasCuPair()) {
+  if (cuUserOverride && hasCuPair()) {
     payload.cuLimit = localCuLimit!;
     payload.cuPrice = localCuPrice!;
   }
@@ -1219,6 +1222,7 @@ async function renderSignShell(
     lastSim = null;
     localCuLimit = null;
     localCuPrice = null;
+    cuUserOverride = false;
     txCuEditable = false;
     lastAcceptedSimSeq = 0;
     cuDirty = false;
@@ -1574,6 +1578,7 @@ export function disposeApprovalShell(): void {
   lastAcceptedSimSeq = 0;
   localCuLimit = null;
   localCuPrice = null;
+  cuUserOverride = false;
   txCuEditable = false;
   cuDirty = false;
   draftLimitStr = "";

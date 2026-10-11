@@ -48,6 +48,7 @@
 | [0.33.0](./0.33.0/INDEX.md) | shipped | 預期變動列：Jupiter 圖示／symbol；固定信任盾欄；anti-spoof 主標規則 |
 | [0.34.0](./0.34.0/INDEX.md) | shipped | 簽署 AI：preflight 進 prompt；OpenRouter 僅移除 decode／simulate；保留 get_accounts 等；AI 不理會審批 blockhash 失效 |
 | [0.35.0](./0.35.0/INDEX.md) | shipped | 視窗標題與 `html lang` 跟 Settings 語言對齊；標題單一語文、無 `Airwave — ` 前綴 |
+| [0.36.0](./0.36.0/INDEX.md) | shipped | 簽署 CU：dApp 已設 limit／price 不自動改寫；套用 CU 才送 simulate payload |
 
 **版本號：** `x.y.z` 的 **patch**（例如 **0.3.1**）留給該 minor 的 **bugfix**，不排新功能。新功能走下一個 **minor**（0.3.0 → 0.4.0 → 0.5.0）。
 

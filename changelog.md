@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.36.0 — 2026-10-12
+
+簽署審批：交易已帶 Compute Budget 的 CU limit／price 時，預設不再改寫 message（無 `workingTx`，簽原始 bytes）。僅缺 limit 或 price 時才自動補該項。審批仍顯示 CU 與費用；使用者「套用 CU」後才以 payload 寫入並重模擬。修 Jupiter 等已嵌入 CU 的 swap。
+
 ## 0.35.0 — 2026-10-12
 
 視窗標題與 `html lang` 跟 Settings 語言對齊。popup／側欄／審批 popout 的 `document.title` 是單一語文 catalog 句（錢包／Wallet、審批／Approval、連線／Connect 等），不再前綴 `Airwave —`。殼內審批不改錢包窗名。sandbox／offscreen 未改。

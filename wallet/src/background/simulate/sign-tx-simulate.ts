@@ -97,7 +97,11 @@ async function simulatePhase1ForLimit(
     return originalLimit ?? CU_LIMIT_MAX;
   }
 
-  const probe = await writeCuToTransactionBytes(txBytes, CU_LIMIT_MAX, 0, ctx.rpcUrl);
+  const probe = await writeCuToTransactionBytes(
+    txBytes,
+    { limit: CU_LIMIT_MAX, price: 0 },
+    ctx.rpcUrl,
+  );
   const probeBytes = probe.ok ? probe.bytes : txBytes;
   let probeMsg;
   try {
@@ -231,7 +235,7 @@ export async function simulateSignTransaction(
       );
       return { ok: true, result, seq };
     }
-    const written = await writeCuToTransactionBytes(originalBytes, limit, price, rpcUrl);
+    const written = await writeCuToTransactionBytes(originalBytes, { limit, price }, rpcUrl);
     const cuErr = writeErrorFromResult(written);
     const simBytes = written.ok ? written.bytes : originalBytes;
     if (written.ok) {
@@ -283,8 +287,26 @@ export async function simulateSignTransaction(
   }
 
   const originalLimit = parsedOriginal.limit;
-  const suggestedLimit = await simulatePhase1ForLimit(ctx, originalBytes, originalLimit);
-  const price = defaultCuPrice;
+  const originalPrice = parsedOriginal.price;
+  const needsLimit = originalLimit == null;
+  const needsPrice = originalPrice == null;
+
+  const feeLimit = originalLimit;
+  const feePrice = originalPrice;
+
+  if (!needsLimit && !needsPrice) {
+    const result = await runPhase2WithFees(
+      ctx,
+      originalBytes,
+      signerPubkey,
+      cluster,
+      feeLimit,
+      feePrice,
+      true,
+      jupiterApiKey,
+    );
+    return { ok: true, result, seq };
+  }
 
   if (hasDuplicateCbDisc(compiledMessage)) {
     const result = await runPhase2WithFees(
@@ -292,8 +314,8 @@ export async function simulateSignTransaction(
       originalBytes,
       signerPubkey,
       cluster,
-      null,
-      null,
+      feeLimit,
+      feePrice,
       true,
       jupiterApiKey,
       CU_WRITE_FAIL_CODE,
@@ -301,10 +323,24 @@ export async function simulateSignTransaction(
     return { ok: true, result, seq };
   }
 
+  let limitToWrite: number | undefined;
+  let priceToWrite: number | undefined;
+  let displayLimit = feeLimit;
+  let displayPrice = feePrice;
+
+  if (needsLimit) {
+    const suggestedLimit = await simulatePhase1ForLimit(ctx, originalBytes, originalLimit);
+    limitToWrite = suggestedLimit;
+    displayLimit = suggestedLimit;
+  }
+  if (needsPrice) {
+    priceToWrite = defaultCuPrice;
+    displayPrice = defaultCuPrice;
+  }
+
   const written = await writeCuToTransactionBytes(
     originalBytes,
-    suggestedLimit,
-    price,
+    { limit: limitToWrite, price: priceToWrite },
     rpcUrl,
   );
   const cuErr = writeErrorFromResult(written);
@@ -317,8 +353,8 @@ export async function simulateSignTransaction(
     simBytes,
     signerPubkey,
     cluster,
-    suggestedLimit,
-    price,
+    displayLimit,
+    displayPrice,
     true,
     jupiterApiKey,
     cuErr,

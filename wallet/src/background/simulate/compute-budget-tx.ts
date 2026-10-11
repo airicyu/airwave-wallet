@@ -233,12 +233,20 @@ export async function decompileTxMessageFromBytes(txBytes: Uint8Array, rpcUrl: s
   return decompileTransactionMessageFetchingLookupTables(compiled, rpc);
 }
 
+export type CuBudgetPatch = {
+  limit?: number;
+  price?: number;
+};
+
 export async function writeCuToTransactionBytes(
   txBytes: Uint8Array,
-  limit: number,
-  price: number,
+  patch: CuBudgetPatch,
   _rpcUrl: string,
 ): Promise<WriteCuResult> {
+  const { limit, price } = patch;
+  if (limit === undefined && price === undefined) {
+    return { ok: false, reason: "cannot_write" };
+  }
   let tx: ReturnType<typeof decodeWireTransaction>;
   try {
     tx = decodeWireTransaction(txBytes);
@@ -275,8 +283,8 @@ export async function writeCuToTransactionBytes(
     accountIndices: [...ix.accountIndices],
     data: new Uint8Array(ix.data),
   }));
-  upsertDisc(nextIxs, programIndex, 2, limit);
-  upsertDisc(nextIxs, programIndex, 3, price);
+  if (limit !== undefined) upsertDisc(nextIxs, programIndex, 2, limit);
+  if (price !== undefined) upsertDisc(nextIxs, programIndex, 3, price);
 
   const nextCompiled = {
     ...compiled,
@@ -312,11 +320,15 @@ export async function writeCuToTransactionBytes(
       return { ok: false, reason: "cannot_write" };
     }
     const parsed = parseCuFromMessage(written);
-    if (cbDiscCount(written, 2) !== 1 || cbDiscCount(written, 3) !== 1) {
-      return { ok: false, reason: "cannot_write" };
+    if (limit !== undefined) {
+      if (cbDiscCount(written, 2) !== 1 || parsed.limit !== (limit >>> 0)) {
+        return { ok: false, reason: "cannot_write" };
+      }
     }
-    if (parsed.limit !== (limit >>> 0) || parsed.price !== price) {
-      return { ok: false, reason: "cannot_write" };
+    if (price !== undefined) {
+      if (cbDiscCount(written, 3) !== 1 || parsed.price !== price) {
+        return { ok: false, reason: "cannot_write" };
+      }
     }
     return { ok: true, bytes: serialized };
   } catch {
