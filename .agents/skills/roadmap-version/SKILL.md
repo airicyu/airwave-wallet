@@ -6,26 +6,26 @@ description: >-
   into INDEX/docs/HANDOFF, repeats until the design gate passes, or stops if
   the proposal is not feasible. Then implements Track by Track using the test
   or manual checks named in that version. Use when the user names a version
-  (e.g. 0.1.0), asks to execute docs/roadmap/X.Y.Z, invokes /roadmap-version,
+  (e.g. 0.1.0), asks to execute dev-docs/roadmap/X.Y.Z, invokes /roadmap-version,
   or asks to follow agent-workflow for a version.
 disable-model-invocation: true
 ---
 
 # Roadmap version（設計審查閘門 → Track 實作）
 
-本技能執行一份 **Airwave Wallet roadmap 版本**。規範來源：[`docs/roadmap/agent-workflow.md`](../../../docs/roadmap/agent-workflow.md)、[`docs/roadmap/GUIDELINES.md`](../../../docs/roadmap/GUIDELINES.md)、倉庫根 `AGENTS.md`。
+本技能執行一份 **Airwave Wallet roadmap 版本**。規範來源：[`dev-docs/roadmap/agent-workflow.md`](../../../dev-docs/roadmap/agent-workflow.md)、[`dev-docs/roadmap/GUIDELINES.md`](../../../dev-docs/roadmap/GUIDELINES.md)、倉庫根 `AGENTS.md`。
 
 對使用者：**繁體中文書面語**。**Do not commit unless the user asks.**
 
 貼用 prompt 與報告骨架見同目錄：[prompts.md](prompts.md)、[review-template.md](review-template.md)。
 
-工作目錄是 **airwave-wallet 倉庫根**。不要改 `../solibra-wallet`，不要改上層 `docs/agent-roadmap/`。
+工作目錄是 **airwave-wallet 倉庫根**。不要改上層 `docs/agent-roadmap/`（若存在）。
 
 ## 觸發與版本
 
-使用者須給出版本（`0.1.0`）或目錄（`docs/roadmap/0.1.0/`）。未給則問一次，勿猜。
+使用者須給出版本（`0.1.0`）或目錄（`dev-docs/roadmap/0.1.0/`）。未給則問一次，勿猜。
 
-工作目錄：`docs/roadmap/<VER>/`。必讀：`INDEX.md`；有則讀 `docs/*`、`HANDOFF.md`。對照上一版 INDEX、相關 `backlog/*.md`（構想，**不得覆寫本版已定案**）。`docs/brainstorm/` 只是背景，不是本版契約。
+工作目錄：`dev-docs/roadmap/<VER>/`。必讀：`INDEX.md`；有則讀 `docs/*`、`HANDOFF.md`。對照上一版 INDEX、相關 `backlog/*.md`（構想，**不得覆寫本版已定案**）。
 
 ## 角色分工（強制）
 
@@ -56,7 +56,7 @@ disable-model-invocation: true
 
 ## 0. 預檢
 
-讀 `INDEX.md` 與連結 docs，以及 `docs/roadmap/GUIDELINES.md` 的架構禁區。對照 GUIDELINES 自足檢查。
+讀 `INDEX.md` 與連結 docs，以及 `dev-docs/roadmap/GUIDELINES.md` 的架構禁區。對照 GUIDELINES 自足檢查。
 
 若 **開工前仍須拍板** 非空（且不是已標成非目標）：**停止**。告訴使用者先拍板，勿開審查迴圈當拍板。
 
@@ -66,7 +66,7 @@ disable-model-invocation: true
 
 - 勿把定案只留在 chat
 - 勿把助記詞、私鑰、密碼、個人地址、生產 RPC 秘密寫進 INDEX／docs／reasoning／HANDOFF／審查報告
-- 勿把 `docs/brainstorm/` 或 Solibra 原始碼當成已定案。INDEX 與 `docs/brainstorm/` 衝突時以 INDEX 為準
+- 勿把 backlog 或未排程構想當成已定案。與 INDEX 衝突時以 INDEX 為準
 - 主路徑不得用：operation store hydrate 找請求、預設廣播全 tab、手寫 rehydrate 當主同步、硬編碼或明文持久密碼、inject 持有長期私鑰、宣告未實作的 Wallet Standard 方法
 - 倉庫尚無整包測試指令。該版 INDEX 必須寫明手驗或測試指令；**禁止**假設 `bun test`
 - 實作範圍限本倉庫
@@ -75,7 +75,7 @@ disable-model-invocation: true
 
 ## 1. 設計審查迴圈
 
-同一檔：`docs/roadmap/<VER>/docs/design-review.md`。**勿為每輪另開新檔**；累加輪次、穩定 ID（`H1`、`M3`…），修復輪 **勿重編號**。
+同一檔：`dev-docs/roadmap/<VER>/docs/design-review.md`。**勿為每輪另開新檔**；累加輪次、穩定 ID（`H1`、`M3`…），修復輪 **勿重編號**。
 
 ### 1a. Spawn 審查
 
@@ -133,7 +133,7 @@ disable-model-invocation: true
 
 嚴格跟 INDEX／HANDOFF 的 Track 順序。禁非目標。INDEX 已定案不要再問；**沉默才提問**。沉默時仍遵守 GUIDELINES 架構禁區。
 
-測試以 **該版 INDEX** 寫明的指令或手驗為準。倉庫尚無預設整包指令；有整包指令後以 `docs/roadmap/GUIDELINES.md`「出貨檔案」表為準。
+測試以 **該版 INDEX** 寫明的指令或手驗為準。倉庫尚無預設整包指令；有整包指令後以 `dev-docs/roadmap/GUIDELINES.md`「出貨檔案」表為準。
 
 | 時機 | 測試期望 |
 |------|----------|
@@ -149,7 +149,7 @@ Popup、popout、注入頁有行為改動：用未封裝擴充把該流程走一
 
 ## 4. 實作審查迴圈（中改以上預設做）
 
-檔案：`docs/roadmap/<VER>/docs/implementation-review.md`（同一檔累加輪次）。
+檔案：`dev-docs/roadmap/<VER>/docs/implementation-review.md`（同一檔累加輪次）。
 
 Spawn 新 Task（禁止 resume 實作對話）。prompt 用 [prompts.md](prompts.md)「實作審查」。
 
@@ -174,7 +174,7 @@ Findings 分級與出貨門檻同 agent-workflow：HIGH 必須關；MEDIUM 預�
 - [ ] 該版約定的測試或手驗已通過，且 UI 流程已在擴充裡走完（或報告寫明無法走完的原因）
 - [ ] 倉庫根 `CHANGELOG.md` 已記本版；若已有 `package.json`，`version` 與 `X.Y.Z` 一致
 - [ ] 本版新增或改動的訊息／storage／custody／能力表路徑已寫進 INDEX
-- [ ] 該構想已出貨則從 `docs/roadmap/backlog/` **刪列＋刪獨立檔**
+- [ ] 該構想已出貨則從 `dev-docs/roadmap/backlog/` **刪列＋刪獨立檔**
 - [ ] INDEX 狀態 `shipped` **僅在**驗收與測試通過且使用者同意出貨時改；否則維持 `in progress`
 
 **不要 git commit**，除非使用者明確要求。

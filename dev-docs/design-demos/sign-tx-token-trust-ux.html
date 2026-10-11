@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 預期變化代幣信任欄（概念稿）</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --ok: #4ecb8d;
+        --danger: #c75050;
+        --popup-w: 384px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 960px; margin: 0 auto; padding: 28px 20px 56px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 22px; max-width: 46rem; font-size: 0.92rem; }
+      .stage { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+      .popup {
+        width: var(--popup-w);
+        background: var(--bg);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        padding: 14px;
+      }
+      .card {
+        background: var(--bg-elevated);
+        border: 1px solid var(--stroke-soft);
+        border-radius: var(--radius);
+        padding: 12px;
+      }
+      .card h2 {
+        margin: 0 0 10px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--text-muted);
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 22px 28px minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 0;
+        border-top: 1px solid var(--stroke-soft);
+      }
+      .row:first-of-type { border-top: 0; }
+      .trust {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+      .trust.yes {
+        background: color-mix(in srgb, var(--ok) 18%, var(--bg-elevated));
+        color: var(--ok);
+      }
+      .trust.no {
+        background: var(--fill);
+        color: var(--text-dim);
+        box-shadow: inset 0 0 0 1px var(--stroke);
+      }
+      .mint-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        overflow: hidden;
+        background: var(--fill);
+        display: grid;
+        place-items: center;
+        font-size: 0.62rem;
+        font-weight: 700;
+        color: #fff;
+      }
+      .mint-icon.sol { background: linear-gradient(135deg, #9945ff, #14f195); }
+      .mint-icon.usdc { background: #2775ca; }
+      .mint-icon.fake {
+        background:
+          radial-gradient(circle at 78% 78%, #3dd68c 0 7px, transparent 8px),
+          #c45c26;
+      }
+      .name { min-width: 0; }
+      .sym {
+        font-weight: 600;
+        font-size: 0.92rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .mint {
+        margin-top: 1px;
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        color: var(--text-dim);
+      }
+      .delta { font-weight: 600; font-size: 0.84rem; font-variant-numeric: tabular-nums; }
+      .delta.plus { color: var(--ok); }
+      .delta.minus { color: var(--danger); }
+      .notes { flex: 1; min-width: 280px; max-width: 420px; }
+      .notes h2 { font-size: 0.95rem; margin: 0 0 8px; }
+      .notes ul { margin: 0; padding-left: 1.1rem; color: var(--text-muted); font-size: 0.88rem; }
+      .notes li { margin: 0 0 8px; }
+      .notes code { font-family: var(--mono); font-size: 0.82em; color: var(--text); }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>預期變化 · 代幣信任欄</h1>
+      <p class="lede">
+        最左一欄永遠佔位：Jupiter verified 用填色盾，未驗證用空心盾。代幣圖維持圓形，裁在圓內。驗證過才以 symbol 做主標；未驗證主標是 mint 縮寫。symbol 渲染前去掉勾類字元。
+      </p>
+      <div class="stage">
+        <div class="popup" aria-label="概念">
+          <div class="card">
+            <h2>Expected changes</h2>
+            <div class="row">
+              <span class="trust yes" title="Jupiter verified" aria-label="Jupiter verified">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" fill="currentColor"/>
+                  <path d="M8.5 12.2l2.3 2.3 4.7-5" stroke="#0f1419" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="mint-icon sol">S</span>
+              <div class="name">
+                <div class="sym">SOL</div>
+              </div>
+              <div class="delta plus">+0.182154713 SOL</div>
+            </div>
+            <div class="row">
+              <span class="trust yes" title="Jupiter verified" aria-label="Jupiter verified">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" fill="currentColor"/>
+                  <path d="M8.5 12.2l2.3 2.3 4.7-5" stroke="#0f1419" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="mint-icon usdc">$</span>
+              <div class="name">
+                <div class="sym">USDC</div>
+                <div class="mint">EPjF…Dt1v</div>
+              </div>
+              <div class="delta minus">−20 USDC</div>
+            </div>
+            <div class="row">
+              <span class="trust no" title="Not verified" aria-label="Not verified">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="M9 12h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span class="mint-icon fake" title="圖裡自帶勾，仍被圓裁住"></span>
+              <div class="name">
+                <div class="sym">9xQe…k4Ua</div>
+                <div class="mint">未採用 symbol</div>
+              </div>
+              <div class="delta minus">−20 9xQe…k4Ua</div>
+            </div>
+          </div>
+        </div>
+        <div class="notes">
+          <h2>欄位</h2>
+          <ul>
+            <li>欄寬固定 22px。兩態都畫，列不會因為有沒有勾而左右跳動。</li>
+            <li>盾形、圓角 6px、自帶底。代幣圖 28px 圓、overflow hidden，中間 8px。</li>
+            <li>原生 SOL 不顯示 mint 列。其餘 mint 前 4…後 4，驗證與否都留在次行。</li>
+            <li>Jupiter 尚未回來時，信任欄用同尺寸的空底，主標先用 mint 縮寫。</li>
+            <li><code>title</code> 與 <code>aria-label</code> 走 catalog：已驗證、未驗證。畫面上不另寫旁白。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

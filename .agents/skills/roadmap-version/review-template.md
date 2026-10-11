@@ -1,6 +1,6 @@
 # 審查報告骨架
 
-審查 subagent 寫入 `docs/roadmap/<VER>/docs/` 時用此結構。同一檔累加輪次。
+審查 subagent 寫入 `dev-docs/roadmap/<VER>/docs/` 時用此結構。同一檔累加輪次。
 
 ## design-review.md
 
@@ -33,7 +33,7 @@
 驗收句 | 設計層是否可測 | 缺口
 
 ## 與現碼抽樣
-現碼未做本版 ≠ 設計 HIGH。標出與提案互斥的現行行為。不要把 brainstorm 或 Solibra 原始碼當成現行程式。
+現碼未做本版 ≠ 設計 HIGH。標出與提案互斥的現行行為。不要把 backlog 或未排程構想當成現行程式。
 
 ## 修復追蹤表
 ID | 級 | 狀態 | 關閉位置（INDEX 條／HOW 節）

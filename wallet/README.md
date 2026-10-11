@@ -1,18 +1,20 @@
 # Airwave Wallet (Chrome extension)
 
-## 建置
+Full local steps: [`dev-docs/setup.md`](../dev-docs/setup.md).
+
+## Build
 
 ```bash
 npm install
 npm run build
 ```
 
-Chrome → 擴充功能 → 開發人員模式 → **載入未封裝** → 選本目錄下的 `dist/`。
+Chrome → Extensions → Developer mode → **Load unpacked** → select `dist/` in this directory.
 
-## 開發
+## Develop
 
 ```bash
 npm run dev
 ```
 
-使用 Vite + CRXJS；契約見 `docs/roadmap/0.1.0/`。
+Vite + CRXJS. When implementing a scheduled version, follow that version’s `dev-docs/roadmap/X.Y.Z/INDEX.md`.

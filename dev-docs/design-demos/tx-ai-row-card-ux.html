@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 簽署頁 AI 單列卡（概念稿）</title>
+    <!--
+      方向稿（對齊 0.32 產品實作）。衝突時以 dev-docs/roadmap/0.32.0 為準。
+      站點置中、方角卡；帳戶 widget 下滿寬分隔線（Home 頂欄不加第二條）。
+      AI 單列：左 bot 圖示（中性色）+「AI分析」；分析中僅卡內偽進度條，右側無風險指數。
+      完成後：同一列「風險指數: …」+ 最右圓底 report 圖示按鈕；整卡不可點，只有 report 開 overlay。
+      逾時／失敗：data-level=failed；右側「分析逾時」或「分析沒有完成」；無 report 鈕、不開空白 overlay（60s session / 55s 單次 LLM）。
+      預期變動 re-simulate：不顯示 Querying、不清空既有差額；結果內容相同則不重繪（減少閃動）。
+    -->
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --accent-dim: #2a6ea8;
+        --ok: #4ecb8d;
+        --watch: #d4a24c;
+        --danger: #c75050;
+        --radius: 8px;
+        --font: "Segoe UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+        --phone-w: 360px;
+        --phone-h: 640px;
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 920px; margin: 0 auto; padding: 28px 20px 64px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 8px; max-width: 40rem; font-size: 0.92rem; }
+      .note { color: var(--text-dim); font-size: 0.82rem; margin: 0 0 16px; max-width: 40rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; }
+      .chip {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 7px 13px;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      .chip.active { border-color: var(--accent); background: #1a2838; }
+      .os-bar {
+        width: var(--phone-w);
+        height: 28px;
+        border: 1px solid var(--stroke);
+        border-bottom: 0;
+        border-radius: 10px 10px 0 0;
+        background: #1a212b;
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        font-size: 0.68rem;
+        color: var(--text-muted);
+      }
+      .phone {
+        width: var(--phone-w);
+        height: var(--phone-h);
+        border: 1px solid var(--stroke);
+        border-radius: 0 0 10px 10px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+      .screen-body {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 16px;
+      }
+      .account {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        max-width: 100%;
+        padding: 4px 8px 4px 4px;
+        border: 1px solid var(--stroke);
+        border-radius: 999px;
+        background: var(--fill);
+        margin-bottom: 10px;
+      }
+      .account-rule {
+        border: 0;
+        border-bottom: 1px solid var(--stroke-soft);
+        margin: 0 -16px 14px;
+      }
+      .account .dot {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #163528;
+        color: var(--ok);
+      }
+      .account .name { font-size: 0.82rem; }
+      .account .copy {
+        border: 0;
+        background: transparent;
+        color: var(--text-dim);
+        padding: 0;
+        display: grid;
+      }
+      .site-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 16px;
+        min-width: 0;
+      }
+      .site-card {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        max-width: calc(100% - 36px);
+        padding: 6px 10px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        background: var(--fill);
+      }
+      .site-k { font-size: 0.75rem; color: var(--text-dim); flex: none; }
+      .site-v {
+        min-width: 0;
+        font-size: 0.82rem;
+        font-family: var(--mono);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .page-title {
+        margin: 0 0 14px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-align: center;
+      }
+      .ai-card {
+        width: 100%;
+        margin: 0 0 12px;
+        padding: 10px 12px 8px;
+        border: 1px solid var(--stroke-soft);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        color: inherit;
+        text-align: left;
+        display: block;
+      }
+      .ai-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 24px;
+      }
+      .ai-mark {
+        width: 18px;
+        height: 18px;
+        display: grid;
+        place-items: center;
+        flex: none;
+        color: var(--text-muted);
+      }
+      /* 左側圖示固定中性色，不跟風險等級 */
+      .ai-card .ai-mark { color: var(--text-muted); }
+      .ai-label { font-size: 0.88rem; font-weight: 600; }
+      .ai-status,
+      .ai-result {
+        margin-left: auto;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        white-space: nowrap;
+      }
+      .ai-status--running {
+        font-weight: 500;
+        color: var(--text-dim);
+      }
+      .ai-card[data-level="low"] .ai-result { color: var(--ok); }
+      .ai-card[data-level="watch"] .ai-result { color: var(--watch); }
+      .ai-card[data-level="high"] .ai-result { color: var(--danger); }
+      .ai-card[data-level="unknown"] .ai-result { color: var(--text-dim); }
+      .ai-card[data-level="failed"] .ai-result {
+        color: var(--text-dim);
+        font-weight: 500;
+      }
+      .ai-mark-icon,
+      .ai-report-icon {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .ai-report-btn {
+        flex: none;
+        display: grid;
+        place-items: center;
+        width: 38px;
+        height: 38px;
+        margin-left: 8px;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #061018;
+        cursor: pointer;
+        box-shadow:
+          0 0 0 1px color-mix(in srgb, var(--accent) 55%, #fff 12%),
+          0 3px 14px color-mix(in srgb, var(--accent) 48%, transparent);
+      }
+      .ai-report-btn .ai-report-icon {
+        width: 19px;
+        height: 19px;
+        stroke-width: 2;
+      }
+      .ai-report-btn:hover {
+        filter: brightness(1.07);
+        box-shadow:
+          0 0 0 1px color-mix(in srgb, var(--accent) 60%, #fff 18%),
+          0 4px 18px color-mix(in srgb, var(--accent) 55%, transparent);
+      }
+      .ai-report-btn:active {
+        transform: scale(0.96);
+        filter: brightness(1.02);
+      }
+      .ai-report-btn:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+      }
+      .ai-track {
+        margin-top: 8px;
+        height: 3px;
+        border-radius: 2px;
+        background: var(--fill);
+        overflow: hidden;
+      }
+      .ai-track > span {
+        display: block;
+        height: 100%;
+        width: 40%;
+        border-radius: 2px;
+        background: var(--accent);
+        animation: ai-slide 1.1s ease-in-out infinite;
+      }
+      @keyframes ai-slide {
+        0% { transform: translateX(-120%); }
+        100% { transform: translateX(280%); }
+      }
+      .sim {
+        border: 1px solid var(--stroke-soft);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        padding: 12px 14px;
+        margin-bottom: 12px;
+      }
+      .sim-head { display: flex; align-items: center; gap: 8px; }
+      .sim-head h3 {
+        margin: 0;
+        flex: 1;
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        color: var(--text-dim);
+      }
+      .icon-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        border: 1px solid var(--stroke);
+        background: var(--fill);
+        color: var(--text-muted);
+        display: grid;
+        place-items: center;
+        padding: 0;
+      }
+      .icon-btn:disabled { opacity: 0.4; }
+      .delta {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+        font-size: 0.88rem;
+      }
+      .delta.dimmed { opacity: 0.55; }
+      .minus { color: #e07070; }
+      .sim-hint {
+        margin: 8px 0 0;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+      }
+      .icon-gallery-title {
+        margin: 0 0 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        max-width: var(--phone-w);
+      }
+      .icon-gallery {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin: 0 0 18px;
+        max-width: var(--phone-w);
+      }
+      @media (min-width: 520px) {
+        .icon-gallery { grid-template-columns: repeat(3, 1fr); }
+      }
+      .icon-swatch {
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        padding: 8px 10px;
+        background: var(--bg-elevated);
+        cursor: pointer;
+        text-align: left;
+      }
+      .icon-swatch:hover { border-color: var(--text-dim); }
+      .icon-swatch.active {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+      }
+      .icon-swatch .swatch-name {
+        display: block;
+        margin: 0 0 6px;
+        font-size: 0.68rem;
+        color: var(--text-dim);
+      }
+      .icon-swatch .ai-row { min-height: 22px; }
+      .icon-swatch .ai-label { font-size: 0.78rem; }
+      .dock {
+        display: flex;
+        gap: 8px;
+        padding: 12px 16px 16px;
+        border-top: 1px solid var(--stroke-soft);
+      }
+      .dock button {
+        flex: 1;
+        height: 40px;
+        border-radius: 8px;
+        font-size: 0.92rem;
+      }
+      .ghost { border: 1px solid var(--stroke); background: transparent; color: var(--text); }
+      .primary { border: 0; background: var(--accent); color: #fff; }
+      .veil {
+        position: absolute;
+        inset: 0;
+        background: rgba(8, 11, 14, 0.72);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+      }
+      .sheet {
+        height: 86%;
+        background: var(--bg-elevated);
+        border-radius: 12px 12px 0 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .sheet-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 12px 8px;
+      }
+      .sheet-head h2 { margin: 0; flex: 1; font-size: 0.95rem; text-align: center; }
+      .sheet-body {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 4px 16px 12px;
+        font-size: 0.84rem;
+      }
+      .sheet-body p { margin: 0 0 10px; }
+      .sheet-disclaimer {
+        flex: none;
+        margin: 0;
+        padding: 0 16px 8px;
+        font-size: 0.68rem;
+        line-height: 1.35;
+        color: var(--text-dim);
+      }
+      .spec-box {
+        max-width: var(--phone-w);
+        margin: 18px 0 0;
+        padding: 12px 14px;
+        border: 1px solid var(--stroke-soft);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        font-size: 0.78rem;
+        color: var(--text-muted);
+      }
+      .spec-box h2 {
+        margin: 0 0 8px;
+        font-size: 0.82rem;
+        color: var(--text);
+      }
+      .spec-box ul { margin: 0; padding-left: 1.1rem; }
+      .spec-box li { margin: 0 0 4px; }
+      .sheet-foot {
+        flex: none;
+        display: flex;
+        justify-content: center;
+        padding: 8px 12px 12px;
+        border-top: 1px solid var(--stroke-soft);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>簽署頁 AI 單列卡</h1>
+      <p class="lede">方向稿（與產品對齊）。站點置中方角卡、複製完整 origin。AI 在標題下：左側 <strong>bot</strong>（中性色）；分析中只有進度條。完成後「風險指數: …」文字跟等級上色，最右<strong>實心 accent report 圓钮</strong>開報告——整張 AI 卡不可點。預期變動重新模擬時保留原差額、不出現 Querying；內容沒變就不閃。</p>
+      <p class="note">下面可試其他左側圖示候選；產品定案為 <strong>Bot</strong>。英文：AI analysis、Risk index: Low。</p>
+      <p class="icon-gallery-title">左側圖示候選（點選套用到上方預覽）</p>
+      <div class="icon-gallery" id="icon-gallery"></div>
+      <div class="controls" id="controls">
+        <button type="button" class="chip active" data-mode="running">分析中</button>
+        <button type="button" class="chip" data-mode="low">完成 · 低</button>
+        <button type="button" class="chip" data-mode="watch">完成 · 留意</button>
+        <button type="button" class="chip" data-mode="high">完成 · 高</button>
+        <button type="button" class="chip" data-mode="unknown">完成 · 未知</button>
+        <button type="button" class="chip" data-mode="timeout">逾時</button>
+        <button type="button" class="chip" data-mode="failed">失敗</button>
+        <button type="button" class="chip" data-locale="zh">繁中</button>
+        <button type="button" class="chip" data-locale="en">English</button>
+        <button type="button" class="chip" id="sim-refresh" data-sim="idle">模擬刷新（演示）</button>
+      </div>
+      <div class="os-bar">Airwave — 簽署交易</div>
+      <div class="phone" id="phone"></div>
+      <div class="spec-box" id="timeout-spec" hidden>
+        <h2>逾時／過慢（產品現況）</h2>
+        <ul>
+          <li>整段分析上限 <strong>60s</strong>；單次 OpenRouter 往返 <strong>55s</strong>。</li>
+          <li>列上右側：<strong>分析逾時</strong>（session 或 bridge 逾時）— 灰色、無風險色。</li>
+          <li><strong>沒有</strong> report 圓钮；核准／拒絕照常可用。</li>
+          <li>若有部分 report 正文（罕見）才保留 report 鈕與 overlay。</li>
+        </ul>
+      </div>
+    </div>
+    <script>
+      const copy = {
+        zh: {
+          title: "簽署交易", site: "站點", ai: "AI分析", delta: "預期變動", report: "AI分析", top: "回到頂部",
+          running: "AI 分析中",
+          timedOut: "分析逾時",
+          failed: "分析沒有完成",
+          disclaimer: "以下為 AI 生成，僅供參考；請自行評估風險，本錢包不為此負責。",
+          result: { low: "風險指數: 低", watch: "風險指數: 留意", high: "風險指數: 高", unknown: "風險指數: 未知" },
+          copySite: "複製站點", openReport: "開啟分析報告",
+          simHint: "重新模擬中：差額文字不變、不出現 Querying。",
+          simDone: "模擬完成：內容與上次相同，畫面不閃。",
+        },
+        en: {
+          title: "Sign transaction", site: "Site", ai: "AI analysis", delta: "Expected change", report: "AI analysis", top: "Back to top",
+          running: "Analyzing",
+          timedOut: "Timed out",
+          failed: "Analysis did not finish",
+          disclaimer: "AI-generated for reference only. You accept the risk; this wallet is not liable.",
+          result: { low: "Risk index: Low", watch: "Risk index: Watch", high: "Risk index: High", unknown: "Risk index: Unknown" },
+          copySite: "Copy site", openReport: "Open analysis",
+          simHint: "Re-simulating: delta text stays; no “Querying”.",
+          simDone: "Done: same delta as before — no flicker.",
+        },
+      };
+      function markSvg(paths) {
+        return `<svg class="ai-mark-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+      }
+      const ICON_VARIANTS = {
+        sparkles: {
+          label: "Sparkles",
+          paths: `<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><path d="M4 18v4"/><path d="M2 20h4"/>`,
+        },
+        brain: {
+          label: "Brain",
+          paths: `<path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/>`,
+        },
+        cpu: {
+          label: "CPU / 處理",
+          paths: `<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>`,
+        },
+        lightbulb: {
+          label: "Lightbulb / 洞察",
+          paths: `<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>`,
+        },
+        scan: {
+          label: "Scan eye / 掃描",
+          paths: `<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>`,
+        },
+        radar: {
+          label: "Radar / 雷達",
+          paths: `<circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="10"/><path d="M12 2v2M12 20v2"/>`,
+        },
+        activity: {
+          label: "Activity / 脈動",
+          paths: `<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>`,
+        },
+        wand: {
+          label: "Wand / 魔法棒",
+          paths: `<path d="m15 4-10 10"/><path d="m8.5 8.5 1 1"/><path d="m13.5 13.5 1 1"/><path d="m7.5 7.5 2 2"/><path d="m12.5 12.5 2 2"/><path d="M19 2 17 4"/>`,
+        },
+        bot: {
+          label: "Bot / 機器人（產品現用）",
+          paths: `<path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/>`,
+        },
+        chat: {
+          label: "Chat / 對話",
+          paths: `<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/>`,
+        },
+      };
+      function leftMark() {
+        return markSvg(ICON_VARIANTS[iconKey].paths);
+      }
+      const reportIcon = `<svg class="ai-report-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5h7l3.5 3.5V19.5H7z"/><path d="M14 4.5V8h3.5"/><path d="M9.5 12h5"/><path d="M9.5 15h5"/></svg>`;
+      const refreshIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>`;
+      const linkIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
+      const upIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>`;
+      const copyIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+      const checkIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`;
+      const SITE = "https://app.example.swap/trade/sol/usdc?ref=airwave-demo";
+      const closeIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+
+      let mode = "running";
+      let locale = "zh";
+      let overlay = false;
+      let siteCopied = false;
+      let siteCopiedTimer = 0;
+      let simPhase = "idle";
+      let iconKey = "bot";
+
+      const phone = document.getElementById("phone");
+      const gallery = document.getElementById("icon-gallery");
+
+      function paintGallery() {
+        const t = copy[locale];
+        gallery.innerHTML = Object.entries(ICON_VARIANTS)
+          .map(
+            ([key, v]) => `
+          <button type="button" class="icon-swatch${key === iconKey ? " active" : ""}" data-icon="${key}">
+            <span class="swatch-name">${v.label}</span>
+            <div class="ai-row">
+              <span class="ai-mark">${markSvg(v.paths)}</span>
+              <span class="ai-label">${t.ai}</span>
+            </div>
+          </button>`,
+          )
+          .join("");
+        gallery.querySelectorAll("[data-icon]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            iconKey = btn.getAttribute("data-icon") || "bot";
+            paintGallery();
+            paint();
+          });
+        });
+      }
+
+      function paint() {
+        const t = copy[locale];
+        const running = mode === "running";
+        const isTimeout = mode === "timeout";
+        const isFailed = mode === "failed";
+        const isError = isTimeout || isFailed;
+        const level = running || isError ? "" : mode;
+        const bar = running ? `<div class="ai-track" aria-hidden="true"><span></span></div>` : "";
+        let rowTail = "";
+        if (running) {
+          rowTail = `<span class="ai-status ai-status--running">${t.running}</span>`;
+        } else if (isTimeout) {
+          rowTail = `<span class="ai-result">${t.timedOut}</span>`;
+        } else if (isFailed) {
+          rowTail = `<span class="ai-result">${t.failed}</span>`;
+        } else {
+          rowTail = `<span class="ai-result">${t.result[level]}</span>
+             <button type="button" class="ai-report-btn" id="open-report" aria-label="${t.openReport}" title="${t.openReport}">${reportIcon}</button>`;
+        }
+        const cardLevel = isError ? "failed" : running ? "running" : level;
+        const card = `<div class="ai-card" data-level="${cardLevel}"${running ? ' role="status"' : ""}>
+          <div class="ai-row"><span class="ai-mark">${leftMark()}</span><span class="ai-label">${t.ai}</span>${rowTail}</div>${bar}</div>`;
+        const spec = document.getElementById("timeout-spec");
+        if (spec) spec.hidden = !isError;
+        const simHint =
+          simPhase === "busy"
+            ? `<p class="sim-hint">${t.simHint}</p>`
+            : simPhase === "done"
+              ? `<p class="sim-hint">${t.simDone}</p>`
+              : "";
+        const deltaClass = simPhase === "busy" ? "delta dimmed" : "delta";
+        const paras = Array.from({ length: 14 }, (_, i) => `<p>報告第 ${i + 1} 段。這段只為了讓底列的回到頂部有東西可滾。</p>`).join("");
+        const veil = overlay
+          ? `<div class="veil">
+              <div class="sheet">
+                <div class="sheet-head">
+                  <span style="width:28px"></span>
+                  <h2>${t.report}</h2>
+                  <button type="button" class="icon-btn" id="close-report" aria-label="close">${closeIcon}</button>
+                </div>
+                <p class="sheet-disclaimer">${t.disclaimer}</p>
+                <div class="sheet-body" id="sheet-body">${paras}</div>
+                <div class="sheet-foot">
+                  <button type="button" class="icon-btn" id="to-top" aria-label="${t.top}" title="${t.top}">${upIcon}</button>
+                </div>
+              </div>
+            </div>`
+          : "";
+        phone.innerHTML = `
+          <div class="screen-body">
+            <div class="account">
+              <span class="dot" aria-hidden="true">✓</span>
+              <span class="name">Imported 1</span>
+              <button type="button" class="copy" aria-label="copy">${linkIcon}</button>
+            </div>
+            <hr class="account-rule" />
+            <div class="site-row">
+              <div class="site-card">
+                <span class="site-k">${t.site}</span>
+                <span class="site-v">${SITE}</span>
+              </div>
+              <button type="button" class="icon-btn" id="copy-site" aria-label="${t.copySite}">${siteCopied ? checkIcon : copyIcon}</button>
+            </div>
+            <h2 class="page-title">${t.title}</h2>
+            ${card}
+            <section class="sim">
+              <div class="sim-head">
+                <h3>${t.delta}</h3>
+                <button type="button" class="icon-btn" aria-label="refresh">${refreshIcon}</button>
+                <button type="button" class="icon-btn" disabled aria-label="inspector">${linkIcon}</button>
+              </div>
+              <div class="${deltaClass}"><span>SOL</span><span class="minus">−0.000005013 SOL</span></div>
+              ${simHint}
+            </section>
+          </div>
+          <div class="dock">
+            <button type="button" class="ghost">拒絕</button>
+            <button type="button" class="primary">批准</button>
+          </div>
+          ${veil}`;
+        const copySite = document.getElementById("copy-site");
+        if (copySite) {
+          copySite.addEventListener("click", () => {
+            void navigator.clipboard?.writeText(SITE);
+            siteCopied = true;
+            paint();
+            clearTimeout(siteCopiedTimer);
+            siteCopiedTimer = setTimeout(() => {
+              siteCopied = false;
+              paint();
+            }, 1600);
+          });
+        }
+        const open = document.getElementById("open-report");
+        if (open) open.addEventListener("click", (e) => { e.stopPropagation(); overlay = true; paint(); });
+        const close = document.getElementById("close-report");
+        if (close) close.addEventListener("click", () => { overlay = false; paint(); });
+        const top = document.getElementById("to-top");
+        const body = document.getElementById("sheet-body");
+        if (top && body) top.addEventListener("click", () => { body.scrollTop = 0; });
+      }
+
+      document.getElementById("controls").addEventListener("click", (event) => {
+        const btn = event.target.closest("button");
+        if (!btn) return;
+        if (btn.id === "sim-refresh") {
+          simPhase = "busy";
+          paint();
+          setTimeout(() => {
+            simPhase = "done";
+            paint();
+            setTimeout(() => {
+              simPhase = "idle";
+              paint();
+            }, 2200);
+          }, 900);
+          return;
+        }
+        if (btn.dataset.mode) {
+          mode = btn.dataset.mode;
+          overlay = false;
+          simPhase = "idle";
+          document.querySelectorAll("[data-mode]").forEach((el) => el.classList.toggle("active", el === btn));
+        }
+        if (btn.dataset.locale) {
+          locale = btn.dataset.locale;
+          document.querySelectorAll("[data-locale]").forEach((el) => el.classList.toggle("active", el === btn));
+        }
+        paintGallery();
+        paint();
+      });
+      document.querySelector('[data-locale="zh"]').classList.add("active");
+      paintGallery();
+      paint();
+    </script>
+  </body>
+</html>
