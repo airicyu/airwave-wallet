@@ -4,3 +4,5 @@ dist/
 *.log
 .vite/
 *.zip
+wallet/pending.test.mjs
+wallet/connection-tabs.test.mjs

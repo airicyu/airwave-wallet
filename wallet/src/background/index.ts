@@ -4,7 +4,7 @@
  */
 import type { ExtensionRequest, ExtensionResponse } from "../shared/commands";
 import { handleDappCommand, handleUiCommand, handleWalletCommand } from "./handlers";
-import { alignConnectionsToActiveAccount, respond } from "./messaging";
+import { alignConnectionsToActiveAccount, installConnectionTabWatch, respond } from "./messaging";
 import {
   finishWalletSendWindowClosed,
   getPending,
@@ -29,6 +29,7 @@ if (inServiceWorker) bootServiceWorker();
 
 function bootServiceWorker(): void {
   registerWalletShellListeners();
+  installConnectionTabWatch();
   installTxAiAssess();
   setPendingAddedHook((id) => {
     maybeStartTxAi(id);

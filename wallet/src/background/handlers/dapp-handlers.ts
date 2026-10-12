@@ -14,7 +14,7 @@ import type {
 } from "../../shared/commands";
 import { messageLooksLikeTransactionMessage } from "../../shared/sign-message-tx";
 import { getActivePublicKey, readActiveAccountId, readConnections, readSettings } from "../storage";
-import { addPending } from "../pending";
+import { addPending, pendingInsertError, setPendingUiHost } from "../pending";
 import { schedulePendingTimeout } from "../pending";
 import { respond } from "../messaging";
 import { rememberConnectedTab, removeConnectionAndNotify, tabOriginStill } from "../messaging";
@@ -31,21 +31,47 @@ function settingsChainId(cluster: "devnet" | "mainnet"): string {
   return cluster === "mainnet" ? "solana:mainnet" : "solana:devnet";
 }
 
+function pendingInsertRefusal(requestId: string): ExtensionResponse {
+  const code = pendingInsertError(requestId);
+  return respond({
+    kind: "airwave-ext-res",
+    requestId,
+    ok: false,
+    error: {
+      code,
+      message: code === "REQUEST_ID_IN_USE" ? "Request id is already pending" : "Request id is invalid",
+    },
+  });
+}
+
 async function presentDappApproval(
   requestId: string,
   _tabId: number,
   record: Omit<PendingRecord, "uiHost">,
-): Promise<void> {
-  let uiHost: PendingRecord["uiHost"] = "popout";
-  if (await isSidebarWalletOpen()) {
-    addPending(requestId, { ...record, uiHost: "sidebar" });
-    schedulePendingTimeout(requestId, pendingTimeoutHandlers);
-    if (await notifySidebarDappApproval(requestId)) return;
+): Promise<ExtensionResponse> {
+  if (!addPending(requestId, { ...record, uiHost: "popout" })) {
+    return pendingInsertRefusal(requestId);
   }
-  uiHost = "popout";
-  addPending(requestId, { ...record, uiHost });
   schedulePendingTimeout(requestId, pendingTimeoutHandlers);
+  if (await isSidebarWalletOpen()) {
+    setPendingUiHost(requestId, "sidebar");
+    if (await notifySidebarDappApproval(requestId)) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId,
+        ok: true,
+        result: { pending: true },
+      });
+    }
+    setPendingUiHost(requestId, "popout");
+  }
   await openPopout(requestId);
+  return respond({
+    kind: "airwave-ext-res",
+    requestId,
+    ok: true,
+    result: { pending: true },
+  });
 }
 
 function tabContext(
@@ -137,7 +163,7 @@ export async function handleDappCommand(
     }
 
     const requestId = req.requestId;
-    await presentDappApproval(requestId, tabId, {
+    return presentDappApproval(requestId, tabId, {
       kind: "connect",
       tabId,
       frameId,
@@ -145,12 +171,6 @@ export async function handleDappCommand(
       payload,
       createdAt: Date.now(),
       reconnectWhileLocked: Boolean(trusted),
-    });
-    return respond({
-      kind: "airwave-ext-res",
-      requestId: req.requestId,
-      ok: true,
-      result: { pending: true },
     });
   }
 
@@ -197,7 +217,7 @@ export async function handleDappCommand(
     const msgBytes = Uint8Array.from(payload.message);
     const messageLooksLikeTx = messageLooksLikeTransactionMessage(msgBytes);
     const requestId = req.requestId;
-    await presentDappApproval(requestId, tabId, {
+    return presentDappApproval(requestId, tabId, {
       kind: "signMessage",
       tabId,
       frameId,
@@ -206,12 +226,6 @@ export async function handleDappCommand(
       createdAt: Date.now(),
       signAccountId: activeId,
       messageLooksLikeTx,
-    });
-    return respond({
-      kind: "airwave-ext-res",
-      requestId: req.requestId,
-      ok: true,
-      result: { pending: true },
     });
   }
 
@@ -267,20 +281,14 @@ export async function handleDappCommand(
       });
     }
     const requestId = req.requestId;
-    await presentDappApproval(requestId, tabId, {
+    return presentDappApproval(requestId, tabId, {
       kind: "signTransaction",
       tabId,
       frameId,
       origin,
       payload: req.payload as SignTransactionPayload,
-      createdAt: Date.now(),
       signAccountId: activeId,
-    });
-    return respond({
-      kind: "airwave-ext-res",
-      requestId: req.requestId,
-      ok: true,
-      result: { pending: true },
+      createdAt: Date.now(),
     });
   }
 
@@ -336,7 +344,7 @@ export async function handleDappCommand(
       });
     }
     const requestId = req.requestId;
-    await presentDappApproval(requestId, tabId, {
+    return presentDappApproval(requestId, tabId, {
       kind: "signAndSendTransaction",
       tabId,
       frameId,
@@ -344,12 +352,6 @@ export async function handleDappCommand(
       payload: payload as SignAndSendTransactionPayload,
       createdAt: Date.now(),
       signAccountId: activeId,
-    });
-    return respond({
-      kind: "airwave-ext-res",
-      requestId: req.requestId,
-      ok: true,
-      result: { pending: true },
     });
   }
 

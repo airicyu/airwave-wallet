@@ -210,6 +210,7 @@ INDEX 可以收窄範圍（例如本版不做簽名），不可以悄悄改用 s
 |------|------|
 | Changelog | 倉庫根 `CHANGELOG.md`（尚不存在；第一個 `shipped` 版建立） |
 | 版本號 | 與該版目錄 `X.Y.Z` 一致。擴充 `package.json` 出現後，`version` 欄與 changelog 對齊 |
+| 專案首頁 | 倉庫根 `README.md` 給人看。出貨時版本句與 `version.md` 相同。展示圖放 `docs/showcase/`，不要放 `wallet/public/`（那會打進擴充套件） |
 | 契約 | 尚無全域 `docs/api.md`。訊息表、storage schema、custody、Wallet Standard 能力表由**引入它們的那一版**放在該版 `docs/` 或 INDEX 指定的倉庫路徑。之後的版本必須連結並摘要，不可假設讀者讀過舊 chat |
 | 測試 | **尚無整包指令。** 某版引入測試 runner 時，在該版已定案寫明指令（含 cwd），並回寫本表。在那之前，每個 Track 的驗收以該版 INDEX 的手驗／窄測為準，禁止假設 `bun test` 或 Engram 的 phase 測試 |
 | 實作範圍 | 只改 `airwave-wallet` 倉庫。不要改上層 `docs/agent-roadmap/`（若存在） |

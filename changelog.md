@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.37.0 — 2026-10-13
+
+安全修復：進行中的批准不能被同一個 requestId 換成另一筆內容。已連線分頁離開該網站後，帳戶變更與斷線不再把公鑰送到新頁面；該網站的連線信任仍在。
+
 ## 0.36.0 — 2026-10-12
 
 簽署審批：交易已帶 Compute Budget 的 CU limit／price 時，預設不再改寫 message（無 `workingTx`，簽原始 bytes）。僅缺 limit 或 price 時才自動補該項。審批仍顯示 CU 與費用；使用者「套用 CU」後才以 payload 寫入並重模擬。修 Jupiter 等已嵌入 CU 的 swap。

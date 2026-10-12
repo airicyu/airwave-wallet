@@ -7,7 +7,7 @@ import { getExposedPublicKey } from "../../../shared/accounts";
 import { accountKind, jsonRpcMissing } from "../../../shared/storage-keys";
 import { getHomeTokensForOwners } from "../../home-tokens";
 import { respond } from "../../messaging";
-import { addPending, schedulePendingTimeout } from "../../pending";
+import { addPending, pendingInsertError, schedulePendingTimeout } from "../../pending";
 import {
   buildWalletSendTransaction,
   pendingTimeoutHandlers,
@@ -104,7 +104,7 @@ export async function handleBeginSend(
       },
     });
   }
-  addPending(requestId, {
+  const reserved = addPending(requestId, {
     kind: "walletSend",
     tabId: 0,
     frameId: 0,
@@ -114,6 +114,18 @@ export async function handleBeginSend(
     signAccountId: active.id,
     uiHost: uiHostFromSender(sender),
   });
+  if (!reserved) {
+    const code = pendingInsertError(requestId);
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: {
+        code,
+        message: code === "REQUEST_ID_IN_USE" ? "Request id is already pending" : "Request id is invalid",
+      },
+    });
+  }
   schedulePendingTimeout(requestId, pendingTimeoutHandlers);
   return respond({
     kind: "airwave-ext-res",

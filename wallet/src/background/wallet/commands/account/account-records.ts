@@ -10,8 +10,9 @@ import {
 } from "../../../../shared/account-label";
 import { accountKind, type AccountMeta } from "../../../../shared/storage-keys";
 import {
+  disconnectOriginsForAccount,
   notifyAccountChanged,
-  notifyDisconnected,
+  rebindConnectionsToAccount,
 } from "../../../messaging";
 import { respond } from "../../../messaging";
 import {
@@ -24,10 +25,8 @@ import {
   clearActiveAccountId,
   readAccounts,
   readActiveAccountId,
-  readConnections,
   writeAccounts,
   writeActiveAccountId,
-  writeConnections,
 } from "../../../storage";
 import { invalidLabel } from "./invalid-label";
 
@@ -43,11 +42,8 @@ export async function handleSetActiveAccount(req: ExtensionRequest): Promise<Ext
     });
   }
   await writeActiveAccountId(accountId);
-  const connections = await readConnections();
-  for (const rec of Object.values(connections)) rec.accountId = accountId;
-  await writeConnections(connections);
   const acc = accounts.find((a) => a.id === accountId)!;
-  await notifyAccountChanged(getExposedPublicKey(acc));
+  await rebindConnectionsToAccount(accountId, getExposedPublicKey(acc));
   return respond({
     kind: "airwave-ext-res",
     requestId: req.requestId,
@@ -148,18 +144,9 @@ export async function handleDeleteAccount(req: ExtensionRequest): Promise<Extens
     });
   }
 
-  const connections = await readConnections();
-  const disconnectPairs: { origin: string; tabIds: number[] }[] = [];
-  for (const [origin, rec] of Object.entries(connections)) {
-    if (rec.accountId === accountId) {
-      disconnectPairs.push({ origin, tabIds: [...rec.tabIds] });
-      delete connections[origin];
-    }
-  }
-
   const nextAccounts = accounts.filter((a) => a.id !== accountId);
   await writeAccounts(nextAccounts);
-  await writeConnections(connections);
+  await disconnectOriginsForAccount(accountId);
 
   if (accountKind(target) === "signing" && session.isUnlocked()) {
     const secrets = session.getVaultSecrets();
@@ -168,10 +155,6 @@ export async function handleDeleteAccount(req: ExtensionRequest): Promise<Extens
       await session.setVaultSecrets(secrets);
       await persistVaultFromSession();
     }
-  }
-
-  for (const { origin, tabIds } of disconnectPairs) {
-    await notifyDisconnected(tabIds, origin);
   }
 
   const activeId = await readActiveAccountId();
