@@ -12,6 +12,7 @@ import {
 } from "../../shared/friendly-error-message";
 import { accountKind, jsonRpcMissing } from "../../shared/storage-keys";
 import { MainnetRpcStop } from "./MainnetRpcStop";
+import { formatOrganicScoreLabel } from "../../shared/organic-score-label";
 import { NATIVE_SOL_ID, shortMint, sortCombinedTokenMembers, type HomeTokenRow } from "../home/home-tokens";
 import { IconChevronDown } from "./StrokeIcon";
 import { shortAddr } from "../lib/format";
@@ -186,15 +187,11 @@ function TokenRow({
           }
         }}
       >
+        <TokenTrust row={row} />
         <TokenIcon row={row} />
         <div className="token-main">
           <div className="token-name-row">
             <div className="token-sym">{row.name || row.symbol}</div>
-            {row.isVerified ? (
-              <span className="token-verified" title={t("token.verified")} aria-label={t("token.verified")}>
-                ✓
-              </span>
-            ) : null}
           </div>
           <div className="token-qty">
             {row.uiAmountLabel} {row.symbol}
@@ -240,6 +237,33 @@ function TokenRow({
         </div>
       ) : null}
     </li>
+  );
+}
+
+function TokenTrust({ row }: { row: HomeTokenRow }): JSX.Element {
+  const { t } = useT();
+  const native = row.id === NATIVE_SOL_ID;
+  const verified = native || row.isVerified === true;
+  if (!verified) {
+    return (
+      <span className="token-trust token-trust--empty" title={t("token.notVerified")} aria-label={t("token.notVerified")} />
+    );
+  }
+  const score = native ? undefined : formatOrganicScoreLabel(row.organicScore);
+  return (
+    <span className="token-trust token-trust--verified" title={t("token.verified")} aria-label={t("token.verified")}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" fill="currentColor" />
+        <path
+          d="M8.5 12.2l2.3 2.3 4.7-5"
+          stroke="#0f1419"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      {score ? <span className="token-trust-score">{score}</span> : null}
+    </span>
   );
 }
 

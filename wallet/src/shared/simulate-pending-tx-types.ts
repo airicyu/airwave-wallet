@@ -5,6 +5,8 @@ export type SimulateTxDeltaDisplay = {
   amountSuffix: string;
   iconUrl?: string;
   iconLetter: string;
+  /** Verified overlay only; never set for unverified. */
+  scoreLabel?: string;
 };
 
 export type SimulateTxDelta = {

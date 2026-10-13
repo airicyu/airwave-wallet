@@ -207,16 +207,15 @@ export function deltaDisplayPaintFingerprint(sim: SimulatePendingTxResult): stri
         disp.amountSuffix,
         disp.iconUrl ?? "",
         disp.iconLetter,
+        disp.scoreLabel ?? "",
       ].join(":");
     })
     .join("|");
 }
 
 const TRUST_VERIFIED_SVG =
-  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" fill="currentColor"/><path d="M8.5 12.2l2.3 2.3 4.7-5" stroke="#0f1419" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" fill="currentColor"/><path d="M8.5 12.2l2.3 2.3 4.7-5" stroke="#0f1419" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-const TRUST_UNVERIFIED_SVG =
-  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" stroke="currentColor" stroke-width="1.8"/><path d="M9 12h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
 
 function fallbackDisplay(d: SimulateTxDelta): SimulateTxDeltaDisplay {
   if (d.kind === "native") {
@@ -248,10 +247,18 @@ function appendDeltaRow(
 
   const trust = document.createElement("span");
   const verified = disp.trust === "verified";
-  trust.className = `delta-trust ${verified ? "delta-trust--verified" : "delta-trust--unverified"}`;
+  trust.className = `delta-trust ${verified ? "delta-trust--verified" : "delta-trust--empty"}`;
   trust.title = t(locale, verified ? "token.verified" : "token.notVerified");
   trust.setAttribute("aria-label", trust.title);
-  trust.innerHTML = verified ? TRUST_VERIFIED_SVG : TRUST_UNVERIFIED_SVG;
+  if (verified) {
+    trust.innerHTML = TRUST_VERIFIED_SVG;
+    if (disp.scoreLabel) {
+      const score = document.createElement("span");
+      score.className = "delta-trust-score";
+      score.textContent = disp.scoreLabel;
+      trust.append(score);
+    }
+  }
 
   const iconWrap = document.createElement("span");
   iconWrap.className = "delta-token-icon";

@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 代幣信任盾與 organicScore（概念稿）</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --accent-dim: #2a6ea8;
+        --ok: #4ecb8d;
+        --warn: #e0a54a;
+        --danger: #c75050;
+        --popup-w: 384px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", "Microsoft JhengHei UI", "PingFang TC", system-ui, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1180px; margin: 0 auto; padding: 28px 20px 64px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede {
+        color: var(--text-muted);
+        margin: 0 0 24px;
+        max-width: 52rem;
+        font-size: 0.92rem;
+      }
+      .stages {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 28px;
+        align-items: flex-start;
+      }
+      .stage-block { display: flex; flex-direction: column; gap: 8px; }
+      .stage-label {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .popup {
+        width: var(--popup-w);
+        background: var(--bg);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 10px 5px 5px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+      }
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #5b8cff, #14f195);
+      }
+      .pill-name { font-size: 0.82rem; font-weight: 600; }
+      .top-spacer { flex: 1; }
+      .ico {
+        width: 32px;
+        height: 32px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--text-muted);
+        display: grid;
+        place-items: center;
+      }
+      .body { padding: 12px; }
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 0 0 8px;
+      }
+      .section-head h2 {
+        margin: 0;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--text-muted);
+      }
+      .token-list { display: flex; flex-direction: column; gap: 8px; }
+      .token-card {
+        display: grid;
+        grid-template-columns: 26px 40px minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+        padding: 12px 10px;
+        border: 1px solid var(--stroke-soft);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+      }
+      .token-main { min-width: 0; }
+      .token-sym {
+        font-weight: 600;
+        font-size: 0.92rem;
+        line-height: 1.25;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .token-qty {
+        margin-top: 2px;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+      }
+      .token-usd {
+        font-weight: 600;
+        font-size: 0.92rem;
+        text-align: right;
+        padding-left: 4px;
+      }
+      .mint-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        overflow: hidden;
+        background: var(--fill);
+        display: grid;
+        place-items: center;
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #fff;
+        flex-shrink: 0;
+      }
+      .mint-icon.sm { width: 28px; height: 28px; font-size: 0.62rem; }
+      .mint-icon.sol { background: linear-gradient(135deg, #9945ff, #14f195); }
+      .mint-icon.usdc { background: #2775ca; }
+      .mint-icon.wz { background: #5a3d2b; }
+      .mint-icon.mx { background: #3a4a38; }
+      .mint-icon.orca { background: #1a3a4a; }
+
+      /* Recommended: 26px cell; numeral hangs 2px past shield corner */
+      .trust {
+        position: relative;
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+      .trust svg { width: 16px; height: 16px; display: block; }
+      .trust.yes {
+        background: color-mix(in srgb, var(--ok) 18%, var(--bg-elevated));
+        color: var(--ok);
+      }
+      .trust.empty {
+        background: transparent;
+        box-shadow: none;
+      }
+      .score {
+        position: absolute;
+        right: -2px;
+        bottom: -2px;
+        min-width: 13px;
+        height: 11px;
+        padding: 0 3px;
+        border-radius: 4px;
+        font-size: 8px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.04em;
+        line-height: 11px;
+        text-align: center;
+        background: var(--bg);
+        color: var(--text);
+        box-shadow: 0 0 0 1px var(--stroke);
+        pointer-events: none;
+      }
+      .trust.yes .score {
+        background: color-mix(in srgb, var(--ok) 16%, var(--bg));
+        color: var(--ok);
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--ok) 35%, var(--stroke));
+      }
+
+      .card {
+        background: var(--bg-elevated);
+        border: 1px solid var(--stroke-soft);
+        border-radius: var(--radius);
+        padding: 12px;
+      }
+      .sign-chrome { padding: 12px; }
+      .acct-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px 4px 4px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+        font-size: 0.78rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+      .acct-pill i {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #5b8cff, #14f195);
+        display: block;
+      }
+      .site-row {
+        display: flex;
+        gap: 8px;
+        font-size: 0.78rem;
+        margin-bottom: 12px;
+      }
+      .site-row span { color: var(--text-dim); }
+      .delta-row {
+        display: grid;
+        grid-template-columns: 26px 28px minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 0;
+        border-top: 1px solid var(--stroke-soft);
+      }
+      .delta-row:first-of-type { border-top: 0; }
+      .sym { font-weight: 600; font-size: 0.92rem; }
+      .mint {
+        margin-top: 1px;
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        color: var(--text-dim);
+      }
+      .delta { font-weight: 600; font-size: 0.84rem; font-variant-numeric: tabular-nums; }
+      .delta.plus { color: var(--ok); }
+      .delta.minus { color: var(--danger); }
+      .dock {
+        display: flex;
+        gap: 8px;
+        padding: 12px;
+        border-top: 1px solid var(--stroke-soft);
+      }
+      .btn {
+        flex: 1;
+        height: 40px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.88rem;
+        font-family: inherit;
+      }
+      .btn.reject { background: var(--fill); color: var(--text); }
+      .btn.ok { background: var(--accent); color: #fff; }
+
+      .block {
+        border: 1px solid var(--stroke-soft);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        overflow: hidden;
+      }
+      .block .token-card { border: none; border-radius: 0; }
+      .member {
+        padding: 8px 12px 10px 84px;
+        border-top: 1px solid var(--stroke-soft);
+        font-size: 0.78rem;
+        color: var(--text-muted);
+      }
+      .m-top { display: flex; justify-content: space-between; gap: 8px; }
+      .addr {
+        font-family: var(--mono);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .notes {
+        flex: 1;
+        min-width: 280px;
+        max-width: 440px;
+      }
+      .notes h2 { font-size: 0.95rem; margin: 0 0 8px; }
+      .notes ul { margin: 0 0 16px; padding-left: 1.1rem; color: var(--text-muted); font-size: 0.88rem; }
+      .notes li { margin: 0 0 8px; }
+      .notes code { font-family: var(--mono); font-size: 0.82em; color: var(--text); }
+      .specimen {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        align-items: flex-end;
+        padding: 12px;
+        background: var(--bg-elevated);
+        border: 1px solid var(--stroke-soft);
+        border-radius: var(--radius);
+        margin-bottom: 16px;
+      }
+      .spec-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+      .spec-cap { font-size: 0.68rem; color: var(--text-dim); }
+      .was {
+        display: grid;
+        grid-template-columns: 40px minmax(0, 1fr) auto;
+        gap: 8px;
+        align-items: center;
+        padding: 10px;
+        background: var(--bg-elevated);
+        border: 1px dashed var(--stroke);
+        border-radius: var(--radius);
+        opacity: 0.72;
+        margin-bottom: 10px;
+        max-width: 320px;
+      }
+      .was-check { color: var(--ok); font-size: 0.85rem; margin-left: 4px; }
+      .compare-cap { font-size: 0.72rem; color: var(--text-dim); margin: 0 0 6px; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>代幣列 · 信任標與分數</h1>
+      <p class="lede">
+        Home 與簽署「預期變化」同一閱讀序：最左一格對齊圓形圖。已驗證才畫綠盾，分數可掛盾右下。未驗證該格留空、不畫圖、不畫 organic score（避免灰盾被讀成受保護）。
+      </p>
+
+      <div class="stages">
+        <div class="stage-block">
+          <div class="stage-label">Home · Tokens</div>
+          <div class="popup" aria-label="Home">
+            <div class="top">
+              <div class="pill">
+                <span class="avatar" aria-hidden="true"></span>
+                <span class="pill-name">Travel</span>
+              </div>
+              <div class="top-spacer"></div>
+              <button class="ico" type="button" aria-label="Menu" title="Menu">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="12" cy="6" r="1.6" fill="currentColor"/>
+                  <circle cx="12" cy="12" r="1.6" fill="currentColor"/>
+                  <circle cx="12" cy="18" r="1.6" fill="currentColor"/>
+                </svg>
+              </button>
+            </div>
+            <div class="body">
+              <div class="section-head"><h2>Tokens</h2></div>
+              <div class="token-list">
+                <div class="token-card">
+                  <span class="trust yes" title="已驗證" aria-label="已驗證">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" fill="currentColor"/>
+                      <path d="M8.5 12.2l2.3 2.3 4.7-5" stroke="#0f1419" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </span>
+                  <span class="mint-icon sol">SO</span>
+                  <div class="token-main">
+                    <div class="token-sym">SOL</div>
+                    <div class="token-qty">2.4102</div>
+                  </div>
+                  <div class="token-usd">$412.08</div>
+                </div>
+
+                <div class="block">
+                  <div class="token-card">
+                    <span class="trust yes" title="已驗證" aria-label="已驗證">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" fill="currentColor"/>
+                        <path d="M8.5 12.2l2.3 2.3 4.7-5" stroke="#0f1419" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      <span class="score">87</span>
+                    </span>
+                    <span class="mint-icon usdc">$</span>
+                    <div class="token-main">
+                      <div class="token-sym">USDC</div>
+                      <div class="token-qty">1,240.00</div>
+                    </div>
+                    <div class="token-usd">$1,240.00</div>
+                  </div>
+                  <div class="member">
+                    <div class="m-top">
+                      <span class="addr">Spend…k2Lm</span>
+                      <span>62%</span>
+                    </div>
+                  </div>
+                  <div class="member">
+                    <div class="m-top">
+                      <span class="addr">Save…n9Qx</span>
+                      <span>38%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="token-card">
+                  <span class="trust empty" title="未驗證" aria-label="未驗證"></span>
+                  <span class="mint-icon wz">WZ</span>
+                  <div class="token-main">
+                    <div class="token-sym">7kQp…x2Lm</div>
+                    <div class="token-qty">40,000</div>
+                  </div>
+                  <div class="token-usd">—</div>
+                </div>
+
+                <div class="token-card">
+                  <span class="trust empty" title="未驗證" aria-label="未驗證"></span>
+                  <span class="mint-icon mx">MX</span>
+                  <div class="token-main">
+                    <div class="token-sym">9xQe…k4Ua</div>
+                    <div class="token-qty">12.5</div>
+                  </div>
+                  <div class="token-usd">$0.04</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-block">
+          <div class="stage-label">Sign tx · Expected changes</div>
+          <div class="popup" aria-label="簽署">
+            <div class="sign-chrome">
+              <div class="acct-pill"><i></i> Travel</div>
+              <div class="site-row"><span>Site</span> demo.airwave.test</div>
+              <div class="card">
+                <h2 style="margin:0 0 10px;font-size:0.78rem;font-weight:600;color:var(--text-muted)">Expected changes</h2>
+
+                <div class="delta-row">
+                  <span class="trust yes" title="已驗證" aria-label="已驗證">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" fill="currentColor"/>
+                      <path d="M8.5 12.2l2.3 2.3 4.7-5" stroke="#0f1419" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </span>
+                  <span class="mint-icon sm sol">S</span>
+                  <div>
+                    <div class="sym">SOL</div>
+                  </div>
+                  <div class="delta plus">+0.182154713 SOL</div>
+                </div>
+
+                <div class="delta-row">
+                  <span class="trust yes" title="已驗證" aria-label="已驗證">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" fill="currentColor"/>
+                      <path d="M8.5 12.2l2.3 2.3 4.7-5" stroke="#0f1419" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="score">87</span>
+                  </span>
+                  <span class="mint-icon sm usdc">$</span>
+                  <div>
+                    <div class="sym">USDC</div>
+                    <div class="mint">Usdc…demo</div>
+                  </div>
+                  <div class="delta minus">−20 USDC</div>
+                </div>
+
+                <div class="delta-row">
+                  <span class="trust empty" title="未驗證" aria-label="未驗證"></span>
+                  <span class="mint-icon sm wz">WZ</span>
+                  <div>
+                    <div class="sym">7kQp…x2Lm</div>
+                    <div class="mint">7kQp…x2Lm</div>
+                  </div>
+                  <div class="delta minus">−40,000</div>
+                </div>
+
+                <div class="delta-row">
+                  <span class="trust empty" title="未驗證" aria-label="未驗證"></span>
+                  <span class="mint-icon sm mx">MX</span>
+                  <div>
+                    <div class="sym">9xQe…k4Ua</div>
+                    <div class="mint">9xQe…k4Ua</div>
+                  </div>
+                  <div class="delta plus">+12.5</div>
+                </div>
+
+                <div class="delta-row">
+                  <span class="trust yes" title="已驗證" aria-label="已驗證">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" fill="currentColor"/>
+                      <path d="M8.5 12.2l2.3 2.3 4.7-5" stroke="#0f1419" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="score">100</span>
+                  </span>
+                  <span class="mint-icon sm orca">OR</span>
+                  <div>
+                    <div class="sym">ORCA</div>
+                    <div class="mint">orca…8vdk</div>
+                  </div>
+                  <div class="delta plus">+4.2 ORCA</div>
+                </div>
+              </div>
+            </div>
+            <div class="dock">
+              <button class="btn reject" type="button">拒絕</button>
+              <button class="btn ok" type="button">批准</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="notes">
+          <h2>建議：26px 格 + 右下角外掛 2px</h2>
+          <ul>
+            <li>已驗證：綠底<strong>盾</strong>＋內勾；<code>organicScore &gt; 0</code> 才在盾右下掛整數分。</li>
+            <li>未驗證：最左格<strong>留空</strong>（仍佔 26px，代幣圖對齊），不畫盾／三角／分數。Jupiter 即使回分數也不畫。</li>
+            <li>信任格 <code>26×26</code>。分數晶片錨在<strong>已驗證盾</strong>右下，<code>right/bottom: -2px</code>。</li>
+            <li>organicScore 常態 1–100；異常大值 <code>99+</code>。</li>
+          </ul>
+
+          <div class="specimen" aria-label="分數樣本">
+            <div class="spec-item">
+              <span class="trust yes">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" fill="currentColor"/>
+                  <path d="M8.5 12.2l2.3 2.3 4.7-5" stroke="#0f1419" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="score">1</span>
+              </span>
+              <span class="spec-cap">1</span>
+            </div>
+            <div class="spec-item">
+              <span class="trust yes">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" fill="currentColor"/>
+                  <path d="M8.5 12.2l2.3 2.3 4.7-5" stroke="#0f1419" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="score">87</span>
+              </span>
+              <span class="spec-cap">87</span>
+            </div>
+            <div class="spec-item">
+              <span class="trust yes">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" fill="currentColor"/>
+                  <path d="M8.5 12.2l2.3 2.3 4.7-5" stroke="#0f1419" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="score">100</span>
+              </span>
+              <span class="spec-cap">100</span>
+            </div>
+            <div class="spec-item">
+              <span class="trust yes">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" fill="currentColor"/>
+                  <path d="M8.5 12.2l2.3 2.3 4.7-5" stroke="#0f1419" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="score">99+</span>
+              </span>
+              <span class="spec-cap">≥1000 截</span>
+            </div>
+            <div class="spec-item">
+              <span class="trust empty" title="未驗證" aria-label="未驗證"></span>
+              <span class="spec-cap">未驗證留空</span>
+            </div>
+          </div>
+
+          <h2>不採用</h2>
+          <ul>
+            <li>未驗證空心灰盾或警告三角：盾像安全；三角把「未知」畫成警示，都過重。改留空。</li>
+            <li>未驗證仍畫 organic score：分數會讓未驗證列看起來像被評過、較可信。</li>
+            <li>維持 22px 且把數字畫進圖心：三位數會吃掉勾／驚嘆號。</li>
+            <li>數字疊在代幣圓上：與信任欄無關，且圓會裁掉。</li>
+            <li>名稱後方 Unicode 勾（現況）：與簽署列不同序，且分數無處可掛。</li>
+            <li>999 四位數：organicScore 以 100 為頂；異常大值顯示 <code>99+</code>。</li>
+          </ul>
+
+          <p class="compare-cap">現況（名稱後勾）— 對照用，非正式畫面</p>
+          <div class="was">
+            <span class="mint-icon sm usdc">$</span>
+            <div class="token-sym">USDC<span class="was-check">✓</span></div>
+            <div class="token-usd">$1,240.00</div>
+          </div>
+
+          <h2>規則</h2>
+          <ul>
+            <li>已驗證才畫綠盾（不用 emoji）。未驗證最左格留空，仍佔位讓圓圖對齊。</li>
+            <li>僅已驗證且 <code>organicScore &gt; 0</code> 才掛整數分；未驗證永不畫分。</li>
+            <li>原生 SOL：已驗證盾；無 Jupiter score 則不畫分。</li>
+            <li>Combined 展開成員列<strong>不放信任格內容</strong>；只在聚合母列。</li>
+            <li>代幣詳情 meta 不在本稿範圍。本版簽署列拿掉 0.33.0 未驗證灰盾。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

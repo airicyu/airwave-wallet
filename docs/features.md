@@ -25,7 +25,7 @@ Version and changes: [version.md](../version.md), [changelog.md](../changelog.md
 
 ## Home
 
-- **Tokens**: holdings for the active account on the current cluster; open a mint to send.
+- **Tokens**: holdings for the active account on the current cluster; open a mint to send. Verified mints show a green shield before the token icon (score overlay when organic score is greater than zero). Unverified rows leave that slot empty.
 - **Activity**: recent transactions. On Mainnet with Helius this is parsed history and can page older rows. Rows can open Helius Orb.
 - **Reclaim rent**: scan zero-balance token accounts, pick some, close them in one send; rent returns as SOL.
 
@@ -49,7 +49,7 @@ Manual test dApp: [test-web](../test-web/README.md).
 
 The transaction approval page (including in-wallet send confirm):
 
-- **Expected changes**: simulates using this transaction’s own blockhash (does not replace it with the node’s latest). While the page is visible, that block refreshes about every 3 seconds. Each balance line shows a wallet trust shield, token icon, name (Jupiter symbol on Mainnet when verified; otherwise mint abbreviation), and amount.
+- **Expected changes**: simulates using this transaction’s own blockhash (does not replace it with the node’s latest). While the page is visible, that block refreshes about every 3 seconds. Each balance line has a 26px slot then token icon, name, and amount. Verified tokens show a green shield (Jupiter organic score overlay when the score is greater than zero). Unverified slots stay empty.
 - **Fees**: computed locally from signature fees and CU, not from the simulation fee fields.
 - You can edit CU limit / price (apply to rewrite the tx); if the dApp already set both, the wallet leaves them unchanged until you apply. Open Solana Explorer Inspector.
 - A failed simulation (for example `BlockhashNotFound`) does not disable approve. Approve is disabled only when the transaction cannot be decoded.

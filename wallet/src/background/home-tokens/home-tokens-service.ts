@@ -542,6 +542,7 @@ export type MintDisplayMeta = {
   symbol?: string;
   iconUrl?: string;
   isVerified?: boolean;
+  organicScore?: number;
 };
 
 /** Mainnet: batch-fetch symbol/icon via Jupiter tokens v2 search. */
@@ -574,6 +575,7 @@ export async function lookupJupiterMintMetadata(
           symbol: symbol || undefined,
           iconUrl,
           isVerified: hit.isVerified === true ? true : undefined,
+          organicScore: hit.organicScore,
         });
       }
     } catch {

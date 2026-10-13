@@ -898,12 +898,13 @@ textarea:focus-visible {
 
 .delta-row {
   display: grid;
-  grid-template-columns: 22px 28px minmax(0, 1fr) auto;
+  grid-template-columns: 26px 28px minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
   padding: 8px 0;
   font-size: 0.88rem;
   border-bottom: 1px solid var(--stroke-soft);
+  overflow: visible;
 }
 
 .delta-row:last-child {
@@ -911,12 +912,14 @@ textarea:focus-visible {
 }
 
 .delta-trust {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
+  overflow: visible;
 }
 
 .delta-trust--verified {
@@ -924,10 +927,28 @@ textarea:focus-visible {
   color: var(--ok);
 }
 
-.delta-trust--unverified {
-  background: var(--fill);
-  color: var(--text-dim);
-  box-shadow: inset 0 0 0 1px var(--stroke);
+.delta-trust--empty {
+  background: transparent;
+}
+
+.delta-trust-score {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  min-width: 13px;
+  height: 11px;
+  padding: 0 3px;
+  border-radius: 4px;
+  font-size: 8px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  line-height: 11px;
+  text-align: center;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--ok) 16%, var(--bg));
+  color: var(--ok);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ok) 35%, var(--stroke));
 }
 
 .delta-token-icon {

@@ -12,6 +12,7 @@ import {
   shortMint,
   WRAPPED_SOL_MINT,
 } from "../../shared/home-tokens";
+import { formatOrganicScoreLabel } from "../../shared/organic-score-label";
 import { sanitizeSymbol } from "../../shared/sanitize-symbol";
 import type { SimulatePendingTxResult, SimulateTxDelta } from "../../shared/simulate-pending-tx-types";
 import type { Cluster } from "../../shared/storage-keys";
@@ -53,6 +54,7 @@ function splUnverified(mint: string): SimulateTxDelta["display"] {
 function splFromHit(mint: string, hit: MintDisplayMeta): SimulateTxDelta["display"] {
   const cleaned = sanitizeSymbol(hit.symbol);
   if (hit.isVerified === true && cleaned) {
+    const scoreLabel = formatOrganicScoreLabel(hit.organicScore);
     return {
       trust: "verified",
       labelPrimary: cleaned,
@@ -65,6 +67,7 @@ function splFromHit(mint: string, hit: MintDisplayMeta): SimulateTxDelta["displa
             ? NATIVE_SOL_ICON_URL
             : undefined,
       iconLetter: iconLetterForSymbol(cleaned),
+      ...(scoreLabel ? { scoreLabel } : {}),
     };
   }
   return splUnverified(mint);
