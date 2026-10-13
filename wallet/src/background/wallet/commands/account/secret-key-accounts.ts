@@ -54,11 +54,25 @@ export async function handleGenerateAccount(req: ExtensionRequest): Promise<Exte
       error: { code: "WALLET_LOCKED", message: "請先解鎖錢包" },
     });
   }
-  const { label } = (req.payload ?? {}) as { label?: string };
+  const { label, secretKeyBase58 } = (req.payload ?? {}) as { label?: string; secretKeyBase58?: string };
   const parsedLabel = parseOptionalAccountLabel(label);
   if (!parsedLabel.ok) return invalidLabel(req, false);
   const accounts = await readAccounts();
-  const kp = await generateRandomLoadedAccount();
+  let kp: LoadedAccountKeys;
+  if (secretKeyBase58 !== undefined) {
+    const decoded = await loadedFromSecretRaw(secretKeyBase58.trim());
+    if (!decoded) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "BAD_SECRET", message: "Invalid private key" },
+      });
+    }
+    kp = decoded;
+  } else {
+    kp = await generateRandomLoadedAccount();
+  }
   const publicKeyBase58 = kp.address;
   if (pubkeyExists(accounts, publicKeyBase58)) {
     return respond({

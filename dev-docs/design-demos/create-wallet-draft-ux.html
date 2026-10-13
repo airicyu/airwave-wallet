@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 產生助記詞／拋棄式錢包（概念稿）</title>
+    <!--
+      0.41.0 informal concept. Not a contract. Agree before changing wallet/.
+    -->
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --warn: #e8a0a0;
+        --popup-w: 422px;
+        --popup-h: 600px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; font-family: var(--font); background: #080b0e; color: var(--text); line-height: 1.45; }
+      .page { max-width: 1200px; margin: 0 auto; padding: 28px 20px 64px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 8px; max-width: 52rem; font-size: 0.92rem; }
+      .note { color: var(--text-dim); font-size: 0.82rem; margin: 0 0 20px; max-width: 52rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; }
+      .chip {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 7px 13px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      .chip.active { border-color: var(--accent); background: #1a2838; }
+      .layout { display: grid; grid-template-columns: 1fr 280px; gap: 28px; align-items: start; }
+      @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } }
+      .gallery { display: grid; grid-template-columns: repeat(2, var(--popup-w)); gap: 24px; justify-content: start; }
+      .gallery.single { grid-template-columns: var(--popup-w); }
+      @media (max-width: 920px) { .gallery { grid-template-columns: 1fr; } }
+      .col-cap { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; font-weight: 600; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .top {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        min-height: 52px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+      }
+      .top h2 { margin: 0; flex: 1; text-align: center; font-size: 0.92rem; font-weight: 600; }
+      .icon-btn {
+        width: 34px; height: 34px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        cursor: pointer;
+      }
+      .icon-btn:hover { background: var(--fill); border-color: var(--stroke); color: var(--text); }
+      .icon-btn.sm-inline { width: 28px; height: 28px; }
+      .icon-btn svg { width: 16px; height: 16px; }
+      .icon-btn.sm-inline svg { width: 14px; height: 14px; }
+      .body { flex: 1; min-height: 0; overflow: auto; padding: 14px 12px 16px; }
+      .dock {
+        flex-shrink: 0;
+        padding: 10px 12px 12px;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+      }
+      .primary {
+        width: 100%;
+        border: 0;
+        border-radius: var(--radius-sm);
+        background: var(--accent);
+        color: #fff;
+        font: inherit;
+        font-size: 0.88rem;
+        font-weight: 600;
+        padding: 11px;
+        cursor: pointer;
+      }
+      .field { margin-bottom: 12px; }
+      .field label { display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 6px; }
+      .field input {
+        width: 100%;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-sm);
+        background: var(--fill);
+        color: var(--text);
+        font: inherit;
+        font-size: 0.88rem;
+        padding: 9px 10px;
+      }
+      .field input:focus { outline: none; border-color: var(--accent); }
+      .seed-backup-warn { margin: 0 0 10px; font-size: 0.8rem; color: var(--warn); }
+      .draft-toolbar { display: flex; justify-content: flex-end; margin: 0 0 8px; }
+      #phone-seed .draft-toolbar { margin-bottom: 18px; }
+      #phone-burner .draft-toolbar { padding-top: 10px; }
+      #phone-seed .word-grid { margin-bottom: 22px; }
+      #phone-seed .pk-label { margin-top: 2px; }
+      .dice-btn {
+        width: 45px;
+        height: 45px;
+        border: 2px solid #9945ff;
+        border-radius: 50%;
+        background: transparent;
+        color: #b794f6;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+      .dice-btn:hover {
+        border-color: #c9b3ff;
+        color: #dcc9ff;
+        background: rgba(153, 69, 255, 0.1);
+      }
+      .dice-btn svg { width: 34px; height: 34px; display: block; }
+      .dice-btn svg .die-face { fill: currentColor; stroke: none; }
+      .dice-btn svg .die-face-top { opacity: 0.1; }
+      .dice-btn svg .die-face-left { opacity: 0.16; }
+      .dice-btn svg .die-face-right { opacity: 0.26; }
+      .dice-btn svg .die-edge {
+        stroke: currentColor;
+        stroke-width: 0.72;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .dice-btn svg .die-pip { fill: currentColor; }
+      .dice-btn svg.shake { transform-origin: 50% 60%; animation: dice-shake 0.21s ease; }
+      @keyframes dice-shake {
+        0% { transform: translateY(0) rotate(0deg); }
+        18% { transform: translateY(-3px) rotate(-10deg); }
+        36% { transform: translateY(-2.5px) rotate(8deg); }
+        54% { transform: translateY(-2px) rotate(-5deg); }
+        72% { transform: translateY(-1px) rotate(2deg); }
+        100% { transform: translateY(0) rotate(0deg); }
+      }
+      .word-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+      .word-ro {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+        padding: 7px 8px;
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        background: var(--fill);
+        min-width: 0;
+      }
+      .word-ro-n { font-size: 0.62rem; color: var(--text-dim); flex-shrink: 0; }
+      .word-ro-w { font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .pk-label { font-size: 0.75rem; color: var(--text-dim); margin: 0 0 6px; }
+      .addr-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        background: var(--fill);
+      }
+      .addr-row-pk {
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .aside {
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        padding: 14px;
+        font-size: 0.82rem;
+        color: var(--text-muted);
+      }
+      .aside h3 { margin: 0 0 8px; font-size: 0.88rem; color: var(--text); }
+      .aside ul { margin: 0; padding-left: 1.1rem; }
+      .aside li { margin-bottom: 6px; }
+      .flash { animation: flash 0.35s ease; }
+      @keyframes flash {
+        0% { box-shadow: 0 0 0 0 rgba(61, 156, 240, 0.5); }
+        100% { box-shadow: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>產生助記詞／拋棄式錢包</h1>
+      <p class="lede">0.41.0 概念稿。兩條 Add account 路徑：進頁即有 draft 公鑰；骰子本機重骰；助記詞<strong>無</strong>整組複製。</p>
+      <p class="note">非正式契約。同意前不改 wallet/。點骰子可試互動（假資料）。</p>
+      <div class="controls">
+        <button type="button" class="chip active" data-view="both">並排</button>
+        <button type="button" class="chip" data-view="seed">僅助記詞</button>
+        <button type="button" class="chip" data-view="burner">僅拋棄式</button>
+      </div>
+      <div class="layout">
+        <div class="gallery" id="gallery">
+          <div class="phone-col" data-panel="seed">
+            <div class="col-cap">建立助記詞錢包</div>
+            <div class="phone" id="phone-seed">
+              <header class="top">
+                <button type="button" class="icon-btn" aria-label="返回"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+                <h2>建立助記詞錢包</h2>
+                <span style="width:34px"></span>
+              </header>
+              <div class="body">
+                <div class="field">
+                  <label for="seed-name">名稱</label>
+                  <input id="seed-name" type="text" placeholder="選填" autocomplete="off" />
+                </div>
+                <p class="seed-backup-warn">離開後無法再顯示助記詞</p>
+                <div class="draft-toolbar">
+                  <button type="button" class="dice-btn" id="dice-seed" title="再產生一組" aria-label="再產生一組">
+                    <svg viewBox="3.4 2.4 17.2 19.2" aria-hidden="true">
+                      <path class="die-face die-face-top" d="M12 4 18.93 8 12 12 5.07 8Z"/>
+                      <path class="die-face die-face-left" d="M5.07 8 12 12 12 20 5.07 16Z"/>
+                      <path class="die-face die-face-right" d="M12 12 18.93 8 18.93 16 12 20Z"/>
+                      <path class="die-edge" d="M12 4 18.93 8 18.93 16 12 20 5.07 16 5.07 8Z M5.07 8 12 12 18.93 8 M12 12v8"/>
+                      <circle class="die-pip" cx="9.78" cy="6.72" r="0.58"/>
+                      <circle class="die-pip" cx="14.22" cy="9.28" r="0.58"/>
+                      <circle class="die-pip" cx="8.54" cy="14" r="0.58"/>
+                      <circle class="die-pip" cx="16.78" cy="11.72" r="0.58"/>
+                      <circle class="die-pip" cx="15.47" cy="14" r="0.58"/>
+                      <circle class="die-pip" cx="14.15" cy="16.28" r="0.58"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="word-grid" id="seed-grid"></div>
+                <p class="pk-label">Solana 公鑰</p>
+                <div class="addr-row" id="seed-addr-row">
+                  <span class="addr-row-pk" id="seed-pk"></span>
+                  <button type="button" class="icon-btn sm-inline" title="複製" aria-label="複製">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+              </div>
+              <footer class="dock"><button type="button" class="primary">建立</button></footer>
+            </div>
+          </div>
+          <div class="phone-col" data-panel="burner">
+            <div class="col-cap">建立拋棄式錢包</div>
+            <div class="phone" id="phone-burner">
+              <header class="top">
+                <button type="button" class="icon-btn" aria-label="返回"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+                <h2>建立拋棄式錢包</h2>
+                <span style="width:34px"></span>
+              </header>
+              <div class="body">
+                <div class="field">
+                  <label for="burner-name">名稱</label>
+                  <input id="burner-name" type="text" placeholder="選填" autocomplete="off" />
+                </div>
+                <div class="draft-toolbar">
+                  <button type="button" class="dice-btn" id="dice-burner" title="再產生一組" aria-label="再產生一組">
+                    <svg viewBox="3.4 2.4 17.2 19.2" aria-hidden="true">
+                      <path class="die-face die-face-top" d="M12 4 18.93 8 12 12 5.07 8Z"/>
+                      <path class="die-face die-face-left" d="M5.07 8 12 12 12 20 5.07 16Z"/>
+                      <path class="die-face die-face-right" d="M12 12 18.93 8 18.93 16 12 20Z"/>
+                      <path class="die-edge" d="M12 4 18.93 8 18.93 16 12 20 5.07 16 5.07 8Z M5.07 8 12 12 18.93 8 M12 12v8"/>
+                      <circle class="die-pip" cx="9.78" cy="6.72" r="0.58"/>
+                      <circle class="die-pip" cx="14.22" cy="9.28" r="0.58"/>
+                      <circle class="die-pip" cx="8.54" cy="14" r="0.58"/>
+                      <circle class="die-pip" cx="16.78" cy="11.72" r="0.58"/>
+                      <circle class="die-pip" cx="15.47" cy="14" r="0.58"/>
+                      <circle class="die-pip" cx="14.15" cy="16.28" r="0.58"/>
+                    </svg>
+                  </button>
+                </div>
+                <p class="pk-label">Solana 公鑰</p>
+                <div class="addr-row" id="burner-addr-row">
+                  <span class="addr-row-pk" id="burner-pk"></span>
+                  <button type="button" class="icon-btn sm-inline" title="複製" aria-label="複製">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+              </div>
+              <footer class="dock"><button type="button" class="primary">產生</button></footer>
+            </div>
+          </div>
+        </div>
+        <aside class="aside">
+          <h3>提案摘要</h3>
+          <ul>
+            <li>骰子靠右、45px 圓框透明底、<strong>2px 紫邊</strong>、立體正方骰 SVG；catalog <code>onboarding.regenerateDraft</code></li>
+            <li>助記詞頁：骰子與詞格、詞格與公鑰標籤加垂直間距</li>
+            <li>拋棄式：名稱欄與骰子之間加垂直間距；點骰子時圖示上跳再微晃落回（圓框不晃）</li>
+            <li>助記詞：移除整組 copy；保留公鑰 copy</li>
+            <li>拋棄式：建立前即見地址（現況成功後才見）</li>
+            <li>重骰不入庫；殼底一次建立／產生</li>
+          </ul>
+        </aside>
+      </div>
+    </div>
+    <script>
+      const WORDS = ["abandon","ability","able","about","above","absent","absorb","abstract","absurd","abuse","access","accident","account","accuse","achieve","acid","acoustic","acquire","across","act","action","actor","actress","actual","adapt","add","addict","address","adjust","admit","adult","advance","advice","aerobic","affair","afford","afraid","again","age","agent","agree","ahead","aim","air","airport","aisle","alarm","album","alcohol","alert","alien","all","alley","allow","almost","alone","alpha","already","also","alter","always","amateur","amazing","among","amount","amused","analyst","anchor","ancient","anger","angle","angry","animal","ankle","announce","annual","another","answer","antenna","antique","anxiety","any","apart","apology","appear","apple","approve","april","arch","arctic","area","arena","argue","arm","armed","armor","army","around","arrange","arrest","arrive","arrow","art","artefact","artist","artwork","ask","aspect","assault","asset","assist","assume","asthma","athlete","atom","attack","attend","attitude","attract","auction","audit","august","aunt","author","auto","autumn","average","avocado","avoid","awake","aware","away","awesome","awful","awkward","axis","baby","bachelor","bacon","badge","bag","balance","balcony","ball","bamboo","banana","banner","bar","barely","bargain","barrel","base","basic","basket","battle","beach","bean","beauty","because","become","beef","before","begin","behave","behind","believe","below","belt","bench","benefit","best","betray","better","between","beyond","bicycle","bid","bike","bind","biology","bird","birth","bitter","black","blade","blame","blanket","blast","bleak","bless","blind","blood","blossom","blouse","blue","blur","blush","board","boat","body","boil","bomb","bone","bonus","book","boost","border","boring","borrow","boss","bottom","bounce","box","boy","bracket","brain","brand","brass","brave","bread","breeze","brick","bridge","brief","bright","bring","brisk","broccoli","broken","bronze","broom","brother","brown","brush","bubble","buddy","budget","buffalo","build","bulb","bulk","bullet","bundle","bunker","burden","burger","burst","bus","business","busy","butter","buyer","buzz"];
+      function pickWords() {
+        const out = [];
+        for (let i = 0; i < 12; i++) out.push(WORDS[Math.floor(Math.random() * WORDS.length)]);
+        return out;
+      }
+      function mockPk() {
+        const a = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+        let s = "";
+        for (let i = 0; i < 44; i++) s += a[Math.floor(Math.random() * a.length)];
+        return s;
+      }
+      function shortAddr(pk) {
+        return pk.length <= 8 ? pk : pk.slice(0, 4) + "…" + pk.slice(-4);
+      }
+      function renderSeed(words, pk) {
+        document.getElementById("seed-grid").innerHTML = words.map((w, i) =>
+          `<div class="word-ro"><span class="word-ro-n">${i + 1}</span><span class="word-ro-w">${w}</span></div>`
+        ).join("");
+        const el = document.getElementById("seed-pk");
+        el.textContent = shortAddr(pk);
+        el.title = pk;
+      }
+      function renderBurner(pk) {
+        const el = document.getElementById("burner-pk");
+        el.textContent = shortAddr(pk);
+        el.title = pk;
+      }
+      let seedPk = mockPk();
+      renderSeed(pickWords(), seedPk);
+      let burnerPk = mockPk();
+      renderBurner(burnerPk);
+      function flash(id) {
+        const n = document.getElementById(id);
+        n.classList.remove("flash");
+        void n.offsetWidth;
+        n.classList.add("flash");
+      }
+      function shakeDice(id) {
+        const svg = document.querySelector("#" + id + " svg");
+        svg.getAnimations().forEach((anim) => anim.cancel());
+        svg.classList.remove("shake");
+        svg.style.animation = "none";
+        void svg.getBoundingClientRect();
+        svg.style.animation = "";
+        svg.classList.add("shake");
+      }
+      document.getElementById("dice-seed").addEventListener("click", () => {
+        seedPk = mockPk();
+        renderSeed(pickWords(), seedPk);
+        shakeDice("dice-seed");
+        flash("seed-addr-row");
+      });
+      document.getElementById("dice-burner").addEventListener("click", () => {
+        burnerPk = mockPk();
+        renderBurner(burnerPk);
+        shakeDice("dice-burner");
+        flash("burner-addr-row");
+      });
+      const gallery = document.getElementById("gallery");
+      document.querySelectorAll(".chip[data-view]").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          const view = chip.dataset.view;
+          document.querySelectorAll(".chip[data-view]").forEach((c) => c.classList.toggle("active", c === chip));
+          gallery.classList.toggle("single", view !== "both");
+          document.querySelector('[data-panel="seed"]').style.display = view === "burner" ? "none" : "";
+          document.querySelector('[data-panel="burner"]').style.display = view === "seed" ? "none" : "";
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1206,10 +1206,93 @@ h1.first-run-name,
   color: #e8a0a0;
 }
 
-.seed-backup-toolbar {
+.draft-toolbar {
   display: flex;
   justify-content: flex-end;
   margin: 0 0 8px;
+}
+
+.generate-seed-screen .draft-toolbar {
+  margin-bottom: 18px;
+}
+
+.generate-seed-screen .word-grid {
+  margin-bottom: 22px;
+}
+
+.generate-burner-form .draft-toolbar {
+  padding-top: 10px;
+}
+
+.pk-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin: 0 0 6px;
+}
+
+.dice-btn {
+  width: 45px;
+  height: 45px;
+  border: 2px solid #9945ff;
+  border-radius: 50%;
+  background: transparent;
+  color: #b794f6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.dice-btn:hover:not(:disabled) {
+  border-color: #c9b3ff;
+  color: #dcc9ff;
+  background: rgba(153, 69, 255, 0.1);
+}
+
+.dice-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.dice-btn svg {
+  width: 34px;
+  height: 34px;
+  display: block;
+}
+
+.dice-btn svg .die-face {
+  fill: currentColor;
+  stroke: none;
+}
+
+.dice-btn svg .die-face-top { opacity: 0.1; }
+.dice-btn svg .die-face-left { opacity: 0.16; }
+.dice-btn svg .die-face-right { opacity: 0.26; }
+
+.dice-btn svg .die-edge {
+  stroke: currentColor;
+  stroke-width: 0.72;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dice-btn svg .die-pip { fill: currentColor; }
+
+.dice-btn svg.shake {
+  transform-origin: 50% 60%;
+  animation: dice-shake 0.21s ease;
+}
+
+@keyframes dice-shake {
+  0% { transform: translateY(0) rotate(0deg); }
+  18% { transform: translateY(-3px) rotate(-10deg); }
+  36% { transform: translateY(-2.5px) rotate(8deg); }
+  54% { transform: translateY(-2px) rotate(-5deg); }
+  72% { transform: translateY(-1px) rotate(2deg); }
+  100% { transform: translateY(0) rotate(0deg); }
 }
 
 .addr-row {

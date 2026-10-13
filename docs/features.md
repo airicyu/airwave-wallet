@@ -9,7 +9,7 @@ Version and changes: [version.md](../version.md), [changelog.md](../changelog.md
 ## Custody and accounts
 
 - A wallet password locks the local password-boxed vault. The unlock key is not kept in plaintext on disk for the long term.
-- You can **generate** a 12-word wallet, **import** a seed (standard or CLI / Ledger path), or add a **watch-only** address.
+- You can **generate** a 12-word wallet or a burner key, **import** a seed (standard or CLI / Ledger path), or add a **watch-only** address. Generate shows the public key first; the dice rolls a new draft on this device before you save it. The 12-word list is not copied as a set.
 - A **Combined** account aggregates several local addresses into one holdings view.
 - Accounts can be renamed, reordered, and deleted (delete requires confirmation).
 

@@ -21,8 +21,8 @@ export type TxAiAssessState =
   | { status: "error"; message: string; reportText?: string };
 
 export const REPORT_PRESETS = [
-  "apodex/apodex-1.1-mini:free",
   "~deepseek/deepseek-flash-latest",
+  "apodex/apodex-1.1-mini:free",
 ] as const;
 
 /** @deprecated Use REPORT_PRESETS */
@@ -33,7 +33,7 @@ export const DECISIONS_PRESETS = ["liquid/d1", "nace-ai/drex-v1.5"] as const;
 /** @deprecated Use DECISIONS_PRESETS */
 export const DECISIONS_MODELS = DECISIONS_PRESETS;
 
-export const DEFAULT_REPORT_MODEL: (typeof REPORT_PRESETS)[number] = "apodex/apodex-1.1-mini:free";
+export const DEFAULT_REPORT_MODEL: (typeof REPORT_PRESETS)[number] = "~deepseek/deepseek-flash-latest";
 export const DEFAULT_DECISIONS_MODEL: (typeof DECISIONS_PRESETS)[number] = "liquid/d1";
 
 export const TX_AI_KINDS = ["signTransaction", "signAndSendTransaction", "walletSend"] as const;

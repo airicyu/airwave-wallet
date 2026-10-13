@@ -11,6 +11,7 @@ import type { SeedPathKind } from "../../shared/seed-derive";
 import type { AccountMeta } from "../../shared/storage-keys";
 import { BrandMark } from "../components/BrandMark";
 import { FirstRunBrand } from "../components/FirstRunBrand";
+import { DiceRerollButton } from "../components/DiceRerollButton";
 import { IconCopy } from "../components/StrokeIcon";
 import { SensitiveTextArea, SensitiveTextInput, WalletPasswordInput } from "../components/WalletPasswordInput";
 import { shortAddr } from "../lib/format";
@@ -31,21 +32,8 @@ import {
   type ImportSeedDraft,
 } from "./import-seed-flow";
 
-let seedClipboardClearTimer: ReturnType<typeof setTimeout> | null = null;
-
-function copySeedWords(words: string[]): void {
-  void navigator.clipboard
-    .writeText(words.join(" "))
-    .then(() => {
-      if (seedClipboardClearTimer != null) clearTimeout(seedClipboardClearTimer);
-      seedClipboardClearTimer = setTimeout(() => {
-        seedClipboardClearTimer = null;
-        void navigator.clipboard.writeText(" ").catch(() => {});
-      }, 30_000);
-    })
-    .catch(() => {});
-}
-import { createGenerateSeedDraft, type GenerateSeedDraft } from "./generate-seed-flow";
+import { createGenerateSeedDraft, rollGenerateSeedDraft, type GenerateSeedDraft } from "./generate-seed-flow";
+import { createBurnerDraft, rollBurnerDraft, type BurnerDraft } from "./generate-burner-flow";
 
 export function AddAccountChooser(): JSX.Element {
   const { navigateTo } = usePopupContext();
@@ -375,18 +363,37 @@ export function GenerateSeedScreen(): JSX.Element {
     label: "",
     err: "",
   }));
+  const [rolling, setRolling] = useState(true);
   useEffect(() => {
-    void createGenerateSeedDraft().then(setDraft);
+    let cancel = false;
+    void createGenerateSeedDraft().then((next) => {
+      if (cancel) return;
+      setDraft(next);
+      setRolling(false);
+    });
+    return () => {
+      cancel = true;
+    };
   }, []);
 
+  const onReroll = useCallback(() => {
+    if (draft.busy || rolling) return;
+    setRolling(true);
+    void rollGenerateSeedDraft(draft).then((next) => {
+      setDraft((prev) => ({ ...next, label: prev.label }));
+      setRolling(false);
+    });
+  }, [draft, rolling]);
+
   const onPrimary = useCallback(async () => {
-    if (!draft.words) return;
+    if (!draft.words || !draft.pk || rolling) return;
+    const mnemonic = draft.words.join(" ");
     clearError();
     setDraft((prev) => ({ ...prev, busy: true }));
     const label = draft.label.trim();
     const fallbackLabel = wallet ? `Account ${wallet.accounts.length + 1}` : undefined;
     const res = await sendExtensionRequest("wallet.importSeedAccount", {
-      mnemonic: draft.words.join(" "),
+      mnemonic,
       pathKind: "phantom",
       index: 0,
       label: label || fallbackLabel,
@@ -402,16 +409,16 @@ export function GenerateSeedScreen(): JSX.Element {
     const prevCount = wallet?.accounts.length ?? 0;
     const state = await refresh();
     navigateTo(viewAfterAccountCreated(prevCount, state, "add-account"));
-  }, [draft.words, draft.label, clearError, wallet, refresh, navigateTo, locale]);
+  }, [draft.words, draft.pk, draft.label, rolling, clearError, wallet, refresh, navigateTo, locale]);
 
   useRegisterDock({
     label: t("common.create"),
-    disabled: draft.busy || draft.words == null,
+    disabled: draft.busy || rolling || draft.words == null || draft.pk == null,
     onPrimary,
   });
 
   return (
-    <>
+    <div className="generate-seed-screen">
       <div className="field">
         <label htmlFor="generate-seed-label">{t("common.name")}</label>
         <input
@@ -425,19 +432,8 @@ export function GenerateSeedScreen(): JSX.Element {
         />
       </div>
       <p className="seed-backup-warn">{t("onboarding.seedBackupWarn")}</p>
-      <div className="seed-backup-toolbar">
-        <button
-          type="button"
-          className="icon-btn sm-inline"
-          id="btn-copy-seed-words"
-          title={t("common.copy")}
-          aria-label={t("common.copy")}
-          onClick={() => {
-            if (draft.words) copySeedWords(draft.words);
-          }}
-        >
-          <IconCopy />
-        </button>
+      <div className="draft-toolbar">
+        <DiceRerollButton label={t("onboarding.regenerateDraft")} disabled={draft.busy || rolling} onClick={onReroll} />
       </div>
       <div id="generate-seed-grid" className="word-grid word-grid-ro">
         {(draft.words ?? []).map((w, i) => (
@@ -447,6 +443,7 @@ export function GenerateSeedScreen(): JSX.Element {
           </div>
         ))}
       </div>
+      <p className="pk-label">{t("onboarding.solanaPubkey")}</p>
       <div className="addr-row">
         <span id="generate-seed-pk" className="addr-row-pk" title={draft.pk ?? ""}>
           {draft.pk ? shortAddr(draft.pk) : ""}
@@ -467,7 +464,7 @@ export function GenerateSeedScreen(): JSX.Element {
       <p id="generate-seed-err" className="inline-err" aria-live="polite">
         {draft.err ? displayStoredError(locale, draft.err) : ""}
       </p>
-    </>
+    </div>
   );
 }
 
@@ -476,8 +473,24 @@ export function GenerateBurnerScreen(): JSX.Element {
   const { t, locale } = useT();
   const [label, setLabel] = useState("");
   const [err, setErr] = useState("");
+  const [draft, setDraft] = useState<BurnerDraft | null>(null);
+  const [rolling, setRolling] = useState(true);
+  const [busy, setBusy] = useState(false);
   const [successPk, setSuccessPk] = useState<string | null>(null);
   const done = successPk != null;
+
+  useEffect(() => {
+    let cancel = false;
+    void createBurnerDraft().then((next) => {
+      if (cancel) return;
+      setDraft(next);
+      setRolling(false);
+    });
+    return () => {
+      cancel = true;
+      setDraft(null);
+    };
+  }, []);
 
   useEffect(() => {
     const handler = () => {
@@ -489,18 +502,33 @@ export function GenerateBurnerScreen(): JSX.Element {
     return () => setBackOverride(null);
   }, [successPk, setBackOverride]);
 
+  const onReroll = useCallback(() => {
+    if (busy || rolling) return;
+    setRolling(true);
+    setErr("");
+    void rollBurnerDraft().then((next) => {
+      setDraft(next);
+      setRolling(false);
+    });
+  }, [busy, rolling]);
+
   const onPrimary = useCallback(async () => {
     if (successPk) {
       setSuccessPk(null);
       navigateTo("add-account");
       return;
     }
+    if (!draft?.secretKeyBase58 || !draft.pk || rolling || busy) return;
+    const secretKeyBase58 = draft.secretKeyBase58;
     clearError();
+    setBusy(true);
     const prevCount = wallet?.accounts.length ?? 0;
     const res = await sendExtensionRequest("wallet.generateAccount", {
       label: label.trim() || undefined,
+      secretKeyBase58,
     });
     if (!res.ok) {
+      setBusy(false);
       setErr(apiErrorMessage(locale, res.error, "error.genericFailed"));
       return;
     }
@@ -511,12 +539,13 @@ export function GenerateBurnerScreen(): JSX.Element {
       navigateTo("rpc-guide");
       return;
     }
+    setBusy(false);
     setSuccessPk(pk);
-  }, [successPk, label, clearError, navigateTo, refresh, locale, wallet]);
+  }, [successPk, draft, rolling, busy, label, clearError, navigateTo, refresh, locale, wallet]);
 
   useRegisterDock({
     label: done ? t("common.done") : t("onboarding.generate"),
-    disabled: false,
+    disabled: !done && (busy || rolling || draft?.secretKeyBase58 == null || draft?.pk == null),
     onPrimary,
   });
 
@@ -536,7 +565,7 @@ export function GenerateBurnerScreen(): JSX.Element {
   }
 
   return (
-    <div id="generate-form">
+    <div id="generate-form" className="generate-burner-form">
       <div className="field">
         <label htmlFor="generate-label">{t("common.name")}</label>
         <input
@@ -548,6 +577,26 @@ export function GenerateBurnerScreen(): JSX.Element {
           value={label}
           onChange={(e) => setLabel(e.target.value)}
         />
+      </div>
+      <div className="draft-toolbar">
+        <DiceRerollButton label={t("onboarding.regenerateDraft")} disabled={busy || rolling} onClick={onReroll} />
+      </div>
+      <p className="pk-label">{t("onboarding.solanaPubkey")}</p>
+      <div className="addr-row">
+        <span id="generate-pk" className="addr-row-pk" title={draft?.pk ?? ""}>
+          {draft?.pk ? shortAddr(draft.pk) : ""}
+        </span>
+        <button
+          type="button"
+          className="icon-btn sm-inline"
+          title={t("common.copy")}
+          aria-label={t("common.copy")}
+          onClick={() => {
+            if (draft?.pk) void navigator.clipboard.writeText(draft.pk);
+          }}
+        >
+          <IconCopy />
+        </button>
       </div>
       <p id="generate-err" className="inline-err" aria-live="polite">
         {err}

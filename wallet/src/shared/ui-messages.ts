@@ -1070,6 +1070,11 @@ const messages = {
     "zh-Hans": "离开后无法再显示助记词",
     "en": "Seed phrase will not be shown again",
   },
+  "onboarding.regenerateDraft": {
+    "zh-Hant": "再產生一組",
+    "zh-Hans": "再生成一组",
+    "en": "Roll again",
+  },
   "onboarding.start": {
     "zh-Hant": "開始",
     "zh-Hans": "开始",

@@ -22,7 +22,7 @@ test("model normalize: presets, custom ids, and illegal fallback", () => {
   assert.equal(normalizeDecisionsModel("bad id"), "liquid/d1");
   assert.equal(normalizeReportModel("not-a-model"), "not-a-model");
   assert.equal(normalizeReportModel("custom/vendor-model"), "custom/vendor-model");
-  assert.equal(normalizeReportModel("bad id"), "apodex/apodex-1.1-mini:free");
+  assert.equal(normalizeReportModel("bad id"), "~deepseek/deepseek-flash-latest");
   assert.equal(normalizeReportModel("~deepseek/deepseek-flash-latest"), "~deepseek/deepseek-flash-latest");
   assert.equal(isLegalOpenRouterModelId("  trim-me  "), true);
   assert.equal(isLegalOpenRouterModelId(""), false);
