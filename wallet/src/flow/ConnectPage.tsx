@@ -1,17 +1,21 @@
 /**
- * Full connect consent page (title, origin, reject/approve dock).
+ * Full connect consent page (site ↔ account hero, reject/connect dock).
  * Shows the vault unlock form first when locked; does not render sign review.
  */
 import type { JSX } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { avatarLetter, shortAddr } from "../popup/lib/format";
 import { IconBack } from "../popup/components/StrokeIcon";
+import { displayAccountName } from "../shared/account-display";
+import { getExposedPublicKey } from "../shared/accounts";
 import type { PendingRecord } from "../shared/commands";
 import { sendExtensionRequest } from "../shared/ext-api";
 import { SESSION_UNLOCKED, STORAGE } from "../shared/storage-keys";
+import type { AccountMeta, UiLocale } from "../shared/storage-keys";
 import { isPopoutApprovalUrl } from "../shared/shell-constants";
 import { apiErrorMessage, DEFAULT_UI_LOCALE, parseUiLocale, t } from "../shared/ui-i18n";
-import type { UiLocale } from "../shared/storage-keys";
 import { applyWindowChrome } from "../shared/window-chrome";
+import { connectHostLabel, connectSiteMark } from "./connect-display";
 import { UnlockForm } from "./UnlockForm";
 
 function applyConnectPopoutTitle(locale: UiLocale): void {
@@ -33,6 +37,8 @@ export function ConnectPage({
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
+  const [accounts, setAccounts] = useState<AccountMeta[]>([]);
+  const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
   const reconnectWhileLocked = useRef(false);
   const autoApproveStarted = useRef(false);
 
@@ -64,8 +70,16 @@ export function ConnectPage({
       }
       reconnectWhileLocked.current = pending.reconnectWhileLocked === true;
       setOrigin(pending.origin);
-      const state = stateRes.ok ? (stateRes.result as { unlocked?: boolean }) : null;
+      const state = stateRes.ok
+        ? (stateRes.result as {
+            unlocked?: boolean;
+            accounts?: AccountMeta[];
+            activeAccountId?: string | null;
+          })
+        : null;
       setUnlocked(state?.unlocked === true);
+      setAccounts(state?.accounts ?? []);
+      setActiveAccountId(state?.activeAccountId ?? null);
       setReady(true);
     })();
     return () => {
@@ -115,6 +129,17 @@ export function ConnectPage({
     autoApproveStarted.current = true;
     void settle("approve");
   }, [gone, ready, settle, unlocked]);
+
+  const activeAccount = useMemo(
+    () => accounts.find((a) => a.id === activeAccountId) ?? null,
+    [accounts, activeAccountId],
+  );
+  const hostLabel = origin ? connectHostLabel(origin) : "";
+  const siteMark = origin ? connectSiteMark(origin) : "?";
+  const accountDisplayName = activeAccount
+    ? displayAccountName(activeAccount.label, getExposedPublicKey(activeAccount))
+    : "—";
+  const accountPk = activeAccount ? getExposedPublicKey(activeAccount) : "";
 
   if (gone) {
     return (
@@ -175,12 +200,20 @@ export function ConnectPage({
         </div>
       </header>
       <div className="flow-page-body connect-consent">
-        <div className="connect-site-card">
-          <span className="connect-site-label">{t(locale, "approval.site")}</span>
-          <span className="connect-origin" title={origin}>{origin}</span>
+        <div className="connect-hero">
+          <div className="connect-site-mark" aria-hidden="true">{siteMark}</div>
+          <div className="connect-host">{hostLabel}</div>
+          <div className="connect-origin" title={origin}>{origin}</div>
+          <div className="connect-bridge" aria-hidden="true" />
+          <div className="connect-account">
+            <span className="avatar connect-acct-avatar" aria-hidden="true">
+              {activeAccount ? avatarLetter(accountDisplayName) : "?"}
+            </span>
+            <div className="connect-acct-name">{accountDisplayName}</div>
+            {accountPk ? <div className="connect-acct-addr">{shortAddr(accountPk)}</div> : null}
+          </div>
         </div>
-        <p className="connect-lead">{t(locale, "approval.connectLead")}</p>
-        {error ? <p className="inline-error">{error}</p> : null}
+        {error ? <p className="inline-error connect-error">{error}</p> : null}
       </div>
       <footer className="approval-dock">
         <button
@@ -197,7 +230,7 @@ export function ConnectPage({
           disabled={busy}
           onClick={() => void settle("approve")}
         >
-          {t(locale, busy ? "approval.approving" : "approval.approve")}
+          {t(locale, busy ? "approval.connecting" : "approval.connect")}
         </button>
       </footer>
     </div>

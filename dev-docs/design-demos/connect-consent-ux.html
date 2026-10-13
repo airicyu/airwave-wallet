@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 網站連線確認（概念稿）</title>
+    <!--
+      Informal concept for the connect consent screen.
+      Not a contract. Do not change wallet/ until this is agreed.
+    -->
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --popup-w: 422px;
+        --popup-h: 640px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1100px; margin: 0 auto; padding: 28px 20px 64px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 8px; max-width: 46rem; font-size: 0.92rem; }
+      .note { color: var(--text-dim); font-size: 0.82rem; margin: 0 0 20px; max-width: 46rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; }
+      .chip {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 7px 13px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      .chip.active { border-color: var(--accent); background: #1a2838; }
+      .gallery {
+        display: grid;
+        grid-template-columns: repeat(2, var(--popup-w));
+        gap: 28px;
+        align-items: start;
+        justify-content: start;
+      }
+      @media (max-width: 940px) { .gallery { grid-template-columns: 1fr; } }
+      .col h2 { margin: 0 0 4px; font-size: 0.94rem; font-weight: 650; }
+      .col p { margin: 0 0 10px; font-size: 0.76rem; color: var(--text-dim); min-height: 2.6em; }
+      .phone-slot { width: var(--popup-w); height: var(--popup-h); }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      @media (max-width: 940px) {
+        .phone-slot {
+          width: calc(var(--popup-w) * 0.62);
+          height: calc(var(--popup-h) * 0.62);
+        }
+        .phone {
+          transform: scale(0.62);
+          transform-origin: top left;
+        }
+      }
+      .top {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        min-height: 52px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+      }
+      .icon-btn {
+        width: 34px;
+        height: 34px;
+        border: 0;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        flex: none;
+      }
+      .icon-btn svg { width: 18px; height: 18px; }
+      .top-title {
+        flex: 1;
+        min-width: 0;
+        text-align: center;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .top-balance { width: 34px; flex: none; }
+      .body {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 20px 16px;
+      }
+      .dock {
+        flex-shrink: 0;
+        display: flex;
+        gap: 10px;
+        padding: 12px;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+      }
+      .ghost, .primary {
+        font: inherit;
+        font-size: 0.88rem;
+        border-radius: var(--radius-sm);
+        padding: 11px 12px;
+        cursor: pointer;
+      }
+      .ghost {
+        flex: 0 0 38%;
+        border: 1px solid var(--stroke);
+        background: transparent;
+        color: var(--text);
+      }
+      .primary {
+        flex: 1;
+        border: 0;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 600;
+      }
+
+      .now-card {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        padding: 8px 12px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-sm);
+        background: var(--fill);
+      }
+      .now-k { flex: none; font-size: 0.75rem; color: var(--text-dim); }
+      .now-origin {
+        flex: 1;
+        min-width: 0;
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .now-lead {
+        margin: 14px 0 0;
+        font-size: 0.92rem;
+        line-height: 1.5;
+      }
+
+      .proposal .body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 28px 28px 36px;
+        text-align: center;
+      }
+      .mark {
+        width: 72px;
+        height: 72px;
+        border-radius: 22px;
+        border: 1px solid var(--stroke);
+        background:
+          radial-gradient(120% 120% at 30% 20%, rgba(61, 156, 240, 0.22), transparent 55%),
+          var(--fill);
+        box-shadow: 0 0 0 8px rgba(61, 156, 240, 0.06);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.7rem;
+        font-weight: 650;
+        letter-spacing: -0.03em;
+      }
+      .host {
+        margin: 16px 0 0;
+        max-width: 100%;
+        font-size: 1.28rem;
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .origin {
+        margin: 4px 0 0;
+        max-width: 100%;
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .link {
+        width: 1px;
+        height: 28px;
+        margin: 18px 0 14px;
+        background: var(--stroke);
+        position: relative;
+      }
+      .link::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent);
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 0 3px var(--bg);
+      }
+      .acct {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        min-width: 0;
+        max-width: 100%;
+      }
+      .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 6px;
+      }
+      .acct-name { font-size: 0.92rem; font-weight: 600; }
+      .acct-addr {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>網站連線確認</h1>
+      <p class="lede">審批 popout 概念稿。左為現況，右為提案。非正式契約，同意前不改產品畫面。</p>
+      <p class="note">提案拿掉說明句。站點名稱是主角，底下是即將露出的帳戶。主按鈕寫「連線」。側欄拉寬時頁殼與底欄跟滿，這組身分仍置中。</p>
+      <div class="controls">
+        <button type="button" class="chip active" data-sample="short">短網址</button>
+        <button type="button" class="chip" data-sample="long">長網址</button>
+      </div>
+      <div class="gallery">
+        <div class="col">
+          <h2>現況</h2>
+          <p>站點列加一句說明，其餘留白。主按鈕是「批准」。</p>
+          <div class="phone-slot"><div class="phone" id="now">
+            <header class="top">
+              <button type="button" class="icon-btn" aria-label="返回">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" /></svg>
+              </button>
+              <div class="top-title">連線</div>
+              <div class="top-balance"></div>
+            </header>
+            <div class="body">
+              <div class="now-card">
+                <span class="now-k">站點</span>
+                <span class="now-origin" data-origin>https://jup.ag</span>
+              </div>
+              <p class="now-lead">這個網站想連線到你的錢包</p>
+            </div>
+            <footer class="dock">
+              <button type="button" class="ghost">拒絕</button>
+              <button type="button" class="primary">批准</button>
+            </footer>
+          </div></div>
+        </div>
+        <div class="col">
+          <h2>提案</h2>
+          <p>站名與帳戶成一組。不寫連線說明。主按鈕是「連線」。</p>
+          <div class="phone-slot"><div class="phone proposal" id="next">
+            <header class="top">
+              <button type="button" class="icon-btn" aria-label="返回">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" /></svg>
+              </button>
+              <div class="top-title">連線</div>
+              <div class="top-balance"></div>
+            </header>
+            <div class="body">
+              <div class="mark" data-mark>J</div>
+              <div class="host" data-host>jup.ag</div>
+              <div class="origin" data-origin title="https://jup.ag">https://jup.ag</div>
+              <div class="link" aria-hidden="true"></div>
+              <div class="acct">
+                <div class="avatar">T</div>
+                <div class="acct-name">Travel</div>
+                <div class="acct-addr">7xKX…9fQa</div>
+              </div>
+            </div>
+            <footer class="dock">
+              <button type="button" class="ghost">拒絕</button>
+              <button type="button" class="primary">連線</button>
+            </footer>
+          </div></div>
+        </div>
+      </div>
+    </div>
+    <script>
+      const samples = {
+        short: { origin: "https://jup.ag", host: "jup.ag", mark: "J" },
+        long: {
+          origin: "https://super-long-subdomain.jupiter.example.com",
+          host: "super-long-subdomain.jupiter.example.com",
+          mark: "S",
+        },
+      };
+      const chips = document.querySelectorAll(".chip");
+      function apply(key) {
+        const sample = samples[key];
+        document.querySelectorAll("[data-origin]").forEach((node) => {
+          node.textContent = sample.origin;
+          node.title = sample.origin;
+        });
+        document.querySelector("[data-host]").textContent = sample.host;
+        document.querySelector("[data-mark]").textContent = sample.mark;
+        chips.forEach((chip) => chip.classList.toggle("active", chip.dataset.sample === key));
+      }
+      chips.forEach((chip) => chip.addEventListener("click", () => apply(chip.dataset.sample)));
+    </script>
+  </body>
+</html>

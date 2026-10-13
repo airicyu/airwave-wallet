@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.40.0 — 2026-10-14
+
+網站連線確認：置中顯示站點與目前帳戶，主按鈕改為「連線」；移除說明句。修復 Settings · 交易 AI 分析：報告／定級模型選「其他」時無法展開自訂 id 欄。
+
 ## 0.39.0 — 2026-10-14
 
 側欄審批 `signTransaction`／`signAndSendTransaction` 時，關閉 Chrome 側欄即拒絕並回發起頁（對齊 popout 關窗）。Settings · 交易 AI：報告／定級各兩個固定模型加「其他」自填 OpenRouter id；報告預設改為 `apodex/apodex-1.1-mini:free`。

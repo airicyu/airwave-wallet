@@ -51,7 +51,8 @@ function ModelPickerField({
   const { t } = useT();
   const presetSet = presets as readonly string[];
   const storedIsPreset = presetSet.includes(storedModel);
-  const selectValue = storedIsPreset ? storedModel : MODEL_OTHER;
+  const [selectOverride, setSelectOverride] = useState<string | null>(null);
+  const selectValue = selectOverride ?? (storedIsPreset ? storedModel : MODEL_OTHER);
   const [customDraft, setCustomDraft] = useState<string | null>(null);
   const draftValue = customDraft ?? (storedIsPreset ? "" : storedModel);
   const showCustom = selectValue === MODEL_OTHER;
@@ -66,9 +67,11 @@ function ModelPickerField({
         onChange={(event) => {
           const value = event.target.value;
           if (value === MODEL_OTHER) {
+            setSelectOverride(MODEL_OTHER);
             setCustomDraft(storedIsPreset ? "" : storedModel);
             return;
           }
+          setSelectOverride(null);
           setCustomDraft(null);
           onPatch(value);
         }}
@@ -92,6 +95,7 @@ function ModelPickerField({
               event.preventDefault();
               const trimmed = draftValue.trim();
               if (!isLegalOpenRouterModelId(trimmed)) return;
+              setSelectOverride(null);
               setCustomDraft(null);
               onPatch(trimmed);
             }}
@@ -105,6 +109,7 @@ function ModelPickerField({
             onClick={() => {
               const trimmed = draftValue.trim();
               if (!isLegalOpenRouterModelId(trimmed)) return;
+              setSelectOverride(null);
               setCustomDraft(null);
               onPatch(trimmed);
             }}

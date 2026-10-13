@@ -1550,6 +1550,16 @@ const messages = {
     "zh-Hans": "这个网站想连接到你的钱包",
     "en": "This site wants to connect to your wallet",
   },
+  "approval.connect": {
+    "zh-Hant": "連線",
+    "zh-Hans": "连接",
+    "en": "Connect",
+  },
+  "approval.connecting": {
+    "zh-Hant": "連線中",
+    "zh-Hans": "连接中",
+    "en": "Connecting",
+  },
   "page.connect": {
     "zh-Hant": "連線",
     "zh-Hans": "连接",

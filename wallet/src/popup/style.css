@@ -280,43 +280,117 @@ h1.first-run-name,
 .connect-consent {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 28px 20px 32px;
 }
 
-.connect-site-card {
+.connect-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.connect-site-mark {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  border: 1px solid var(--stroke);
+  background:
+    radial-gradient(120% 120% at 30% 20%, rgba(61, 156, 240, 0.22), transparent 55%),
+    var(--fill);
+  box-shadow: 0 0 0 8px rgba(61, 156, 240, 0.06);
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 0;
-  padding: 8px 12px;
-  border: 1px solid var(--stroke);
-  border-radius: var(--radius-sm);
-  background: var(--fill);
+  justify-content: center;
+  font-size: 1.7rem;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  flex-shrink: 0;
 }
 
-.connect-site-label {
-  flex: none;
-  font-size: 0.75rem;
-  color: var(--text-dim);
+.connect-host {
+  margin: 16px 0 0;
+  max-width: 100%;
+  font-size: 1.28rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.connect-origin {
-  flex: 1;
-  min-width: 0;
+.connect-consent .connect-origin {
+  margin: 4px 0 0;
+  max-width: 100%;
   font-family: var(--mono);
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.connect-lead {
-  margin: 0;
+.connect-bridge {
+  width: 1px;
+  height: 28px;
+  margin: 18px 0 14px;
+  background: var(--stroke);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.connect-bridge::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 3px var(--bg);
+}
+
+.connect-account {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.connect-acct-avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+}
+
+.connect-acct-name {
   font-size: 0.92rem;
-  font-weight: 400;
-  line-height: 1.5;
-  color: var(--text);
+  font-weight: 600;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.connect-acct-addr {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.connect-error {
+  margin: 16px 0 0;
+  max-width: 100%;
 }
 
 .flow-page > .unlock-screen {
