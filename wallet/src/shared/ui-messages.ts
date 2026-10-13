@@ -325,6 +325,11 @@ const messages = {
     "zh-Hans": "GLM 5.3 Flash",
     "en": "GLM 5.3 Flash",
   },
+  "settings.openRouter.model.other": {
+    "zh-Hant": "其他",
+    "zh-Hans": "其他",
+    "en": "Other",
+  },
   "settings.openRouter.decisionsModel": {
     "zh-Hant": "定級模型",
     "zh-Hans": "定级模型",
@@ -339,6 +344,11 @@ const messages = {
     "zh-Hant": "Nace.AI Drex v1.5",
     "zh-Hans": "Nace.AI Drex v1.5",
     "en": "Nace.AI Drex v1.5",
+  },
+  "settings.openRouter.decisionsModel.other": {
+    "zh-Hant": "其他",
+    "zh-Hans": "其他",
+    "en": "Other",
   },
   "approval.txAi.running": {
     "zh-Hant": "AI 分析中",

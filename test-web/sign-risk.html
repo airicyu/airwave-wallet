@@ -5,11 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>簽署安全評估 POC</title>
     <style>
-      body { font-family: system-ui, sans-serif; max-width: 52rem; margin: 1.5rem; }
+      body { font-family: system-ui, sans-serif; max-width: 96rem; margin: 1.5rem; }
       textarea, select, input, pre { width: 100%; box-sizing: border-box; }
-      textarea { font-family: ui-monospace, monospace; }
+      textarea, #risk-model-a, #risk-model-b { font-family: ui-monospace, monospace; }
       label { display: block; margin: 0.75rem 0; }
-      pre { white-space: pre-wrap; background: #f4f4f4; padding: 0.75rem; }
+      .model-presets { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: -0.25rem 0 0.75rem; }
+      .model-presets button { width: auto; }
+      .run-meta { margin: 0.25rem 0 0.5rem; font-variant-numeric: tabular-nums; }
+      .run-compare { display: flex; gap: 1rem; align-items: flex-start; }
+      .run-compare > section { flex: 1 1 0; min-width: 0; }
+      pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #f4f4f4; padding: 0.75rem; }
     </style>
   </head>
   <body>
@@ -17,8 +22,8 @@
       <p><a href="/">← 回到 test-web 連線頁</a></p>
       <h1>簽署安全評估 POC</h1>
       <p>
-        與錢包連線頁分開。本頁用 vendored <code>bubble-harness</code> 多輪 tool loop
-        （decode／get_accounts／simulate／各 <code>rpc_get_*</code>）。
+        與錢包連線頁分開。分析前先做跟錢包報告步驟相同的預檢（decode、交易自己的 blockhash 模擬、分批查帳戶），
+        再跑 vendored <code>bubble-harness</code>。模型看不到 <code>decode_message</code>／<code>simulate</code>，也不寫等級。
         本地樣本用 <strong>mainnet 公開地址</strong>組草稿（非可簽名），方便 RPC 查到帳戶；請配 mainnet RPC。
         OpenRouter key 與 RPC URL 只留在這個欄位，不會寫進檔案或 localStorage。
       </p>
@@ -57,14 +62,25 @@
         </select>
       </label>
       <label>
-        模型
-        <select id="risk-model">
-          <option value="~deepseek/deepseek-flash-latest" selected>DeepSeek Flash latest</option>
-          <option value="~deepseek/deepseek-pro-latest">DeepSeek Pro latest</option>
-          <option value="moonshotai/kimi-k2-0905">Kimi K2 0905</option>
-          <option value="z-ai/glm-5.3-flash">GLM 5.3 Flash</option>
-        </select>
+        模型 A
+        <input id="risk-model-a" type="text" spellcheck="false" autocomplete="off" value="~deepseek/deepseek-flash-latest" />
       </label>
+      <div class="model-presets" data-risk-target="risk-model-a">
+        <button type="button" data-risk-model="~deepseek/deepseek-flash-latest">DeepSeek Flash latest</button>
+        <button type="button" data-risk-model="~deepseek/deepseek-pro-latest">DeepSeek Pro latest</button>
+        <button type="button" data-risk-model="moonshotai/kimi-k2-0905">Kimi K2 0905</button>
+        <button type="button" data-risk-model="z-ai/glm-5.3-flash">GLM 5.3 Flash</button>
+      </div>
+      <label>
+        模型 B
+        <input id="risk-model-b" type="text" spellcheck="false" autocomplete="off" placeholder="留空則不跑" />
+      </label>
+      <div class="model-presets" data-risk-target="risk-model-b">
+        <button type="button" data-risk-model="~deepseek/deepseek-flash-latest">DeepSeek Flash latest</button>
+        <button type="button" data-risk-model="~deepseek/deepseek-pro-latest">DeepSeek Pro latest</button>
+        <button type="button" data-risk-model="moonshotai/kimi-k2-0905">Kimi K2 0905</button>
+        <button type="button" data-risk-model="z-ai/glm-5.3-flash">GLM 5.3 Flash</button>
+      </div>
       <label>
         OpenRouter API key
         <input id="risk-key" type="password" autocomplete="off" spellcheck="false" />
@@ -91,10 +107,24 @@
       <p id="risk-status"></p>
       <h3>目前交易摘要（手動／tool 解碼後）</h3>
       <pre id="risk-flags"></pre>
-      <h3>Tool 軌跡</h3>
-      <pre id="risk-trace"></pre>
-      <h3>模型回覆</h3>
-      <pre id="risk-answer"></pre>
+      <div class="run-compare">
+      <section id="risk-slot-a" hidden>
+        <h3>模型 A</h3>
+        <p id="risk-meta-a" class="run-meta"></p>
+        <h3>Tool 軌跡</h3>
+        <pre id="risk-trace-a"></pre>
+        <h3>模型回覆</h3>
+        <pre id="risk-answer-a"></pre>
+      </section>
+      <section id="risk-slot-b" hidden>
+        <h3>模型 B</h3>
+        <p id="risk-meta-b" class="run-meta"></p>
+        <h3>Tool 軌跡</h3>
+        <pre id="risk-trace-b"></pre>
+        <h3>模型回覆</h3>
+        <pre id="risk-answer-b"></pre>
+      </section>
+      </div>
     </main>
     <script type="module" src="/src/sign-risk-page.ts"></script>
   </body>

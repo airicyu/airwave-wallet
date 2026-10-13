@@ -51,6 +51,7 @@
 | [0.36.0](./0.36.0/INDEX.md) | shipped | 簽署 CU：dApp 已設 limit／price 不自動改寫；套用 CU 才送 simulate payload |
 | [0.37.0](./0.37.0/INDEX.md) | shipped | 安全修復：在途 requestId 不可換包；離開 origin 的分頁不再收公鑰 |
 | [0.38.0](./0.38.0/INDEX.md) | shipped | Home 與審批差額列統一信任盾；`organicScore` > 0 疊在盾右下 |
+| [0.39.0](./0.39.0/INDEX.md) | shipped | 側欄關閉拒絕待簽；AI 設定報告／定級可選「其他」 |
 
 **版本號：** `x.y.z` 的 **patch**（例如 **0.3.1**）留給該 minor 的 **bugfix**，不排新功能。新功能走下一個 **minor**（0.3.0 → 0.4.0 → 0.5.0）。
 

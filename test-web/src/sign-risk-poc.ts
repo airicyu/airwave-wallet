@@ -38,6 +38,7 @@ import {
   gradeWithDecisions,
 } from "./sign-risk-decisions";
 import { formatLoopEvent, runSignRiskHarness } from "./sign-risk-harness";
+import { runSignRiskPreflight } from "./sign-risk-preflight";
 
 const BLOCKHASH = "11111111111111111111111111111111" as Blockhash;
 const RECENT_BLOCKHASHES = "SysvarRecentB1ockHashes11111111111111111111";
@@ -295,14 +296,22 @@ function readWire(): WireForm {
 export function mountSignRiskPoc(): void {
   const context = el<HTMLTextAreaElement>("risk-context");
   const flagsOut = el<HTMLPreElement>("risk-flags");
-  const answer = el<HTMLPreElement>("risk-answer");
-  const trace = el<HTMLPreElement>("risk-trace");
   const decisionsOut = el<HTMLPreElement>("risk-decisions-out");
   const status = el<HTMLParagraphElement>("risk-status");
   const ask = el<HTMLButtonElement>("risk-ask");
   const decisionsModel = el<HTMLSelectElement>("risk-decisions-model");
   const decisionsSample = el<HTMLSelectElement>("risk-decisions-sample");
   context.value = CONTEXT;
+  document.querySelectorAll<HTMLButtonElement>("[data-risk-model]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = button.dataset.riskModel;
+      const targetId = button.closest("[data-risk-target]")?.getAttribute("data-risk-target");
+      if (!id || !targetId) return;
+      const input = el<HTMLInputElement>(targetId);
+      input.value = id;
+      input.focus();
+    });
+  });
 
   for (const model of DECISIONS_MODELS) {
     const opt = document.createElement("option");
@@ -369,8 +378,7 @@ export function mountSignRiskPoc(): void {
       show();
       status.textContent = `已載入鏈上交易（${latest.staticFlags.instructions.length} ix，${latest.chainAccounts?.length ?? 0} 個帳戶）`;
     } catch (error) {
-      status.textContent = "載入交易失敗";
-      answer.textContent = error instanceof Error ? error.message : String(error);
+      status.textContent = `載入交易失敗：${error instanceof Error ? error.message : String(error)}`;
     }
   });
 
@@ -390,14 +398,11 @@ export function mountSignRiskPoc(): void {
       show();
       status.textContent = `已查 ${latest.chainAccounts?.length ?? 0} 個帳戶`;
     } catch (error) {
-      status.textContent = "查帳戶失敗";
-      answer.textContent = error instanceof Error ? error.message : String(error);
+      status.textContent = `查帳戶失敗：${error instanceof Error ? error.message : String(error)}`;
     }
   });
 
   ask.addEventListener("click", async () => {
-    answer.textContent = "";
-    trace.textContent = "";
     const key = el<HTMLInputElement>("risk-key").value.trim();
     if (!key) {
       status.textContent = "先填 OpenRouter API key";
@@ -407,54 +412,95 @@ export function mountSignRiskPoc(): void {
       status.textContent = "沒有可送出的交易";
       return;
     }
-    const model = el<HTMLSelectElement>("risk-model").value;
+    const runs = (["a", "b"] as const)
+      .map((slot) => ({ slot, model: el<HTMLInputElement>(`risk-model-${slot}`).value.trim() }))
+      .filter((row) => row.model);
+    if (runs.length === 0) {
+      status.textContent = "先填模型";
+      return;
+    }
     const rpcUrl = el<HTMLInputElement>("risk-rpc").value.trim();
+    const session = {
+      transactionBase64: latest.transactionBase64,
+      wireForm: latest.wireForm,
+      loaded: latest.loaded,
+      rpcUrl,
+      rpcJsonMessage: latest.rpcJsonMessage,
+    };
     ask.disabled = true;
-    status.textContent = `harness → ${model}…`;
-    const live: string[] = [];
+    status.textContent = "預檢…";
+    let preflight;
     try {
-      // Do not pre-fetch accounts: the model should call get_accounts via tools.
-      const view = await runSignRiskHarness({
-        session: {
-          transactionBase64: latest.transactionBase64,
-          wireForm: latest.wireForm,
-          loaded: latest.loaded,
-          rpcUrl,
-          rpcJsonMessage: latest.rpcJsonMessage,
-        },
-        systemMessage: context.value,
-        apiKey: key,
-        model,
-        onEvent: (event) => {
-          const line = formatLoopEvent(event);
-          if (line) {
-            live.push(line);
-            trace.textContent = live.join("\n\n");
-          }
-          if (event.type === "step") {
-            status.textContent = `harness → ${model}… step ${event.step}/${event.maxSteps}`;
-          } else if (event.type === "tool") {
-            status.textContent = `tool ${event.toolCall.function.name}…`;
-          } else if (event.type === "assistant" && event.message.tool_calls?.length) {
-            status.textContent = `呼叫 tools…`;
-          }
-        },
-      });
-      if (view.lastDecode) {
-        latest = {
-          ...latest,
-          staticFlags: view.lastDecode,
-          ...(view.lastAccounts ? { chainAccounts: view.lastAccounts } : {}),
-        };
-        show();
-      }
-      trace.textContent = view.trace || "(no events)";
-      lastHarnessReport = view.finalText || "";
-      answer.textContent = lastHarnessReport || "(empty assistant content)";
-      status.textContent = `完成：${view.stopReason}，${view.steps} 步`;
+      preflight = await runSignRiskPreflight(session);
     } catch (error) {
-      status.textContent = "harness 失敗";
-      answer.textContent = error instanceof Error ? error.message : String(error);
+      status.textContent = `預檢失敗：${error instanceof Error ? error.message : String(error)}`;
+      ask.disabled = false;
+      return;
+    }
+    latest = { ...latest, staticFlags: preflight.decode };
+    flagsOut.textContent = preflight.userMessage;
+    status.textContent = runs.map((row) => row.model).join(" ＋ ");
+    const reports: Partial<Record<"a" | "b", string>> = {};
+    for (const slot of ["a", "b"] as const) {
+      const active = runs.some((row) => row.slot === slot);
+      el<HTMLElement>(`risk-slot-${slot}`).hidden = !active;
+      if (!active) continue;
+      el<HTMLPreElement>(`risk-trace-${slot}`).textContent = "";
+      el<HTMLPreElement>(`risk-answer-${slot}`).textContent = "";
+      el<HTMLParagraphElement>(`risk-meta-${slot}`).textContent = "";
+    }
+    try {
+      await Promise.all(
+        runs.map(async (row) => {
+          const meta = el<HTMLParagraphElement>(`risk-meta-${row.slot}`);
+          const traceOut = el<HTMLPreElement>(`risk-trace-${row.slot}`);
+          const answerOut = el<HTMLPreElement>(`risk-answer-${row.slot}`);
+          const started = performance.now();
+          let phase = "分析中";
+          const paint = (): void => {
+            const seconds = ((performance.now() - started) / 1000).toFixed(1);
+            meta.textContent = `${row.model} · ${seconds} 秒 · ${phase}`;
+          };
+          paint();
+          const timer = window.setInterval(paint, 100);
+          const live: string[] = [];
+          try {
+            const view = await runSignRiskHarness({
+              session,
+              preflight,
+              systemMessage: context.value,
+              apiKey: key,
+              model: row.model,
+              onEvent: (event) => {
+                const line = formatLoopEvent(event);
+                if (line) {
+                  live.push(line);
+                  traceOut.textContent = live.join("\n\n");
+                }
+                if (event.type === "step") phase = `step ${event.step}/${event.maxSteps}`;
+                else if (event.type === "tool") phase = event.toolCall.function.name;
+                else if (event.type === "assistant" && event.message.tool_calls?.length) phase = "呼叫 tools";
+                paint();
+              },
+            });
+            if (view.lastAccounts && latest) {
+              latest = { ...latest, chainAccounts: view.lastAccounts };
+            }
+            traceOut.textContent = view.trace || "(no events)";
+            reports[row.slot] = view.finalText || "";
+            answerOut.textContent = reports[row.slot] || "(empty assistant content)";
+            phase = `${view.stopReason}，${view.steps} 步`;
+          } catch (error) {
+            answerOut.textContent = error instanceof Error ? error.message : String(error);
+            phase = "失敗";
+          } finally {
+            window.clearInterval(timer);
+            paint();
+          }
+        }),
+      );
+      lastHarnessReport = (reports.a ?? "").trim() || reports.b || "";
+      status.textContent = "分析結束";
     } finally {
       ask.disabled = false;
     }

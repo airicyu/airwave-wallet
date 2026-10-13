@@ -9,10 +9,10 @@ import { IconCheck, IconEye } from "../components/StrokeIcon";
 import { sendExtensionRequest } from "../../shared/ext-api";
 import type { PublicSettings } from "../../shared/storage-keys";
 import {
-  DECISIONS_MODELS,
-  REPORT_MODELS,
+  DECISIONS_PRESETS,
+  REPORT_PRESETS,
   decisionsModelLabelKey,
-  reportModelLabelKey,
+  isLegalOpenRouterModelId,
 } from "../../shared/tx-ai";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
@@ -23,10 +23,98 @@ import {
   type SettingsIo,
 } from "./settings-logic";
 
+const MODEL_OTHER = "__other__";
+
 function useSettingsIo(): SettingsIo {
   const { refresh, showError, wallet } = usePopupContext();
   const locale = wallet?.settings.locale ?? "zh-Hant";
   return { refresh, showError, locale };
+}
+
+function ModelPickerField({
+  id,
+  label,
+  presets,
+  storedModel,
+  otherLabel,
+  presetLabel,
+  onPatch,
+}: {
+  id: string;
+  label: string;
+  presets: readonly string[];
+  storedModel: string;
+  otherLabel: string;
+  presetLabel: (model: string) => string;
+  onPatch: (model: string) => void;
+}): JSX.Element {
+  const { t } = useT();
+  const presetSet = presets as readonly string[];
+  const storedIsPreset = presetSet.includes(storedModel);
+  const selectValue = storedIsPreset ? storedModel : MODEL_OTHER;
+  const [customDraft, setCustomDraft] = useState<string | null>(null);
+  const draftValue = customDraft ?? (storedIsPreset ? "" : storedModel);
+  const showCustom = selectValue === MODEL_OTHER;
+
+  return (
+    <div className="field">
+      <label htmlFor={id}>{label}</label>
+      <select
+        id={id}
+        className="tx-ai-model-select"
+        value={selectValue}
+        onChange={(event) => {
+          const value = event.target.value;
+          if (value === MODEL_OTHER) {
+            setCustomDraft(storedIsPreset ? "" : storedModel);
+            return;
+          }
+          setCustomDraft(null);
+          onPatch(value);
+        }}
+      >
+        {presets.map((model) => (
+          <option key={model} value={model}>
+            {presetLabel(model)}
+          </option>
+        ))}
+        <option value={MODEL_OTHER}>{otherLabel}</option>
+      </select>
+      {showCustom ? (
+        <div className="rpc-edit tx-ai-model-custom">
+          <input
+            type="text"
+            value={draftValue}
+            autoComplete="off"
+            onChange={(event) => setCustomDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter") return;
+              event.preventDefault();
+              const trimmed = draftValue.trim();
+              if (!isLegalOpenRouterModelId(trimmed)) return;
+              setCustomDraft(null);
+              onPatch(trimmed);
+            }}
+          />
+          <button
+            type="button"
+            className="icon-btn ghost-inline rpc-icon-btn"
+            title={t("common.confirm")}
+            aria-label={t("common.confirm")}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => {
+              const trimmed = draftValue.trim();
+              if (!isLegalOpenRouterModelId(trimmed)) return;
+              setCustomDraft(null);
+              onPatch(trimmed);
+            }}
+          >
+            <IconCheck />
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 export function TxAiSettingsScreen({ settings }: { settings: PublicSettings }): JSX.Element {
@@ -111,38 +199,28 @@ export function TxAiSettingsScreen({ settings }: { settings: PublicSettings }): 
           </button>
         </div>
       </div>
-      <div className="field">
-        <label htmlFor="openrouter-report-model">{t("settings.openRouter.model")}</label>
-        <select
-          id="openrouter-report-model"
-          value={settings.openRouterModel}
-          onChange={(event) => {
-            void patchSettingsPartial({ openRouterModel: event.target.value }, io, locale);
-          }}
-        >
-          {REPORT_MODELS.map((model) => (
-            <option key={model} value={model}>
-              {t(reportModelLabelKey(model))}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="field">
-        <label htmlFor="openrouter-decisions-model">{t("settings.openRouter.decisionsModel")}</label>
-        <select
-          id="openrouter-decisions-model"
-          value={settings.openRouterDecisionsModel}
-          onChange={(event) => {
-            void patchSettingsPartial({ openRouterDecisionsModel: event.target.value }, io, locale);
-          }}
-        >
-          {DECISIONS_MODELS.map((model) => (
-            <option key={model} value={model}>
-              {t(decisionsModelLabelKey(model))}
-            </option>
-          ))}
-        </select>
-      </div>
+      <ModelPickerField
+        id="openrouter-report-model"
+        label={t("settings.openRouter.model")}
+        presets={REPORT_PRESETS}
+        storedModel={settings.openRouterModel}
+        otherLabel={t("settings.openRouter.model.other")}
+        presetLabel={(model) => model}
+        onPatch={(model) => {
+          void patchSettingsPartial({ openRouterModel: model }, io, locale);
+        }}
+      />
+      <ModelPickerField
+        id="openrouter-decisions-model"
+        label={t("settings.openRouter.decisionsModel")}
+        presets={DECISIONS_PRESETS}
+        storedModel={settings.openRouterDecisionsModel}
+        otherLabel={t("settings.openRouter.decisionsModel.other")}
+        presetLabel={(model) => t(decisionsModelLabelKey(model))}
+        onPatch={(model) => {
+          void patchSettingsPartial({ openRouterDecisionsModel: model }, io, locale);
+        }}
+      />
     </>
   );
 }

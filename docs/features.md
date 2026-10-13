@@ -59,7 +59,7 @@ The transaction approval page (including in-wallet send confirm):
 
 ## Transaction AI analysis (optional)
 
-Settings → AI settings: add an [OpenRouter](https://openrouter.ai/) API key and turn it on. Signing a transaction then starts one read-only assess.
+Settings → AI settings: add an [OpenRouter](https://openrouter.ai/) API key and turn it on. Pick preset report/grading models or **Other** with a custom OpenRouter model id (confirm to save). Signing a transaction then starts one read-only assess. In side-panel mode, closing the Chrome side panel while a sign transaction is pending rejects the request (same idea as closing the approval popout).
 
 - Before the model runs, the service worker preflights decode, approval-style simulate (the transaction’s own blockhash), and token-source accounts into the first prompt. The model cannot call `decode_message` or `simulate` again; it can still use `get_accounts`, `rpc_get_multiple_accounts`, and other read-only RPC tools for follow-up.
 - The loop runs in a **manifest sandbox** (no `chrome.*`, no network). The service worker performs model and RPC calls.

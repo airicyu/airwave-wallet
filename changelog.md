@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.39.0 — 2026-10-14
+
+側欄審批 `signTransaction`／`signAndSendTransaction` 時，關閉 Chrome 側欄即拒絕並回發起頁（對齊 popout 關窗）。Settings · 交易 AI：報告／定級各兩個固定模型加「其他」自填 OpenRouter id；報告預設改為 `apodex/apodex-1.1-mini:free`。
+
 ## 0.38.0 — 2026-10-13
 
 Home 持倉與簽署預期變動列對齊：已驗證綠盾在代幣圖前，organic score 大於 0 時整數分掛在盾右下。未驗證最左格留空、不畫分數。

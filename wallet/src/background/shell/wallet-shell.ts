@@ -11,7 +11,13 @@ import {
   WALLET_PAGE_PATH,
 } from "../../shared/shell-constants";
 import type { ShellMode } from "../../shared/storage-keys";
-import { findSidebarDappApprovalRequestId, rejectOrdinaryDappPending } from "../pending";
+import {
+  findOldestSidebarSignTxPendingId,
+  findSidebarDappApprovalRequestId,
+  getPending,
+  rejectOrdinaryDappPending,
+} from "../pending";
+import { finishSignAndSendWindowClosed } from "../send";
 import { respond } from "../messaging";
 
 let lastNormalWindowId: number | undefined;
@@ -216,7 +222,22 @@ export function registerWalletShellListeners(): void {
     if (port.name !== SIDEBAR_SURFACE_PORT) return;
     void setSidebarSurfaceOpen(true);
     port.onDisconnect.addListener(() => {
-      void setSidebarSurfaceOpen(false);
+      void (async () => {
+        if (!sidebarSurfaceOpen) {
+          await setSidebarSurfaceOpen(false);
+          return;
+        }
+        const id = findOldestSidebarSignTxPendingId();
+        if (id) {
+          const p = getPending(id);
+          if (p?.kind === "signTransaction") {
+            await rejectOrdinaryDappPending(id, "Approval window closed");
+          } else if (p?.kind === "signAndSendTransaction") {
+            await finishSignAndSendWindowClosed(id);
+          }
+        }
+        await setSidebarSurfaceOpen(false);
+      })();
     });
   });
 }

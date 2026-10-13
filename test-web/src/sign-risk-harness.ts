@@ -1,6 +1,6 @@
 /**
- * test-web sign-risk: wrap local decode/RPC as bubble-harness host tools and run
- * a multi-step OpenRouter loop. Not the wallet approval path.
+ * test-web sign-risk: follow-up RPC tools and the report-model loop.
+ * Decode and simulate already happened in preflight. Not the wallet approval path.
  */
 import {
   createHarness,
@@ -11,26 +11,17 @@ import {
   type HostToolDefinition,
   type RunAgentLoopResult,
 } from "../vendor/bubble-harness.js";
-import {
-  applyOwnerMismatch,
-  messageBytesFromWire,
-  staticFlagsFromMessage,
-  staticFlagsFromRpcJsonMessage,
-  type LoadedAddresses,
-  type RpcJsonMessage,
-  type StaticFlags,
-} from "./sign-risk-decode";
+import type { StaticFlags } from "./sign-risk-decode";
 import { fetchChainAccounts, rpcRead, type ChainAccount } from "./sign-risk-rpc";
 import { buildFlattenedRpcTools } from "./sign-risk-rpc-tools";
+import {
+  PREFETCH_DUPLICATE_NOTE,
+  splitPrefetchDuplicates,
+  type SignRiskPreflight,
+  type SignRiskSession,
+} from "./sign-risk-preflight";
 
-export type HarnessSession = {
-  transactionBase64: string;
-  wireForm: string;
-  loaded?: LoadedAddresses;
-  rpcUrl: string;
-  /** RPC json message — required for Solana tx version 1 binary compatibility. */
-  rpcJsonMessage?: RpcJsonMessage;
-};
+export type HarnessSession = SignRiskSession;
 
 export type HarnessRunView = {
   stopReason: RunAgentLoopResult["stopReason"];
@@ -41,53 +32,14 @@ export type HarnessRunView = {
   lastAccounts: ChainAccount[] | null;
 };
 
-function base64ToBytes(b64: string): Uint8Array {
-  const binary = atob(b64);
-  const out = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) out[i] = binary.charCodeAt(i);
-  return out;
-}
-
-/** Local demos store raw message bytes; RPC／masked-wire store full wire. */
-function messageBytesFromSession(session: HarnessSession): Uint8Array {
-  const bytes = base64ToBytes(session.transactionBase64);
-  if (session.wireForm === "message") return bytes;
-  return messageBytesFromWire(bytes);
-}
-
-/** Skip well-known programs — they clutter RPC results and waste the tool result cap. */
-const SKIP_ACCOUNT_LOOKUP = new Set([
-  "11111111111111111111111111111111",
-  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
-  "ComputeBudget111111111111111111111111111111",
-  "So11111111111111111111111111111111111111112",
-  "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
-  "Memo1UhkJRfHyvLMcVucJyeXtyXNSDyzPVsqVQ5m5",
-]);
-
-function collectPubkeys(summary: StaticFlags): string[] {
-  const keys = [summary.feePayer];
-  for (const ix of summary.instructions) {
-    for (const account of ix.accounts) keys.push(account.pubkey);
-  }
-  return [...new Set(keys.filter((k) => k && k !== "未解析" && !SKIP_ACCOUNT_LOOKUP.has(k)))];
-}
-
 function asStringArray(value: unknown): string[] | null {
-  if (!Array.isArray(value)) return null;
-  if (!value.every((item) => typeof item === "string")) return null;
+  if (!Array.isArray(value) || value.length === 0) return null;
+  if (!value.every((item) => typeof item === "string" && item)) return null;
   return value;
 }
 
-/** Host product shape — not a bubble-harness concern. */
-function looksLikeFinalReport(text: string): boolean {
-  if (!text) return false;
-  if (text.length > 900) return false;
-  if (!/等級\s*[：:]\s*(低|留意|高|未知)/.test(text)) return false;
-  if (/\b(Hmm|Wait|Anyway|Hold on|Let me|I'll start)\b/i.test(text)) return false;
-  return true;
+function asPubkey(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function preview(text: string, max = 280): string {
@@ -121,124 +73,97 @@ export function formatLoopEvent(event: AgentLoopEvent): string | null {
   return null;
 }
 
-function buildHostTools(session: HarnessSession, state: {
-  lastDecode: StaticFlags | null;
-  lastAccounts: ChainAccount[] | null;
-}): HostToolDefinition[] {
+function guardPrefetch(
+  name: string,
+  args: Record<string, unknown>,
+  preflight: SignRiskPreflight,
+): unknown | null {
+  if (name === "rpc_get_balance") {
+    const pubkey = asPubkey(args.pubkey);
+    if (
+      pubkey &&
+      preflight.feePayer &&
+      pubkey === preflight.feePayer &&
+      preflight.feePayerBalanceLamports
+    ) {
+      return { ok: true, result: { value: preflight.feePayerBalanceLamports }, note: PREFETCH_DUPLICATE_NOTE };
+    }
+  }
+  if (name === "rpc_get_account_info") {
+    const pubkey = asPubkey(args.pubkey);
+    if (pubkey && preflight.manifest.has(pubkey)) return { ok: true, note: PREFETCH_DUPLICATE_NOTE };
+  }
+  if (name === "rpc_get_multiple_accounts") {
+    const pubkeys = asStringArray(args.pubkeys);
+    if (!pubkeys) return null;
+    const { novel, skipped } = splitPrefetchDuplicates(pubkeys.slice(0, 100), preflight.manifest);
+    if (novel.length === 0) return { ok: true, note: PREFETCH_DUPLICATE_NOTE, skipped_prefetch: skipped };
+    if (skipped.length > 0) return { novel, skipped };
+  }
+  return null;
+}
+
+function buildHostTools(
+  session: HarnessSession,
+  preflight: SignRiskPreflight,
+  state: { lastAccounts: ChainAccount[] | null },
+): HostToolDefinition[] {
+  const followUps = buildFlattenedRpcTools(session.rpcUrl).map((tool) => ({
+    ...tool,
+    execute: async (args: Record<string, unknown>) => {
+      const blocked = guardPrefetch(tool.name, args, preflight);
+      if (blocked && !(blocked as { novel?: string[] }).novel) return blocked;
+      if (tool.name === "rpc_get_multiple_accounts" && blocked && (blocked as { novel?: string[] }).novel) {
+        const { novel, skipped } = blocked as { novel: string[]; skipped: string[] };
+        const read = await rpcRead(session.rpcUrl, "getMultipleAccounts", [
+          novel,
+          { encoding: typeof args.encoding === "string" ? args.encoding : "base64" },
+        ]);
+        return { read, skipped_prefetch: skipped, note: PREFETCH_DUPLICATE_NOTE };
+      }
+      return tool.execute(args);
+    },
+  }));
   return [
     {
-      name: "decode_message",
-      description:
-        "Decode the session transaction bytes into feePayer, instructions, and deterministic risk flags. Call this before judging the tx.",
-      parameters: {
-        type: "object",
-        properties: {},
-        additionalProperties: false,
-      },
-      execute: () => {
-        const summary = session.rpcJsonMessage
-          ? staticFlagsFromRpcJsonMessage(session.rpcJsonMessage, session.loaded)
-          : staticFlagsFromMessage(messageBytesFromSession(session), session.loaded);
-        state.lastDecode = summary;
-        return {
-          ok: true,
-          wireForm: session.wireForm,
-          decodePath: session.rpcJsonMessage ? "rpc-json" : "binary",
-          feePayer: summary.feePayer,
-          instructions: summary.instructions,
-          flags: summary.flags,
-        };
-      },
-    },
-    {
       name: "get_accounts",
-      description:
-        "Fetch on-chain account data (lamports, owner program, parsed token account fields) via RPC. Omit pubkeys to use keys from the last decode_message.",
+      description: "Read account data for pubkeys that are not already in preflightPubkeys.",
       parameters: {
         type: "object",
         properties: {
           pubkeys: {
             type: "array",
             items: { type: "string" },
-            description: "Base58 pubkeys; max 100. Omit to use keys from last decode.",
+            description: "Base58 pubkeys not listed in preflightPubkeys. Max 20.",
           },
         },
         additionalProperties: false,
       },
       execute: async (args: Record<string, unknown>) => {
-        if (!session.rpcUrl) {
-          return { ok: false, error: "RPC URL not set in the page" };
-        }
-        let pubkeys = asStringArray(args.pubkeys);
-        if (!pubkeys) {
-          if (!state.lastDecode) {
-            return { ok: false, error: "Call decode_message first, or pass pubkeys" };
-          }
-          pubkeys = collectPubkeys(state.lastDecode);
-        }
-        const chainAccounts = await fetchChainAccounts(session.rpcUrl, pubkeys);
+        if (!session.rpcUrl) return { ok: false, error: "RPC URL not set in the page" };
+        const requested = asStringArray(args.pubkeys) ?? [...preflight.manifest].slice(0, 20);
+        if (!requested.length) return { ok: false, error: "no pubkeys" };
+        const { novel, skipped } = splitPrefetchDuplicates(requested.slice(0, 20), preflight.manifest);
+        if (novel.length === 0) return { ok: true, note: PREFETCH_DUPLICATE_NOTE, skipped_prefetch: skipped };
+        const chainAccounts = await fetchChainAccounts(session.rpcUrl, novel);
         state.lastAccounts = chainAccounts;
-        if (state.lastDecode) {
-          const tokenOwner = new Map<string, string>();
-          for (const item of chainAccounts) {
-            if (item.token) tokenOwner.set(item.pubkey, item.token.owner);
-          }
-          applyOwnerMismatch(state.lastDecode, tokenOwner);
-        }
-        const found = chainAccounts.filter((a) => a.found).length;
-        return {
-          ok: true,
-          count: chainAccounts.length,
-          found,
-          missing: chainAccounts.length - found,
-          note: "found:false means the account has no data on this RPC cluster (or was closed). Well-known programs are omitted from the default key list.",
-          chainAccounts,
-          flags: state.lastDecode?.flags ?? [],
-        };
+        if (skipped.length === 0) return { ok: true, chainAccounts };
+        return { ok: true, chainAccounts, skipped_prefetch: skipped, note: PREFETCH_DUPLICATE_NOTE };
       },
     },
-    {
-      name: "simulate",
-      description:
-        "JSON-RPC simulateTransaction for the session wire (replaceRecentBlockhash, no sigVerify). Bare message samples fail. Historical/mainnet wires often fail against current pool/account state (expired blockhash, closed ATA, liquidity changed)—treat err as replay noise unless logs show a clear authority/permission issue; do not raise risk level solely because simulate failed.",
-      parameters: {
-        type: "object",
-        properties: {},
-        additionalProperties: false,
-      },
-      execute: async () => {
-        if (!session.rpcUrl) {
-          return { ok: false, error: "RPC URL not set in the page" };
-        }
-        if (session.wireForm === "message") {
-          return {
-            ok: false,
-            error: "Session is a bare message (no signature region); simulate needs full wire or masked-wire",
-          };
-        }
-        return rpcRead(session.rpcUrl, "simulateTransaction", [
-          session.transactionBase64,
-          {
-            encoding: "base64",
-            replaceRecentBlockhash: true,
-            sigVerify: false,
-            commitment: "processed",
-          },
-        ]);
-      },
-    },
-    ...buildFlattenedRpcTools(session.rpcUrl),
+    ...followUps,
   ];
 }
 
 export async function runSignRiskHarness(input: {
   session: HarnessSession;
+  preflight: SignRiskPreflight;
   systemMessage: string;
   apiKey: string;
   model: string;
   onEvent?: AgentLoopEventHandler;
 }): Promise<HarnessRunView> {
-  const state = { lastDecode: null as StaticFlags | null, lastAccounts: null as ChainAccount[] | null };
+  const state = { lastAccounts: null as ChainAccount[] | null };
   const kv = new Map<string, string>();
   const traceLines: string[] = [];
   const callModel = createOpenRouterCallModel({
@@ -255,11 +180,10 @@ export async function runSignRiskHarness(input: {
         kv.set(key, value);
       },
     },
-    hostTools: buildHostTools(input.session, state),
-    // Deny open web fetch in this POC; use host tools only.
+    hostTools: buildHostTools(input.session, input.preflight, state),
     fetchAllowlist: ["https://__fetch-disabled__/"],
-    maxSteps: 12,
-    toolResultMaxBytes: 16384,
+    maxSteps: 8,
+    toolResultMaxBytes: 8000,
     callModel,
   });
 
@@ -274,62 +198,19 @@ export async function runSignRiskHarness(input: {
 
   const result = await runAgentLoop(harness, {
     systemMessage: input.systemMessage,
-    temperature: 0,
-    maxTokens: 1200,
+    temperature: 0.2,
     retryEmptyFinal: true,
-    emptyFinalUserMessage:
-      "工具已結束但上一則沒有可見文字。請只輸出繁體中文四段報告與最後一行等級（低／留意／高／未知），不要再呼叫任何 tool。",
+    emptyFinalUserMessage: "Write the report now in the requested language. Do not call tools.",
     onEvent,
-    messages: [
-      {
-        role: "user",
-        content: JSON.stringify({
-          task: "Analyze this Solana transaction for user-facing security notes.",
-          wireForm: input.session.wireForm,
-          hasRpc: Boolean(input.session.rpcUrl),
-          hint: "Call decode_message first. Use get_accounts / simulate / rpc_get_* when needed. If simulate fails on an rpc-wire session, treat it as stale-state noise—not proof of malice. When finished with tools, your LAST assistant message must be ONLY the Traditional Chinese report (four sections + 等級)—no English preamble, no 'I'll start…'.",
-        }),
-      },
-    ],
+    messages: [{ role: "user", content: input.preflight.userMessage }],
   });
-
-  let finalText = result.finalText;
-
-  // Product-format rewrite only (host). Empty/reasoning transport is handled by harness.
-  if (finalText && !looksLikeFinalReport(finalText)) {
-    traceLines.push("— host rewrite: final text is not the Chinese report shape");
-    const nudged = await callModel({
-      messages: [
-        ...result.messages,
-        {
-          role: "user",
-          content:
-            "上一則不是合格報告（禁止英文思考過程）。請重寫：只輸出繁體中文、200 字內、四段（這筆在做什麼／flags／缺什麼資料／最後一行「等級：低|留意|高|未知」）。不要再呼叫 tool。本地樣本的巨額餘額是環境噪音，勿當劇情。",
-        },
-      ],
-      tools: [],
-      temperature: 0,
-      maxTokens: 600,
-    });
-    const text = nudged.message.content?.trim() ?? "";
-    if (text) {
-      finalText = text;
-      traceLines.push(`assistant: ${text}`);
-    }
-  }
-
-  if (!finalText) {
-    finalText = `(無最終報告：stopReason=${result.stopReason}，${result.steps} 步)`;
-  } else if (!looksLikeFinalReport(finalText)) {
-    finalText = `${finalText}\n\n（提醒：上列可能仍是模型思考過程，非正式四段報告）`;
-  }
 
   return {
     stopReason: result.stopReason,
     steps: result.steps,
-    finalText,
+    finalText: result.finalText || `(無最終報告：stopReason=${result.stopReason}，${result.steps} 步)`,
     trace: traceLines.join("\n\n") || "(no events)",
-    lastDecode: state.lastDecode,
+    lastDecode: input.preflight.decode,
     lastAccounts: state.lastAccounts,
   };
 }

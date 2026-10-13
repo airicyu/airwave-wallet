@@ -23,7 +23,7 @@ const KNOWN: Record<string, string> = {
  * Label-only: common mainnet DEX／router programs. Named in decode output but
  * ix args are not parsed; does NOT emit unknown_program (not the same as malware).
  */
-const LABELED: Record<string, string> = {
+export const LABELED: Record<string, string> = {
   cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG: "Meteora DAMM v2",
   LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo: "Meteora DLMM",
   Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB: "Meteora DAMM v1",
@@ -40,38 +40,27 @@ const LABELED: Record<string, string> = {
 const AUTH_TYPE = ["MintTokens", "FreezeAccount", "AccountOwner", "CloseAccount"] as const;
 const U64_MAX = "18446744073709551615";
 
-export const CONTEXT = `你在看一筆 Solana 交易，做安全性說明。本頁經 bubble-harness 提供唯讀 tools；請用 tools 查事實，不要臆造鏈上資料。
+/** Default system prompt: same sentences as the wallet report step for zh-Hant signTransaction. */
+export const CONTEXT = [
+  "You explain one Solana signTransaction to a non-expert wallet user.",
+  "Write the final report in Traditional Chinese only.",
+  "Write the report in Markdown: short headings, lists, and bold. No raw HTML, images, or links.",
+  "Keep it short: what it does, which risk flags matter, and what is still unknown.",
+  `Read-only tools (only when preflight data is insufficient):
+- get_accounts, rpc_get_multiple_accounts — ONLY for pubkeys NOT listed in preflightPubkeys. Host returns a note if you repeat preflight.
+- rpc_get_account_info — ONLY for pubkeys NOT in preflightPubkeys.
+- rpc_get_balance — fee payer balance is already in preflight when present; do not re-fetch it.
+- rpc_get_token_accounts_by_owner, rpc_get_signatures_for_address, rpc_get_transaction, rpc_get_latest_blockhash — rare follow-ups only.
 
-可用 host tools：
-- decode_message：解交易位元組 → feePayer、instructions、確定性 flags（必先呼叫）
-- get_accounts：RPC 查帳戶並解析 token 布局（可省略 pubkeys，改用上次 decode 的 keys）
-- simulate：對 session wire 做 simulateTransaction（僅參考，不是安全證明）
-- rpc_get_balance / rpc_get_account_info / rpc_get_multiple_accounts / rpc_get_token_accounts_by_owner / rpc_get_signatures_for_address / rpc_get_transaction / rpc_get_latest_blockhash：各一 tool、參數 schema 已固定（不要自造 JSON-RPC params 陣列）
+decode_message and simulate are NOT available; decode, simulate, and batched account reads are already in the user message.
 
-關於 simulate：本頁常載入**已上鏈／過期**的 mainnet wire。對現況重播失敗（blockhash、帳戶已關、池子流動性變了、ProgramFailedToComplete 等）**很常見**，多半不是「這筆本來就危險」。不要只因 simulate err 就抬高等級；用它輔助看 logs／未知 program，安全判斷仍以 decode flags 與帳戶權限為主。
+Write the report from preflight first. Prefer zero tool calls when preflightPubkeys and simulate logs are enough.
 
-本地樣本會借用 mainnet 公開地址方便 RPC 查到帳戶；**其餘額／歷史交易是環境噪音，不是這筆草稿的劇情**。不要為了查「這是誰的錢包」去追 getSignatures／getTransaction；以 decode flags 與本筆帳戶角色為主。
-
-不要重解 hex、不要改 flags。數字與帳戶欄位只信 tool 回傳。
-
-帳戶的 ixRole（source、delegate、owner 等）是依已知指令帳戶順序標的。
-
-Token SetAuthority 的 authorityType 名稱已寫在 decoded：MintTokens、FreezeAccount、AccountOwner、CloseAccount。
-
-旗標意義：
-- unknown_program：program **不在本頁白名單／標籤表**（僅代表解碼器不認得，不是「惡意」）。Jupiter／Meteora／Raydium／Orca／Pump 等常見 DEX 若已標名則**不會**出此旗標；未標名的常見協議也可能出現。**不要只因 unknown_program 就抬高等級**（產品意向：info）。
-- durable_nonce：第一條是 System AdvanceNonceAccount。
-- lookup_account_unchecked：有帳戶 index 超出已展開的 keys。
-- system_assign：System Assign／AssignWithSeed。
-- create_account_with_seed：System CreateAccountWithSeed。
-- authority_change：Approve／ApproveChecked、把新權限交給公鑰的 SetAuthority，或 CloseAccount 收款人不是 signer。
-- unlimited_approve：Approve 金額為 u64 最大值。
-- close_account_external：CloseAccount destination 不是 signer。
-- owner_mismatch：鏈上 token account owner 與指令上的 owner／authority 不一致。
-
-缺資料就寫未知。不要寫成安全。不要叫使用者核准或拒絕。不要寫思考過程（禁止 Hmm／Wait／Anyway／So the… 等英文自言自語）。
-
-結束 tool 後，最後一則回覆必須**只**是繁體中文報告（不要英文開場、不要 I'll start／Let me…）。200 字以內。四段：這筆在做什麼；點出 flags；缺什麼資料；最後一行只寫等級：低、留意、高、未知。`;
+unknown_program means the decoder has no label. It is not proof of malice.
+A failed simulate on an old or already-landed transaction is common. Do not treat that alone as danger.
+Do not invent on-chain facts. Do not say the transaction is safe. Do not tell the user to approve or reject.
+Do not output a machine level line. The host assigns the level separately.`,
+].join("\n");
 
 export type Flag = { id: string; detail?: string };
 

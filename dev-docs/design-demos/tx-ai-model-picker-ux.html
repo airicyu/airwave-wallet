@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — AI 設定模型選項（概念稿）</title>
+    <!--
+      Informal concept for backlog tx-ai-model-picker.
+      Not a contract. A scheduled INDEX wins on conflict.
+    -->
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --ok: #4ecb8d;
+        --popup-w: 422px;
+        --popup-h: 600px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1100px; margin: 0 auto; padding: 28px 20px 64px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 8px; max-width: 46rem; font-size: 0.92rem; }
+      .note { color: var(--text-dim); font-size: 0.82rem; margin: 0 0 20px; max-width: 46rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; }
+      .chip {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 7px 13px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      .chip.active { border-color: var(--accent); background: #1a2838; }
+      .layout { display: grid; grid-template-columns: var(--popup-w) 1fr; gap: 28px; align-items: start; }
+      @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+      .phone-cap { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+      }
+      .top h2 { margin: 0; flex: 1; font-size: 0.95rem; font-weight: 650; text-align: center; }
+      .icon-btn {
+        width: 34px;
+        height: 34px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .icon-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+      .body { flex: 1; overflow: auto; padding: 14px 12px 16px; }
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        margin-bottom: 14px;
+      }
+      .toggle-row .name { font-size: 0.88rem; font-weight: 600; }
+      .switch {
+        width: 42px;
+        height: 24px;
+        border-radius: 999px;
+        border: 1px solid #2f5a45;
+        background: #1a3a2a;
+        position: relative;
+        flex-shrink: 0;
+      }
+      .switch::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 20px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--ok);
+      }
+      .set-field { margin: 0 0 14px; }
+      .set-field > label {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        margin-bottom: 5px;
+      }
+      .set-field select,
+      .set-field input[type="text"] {
+        width: 100%;
+        padding: 9px 10px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--stroke);
+        background: var(--fill);
+        color: var(--text);
+        font: inherit;
+        font-size: 0.82rem;
+      }
+      .set-field select {
+        appearance: none;
+        padding-right: 36px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239aa7b4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 16px 16px;
+      }
+      .rpc-edit {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 6px;
+      }
+      .set-field .rpc-edit input[type="text"] {
+        flex: 1;
+        min-width: 0;
+        width: auto;
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        background: var(--bg);
+      }
+      .icon-btn.ghost {
+        width: 28px;
+        height: 28px;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+      }
+      .icon-btn.ghost:hover,
+      .icon-btn.ghost:focus-visible {
+        color: var(--text);
+        background: var(--fill);
+        border-radius: var(--radius-sm);
+      }
+      .icon-btn.ghost svg {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .set-field select:focus,
+      .set-field input[type="text"]:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .secret {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .secret .mask {
+        flex: 1;
+        min-width: 0;
+        background: var(--bg);
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+      }
+      .aside h3 { margin: 0 0 8px; font-size: 0.95rem; }
+      .aside p { margin: 0 0 10px; color: var(--text-muted); font-size: 0.86rem; }
+      .aside ul { margin: 0; padding-left: 1.1rem; color: var(--text-muted); font-size: 0.86rem; }
+      .aside li { margin: 0 0 6px; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>AI 設定 · 模型選項</h1>
+      <p class="lede">Settings · 交易 AI 分析。報告模型與定級模型各是下拉；只有選「其他」時，該列底下才多一行可填的模型 id。</p>
+      <p class="note">概念稿，不是契約。下拉改了立刻算選好；「其他」的模型 id 要按列尾的勾才寫入。畫面不另外解釋這件事。</p>
+      <div class="controls" id="chips">
+        <button type="button" class="chip active" data-scene="default">預設</button>
+        <button type="button" class="chip" data-scene="report-empty">報告 · 其他（空）</button>
+        <button type="button" class="chip" data-scene="report-kept">報告 · 其他（舊 id）</button>
+        <button type="button" class="chip" data-scene="grade-other">定級 · 其他</button>
+        <button type="button" class="chip" data-scene="both">兩邊都是其他</button>
+      </div>
+      <div class="layout">
+        <div>
+          <div class="phone-cap" id="cap">預設：兩邊都是固定項</div>
+          <div class="phone" id="phone"></div>
+        </div>
+        <aside class="aside">
+          <h3>這一版畫面</h3>
+          <p>報告模型固定兩項，預設是 <code>apodex/apodex-1.1-mini:free</code>。定級模型仍是 LiquidAI d1 與 Nace.AI Drex v1.5。</p>
+          <ul>
+            <li>沒選「其他」，不留空輸入列。</li>
+            <li>已存過、但不在新清單裡的 id（Kimi、GLM、DeepSeek Pro）打開時落在「其他」，欄裡就是那個 id。</li>
+            <li>勾與 RPC 自訂網址同一顆：無框、列尾、<code>確認</code>。按勾或 Enter 才寫入。打字與失焦都不寫。</li>
+          </ul>
+        </aside>
+      </div>
+    </div>
+    <script>
+      const APODEX = "apodex/apodex-1.1-mini:free";
+      const FLASH = "~deepseek/deepseek-flash-latest";
+      const phone = document.getElementById("phone");
+      const cap = document.getElementById("cap");
+      const chips = document.getElementById("chips");
+      const CAPS = {
+        default: "預設：兩邊都是固定項",
+        "report-empty": "剛選報告「其他」，欄還是空的",
+        "report-kept": "舊的 Kimi id 落在「其他」",
+        "grade-other": "定級選「其他」",
+        both: "兩邊都是「其他」",
+      };
+      const SCENES = {
+        default: { report: APODEX, reportCustom: "", decisions: "liquid/d1", decisionsCustom: "" },
+        "report-empty": { report: "other", reportCustom: "", decisions: "liquid/d1", decisionsCustom: "" },
+        "report-kept": { report: "other", reportCustom: "moonshotai/kimi-k2-0905", decisions: "liquid/d1", decisionsCustom: "" },
+        "grade-other": { report: APODEX, reportCustom: "", decisions: "other", decisionsCustom: "" },
+        both: { report: "other", reportCustom: "z-ai/glm-5.3-flash", decisions: "other", decisionsCustom: "nace-ai/drex-v1.5" },
+      };
+      let state = { ...SCENES.default };
+      let draft = { report: state.reportCustom, decisions: state.decisionsCustom };
+      let scene = "default";
+      const CHECK = `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>`;
+
+      function esc(value) {
+        return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+      }
+
+      function legalId(value) {
+        const id = value.trim();
+        if (!id || /[\s\u0000-\u001F\u007F]/.test(id)) return "";
+        return id;
+      }
+
+      function customRow(inputId, value) {
+        return `<div class="rpc-edit"><input id="${inputId}" type="text" spellcheck="false" autocomplete="off" placeholder="模型 id" value="${esc(value)}" /><button type="button" class="icon-btn ghost" data-for="${inputId}" title="確認" aria-label="確認">${CHECK}</button></div>`;
+      }
+
+      function render() {
+        cap.textContent = CAPS[scene] ?? scene;
+        chips.querySelectorAll(".chip").forEach((chip) => {
+          chip.classList.toggle("active", chip.dataset.scene === scene);
+        });
+        const reportOther = state.report === "other";
+        const gradeOther = state.decisions === "other";
+        phone.innerHTML = `
+          <div class="top">
+            <span class="icon-btn" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></span>
+            <h2>交易 AI 分析</h2>
+            <span style="width:34px"></span>
+          </div>
+          <div class="body">
+            <div class="toggle-row"><span class="name">啟用</span><span class="switch" role="switch" aria-checked="true"></span></div>
+            <div class="set-field">
+              <label>OpenRouter API key</label>
+              <div class="secret"><div class="mask">••••••</div></div>
+            </div>
+            <div class="set-field">
+              <label for="report">報告模型</label>
+              <select id="report">
+                <option value="${APODEX}" ${state.report === APODEX ? "selected" : ""}>${APODEX}</option>
+                <option value="${FLASH}" ${state.report === FLASH ? "selected" : ""}>${FLASH}</option>
+                <option value="other" ${reportOther ? "selected" : ""}>其他</option>
+              </select>
+              ${reportOther ? customRow("report-custom", draft.report) : ""}
+            </div>
+            <div class="set-field">
+              <label for="grade">定級模型</label>
+              <select id="grade">
+                <option value="liquid/d1" ${state.decisions === "liquid/d1" ? "selected" : ""}>LiquidAI d1</option>
+                <option value="nace-ai/drex-v1.5" ${state.decisions === "nace-ai/drex-v1.5" ? "selected" : ""}>Nace.AI Drex v1.5</option>
+                <option value="other" ${gradeOther ? "selected" : ""}>其他</option>
+              </select>
+              ${gradeOther ? customRow("grade-custom", draft.decisions) : ""}
+            </div>
+          </div>`;
+        phone.querySelector("#report").addEventListener("change", (event) => {
+          state.report = event.target.value;
+          if (state.report !== "other") {
+            state.reportCustom = "";
+            draft.report = "";
+          }
+          scene = "custom";
+          render();
+          if (state.report === "other") phone.querySelector("#report-custom")?.focus();
+        });
+        phone.querySelector("#grade").addEventListener("change", (event) => {
+          state.decisions = event.target.value;
+          if (state.decisions !== "other") {
+            state.decisionsCustom = "";
+            draft.decisions = "";
+          }
+          scene = "custom";
+          render();
+          if (state.decisions === "other") phone.querySelector("#grade-custom")?.focus();
+        });
+        bindCustom("report-custom", "report");
+        bindCustom("grade-custom", "decisions");
+      }
+
+      function bindCustom(inputId, key) {
+        const input = phone.querySelector("#" + inputId);
+        const button = phone.querySelector(`[data-for="${inputId}"]`);
+        if (!input || !button) return;
+        const savedKey = key === "report" ? "reportCustom" : "decisionsCustom";
+        const commit = () => {
+          const id = legalId(input.value);
+          if (!id) return;
+          state[savedKey] = id;
+          draft[key] = id;
+          input.value = id;
+        };
+        input.addEventListener("input", () => {
+          draft[key] = input.value;
+        });
+        input.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          commit();
+        });
+        button.addEventListener("click", commit);
+      }
+
+      chips.addEventListener("click", (event) => {
+        const button = event.target.closest(".chip");
+        if (!button) return;
+        scene = button.dataset.scene;
+        state = { ...SCENES[scene] };
+        draft = { report: state.reportCustom, decisions: state.decisionsCustom };
+        render();
+      });
+      render();
+    </script>
+  </body>
+</html>

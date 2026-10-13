@@ -51,6 +51,21 @@ const DAPP_SHELL_KINDS = new Set([
   "signAndSendTransaction",
 ]);
 
+const SIDEBAR_SIGN_TX_KINDS = new Set(["signTransaction", "signAndSendTransaction"]);
+
+/** Oldest sidebar-hosted sign tx pending (signTransaction / signAndSendTransaction only). */
+export function findOldestSidebarSignTxPendingId(): string | null {
+  let oldest: { id: string; at: number } | null = null;
+  for (const [id, record] of pendingRequests) {
+    if (record.uiHost !== "sidebar") continue;
+    if (!SIDEBAR_SIGN_TX_KINDS.has(record.kind)) continue;
+    if (!oldest || record.createdAt < oldest.at) {
+      oldest = { id, at: record.createdAt };
+    }
+  }
+  return oldest?.id ?? null;
+}
+
 /** Oldest pending dApp approval presented in the side panel shell (`uiHost: "sidebar"`). */
 export function findSidebarDappApprovalRequestId(): string | null {
   let oldest: { id: string; at: number } | null = null;

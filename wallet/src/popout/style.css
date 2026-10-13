@@ -884,10 +884,16 @@ textarea:focus-visible {
   list-style: none;
 }
 
+.tx-details summary::-webkit-details-marker,
+.fee-details summary::-webkit-details-marker {
+  display: none;
+}
+
 .tx-details summary::before,
 .fee-details summary::before {
-  content: "▸ ";
+  content: "▸";
   display: inline-block;
+  margin-right: 4px;
   transition: transform 0.15s ease;
 }
 

@@ -20,17 +20,21 @@ export type TxAiAssessState =
     }
   | { status: "error"; message: string; reportText?: string };
 
-export const REPORT_MODELS = [
+export const REPORT_PRESETS = [
+  "apodex/apodex-1.1-mini:free",
   "~deepseek/deepseek-flash-latest",
-  "~deepseek/deepseek-pro-latest",
-  "moonshotai/kimi-k2-0905",
-  "z-ai/glm-5.3-flash",
 ] as const;
 
-export const DECISIONS_MODELS = ["liquid/d1", "nace-ai/drex-v1.5"] as const;
+/** @deprecated Use REPORT_PRESETS */
+export const REPORT_MODELS = REPORT_PRESETS;
 
-export const DEFAULT_REPORT_MODEL: (typeof REPORT_MODELS)[number] = "~deepseek/deepseek-flash-latest";
-export const DEFAULT_DECISIONS_MODEL: (typeof DECISIONS_MODELS)[number] = "liquid/d1";
+export const DECISIONS_PRESETS = ["liquid/d1", "nace-ai/drex-v1.5"] as const;
+
+/** @deprecated Use DECISIONS_PRESETS */
+export const DECISIONS_MODELS = DECISIONS_PRESETS;
+
+export const DEFAULT_REPORT_MODEL: (typeof REPORT_PRESETS)[number] = "apodex/apodex-1.1-mini:free";
+export const DEFAULT_DECISIONS_MODEL: (typeof DECISIONS_PRESETS)[number] = "liquid/d1";
 
 export const TX_AI_KINDS = ["signTransaction", "signAndSendTransaction", "walletSend"] as const;
 
@@ -65,16 +69,25 @@ export function isTxAiKind(kind: string): kind is TxAiKind {
   return (TX_AI_KINDS as readonly string[]).includes(kind);
 }
 
-export function normalizeReportModel(raw: unknown): (typeof REPORT_MODELS)[number] {
-  return (REPORT_MODELS as readonly string[]).includes(typeof raw === "string" ? raw : "")
-    ? (raw as (typeof REPORT_MODELS)[number])
-    : DEFAULT_REPORT_MODEL;
+export function isLegalOpenRouterModelId(raw: string): boolean {
+  const id = raw.trim();
+  if (!id || id.length > 256) return false;
+  if (/[\s\u0000-\u001F\u007F]/.test(id)) return false;
+  return true;
 }
 
-export function normalizeDecisionsModel(raw: unknown): (typeof DECISIONS_MODELS)[number] {
-  return (DECISIONS_MODELS as readonly string[]).includes(typeof raw === "string" ? raw : "")
-    ? (raw as (typeof DECISIONS_MODELS)[number])
-    : DEFAULT_DECISIONS_MODEL;
+export function normalizeReportModel(raw: unknown): string {
+  if (typeof raw !== "string") return DEFAULT_REPORT_MODEL;
+  if ((REPORT_PRESETS as readonly string[]).includes(raw)) return raw;
+  if (isLegalOpenRouterModelId(raw)) return raw.trim();
+  return DEFAULT_REPORT_MODEL;
+}
+
+export function normalizeDecisionsModel(raw: unknown): string {
+  if (typeof raw !== "string") return DEFAULT_DECISIONS_MODEL;
+  if ((DECISIONS_PRESETS as readonly string[]).includes(raw)) return raw;
+  if (isLegalOpenRouterModelId(raw)) return raw.trim();
+  return DEFAULT_DECISIONS_MODEL;
 }
 
 const FLOOR: Partial<Record<string, TxAiLevel>> = {
@@ -136,19 +149,6 @@ export function decisionsModelLabelKey(
 ): "settings.openRouter.decisionsModel.d1" | "settings.openRouter.decisionsModel.drex" {
   if (model === "nace-ai/drex-v1.5") return "settings.openRouter.decisionsModel.drex";
   return "settings.openRouter.decisionsModel.d1";
-}
-
-export function reportModelLabelKey(
-  model: string,
-):
-  | "settings.openRouter.model.deepseekFlash"
-  | "settings.openRouter.model.deepseekPro"
-  | "settings.openRouter.model.kimi"
-  | "settings.openRouter.model.glm" {
-  if (model === "~deepseek/deepseek-pro-latest") return "settings.openRouter.model.deepseekPro";
-  if (model === "moonshotai/kimi-k2-0905") return "settings.openRouter.model.kimi";
-  if (model === "z-ai/glm-5.3-flash") return "settings.openRouter.model.glm";
-  return "settings.openRouter.model.deepseekFlash";
 }
 
 export function replyLanguage(locale: UiLocale): string {

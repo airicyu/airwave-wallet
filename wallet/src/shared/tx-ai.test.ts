@@ -10,15 +10,23 @@ import {
   applyFlagsFloor,
   assessLevelWithoutChain,
   hostToolVerdict,
+  isLegalOpenRouterModelId,
   mentionsBannedRpc,
   normalizeDecisionsModel,
   normalizeReportModel,
 } from "./tx-ai.ts";
 
-test("unknown decisions model falls back to liquid/d1", () => {
-  assert.equal(normalizeDecisionsModel("typesafe/jev-1.13"), "liquid/d1");
+test("model normalize: presets, custom ids, and illegal fallback", () => {
+  assert.equal(normalizeDecisionsModel("typesafe/jev-1.13"), "typesafe/jev-1.13");
   assert.equal(normalizeDecisionsModel("nace-ai/drex-v1.5"), "nace-ai/drex-v1.5");
-  assert.equal(normalizeReportModel("not-a-model"), "~deepseek/deepseek-flash-latest");
+  assert.equal(normalizeDecisionsModel("bad id"), "liquid/d1");
+  assert.equal(normalizeReportModel("not-a-model"), "not-a-model");
+  assert.equal(normalizeReportModel("custom/vendor-model"), "custom/vendor-model");
+  assert.equal(normalizeReportModel("bad id"), "apodex/apodex-1.1-mini:free");
+  assert.equal(normalizeReportModel("~deepseek/deepseek-flash-latest"), "~deepseek/deepseek-flash-latest");
+  assert.equal(isLegalOpenRouterModelId("  trim-me  "), true);
+  assert.equal(isLegalOpenRouterModelId(""), false);
+  assert.equal(isLegalOpenRouterModelId("has space"), false);
 });
 
 test("flags floor raises and does not lower", () => {

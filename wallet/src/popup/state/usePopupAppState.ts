@@ -306,22 +306,11 @@ export function usePopupAppState() {
     chrome.runtime.onMessage.addListener(onSettled);
     chrome.runtime.onMessage.addListener(onDappApproval);
 
-    const abortDappApprovalOnSidebarUnload = () => {
-      if (walletShellSurfaceFromHref(window.location.href) !== "sidebar") return;
-      const top = topFlow(bagRef.current.flowStack);
-      if (!top) return;
-      rejectFlowPending(top.requestId);
-      bagRef.current.flowStack = [];
-      setFlowStack([]);
-    };
-
     const onUnload = () => {
       abortWalletSendOnPopupUnload();
-      abortDappApprovalOnSidebarUnload();
     };
     const onPageHide = () => {
       abortWalletSendOnPopupUnload();
-      abortDappApprovalOnSidebarUnload();
     };
     window.addEventListener("beforeunload", onUnload);
     window.addEventListener("pagehide", onPageHide);
