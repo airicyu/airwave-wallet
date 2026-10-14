@@ -7,7 +7,16 @@ import { sendExtensionRequest } from "../../shared/ext-api";
 import { apiErrorMessage, type UiLocale } from "../../shared/ui-i18n";
 import { amountUiToRaw, formatRawToAmountUi, solReserveLamports } from "../../shared/wallet-send-amount";
 import { NATIVE_SOL_ID, type HomeTokenRow } from "../home/home-tokens";
+import { homeTokenRowForSendBalance } from "../../shared/wallet-send-eligibility";
 import type { State } from "../types";
+
+function sendBalanceRow(state: State, rows: HomeTokenRow[], tokenId: string): HomeTokenRow | undefined {
+  const row = findTokenRowById(rows, tokenId);
+  if (!row) return undefined;
+  const active = state.accounts.find((a) => a.id === state.activeAccountId);
+  if (!active) return row;
+  return homeTokenRowForSendBalance(row, active);
+}
 
 export function findTokenRowById(rows: HomeTokenRow[], tokenId: string): HomeTokenRow | undefined {
   return rows.find((r) => r.id === tokenId);
@@ -24,7 +33,7 @@ export function sendFormValid(args: {
   amount: string;
   recipient: string;
 }): boolean {
-  const row = args.detailTokenId ? findTokenRowById(args.rows, args.detailTokenId) : undefined;
+  const row = args.detailTokenId ? sendBalanceRow(args.state, args.rows, args.detailTokenId) : undefined;
   if (!row) return false;
   const amount = args.amount.trim();
   const recipient = args.recipient.trim();

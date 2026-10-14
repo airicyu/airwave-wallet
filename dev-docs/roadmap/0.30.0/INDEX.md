@@ -3,7 +3,7 @@
 - **狀態：** `in progress`
 - **上游版本：** [0.29.0](../0.29.0/INDEX.md)（Mainnet RPC 就緒語意）。簽署審批殼與模擬：[0.10.0](../0.10.0/INDEX.md)／[0.11.0](../0.11.0/INDEX.md)／[0.19.0](../0.19.0/INDEX.md)。第三方 key 形狀：[0.27.0](../0.27.0/INDEX.md)
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
-- **構想來源：** [backlog/sign-tx-ai-security-eval.md](../backlog/sign-tx-ai-security-eval.md)、[backlog/bubble-harness-runtime.md](../backlog/bubble-harness-runtime.md)、[backlog/bubble-harness-handoff.md](../backlog/bubble-harness-handoff.md)；POC：`test-web/sign-risk.html`
+- **構想來源：** 原 `backlog/sign-tx-ai-security-eval.md`、`backlog/bubble-harness-runtime.md`、`backlog/bubble-harness-handoff.md`（出貨後已刪）。POC：`test-web/sign-risk.html`
 - **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)。Settings · AI 欄位概念稿：[`dev-docs/design-demos/tx-ai-analysis-ux.html`](../design-demos/tx-ai-analysis-ux.html)。審批殼帳戶列與站點列：[`dev-docs/design-demos/approval-account-chrome-ux.html`](../design-demos/approval-account-chrome-ux.html)。AI 懸浮卡＋overlay（**已同意**）：[`dev-docs/design-demos/tx-ai-chip-report-ux.html`](../design-demos/tx-ai-chip-report-ux.html)
 - **秘密欄位：** OpenRouter API key 進 settings（同 Jupiter／Helius 模式）。禁止把真實 key、助記詞、密碼寫進本目錄
 

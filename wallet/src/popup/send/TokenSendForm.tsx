@@ -7,6 +7,7 @@ import { useT } from "../state/useT";
 import { useRegisterDock } from "../state/dock";
 import { solReserveLamports } from "../../shared/wallet-send-amount";
 import type { State } from "../types";
+import { homeTokenRowForSendBalance } from "../../shared/wallet-send-eligibility";
 import { beginTokenSend, findTokenRowById, halfSendAmount, maxSendAmount, sendFormValid, tokenBalanceRaw } from "./send-logic";
 import { syncWalletSendAbortId } from "../components/ApprovalHost";
 
@@ -30,7 +31,10 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
     consumePendingSendFormError();
   }, [pendingSendFormError, consumePendingSendFormError, locale]);
 
-  const row = detailTokenId ? findTokenRowById(homeTokenRows, detailTokenId) : undefined;
+  const rawRow = detailTokenId ? findTokenRowById(homeTokenRows, detailTokenId) : undefined;
+  const active = wallet.accounts.find((a) => a.id === wallet.activeAccountId);
+  const row =
+    rawRow && active ? homeTokenRowForSendBalance(rawRow, active) : rawRow;
   let balance = "—";
   let halfDisabled = true;
   let maxDisabled = true;

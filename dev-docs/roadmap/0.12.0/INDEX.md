@@ -3,7 +3,7 @@
 - **狀態：** `shipped`
 - **上游版本：** [0.11.0](../0.11.0/INDEX.md)（持倉列版面、簽署交易 popout、pending／custody 不變）
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
-- **構想來源：** 原 backlog「從持倉送出代幣」（出貨後已刪檔）；聚合送出仍在 [backlog/send-token-combined.md](../backlog/send-token-combined.md)
+- **構想來源：** 原 backlog「從持倉送出代幣」（出貨後已刪檔）。聚合送出見 [0.42.0](../0.42.0/INDEX.md)
 - **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)；概念稿 [`dev-docs/design-demos/send-token-ux.html`](../design-demos/send-token-ux.html)（非正式；衝突以本 INDEX／HOW 為準）
 - **秘密欄位：** 本版無新密碼欄
 
@@ -42,7 +42,7 @@
 
 ## 非目標
 
-- 聚合送出、歸集（[send-token-combined.md](../backlog/send-token-combined.md)）
+- 聚合送出、歸集（聚合送出已於 [0.42.0](../0.42.0/INDEX.md) 出貨；歸集仍非目標）
 - 地址簿管理（[address-book.md](../backlog/address-book.md)）
 - `signAndSendTransaction`、dApp 代廣播
 - 互換、wrap／unwrap、一次多資產

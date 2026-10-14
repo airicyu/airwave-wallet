@@ -10,7 +10,8 @@ import {
   friendlyErrorMessage,
   shouldUseRpcTransientToast,
 } from "../../shared/friendly-error-message";
-import { accountKind, jsonRpcMissing } from "../../shared/storage-keys";
+import { jsonRpcMissing } from "../../shared/storage-keys";
+import { canWalletSendFromActiveAccount, homeTokenRowForSendBalance } from "../../shared/wallet-send-eligibility";
 import { MainnetRpcStop } from "./MainnetRpcStop";
 import { formatOrganicScoreLabel } from "../../shared/organic-score-label";
 import { NATIVE_SOL_ID, shortMint, sortCombinedTokenMembers, type HomeTokenRow } from "../home/home-tokens";
@@ -303,7 +304,8 @@ export function TokenDetailView({
     );
   }
   const active = wallet.accounts.find((a) => a.id === wallet.activeAccountId);
-  const canSend = wallet.unlocked && active != null && accountKind(active) === "signing";
+  const canSend = canWalletSendFromActiveAccount(wallet.accounts, active, wallet.unlocked);
+  const balanceRow = active ? homeTokenRowForSendBalance(row, active) : row;
 
   return (
     <div id="token-detail-root" className="token-detail">
@@ -320,7 +322,7 @@ export function TokenDetailView({
         <div className="token-detail-row">
           <span className="label">{t("send.amount")}</span>
           <span>
-            {row.uiAmountLabel} {row.symbol}
+            {balanceRow.uiAmountLabel} {row.symbol}
           </span>
         </div>
         <div className="token-detail-row">

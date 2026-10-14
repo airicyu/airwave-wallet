@@ -9,9 +9,6 @@
 | 項目 | 說明 |
 |------|------|
 | [版本升級與 storage 遷移](./storage-migration.md) | [0.26.0](../0.26.0/INDEX.md) 已蓋第 1 代戳；之後形狀變更仍走具名世代步驟 |
-| [聚合錢包帳戶送出代幣](./send-token-combined.md) | 從目前可簽成員送；可動用≠加總；不含歸集。單一可簽送出已於 [0.12.0](../0.12.0/INDEX.md) 出貨 |
 | [錢包地址簿](./address-book.md) | 名稱＋地址白名單；送出可選，仍可手貼 |
 | [簽署交易 Anchor IDL 解析](./sign-transaction-ix-decode.md) | 靜態 common parser 已於 [0.19.0](../0.19.0/INDEX.md) 出貨；鏈上／metadata IDL 層仍未排程 |
 | [簽署交易 Durable Nonce 提醒](./sign-tx-durable-nonce-alert.md) | 審批時若第一條是 System `AdvanceNonceAccount`，提醒這筆用了 durable nonce；不擋批准 |
-| [簽署交易 AI 安全評估](./sign-tx-ai-security-eval.md) | 已排 [0.30.0](../0.30.0/INDEX.md)（提案／planned）。POC：`test-web/sign-risk.html` |
-| [bubble-harness 多輪查詢 runtime](./bubble-harness-runtime.md) | 已排 [0.30.0](../0.30.0/INDEX.md)：本倉抄 loop＋**真 sandbox**；給實作 agent：[handoff](./bubble-harness-handoff.md) |

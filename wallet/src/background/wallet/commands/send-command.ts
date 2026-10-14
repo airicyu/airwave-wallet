@@ -3,8 +3,8 @@
  * Does not sign, broadcast, or handle dApp-originated sign requests.
  */
 import type { BeginSendPayload, ExtensionRequest, ExtensionResponse } from "../../../shared/commands";
-import { getExposedPublicKey } from "../../../shared/accounts";
-import { accountKind, jsonRpcMissing } from "../../../shared/storage-keys";
+import { getExposedPublicKey, resolvePubkey } from "../../../shared/accounts";
+import { jsonRpcMissing } from "../../../shared/storage-keys";
 import { getHomeTokensForOwners } from "../../home-tokens";
 import { respond } from "../../messaging";
 import { addPending, pendingInsertError, schedulePendingTimeout } from "../../pending";
@@ -13,9 +13,13 @@ import {
   pendingTimeoutHandlers,
   resolveHomeTokenRowForSend,
 } from "../../send";
-import { getActiveAccountMeta, keypairForAccountId } from "../../session";
+import {
+  getActiveAccountMeta,
+  loadedAccountForAccountId,
+  signGateError,
+} from "../../session";
 import * as session from "../../session";
-import { readSettings } from "../../storage";
+import { readAccounts, readSettings } from "../../storage";
 
 import { walletShellSurfaceFromHref } from "../../../shared/shell-constants";
 
@@ -46,7 +50,20 @@ export async function handleBeginSend(
       error: { code: "NO_ACCOUNT", message: "No active account" },
     });
   }
-  if (accountKind(active) !== "signing") {
+  const gateErr = await signGateError();
+  if (gateErr) {
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: { code: gateErr.code, message: gateErr.message },
+    });
+  }
+  const accounts = await readAccounts();
+  const secrets = session.getVaultSecrets()?.secrets;
+  const gatePubkey = getExposedPublicKey(active);
+  const resolved = resolvePubkey(accounts, secrets, gatePubkey);
+  if (resolved.role !== "signing") {
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
@@ -54,6 +71,7 @@ export async function handleBeginSend(
       error: { code: "ACCOUNT_READ_ONLY", message: "Read-only account cannot send" },
     });
   }
+  const signAccountId = resolved.accountId;
   const payload = req.payload as BeginSendPayload;
   const settings = await readSettings();
   if (jsonRpcMissing(settings)) {
@@ -64,8 +82,7 @@ export async function handleBeginSend(
       error: { code: "MAINNET_RPC_UNSET", message: "Mainnet RPC is not set" },
     });
   }
-  const owner = getExposedPublicKey(active);
-  const { rows } = await getHomeTokensForOwners([owner], settings);
+  const { rows } = await getHomeTokensForOwners([gatePubkey], settings);
   const row = await resolveHomeTokenRowForSend(rows, payload.tokenId);
   if (!row) {
     return respond({
@@ -75,7 +92,7 @@ export async function handleBeginSend(
       error: { code: "INVALID_PAYLOAD", message: "Unknown token" },
     });
   }
-  const kp = await keypairForAccountId(active.id);
+  const kp = await loadedAccountForAccountId(signAccountId);
   if (!kp) {
     return respond({
       kind: "airwave-ext-res",
@@ -111,7 +128,7 @@ export async function handleBeginSend(
     origin: "airwave:wallet",
     payload: { transaction: Array.from(built.txBytes) },
     createdAt: Date.now(),
-    signAccountId: active.id,
+    signAccountId,
     uiHost: uiHostFromSender(sender),
   });
   if (!reserved) {
