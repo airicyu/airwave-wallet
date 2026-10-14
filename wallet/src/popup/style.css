@@ -2058,6 +2058,102 @@ h1.first-run-name,
   width: 100%;
 }
 
+.send-recipient-line,
+.send-picked {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.send-recipient-line .token-send-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.send-picked strong {
+  font-size: 0.88rem;
+}
+
+.send-picked .mono {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
+
+.address-cards-empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 28px 8px;
+}
+
+.address-card-input {
+  width: 8rem;
+  border: 0;
+  border-bottom: 1px solid var(--accent);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  outline: none;
+}
+
+.address-cards-add {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.send-pick-tabs {
+  display: flex;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--stroke-soft);
+}
+
+.send-pick-tabs button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  padding: 8px 4px 10px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.send-pick-tabs button.on {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+  font-weight: 650;
+}
+
+.send-pick-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  padding: 12px;
+  margin-bottom: 8px;
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.send-pick-row .book-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.send-pick-row .dim {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
+
 .token-send-row {
   display: flex;
   gap: 6px;
@@ -2379,7 +2475,7 @@ h1.first-run-name,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .subpage-head h2 {
@@ -2388,14 +2484,14 @@ h1.first-run-name,
 }
 
 .account-card {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .account-card-body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px;
+  padding: 8px 10px;
   border: 1px solid var(--stroke-soft);
   border-radius: var(--radius);
   background: var(--bg-elevated);
@@ -2439,7 +2535,7 @@ h1.first-run-name,
   width: 8px;
   flex-shrink: 0;
   align-self: stretch;
-  min-height: 28px;
+  min-height: 22px;
   background-image: radial-gradient(circle, var(--text-dim) 1px, transparent 1.2px);
   background-size: 4px 4px;
   opacity: 0.35;
@@ -2469,14 +2565,14 @@ h1.first-run-name,
 
 .account-name {
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.86rem;
 }
 
 .account-addr-row {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-top: 4px;
+  margin-top: 1px;
 }
 
 .addr {

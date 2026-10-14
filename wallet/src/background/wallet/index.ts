@@ -26,5 +26,9 @@ export {
   handleDisconnectAllOrigins,
   handleDisconnectOrigin,
   handleBeginSend,
+  handleAddressBookAdd,
+  handleAddressBookRemove,
+  handleAddressBookRename,
+  handleAddressBookReorder,
   handlePatchSettings,
 } from "./commands";

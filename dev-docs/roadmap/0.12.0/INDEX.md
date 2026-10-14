@@ -43,7 +43,7 @@
 ## 非目標
 
 - 聚合送出、歸集（聚合送出已於 [0.42.0](../0.42.0/INDEX.md) 出貨；歸集仍非目標）
-- 地址簿管理（[address-book.md](../backlog/address-book.md)）
+- 地址簿管理（已於 [0.43.0](../0.43.0/INDEX.md) 出貨）
 - `signAndSendTransaction`、dApp 代廣播
 - 互換、wrap／unwrap、一次多資產
 - 改 connect／signMessage；改 dApp signTransaction 成功語意

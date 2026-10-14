@@ -2,7 +2,7 @@
  * Shared TypeScript types for popup wallet mirror state, connection summaries, and navigable view names.
  * Contains no runtime logic or UI rendering.
  */
-import type { AccountMeta, PublicSettings } from "../shared/storage-keys";
+import type { AccountMeta, AddressCard, PublicSettings } from "../shared/storage-keys";
 import type { MessageKey } from "../shared/ui-messages";
 
 export type ConnectionSummary = {
@@ -18,6 +18,7 @@ export type State = {
   activeAccountId: string | null;
   settings: PublicSettings;
   connections: ConnectionSummary[];
+  addressBook: AddressCard[];
 };
 
 export type View =
@@ -26,6 +27,9 @@ export type View =
   | "rpc-guide"
   | "token-detail"
   | "token-send"
+  | "send-pick"
+  | "address-cards"
+  | "address-cards-add"
   | "send-approval"
   | "close-empty-pick"
   | "close-empty-confirm"
@@ -85,6 +89,9 @@ export const SUBPAGE_TITLE_KEYS: Record<Exclude<View, "home-token" | "home-activ
   "connected-sites": "nav.connectedSites",
   "token-detail": "nav.tokenDetail",
   "token-send": "nav.tokenSend",
+  "send-pick": "addressCards.pick",
+  "address-cards": "menu.addressCards",
+  "address-cards-add": "addressCards.add",
   "send-approval": "nav.sendApproval",
   "close-empty-pick": "nav.closeEmptyPick",
   "close-empty-confirm": "nav.closeEmptyConfirm",

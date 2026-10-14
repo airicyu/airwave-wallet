@@ -1,3 +1,7 @@
+/**
+ * In-popup token send form: amount, recipient, and review.
+ * Does not build or sign the transaction.
+ */
 import type { JSX } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { NATIVE_SOL_ID } from "../home/home-tokens";
@@ -9,6 +13,9 @@ import { solReserveLamports } from "../../shared/wallet-send-amount";
 import type { State } from "../types";
 import { homeTokenRowForSendBalance } from "../../shared/wallet-send-eligibility";
 import { beginTokenSend, findTokenRowById, halfSendAmount, maxSendAmount, sendFormValid, tokenBalanceRaw } from "./send-logic";
+import { patchSendDraft, readSendDraft } from "./send-draft";
+import { IconBook, IconX } from "../components/StrokeIcon";
+import { shortAddr } from "../lib/format";
 import { syncWalletSendAbortId } from "../components/ApprovalHost";
 
 export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
@@ -21,8 +28,10 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
     navigateTo,
   } = usePopupContext();
   const { t, locale } = useT();
-  const [amount, setAmount] = useState("");
-  const [recipient, setRecipient] = useState("");
+  const initial = readSendDraft();
+  const [amount, setAmount] = useState(initial.amount);
+  const [recipient, setRecipient] = useState(initial.recipient);
+  const [pickedLabel, setPickedLabel] = useState(initial.label);
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
@@ -117,7 +126,10 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
             autoComplete="off"
             placeholder="0"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => {
+              setAmount(e.target.value);
+              patchSendDraft({ amount: e.target.value });
+            }}
           />
           <button
             type="button"
@@ -127,7 +139,10 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
             onClick={() => {
               if (!row) return;
               const next = halfSendAmount(row);
-              if (next != null) setAmount(next);
+              if (next != null) {
+                setAmount(next);
+                patchSendDraft({ amount: next });
+              }
             }}
           >
             50%
@@ -140,7 +155,10 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
             onClick={() => {
               if (!row) return;
               const next = maxSendAmount(row, wallet);
-              if (next != null) setAmount(next);
+              if (next != null) {
+                setAmount(next);
+                patchSendDraft({ amount: next });
+              }
             }}
           >
             {t("send.max")}
@@ -150,16 +168,51 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
           <label className="field-label" htmlFor="send-recipient">
             {t("send.recipient")}
           </label>
-          <input
-            type="text"
-            id="send-recipient"
-            className="token-send-input mono"
-            autoComplete="off"
-            spellCheck={false}
-            placeholder={t("send.recipientPlaceholder")}
-            value={recipient}
-            onChange={(e) => setRecipient(e.target.value)}
-          />
+          {pickedLabel ? (
+            <div className="send-picked">
+              <strong>{pickedLabel}</strong>
+              <span className="mono">{shortAddr(recipient)}</span>
+              <button
+                type="button"
+                className="icon-btn ghost-inline"
+                title={t("addressCards.clear")}
+                aria-label={t("addressCards.clear")}
+                onClick={() => {
+                  setRecipient("");
+                  setPickedLabel("");
+                  patchSendDraft({ recipient: "", label: "" });
+                }}
+              >
+                <IconX />
+              </button>
+            </div>
+          ) : (
+            <div className="send-recipient-line">
+              <input
+                type="text"
+                id="send-recipient"
+                className="token-send-input mono"
+                autoComplete="off"
+                spellCheck={false}
+                placeholder={t("send.recipientPlaceholder")}
+                value={recipient}
+                onChange={(e) => {
+                  setRecipient(e.target.value);
+                  setPickedLabel("");
+                  patchSendDraft({ recipient: e.target.value, label: "" });
+                }}
+              />
+              <button
+                type="button"
+                className="icon-btn"
+                title={t("addressCards.open")}
+                aria-label={t("addressCards.open")}
+                onClick={() => navigateTo("send-pick")}
+              >
+                <IconBook />
+              </button>
+            </div>
+          )}
         </div>
         <p id="send-form-error" className="error" hidden={!formError}>
           {formError}

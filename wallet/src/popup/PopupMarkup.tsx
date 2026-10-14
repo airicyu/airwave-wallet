@@ -27,6 +27,7 @@ import { RefreshAssetsButton } from "./components/RefreshAssetsButton";
 import {
   IconAccounts,
   IconBack,
+  IconBook,
   IconCollapseRight,
   IconGlobe,
   IconInfo,
@@ -58,6 +59,7 @@ import { SetupFlow } from "./onboarding/SetupFlow";
 import { RpcGuideScreen } from "./onboarding/RpcGuideScreen";
 import { screenEnterKey, subpageTitle } from "./runtime";
 import { TokenSendForm } from "./send/TokenSendForm";
+import { AddressCardsAddScreen, AddressCardsScreen, SendPickScreen } from "./address-cards/AddressCardsScreens";
 import {
   ChangePasswordScreen,
   CuPriceScreen,
@@ -98,6 +100,10 @@ function MenuItems(): JSX.Element {
       <button type="button" className="menu-item" onClick={() => navigateTo("accounts")}>
         <IconAccounts />
         {t("menu.walletAccounts")}
+      </button>
+      <button type="button" className="menu-item" onClick={() => navigateTo("address-cards")}>
+        <IconBook />
+        {t("menu.addressCards")}
       </button>
       <button type="button" className="menu-item" onClick={() => navigateTo("settings")}>
         <IconSettings />
@@ -378,6 +384,24 @@ export function PopupMarkup(): JSX.Element {
           {currentView === "token-send" ? (
             <section id="screen-token-send" className="screen">
               <TokenSendForm wallet={wallet} />
+            </section>
+          ) : null}
+
+          {currentView === "send-pick" ? (
+            <section id="screen-send-pick" className="screen">
+              <SendPickScreen wallet={wallet} />
+            </section>
+          ) : null}
+
+          {currentView === "address-cards" ? (
+            <section id="screen-address-cards" className="screen">
+              <AddressCardsScreen wallet={wallet} />
+            </section>
+          ) : null}
+
+          {currentView === "address-cards-add" ? (
+            <section id="screen-address-cards-add" className="screen">
+              <AddressCardsAddScreen />
             </section>
           ) : null}
 

@@ -27,6 +27,7 @@ import {
 } from "../shell/shell-bridge";
 import { shouldShowRpcGuide } from "../lib/rpc-guide";
 import { BACK_PARENT } from "../runtime";
+import { clearSendDraft } from "../send/send-draft";
 import type { State, View } from "../types";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 
@@ -35,6 +36,7 @@ const STORAGE_KEYS = [
   "airwave.activeAccountId.v1",
   "airwave.settings.v1",
   "airwave.connections.v1",
+  "airwave.addressBook.v1",
 ] as const;
 
 type WalletMirror = {
@@ -126,6 +128,7 @@ export function usePopupAppState() {
     if (!res.ok) throw new Error(res.error?.message ?? "getState failed");
     const state = res.result as State;
     if (!state.connections) state.connections = [];
+    if (!Array.isArray(state.addressBook)) state.addressBook = [];
     dispatch({ type: "setWallet", wallet: state });
     return state;
   }, []);
@@ -149,6 +152,9 @@ export function usePopupAppState() {
       if (current === "token-send" && next !== "token-send" && next !== "send-approval") {
         setPendingSendFormError(null);
       }
+      const sendFlow = current === "token-send" || current === "send-pick" || current === "send-approval";
+      const stayInSend = next === "token-send" || next === "send-pick" || next === "send-approval";
+      if (sendFlow && !stayInSend) clearSendDraft();
       if (next === "token-send" && current !== "token-send") {
         setPendingSendFormError(null);
       }

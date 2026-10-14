@@ -9,6 +9,7 @@ import { toPublicSettings } from "../../../../shared/storage-keys";
 import {
   readAccounts,
   readActiveAccountId,
+  readAddressBook,
   readConnections,
   readSettings,
   readVaultBlob,
@@ -20,6 +21,7 @@ export async function handleGetState(req: ExtensionRequest): Promise<ExtensionRe
   const settings = await readSettings();
   const vaultExists = (await readVaultBlob()) != null;
   const connections = await readConnections();
+  const addressBook = await readAddressBook();
   const connectionsList = Object.entries(connections).map(([origin, rec]) => ({
     origin,
     accountId: rec.accountId,
@@ -36,6 +38,7 @@ export async function handleGetState(req: ExtensionRequest): Promise<ExtensionRe
       activeAccountId,
       settings: toPublicSettings(settings),
       connections: connectionsList,
+      addressBook,
     },
   });
 }

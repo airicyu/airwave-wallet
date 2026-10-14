@@ -13,6 +13,10 @@ import { handleGetHomeTokens } from "../home-tokens";
 import { respond } from "../messaging";
 import {
   handleAddCombinedSub,
+  handleAddressBookAdd,
+  handleAddressBookRemove,
+  handleAddressBookRename,
+  handleAddressBookReorder,
   handleAddReadOnlyAccount,
   handleBeginSend,
   handleChangeVaultPassword,
@@ -74,6 +78,10 @@ export async function handleWalletCommand(
   if (req.command === "wallet.disconnectOrigin") return handleDisconnectOrigin(req);
   if (req.command === "wallet.disconnectAllOrigins") return handleDisconnectAllOrigins(req);
   if (req.command === "wallet.beginSend") return handleBeginSend(req, sender);
+  if (req.command === "addressBook.add") return handleAddressBookAdd(req);
+  if (req.command === "addressBook.rename") return handleAddressBookRename(req);
+  if (req.command === "addressBook.remove") return handleAddressBookRemove(req);
+  if (req.command === "addressBook.reorder") return handleAddressBookReorder(req);
   if (req.command === "shell.getLastNormalWindowId") return handleShellGetLastNormalWindowId(req);
   if (req.command === "shell.getSidebarDappApproval") return handleShellGetSidebarDappApproval(req);
   if (req.command === "shell.switchToWindow") return handleShellSwitchToWindow(req);

@@ -25,7 +25,7 @@
 
 - 歸集，或多簽把多名成員湊成一筆
 - 可動用等於 Home 加總
-- 地址簿（仍見 [backlog/address-book.md](../backlog/address-book.md)）
+- 地址簿（已於 [0.43.0](../0.43.0/INDEX.md) 出貨）
 - 新的 Wallet Standard 方法
 - storage 遷移步驟（骨架已在 [0.26.0](../0.26.0/INDEX.md)；本版不改資料形狀）
 

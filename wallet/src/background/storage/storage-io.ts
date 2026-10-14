@@ -13,6 +13,7 @@ import {
   type ClusterRpcConfig,
   type ConnectionsMap,
   normalizeShellMode,
+  type AddressCard,
   type Settings,
   type UiLocale,
 } from "../../shared/storage-keys";
@@ -120,6 +121,24 @@ export async function readVaultBlob(): Promise<VaultBlob | null> {
 
 export async function writeVaultBlob(blob: VaultBlob): Promise<void> {
   await chrome.storage.local.set({ [STORAGE.vault]: blob });
+}
+
+export async function readAddressBook(): Promise<AddressCard[]> {
+  const r = await chrome.storage.local.get(STORAGE.addressBook);
+  const raw = r[STORAGE.addressBook];
+  if (!Array.isArray(raw)) return [];
+  const cards: AddressCard[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const row = item as Partial<AddressCard>;
+    if (typeof row.id !== "string" || typeof row.name !== "string" || typeof row.address !== "string") continue;
+    cards.push({ id: row.id, name: row.name, address: row.address });
+  }
+  return cards;
+}
+
+export async function writeAddressBook(cards: AddressCard[]): Promise<void> {
+  await chrome.storage.local.set({ [STORAGE.addressBook]: cards });
 }
 
 export async function getActivePublicKey(): Promise<string | null> {

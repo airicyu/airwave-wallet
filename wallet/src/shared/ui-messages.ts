@@ -170,6 +170,76 @@ const messages = {
     "zh-Hans": "钱包账户",
     "en": "Wallet accounts",
   },
+  "menu.addressCards": {
+    "zh-Hant": "地址簿",
+    "zh-Hans": "地址簿",
+    "en": "Address book",
+  },
+  "addressCards.empty": {
+    "zh-Hant": "還沒有地址",
+    "zh-Hans": "还没有地址",
+    "en": "No addresses yet",
+  },
+  "addressCards.add": {
+    "zh-Hant": "加入",
+    "zh-Hans": "加入",
+    "en": "Add",
+  },
+  "addressCards.name": {
+    "zh-Hant": "名稱",
+    "zh-Hans": "名称",
+    "en": "Name",
+  },
+  "addressCards.address": {
+    "zh-Hant": "地址",
+    "zh-Hans": "地址",
+    "en": "Address",
+  },
+  "addressCards.deleteTitle": {
+    "zh-Hant": "刪除",
+    "zh-Hans": "删除",
+    "en": "Delete",
+  },
+  "addressCards.invalid": {
+    "zh-Hant": "地址無效",
+    "zh-Hans": "地址无效",
+    "en": "Invalid address",
+  },
+  "addressCards.duplicate": {
+    "zh-Hant": "這條地址已在",
+    "zh-Hans": "这条地址已在",
+    "en": "Address already saved",
+  },
+  "addressCards.notFound": {
+    "zh-Hant": "這筆已不在",
+    "zh-Hans": "这笔已不在",
+    "en": "No longer in the list",
+  },
+  "addressCards.tabWallet": {
+    "zh-Hant": "錢包",
+    "zh-Hans": "钱包",
+    "en": "Wallet",
+  },
+  "addressCards.tabCards": {
+    "zh-Hant": "地址簿",
+    "zh-Hans": "地址簿",
+    "en": "Address book",
+  },
+  "addressCards.pick": {
+    "zh-Hant": "選擇地址",
+    "zh-Hans": "选择地址",
+    "en": "Choose address",
+  },
+  "addressCards.clear": {
+    "zh-Hant": "清除",
+    "zh-Hans": "清除",
+    "en": "Clear",
+  },
+  "addressCards.open": {
+    "zh-Hant": "地址簿",
+    "zh-Hans": "地址簿",
+    "en": "Address book",
+  },
   "menu.settings": {
     "zh-Hant": "設定",
     "zh-Hans": "设置",

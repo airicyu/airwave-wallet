@@ -30,4 +30,10 @@ export {
 } from "./session";
 export { handleDisconnectAllOrigins, handleDisconnectOrigin } from "./connection-commands";
 export { handleBeginSend } from "./send-command";
+export {
+  handleAddressBookAdd,
+  handleAddressBookRemove,
+  handleAddressBookRename,
+  handleAddressBookReorder,
+} from "./address-book-command";
 export { handlePatchSettings } from "./settings-command";

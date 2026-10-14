@@ -35,6 +35,15 @@ export function IconCopy({ size = 16 }: { size?: number }): JSX.Element {
   );
 }
 
+export function IconBook({ size = 16 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </StrokeIcon>
+  );
+}
+
 export function IconPlus({ size = 16 }: { size?: number }): JSX.Element {
   return (
     <StrokeIcon size={size}>

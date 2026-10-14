@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 地址簿 DRAFT</title>
+    <!--
+      非正式。給使用者看完再排進某版 INDEX。
+      管理：Home 漢堡選單，「錢包帳戶」下一項。送出：收款欄旁的簿圖示填入地址，仍可手貼。
+    -->
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --accent-dim: #2a6ea8;
+        --danger: #c75050;
+        --ok: #4ecb8d;
+        --popup-w: 384px;
+        --popup-h: 640px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", "Microsoft JhengHei UI", system-ui, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1120px; margin: 0 auto; padding: 28px 20px 56px; }
+      .kicker { margin: 0 0 8px; color: var(--accent); font-size: 0.72rem; letter-spacing: 0.06em; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 14px; max-width: 46rem; font-size: 0.92rem; }
+      .notes { color: var(--text-dim); font-size: 0.82rem; max-width: 46rem; margin: 0 0 18px; padding-left: 1.1rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+      .chip {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 7px 13px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .chip.active { border-color: var(--accent); background: #1a2838; }
+      .layout { display: grid; grid-template-columns: var(--popup-w) 1fr; gap: 28px; align-items: start; }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+      .phone-cap { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+      .top h2 { font-size: 0.95rem; margin: 0; font-weight: 600; flex: 1; min-width: 0; }
+      .icon-btn {
+        flex-shrink: 0;
+        width: 34px; height: 34px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .icon-btn:hover { background: var(--fill); border-color: var(--stroke); color: var(--text); }
+      .icon-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+      .icon-btn.danger:hover { color: #e8a0a0; border-color: var(--danger); }
+      .body { flex: 1; min-height: 0; overflow: auto; padding: 12px; }
+      .dock {
+        flex-shrink: 0;
+        padding: 10px 12px 12px;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+      }
+      .primary {
+        width: 100%;
+        border: 0;
+        background: var(--accent);
+        color: #061018;
+        font-weight: 700;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .primary:disabled { opacity: 0.4; cursor: default; }
+      .nav-row, .book-row, .pick-row {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-align: left;
+        padding: 12px;
+        border: 1px solid var(--stroke);
+        border-radius: 10px;
+        background: var(--bg-elevated);
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+      }
+      .nav-row + .nav-row, .book-row + .book-row, .pick-row + .pick-row { margin-top: 8px; }
+      .nav-row:hover, .book-row:hover, .pick-row:hover { border-color: var(--accent-dim); }
+      .nav-main, .book-main { flex: 1; min-width: 0; }
+      .nav-title, .book-name { display: block; font-size: 0.88rem; font-weight: 600; }
+      .nav-sub, .book-addr {
+        display: block;
+        margin-top: 2px;
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .book-addr { font-family: var(--mono); }
+      .name-line { display: flex; align-items: center; gap: 4px; min-height: 22px; }
+      .name-line .book-name { min-width: 0; }
+      .name-line .name-input { width: 8rem; flex: none; }
+      .addr-line { display: flex; align-items: center; gap: 2px; margin-top: 2px; }
+      .addr-line .book-addr { margin-top: 0; }
+      .card-edit, .addr-line .icon-btn { width: 22px; height: 22px; }
+      .card-edit svg, .addr-line .icon-btn svg { width: 14px; height: 14px; }
+      .name-input {
+        width: 100%;
+        border: 0;
+        border-bottom: 1px solid var(--accent);
+        background: transparent;
+        color: var(--text);
+        font: inherit;
+        font-size: 0.88rem;
+        font-weight: 600;
+        padding: 0 0 1px;
+        outline: none;
+        border-radius: 0;
+      }
+      .chev { color: var(--text-dim); flex-shrink: 0; }
+      .field { margin-bottom: 12px; }
+      .field label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; }
+      .field input, .search input {
+        width: 100%;
+        border: 1px solid var(--stroke);
+        background: var(--fill);
+        color: var(--text);
+        border-radius: 10px;
+        padding: 10px 12px;
+        font: inherit;
+        font-size: 0.88rem;
+        outline: none;
+      }
+      .field input:focus, .search input:focus { border-color: var(--accent); }
+      .field input.mono { font-family: var(--mono); font-size: 0.8rem; }
+      .err { color: #e8a0a0; font-size: 0.78rem; margin: 0 0 8px; }
+      .empty { color: var(--text-muted); font-size: 0.88rem; padding: 28px 8px; text-align: center; }
+      .search { margin-bottom: 10px; }
+      .row-tools { display: flex; gap: 2px; flex-shrink: 0; }
+      .expand {
+        margin: -4px 0 8px;
+        padding: 10px;
+        border: 1px solid var(--stroke);
+        border-top: 0;
+        border-radius: 0 0 10px 10px;
+        background: #141a21;
+      }
+      .book-row.open { border-radius: 10px 10px 0 0; margin-bottom: 0; }
+      .expand .field { margin-bottom: 8px; }
+      .tabs {
+        display: flex;
+        margin: 0 0 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+      }
+      .tabs button {
+        flex: 1;
+        border: 0;
+        background: transparent;
+        color: var(--text-dim);
+        font: inherit;
+        font-size: 0.84rem;
+        padding: 8px 4px 10px;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+      }
+      .tabs button.on { color: var(--text); border-bottom-color: var(--accent); font-weight: 650; }
+      .kind-mark {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: var(--fill);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .kind-mark svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+      .sheet {
+        position: absolute;
+        inset: 0;
+        background: rgba(8, 11, 14, 0.55);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+      }
+      .sheet-card {
+        background: var(--bg);
+        border-top: 1px solid var(--stroke);
+        border-radius: 16px 16px 0 0;
+        max-height: 78%;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .sheet-card .body { padding-top: 4px; }
+      .picked {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border: 1px solid var(--stroke);
+        border-radius: 10px;
+        background: var(--fill);
+        margin-bottom: 8px;
+      }
+      .picked strong { font-size: 0.86rem; }
+      .picked span { flex: 1; font-family: var(--mono); font-size: 0.72rem; color: var(--text-dim); }
+      .recipient-line { display: flex; gap: 6px; align-items: center; }
+      .recipient-line input { flex: 1; min-width: 0; }
+      .confirm {
+        position: absolute;
+        inset: 0;
+        background: rgba(8, 11, 14, 0.72);
+        display: grid;
+        place-items: center;
+        padding: 20px;
+      }
+      .confirm-card {
+        width: 100%;
+        background: var(--bg-elevated);
+        border: 1px solid var(--stroke);
+        border-radius: 14px;
+        padding: 16px;
+      }
+      .confirm-card h3 { margin: 0 0 6px; font-size: 0.95rem; }
+      .confirm-card p { margin: 0 0 14px; color: var(--text-muted); font-size: 0.84rem; }
+      .confirm-actions { display: flex; gap: 8px; }
+      .confirm-actions button { flex: 1; border-radius: 10px; padding: 9px; font: inherit; font-weight: 650; cursor: pointer; }
+      .menu-pop {
+        position: absolute;
+        top: 52px;
+        right: 8px;
+        width: 196px;
+        background: #1a212b;
+        border: 1px solid var(--stroke);
+        border-radius: 12px;
+        padding: 6px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+        z-index: 2;
+      }
+      .menu-item {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        font: inherit;
+        font-size: 0.88rem;
+        text-align: left;
+        padding: 9px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .menu-item svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; flex-shrink: 0; }
+      .menu-item.on { background: #243041; }
+      .menu-item.lock { color: var(--text-muted); border-top: 1px solid var(--stroke-soft); border-radius: 0; margin-top: 4px; padding-top: 12px; }
+      .home-dim { filter: brightness(0.55); }
+      .ghost-btn { background: transparent; color: var(--text); border: 1px solid var(--stroke); }
+      .danger-btn { background: var(--danger); color: #fff; border: 0; }
+      .aside h3 { margin: 0 0 8px; font-size: 0.92rem; }
+      .aside p, .aside li { color: var(--text-muted); font-size: 0.86rem; }
+      .aside ul { margin: 0; padding-left: 1.1rem; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <p class="kicker">DRAFT</p>
+      <h1>Address cards</h1>
+      <p class="lede">一份名稱＋地址。Home 漢堡選單裡維護；送出時可選，收款欄仍可手貼。點下方畫面切換。</p>
+      <ul class="notes">
+        <li>入口在漢堡選單，「錢包帳戶」下一項。Settings 不放。送出頁的簿圖示進全螢幕挑選，不是第二份管理。</li>
+        <li>沒有備註、沒有搜尋框（名單短）。沒有「從自己的帳戶加入」。</li>
+        <li>同一條地址不能存兩次。名稱可重複。刪除只從名單拿掉。</li>
+        <li>白名單不擋手貼的其他地址。</li>
+      </ul>
+      <div class="controls" id="chips"></div>
+      <div class="layout">
+        <div>
+          <div class="phone-cap" id="cap"></div>
+          <div class="phone" id="phone"></div>
+        </div>
+        <aside class="aside" id="aside"></aside>
+      </div>
+    </div>
+    <script>
+      const BOOK = [
+        { name: "Alice", addr: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU" },
+        { name: "冷錢包", addr: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM" },
+        { name: "交易所提現", addr: "4Nd1mBQtrMJVZ1F2K2wP6G6uQh1mYh1mYh1mYh1mYh1m" },
+      ];
+      const screens = [
+        ["menu", "選單"],
+        ["list", "Address cards"],
+        ["empty", "空名單"],
+        ["add", "新增"],
+        ["bad", "地址無效"],
+        ["dup", "地址已在"],
+        ["rename", "改名稱"],
+        ["del", "刪除確認"],
+        ["send", "送出・手貼"],
+        ["pick", "選・錢包"],
+        ["pickBook", "選・Address cards"],
+        ["picked", "送出・已選"],
+      ];
+      const notes = {
+        menu: "Home 右上漢堡選單。「Address cards」緊接在「錢包帳戶」下面。點了進名單，選單關掉。",
+        list: "每張卡：改名圖示在名稱後面，跟帳戶列表同一支鉛筆。縮寫後面是複製。點改名只把名稱換成同一行的輸入。",
+        empty: "沒有名單時只留一句，加號仍在。送出頁不因此停住。",
+        add: "名稱與地址都要有。殼底「加入」才寫入。返回放棄未送出的草稿。",
+        bad: "不是有效 base58 公鑰時，底欄停住，欄下短句。",
+        dup: "同一條地址已在簿裡。改名稱走既有那一列，不另存一筆。",
+        rename: "名稱就地改。鉛筆換成勾，勾或失焦才寫入。地址不變。",
+        del: "刪除要再確認一次。確認後名單少一筆，鏈上與已送出的交易不動。",
+        send: "收款欄與現在相同。右側簿圖示。沒有任何一筆時圖示仍在，點開是空狀態。",
+        pick: "全螢幕。兩個分頁：錢包、Address cards。錢包列沿用帳戶列表的圖示：鑰匙、眼睛、層疊，不寫種類字。聚合列是該戶的目前錢包。點一列回到送出並填入。",
+        pickBook: "同一全螢幕的另一頁。只有 Address cards。沒有卡片時這一頁是空狀態，另一頁仍可選。",
+        picked: "已選時欄位換成名稱＋縮寫。叉清掉後回到可手貼。送出仍用那條完整地址。",
+      };
+      let screen = "list";
+      const chips = document.getElementById("chips");
+      screens.forEach(([id, label]) => {
+        const b = document.createElement("button");
+        b.className = "chip";
+        b.textContent = label;
+        b.dataset.id = id;
+        b.onclick = () => { screen = id; render(); };
+        chips.appendChild(b);
+      });
+      const svg = {
+        back: '<svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>',
+        add: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+        menu: '<svg viewBox="0 0 24 24"><circle cx="12" cy="6" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="18" r="1.2" fill="currentColor" stroke="none"/></svg>',
+        book: '<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+        accounts: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 19c.6-3 2.8-4.5 6-4.5s5.4 1.5 6 4.5"/><circle cx="17" cy="9" r="2.2"/><path d="M16.2 14.6c2.2.3 3.8 1.5 4.5 3.4"/></svg>',
+        gear: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/></svg>',
+        globe: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.8 2.5 15.2 0 18M12 3c-2.5 2.8-2.5 15.2 0 18"/></svg>',
+        info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 8h.01"/></svg>',
+        lock: '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+        key: '<svg viewBox="0 0 24 24"><circle cx="9" cy="15" r="4"/><path d="M12 13l7-7"/><path d="M16 6h3v3"/></svg>',
+        eye: '<svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
+        layers: '<svg viewBox="0 0 24 24"><rect x="5" y="8" width="12" height="10" rx="2"/><rect x="8" y="5" width="12" height="10" rx="2"/></svg>',
+        pencil: '<svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>',
+        copy: '<svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/></svg>',
+        trash: '<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5h6v2M8 7l1 13h6l1-13"/></svg>',
+        check: '<svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>',
+        x: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+      };
+      const short = (a) => a.slice(0, 4) + "…" + a.slice(-4);
+      function bar(title, { back, add, menu } = {}) {
+        return `<header class="top">
+          ${back ? `<button class="icon-btn" title="返回" aria-label="返回">${svg.back}</button>` : ""}
+          <h2>${title}</h2>
+          ${add ? `<button class="icon-btn" title="新增" aria-label="新增">${svg.add}</button>` : ""}
+          ${menu ? `<button class="icon-btn" title="選單" aria-label="選單">${svg.menu}</button>` : ""}
+        </header>`;
+      }
+      function row(item, editing) {
+        const name = editing
+          ? `<input class="name-input" value="${item.name}" aria-label="名稱" />`
+          : `<span class="book-name">${item.name}</span>`;
+        const lead = editing ? svg.check : svg.pencil;
+        const leadLabel = editing ? "確認" : "改名稱";
+        return `<article class="book-row">
+          <span class="book-main">
+            <span class="name-line">${name}<button class="icon-btn card-edit" type="button" title="${leadLabel}" aria-label="${leadLabel}">${lead}</button></span>
+            <span class="addr-line"><span class="book-addr">${short(item.addr)}</span><button class="icon-btn" type="button" title="複製地址" aria-label="複製地址">${svg.copy}</button></span>
+          </span>
+          <button class="icon-btn danger" type="button" title="刪除" aria-label="刪除">${svg.trash}</button>
+        </article>`;
+      }
+      function phone() {
+        if (screen === "menu") {
+          return `<div class="home-dim">${bar("", { menu: true })}<div class="body">
+            <button class="book-row" type="button"><span class="book-main"><span class="book-name">SOL</span><span class="book-addr">1.24</span></span></button>
+            <button class="book-row" type="button"><span class="book-main"><span class="book-name">USDC</span><span class="book-addr">40.00</span></span></button>
+          </div></div>
+            <div class="menu-pop">
+              <button class="menu-item" type="button">${svg.accounts}錢包帳戶</button>
+              <button class="menu-item on" type="button">${svg.book}Address cards</button>
+              <button class="menu-item" type="button">${svg.gear}設定</button>
+              <button class="menu-item" type="button">${svg.globe}已連線網站</button>
+              <button class="menu-item" type="button">${svg.info}關於此應用</button>
+              <button class="menu-item lock" type="button">${svg.lock}鎖定錢包</button>
+            </div>`;
+        }
+        if (screen === "list" || screen === "rename") {
+          return bar("Address cards", { back: true, add: true }) + `<div class="body">
+            ${row(BOOK[0], screen === "rename")}
+            ${row(BOOK[1])}
+            ${row(BOOK[2])}
+          </div>`;
+        }
+        if (screen === "empty") {
+          return bar("Address cards", { back: true, add: true }) + `<div class="body"><p class="empty">還沒有地址</p></div>`;
+        }
+        if (screen === "add" || screen === "bad" || screen === "dup") {
+          const err = screen === "bad" ? "地址無效" : screen === "dup" ? "這條地址已在地址簿" : "";
+          return bar("新增地址", { back: true }) + `<div class="body">
+            <div class="field"><label>名稱</label><input value="${screen === "add" ? "" : "冷錢包"}" placeholder="名稱" /></div>
+            <div class="field"><label>地址</label><input class="mono" value="${screen === "add" ? "" : screen === "bad" ? "not-an-address" : BOOK[1].addr}" placeholder="地址" /></div>
+            ${err ? `<p class="err">${err}</p>` : ""}
+          </div>
+          <footer class="dock"><button class="primary" ${screen === "add" ? "disabled" : ""}>加入</button></footer>`;
+        }
+        if (screen === "del") {
+          return bar("Address cards", { back: true, add: true }) + `<div class="body">${BOOK.map((b) => row(b)).join("")}</div>
+            <div class="confirm"><div class="confirm-card">
+              <h3>刪除 Alice</h3>
+              <p>${short(BOOK[0].addr)}</p>
+              <div class="confirm-actions">
+                <button class="ghost-btn" type="button">取消</button>
+                <button class="danger-btn" type="button">刪除</button>
+              </div>
+            </div></div>`;
+        }
+        const sendBody = () => {
+          const amount = `<div class="field"><label>數量</label><input value="0.1" /></div>`;
+          let recipient = "";
+          if (screen === "picked") {
+            recipient = `<div class="field"><label>收款</label>
+              <div class="picked"><strong>Alice</strong><span>${short(BOOK[0].addr)}</span>
+                <button class="icon-btn" title="清除" aria-label="清除">${svg.x}</button></div></div>`;
+          } else {
+            recipient = `<div class="field"><label>收款</label>
+              <div class="recipient-line">
+                <input class="mono" placeholder="地址" value="" />
+                <button class="icon-btn" title="Address cards" aria-label="Address cards">${svg.book}</button>
+              </div></div>`;
+          }
+          return bar("送出 SOL", { back: true }) + `<div class="body">${amount}${recipient}</div>
+            <footer class="dock"><button class="primary" ${screen === "picked" ? "" : "disabled"}>檢視</button></footer>`;
+        };
+        if (screen === "pick" || screen === "pickBook") {
+          const onBook = screen === "pickBook";
+          const wallets = [
+            ["日常", "key", "#4ecb8d", "可簽", "7EcD…k3Qa"],
+            ["觀察", "eye", "#e8b84a", "唯讀", "3mNp…9cLx"],
+            ["家庭", "layers", "#c084fc", "聚合", "9WzD…AWWM"],
+          ];
+          const list = onBook
+            ? BOOK.map((b) => `<button class="pick-row" type="button"><span class="book-main"><span class="book-name">${b.name}</span><span class="book-addr">${short(b.addr)}</span></span></button>`).join("")
+            : wallets.map(([name, icon, color, label, addr]) => `<button class="pick-row" type="button"><span class="kind-mark" style="color:${color}" title="${label}" aria-label="${label}">${svg[icon]}</span><span class="book-main"><span class="book-name">${name}</span><span class="book-addr">${addr}</span></span></button>`).join("");
+          return bar("選擇地址", { back: true }) + `<div class="body">
+            <div class="tabs">
+              <button type="button" class="${onBook ? "" : "on"}">錢包</button>
+              <button type="button" class="${onBook ? "on" : ""}">Address cards</button>
+            </div>
+            ${list}
+          </div>`;
+        }
+        return sendBody();
+      }
+      function render() {
+        document.querySelectorAll(".chip").forEach((c) => c.classList.toggle("active", c.dataset.id === screen));
+        document.getElementById("cap").textContent = screens.find((s) => s[0] === screen)[1];
+        document.getElementById("phone").innerHTML = phone();
+        document.getElementById("aside").innerHTML = `<h3>這一屏</h3><p>${notes[screen]}</p>`;
+      }
+      render();
+    </script>
+  </body>
+</html>

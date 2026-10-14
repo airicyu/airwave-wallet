@@ -12,7 +12,14 @@ export const STORAGE = {
   vault: "airwave.vault.v1",
   /** Integer generation of local records; not the extension X.Y.Z. */
   schemaGeneration: "airwave.schemaGeneration",
+  addressBook: "airwave.addressBook.v1",
 } as const;
+
+export type AddressCard = {
+  id: string;
+  name: string;
+  address: string;
+};
 
 /** This build's local schema generation. Existing `*.v1` keys are generation 1. */
 export const CURRENT_SCHEMA_GENERATION = 1;
