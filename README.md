@@ -6,6 +6,8 @@ Airwave is a non-custodial Solana Chrome extension wallet. Private keys stay on 
 
 This is a developer preview. Build from this repo and load it into Chrome. It is not on the Chrome Web Store.
 
+Official account: [@airwavewallet](https://x.com/airwavewallet) on X.
+
 ![Airwave Wallet. See what you sign on Solana.](docs/showcase/hero.png)
 
 ## What approval looks like
