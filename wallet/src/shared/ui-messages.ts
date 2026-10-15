@@ -365,6 +365,26 @@ const messages = {
     "zh-Hans": "已开启 · {model}",
     "en": "On · {model}",
   },
+  "settings.txAiAnalysis.defaultSummary": {
+    "zh-Hant": "已開啟 · 預設",
+    "zh-Hans": "已开启 · 预设",
+    "en": "On · Default",
+  },
+  "settings.txAiAnalysis.modeDefault": {
+    "zh-Hant": "預設",
+    "zh-Hans": "预设",
+    "en": "Default",
+  },
+  "settings.txAiAnalysis.modeCustom": {
+    "zh-Hant": "自訂",
+    "zh-Hans": "自定义",
+    "en": "Custom",
+  },
+  "settings.txAiAnalysis.chainRequired": {
+    "zh-Hant": "至少填一個合法模型 id",
+    "zh-Hans": "至少填一个合法模型 id",
+    "en": "Enter at least one valid model id",
+  },
   "settings.openRouter.apiKey": {
     "zh-Hant": "OpenRouter API key",
     "zh-Hans": "OpenRouter API key",
@@ -424,6 +444,11 @@ const messages = {
     "zh-Hant": "AI 分析中",
     "zh-Hans": "AI 分析中",
     "en": "Analyzing",
+  },
+  "approval.txAi.stop": {
+    "zh-Hant": "停止分析",
+    "zh-Hans": "停止分析",
+    "en": "Stop analysis",
   },
   "approval.txAi.rowLabel": {
     "zh-Hant": "AI分析",
@@ -736,14 +761,14 @@ const messages = {
     "en": "Disconnect all",
   },
   "common.tokens": {
-    "zh-Hant": "代幣",
-    "zh-Hans": "代币",
-    "en": "Tokens",
+    "zh-Hant": "資產",
+    "zh-Hans": "资产",
+    "en": "Assets",
   },
   "common.activity": {
     "zh-Hant": "活動",
     "zh-Hans": "活动",
-    "en": "Activity",
+    "en": "Activities",
   },
   "unlock.lead": {
     "zh-Hant": "錢包已鎖定",

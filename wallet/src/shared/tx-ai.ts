@@ -10,31 +10,39 @@ export type TxAiFlag = { id: string; detail?: string };
 
 export type TxAiAssessState =
   | { status: "idle" }
-  | { status: "running"; startedAt: number }
+  | { status: "running"; startedAt: number; reportModelUsed?: string }
   | {
       status: "done";
       level: TxAiLevel;
       decisionsLevel: TxAiLevel;
       reportText: string;
       flags: TxAiFlag[];
+      reportModelUsed?: string;
     }
   | { status: "error"; message: string; reportText?: string };
 
-export const REPORT_PRESETS = [
+export type TxAiModelMode = "default" | "custom";
+
+export const DEFAULT_REPORT_MODEL_CHAIN = [
+  "inclusionai/ling-3.0-flash",
+  "nvidia/nemotron-3.5-lightning",
   "~deepseek/deepseek-flash-latest",
-  "apodex/apodex-1.1-mini:free",
 ] as const;
 
-/** @deprecated Use REPORT_PRESETS */
+export const DEFAULT_DECISIONS_MODEL_CHAIN = ["liquid/d1", "nace-ai/drex-v1.5"] as const;
+
+/** 0.39 migrate reference; never write to storage. */
+export const LEGACY_039_DEFAULT_REPORT_MODEL = "apodex/apodex-1.1-mini:free";
+export const LEGACY_039_DEFAULT_DECISIONS_MODEL = "liquid/d1";
+
+export const DEFAULT_REPORT_MODEL = DEFAULT_REPORT_MODEL_CHAIN[0];
+export const DEFAULT_DECISIONS_MODEL = DEFAULT_DECISIONS_MODEL_CHAIN[0];
+
+/** @deprecated 0.44 uses model chains; kept for type compat only. */
+export const REPORT_PRESETS = DEFAULT_REPORT_MODEL_CHAIN;
 export const REPORT_MODELS = REPORT_PRESETS;
-
-export const DECISIONS_PRESETS = ["liquid/d1", "nace-ai/drex-v1.5"] as const;
-
-/** @deprecated Use DECISIONS_PRESETS */
+export const DECISIONS_PRESETS = DEFAULT_DECISIONS_MODEL_CHAIN;
 export const DECISIONS_MODELS = DECISIONS_PRESETS;
-
-export const DEFAULT_REPORT_MODEL: (typeof REPORT_PRESETS)[number] = "~deepseek/deepseek-flash-latest";
-export const DEFAULT_DECISIONS_MODEL: (typeof DECISIONS_PRESETS)[number] = "liquid/d1";
 
 export const TX_AI_KINDS = ["signTransaction", "signAndSendTransaction", "walletSend"] as const;
 
@@ -76,18 +84,67 @@ export function isLegalOpenRouterModelId(raw: string): boolean {
   return true;
 }
 
+export function normalizeModelChain(raw: unknown, max = 5): string[] {
+  if (!Array.isArray(raw)) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const item of raw) {
+    if (typeof item !== "string") continue;
+    const id = item.trim();
+    if (!id || !isLegalOpenRouterModelId(id) || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+export type TxAiModelSettingsSlice = {
+  openRouterReportModelMode?: TxAiModelMode;
+  openRouterReportModelChain?: string[];
+  openRouterDecisionsModelMode?: TxAiModelMode;
+  openRouterDecisionsModelChain?: string[];
+};
+
+export function effectiveReportModelChain(settings: TxAiModelSettingsSlice): string[] {
+  const mode = settings.openRouterReportModelMode === "custom" ? "custom" : "default";
+  if (mode !== "custom") return [...DEFAULT_REPORT_MODEL_CHAIN];
+  const chain = normalizeModelChain(settings.openRouterReportModelChain, 5);
+  return chain.length > 0 ? chain : [...DEFAULT_REPORT_MODEL_CHAIN];
+}
+
+export function effectiveDecisionsModelChain(settings: TxAiModelSettingsSlice): string[] {
+  const mode = settings.openRouterDecisionsModelMode === "custom" ? "custom" : "default";
+  if (mode !== "custom") return [...DEFAULT_DECISIONS_MODEL_CHAIN];
+  const chain = normalizeModelChain(settings.openRouterDecisionsModelChain, 5);
+  return chain.length > 0 ? chain : [...DEFAULT_DECISIONS_MODEL_CHAIN];
+}
+
+export type OpenRouterFailureClass = "fatal" | "try_next" | "retry_same";
+
+export function classifyOpenRouterFailure(status: number | null): OpenRouterFailureClass {
+  if (status === 429) return "retry_same";
+  if (status === 400 || status === 401 || status === 402 || status === 403) return "fatal";
+  if (status === 404 || status === 502 || status === 503) return "try_next";
+  return "fatal";
+}
+
 export function normalizeReportModel(raw: unknown): string {
   if (typeof raw !== "string") return DEFAULT_REPORT_MODEL;
-  if ((REPORT_PRESETS as readonly string[]).includes(raw)) return raw;
   if (isLegalOpenRouterModelId(raw)) return raw.trim();
   return DEFAULT_REPORT_MODEL;
 }
 
 export function normalizeDecisionsModel(raw: unknown): string {
   if (typeof raw !== "string") return DEFAULT_DECISIONS_MODEL;
-  if ((DECISIONS_PRESETS as readonly string[]).includes(raw)) return raw;
   if (isLegalOpenRouterModelId(raw)) return raw.trim();
   return DEFAULT_DECISIONS_MODEL;
+}
+
+export function shortenOpenRouterModelId(id: string): string {
+  const t = id.trim();
+  if (t.length <= 28) return t;
+  return `${t.slice(0, 12)}…${t.slice(-10)}`;
 }
 
 const FLOOR: Partial<Record<string, TxAiLevel>> = {

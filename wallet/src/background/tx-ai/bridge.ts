@@ -4,14 +4,13 @@
  */
 import { SANDBOX_TOOL_SCHEMAS } from "../../agent-harness/loop";
 import { TX_AI_BRIDGE_KIND, type TxAiBridgeMessage, type TxAiChatMessage } from "../../shared/tx-ai-protocol";
-import { normalizeReportModel } from "../../shared/tx-ai";
 import { readSettings } from "../storage";
 import { resolveTxAiLoop, rememberDecodePubkeys } from "./assess";
 import { pubkeysFromTxAiDecode } from "./preflight";
 import type { TxAiDecode } from "./local-flags";
 import { executeHostTool } from "./host-tools";
-import { openRouterChat } from "./openrouter";
-import { activeTxAiRequestId, getTxAiSession } from "./runtime";
+import { openRouterChatWithChain } from "./openrouter";
+import { activeTxAiRequestId, getTxAiSession, setTxAiState } from "./runtime";
 
 export function isTxAiOffscreenSender(sender: chrome.runtime.MessageSender): boolean {
   if (sender.id !== chrome.runtime.id || sender.tab) return false;
@@ -123,13 +122,19 @@ export async function handleTxAiBridge(message: TxAiBridgeMessage): Promise<TxAi
       };
     }
     const settings = await readSettings();
-    const assistant = await openRouterChat({
+    const { modelUsed, result: assistant } = await openRouterChatWithChain({
       apiKey: settings.openRouterApiKey,
-      model: normalizeReportModel(settings.openRouterModel),
+      chain: session.reportModelChain,
+      lockedModel: session.reportModelUsed,
       messages,
       tools: chatTools(),
       signal: session.abort.signal,
     });
+    session.reportModelUsed = modelUsed;
+    const running = session.state;
+    if (running.status === "running") {
+      setTxAiState(requestId, { ...running, reportModelUsed: modelUsed });
+    }
     return {
       kind: TX_AI_BRIDGE_KIND,
       op: "llm.result",

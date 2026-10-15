@@ -30,6 +30,7 @@ export type HarnessRunView = {
   trace: string;
   lastDecode: StaticFlags | null;
   lastAccounts: ChainAccount[] | null;
+  aborted?: boolean;
 };
 
 function asStringArray(value: unknown): string[] | null {
@@ -161,17 +162,24 @@ export async function runSignRiskHarness(input: {
   systemMessage: string;
   apiKey: string;
   model: string;
+  signal?: AbortSignal;
   onEvent?: AgentLoopEventHandler;
 }): Promise<HarnessRunView> {
   const state = { lastAccounts: null as ChainAccount[] | null };
   const kv = new Map<string, string>();
   const traceLines: string[] = [];
+  const signal = input.signal;
+  const fetchImpl: typeof fetch = (url, init) => {
+    if (signal?.aborted) return Promise.reject(new DOMException("Aborted", "AbortError"));
+    return fetch(url, { ...init, signal });
+  };
   const callModel = createOpenRouterCallModel({
     apiKey: input.apiKey,
     model: input.model,
     baseUrl: `${location.origin}/openrouter/api/v1`,
     referer: location.origin,
     title: "Airwave sign-risk harness poc",
+    fetchImpl,
   });
   const harness = createHarness({
     kvStore: {
@@ -196,21 +204,36 @@ export async function runSignRiskHarness(input: {
     await input.onEvent?.(event);
   };
 
-  const result = await runAgentLoop(harness, {
-    systemMessage: input.systemMessage,
-    temperature: 0.2,
-    retryEmptyFinal: true,
-    emptyFinalUserMessage: "Write the report now in the requested language. Do not call tools.",
-    onEvent,
-    messages: [{ role: "user", content: input.preflight.userMessage }],
-  });
+  try {
+    const result = await runAgentLoop(harness, {
+      systemMessage: input.systemMessage,
+      temperature: 0.2,
+      retryEmptyFinal: true,
+      emptyFinalUserMessage: "Write the report now in the requested language. Do not call tools.",
+      onEvent,
+      messages: [{ role: "user", content: input.preflight.userMessage }],
+    });
 
-  return {
-    stopReason: result.stopReason,
-    steps: result.steps,
-    finalText: result.finalText || `(無最終報告：stopReason=${result.stopReason}，${result.steps} 步)`,
-    trace: traceLines.join("\n\n") || "(no events)",
-    lastDecode: input.preflight.decode,
-    lastAccounts: state.lastAccounts,
-  };
+    return {
+      stopReason: result.stopReason,
+      steps: result.steps,
+      finalText: result.finalText || `(無最終報告：stopReason=${result.stopReason}，${result.steps} 步)`,
+      trace: traceLines.join("\n\n") || "(no events)",
+      lastDecode: input.preflight.decode,
+      lastAccounts: state.lastAccounts,
+    };
+  } catch (error) {
+    if (signal?.aborted || (error instanceof DOMException && error.name === "AbortError")) {
+      return {
+        stopReason: "max_steps",
+        steps: 0,
+        finalText: "",
+        trace: traceLines.join("\n\n") || "(stopped)",
+        lastDecode: input.preflight.decode,
+        lastAccounts: state.lastAccounts,
+        aborted: true,
+      };
+    }
+    throw error;
+  }
 }

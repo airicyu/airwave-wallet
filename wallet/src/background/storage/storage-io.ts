@@ -18,7 +18,15 @@ import {
   type UiLocale,
 } from "../../shared/storage-keys";
 import { normalizeDefaultCuPrice } from "../simulate";
-import { normalizeDecisionsModel, normalizeReportModel } from "../../shared/tx-ai";
+import {
+  isLegalOpenRouterModelId,
+  LEGACY_039_DEFAULT_DECISIONS_MODEL,
+  LEGACY_039_DEFAULT_REPORT_MODEL,
+  normalizeDecisionsModel,
+  normalizeModelChain,
+  normalizeReportModel,
+  type TxAiModelMode,
+} from "../../shared/tx-ai";
 import type { VaultBlob } from "../../shared/crypto-vault";
 
 export async function readSettings(): Promise<Settings> {
@@ -59,9 +67,91 @@ function normalizeUiLocale(raw: unknown): UiLocale {
   return "zh-Hant";
 }
 
+function normalizeTxAiMode(raw: unknown): TxAiModelMode {
+  return raw === "custom" ? "custom" : "default";
+}
+
+function migrateLegacySingleModel(
+  legacy: string,
+  defaultLegacyId: string,
+): { mode: TxAiModelMode; chain: string[] } {
+  const trimmed = legacy.trim();
+  if (!trimmed || trimmed === defaultLegacyId) return { mode: "default", chain: [] };
+  if (!isLegalOpenRouterModelId(trimmed)) return { mode: "default", chain: [] };
+  return { mode: "custom", chain: [trimmed] };
+}
+
+function normalizeTxAiFields(raw: Partial<Settings> | undefined): {
+  openRouterReportModelMode: TxAiModelMode;
+  openRouterReportModelChain: string[];
+  openRouterDecisionsModelMode: TxAiModelMode;
+  openRouterDecisionsModelChain: string[];
+  openRouterModel: string;
+  openRouterDecisionsModel: string;
+} {
+  const hasReportMode =
+    raw?.openRouterReportModelMode === "default" || raw?.openRouterReportModelMode === "custom";
+  const hasDecisionsMode =
+    raw?.openRouterDecisionsModelMode === "default" || raw?.openRouterDecisionsModelMode === "custom";
+
+  let reportMode = hasReportMode ? normalizeTxAiMode(raw?.openRouterReportModelMode) : "default";
+  let reportChain = normalizeModelChain(raw?.openRouterReportModelChain, 5);
+  let decisionsMode = hasDecisionsMode ? normalizeTxAiMode(raw?.openRouterDecisionsModelMode) : "default";
+  let decisionsChain = normalizeModelChain(raw?.openRouterDecisionsModelChain, 5);
+
+  if (!hasReportMode) {
+    const earlyChain = normalizeModelChain(raw?.openRouterReportModelChain, 5);
+    if (earlyChain.length > 0) {
+      reportMode = "custom";
+      reportChain = earlyChain;
+    } else {
+      const legacy = typeof raw?.openRouterModel === "string" ? raw.openRouterModel : "";
+      const migrated = migrateLegacySingleModel(legacy, LEGACY_039_DEFAULT_REPORT_MODEL);
+      reportMode = migrated.mode;
+      reportChain = migrated.chain;
+    }
+  } else if (reportMode === "custom" && reportChain.length === 0) {
+    const legacy = typeof raw?.openRouterModel === "string" ? raw.openRouterModel : "";
+    if (legacy.trim()) reportChain = normalizeModelChain([legacy], 5);
+  }
+
+  if (!hasDecisionsMode) {
+    const earlyChain = normalizeModelChain(raw?.openRouterDecisionsModelChain, 5);
+    if (earlyChain.length > 0) {
+      decisionsMode = "custom";
+      decisionsChain = earlyChain;
+    } else {
+      const legacy = typeof raw?.openRouterDecisionsModel === "string" ? raw.openRouterDecisionsModel : "";
+      const migrated = migrateLegacySingleModel(legacy, LEGACY_039_DEFAULT_DECISIONS_MODEL);
+      decisionsMode = migrated.mode;
+      decisionsChain = migrated.chain;
+    }
+  } else if (decisionsMode === "custom" && decisionsChain.length === 0) {
+    const legacy = typeof raw?.openRouterDecisionsModel === "string" ? raw.openRouterDecisionsModel : "";
+    if (legacy.trim()) decisionsChain = normalizeModelChain([legacy], 5);
+  }
+
+  const openRouterModel =
+    reportMode === "custom" && reportChain[0] ? reportChain[0] : normalizeReportModel(raw?.openRouterModel);
+  const openRouterDecisionsModel =
+    decisionsMode === "custom" && decisionsChain[0]
+      ? decisionsChain[0]
+      : normalizeDecisionsModel(raw?.openRouterDecisionsModel);
+
+  return {
+    openRouterReportModelMode: reportMode,
+    openRouterReportModelChain: reportChain,
+    openRouterDecisionsModelMode: decisionsMode,
+    openRouterDecisionsModelChain: decisionsChain,
+    openRouterModel,
+    openRouterDecisionsModel,
+  };
+}
+
 export function normalizeSettings(raw: Partial<Settings> | undefined): Settings {
   const cluster = raw?.cluster === "mainnet" ? "mainnet" : "devnet";
   const rpcByCluster = normalizeRpcByCluster(raw, cluster);
+  const txAi = normalizeTxAiFields(raw);
   return {
     cluster,
     rpcByCluster,
@@ -69,8 +159,7 @@ export function normalizeSettings(raw: Partial<Settings> | undefined): Settings 
     heliusApiUrl: typeof raw?.heliusApiUrl === "string" ? raw.heliusApiUrl : "",
     jupiterApiKey: typeof raw?.jupiterApiKey === "string" ? raw.jupiterApiKey : "",
     openRouterApiKey: typeof raw?.openRouterApiKey === "string" ? raw.openRouterApiKey : "",
-    openRouterModel: normalizeReportModel(raw?.openRouterModel),
-    openRouterDecisionsModel: normalizeDecisionsModel(raw?.openRouterDecisionsModel),
+    ...txAi,
     txAiAnalysisEnabled: raw?.txAiAnalysisEnabled ?? true,
     defaultCuPrice: normalizeDefaultCuPrice(raw?.defaultCuPrice),
     locale: normalizeUiLocale(raw?.locale),

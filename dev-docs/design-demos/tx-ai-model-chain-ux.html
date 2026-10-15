@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 交易 AI 模型（預設／自訂）概念稿 0.44.0</title>
+    <!--
+      Informal concept for dev-docs/roadmap/0.44.0 (default vs custom model chains).
+      Not a contract. INDEX + HOW win on conflict.
+    -->
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --ok: #4ecb8d;
+        --popup-w: 422px;
+        --popup-h: 600px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1100px; margin: 0 auto; padding: 28px 20px 64px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 8px; max-width: 48rem; font-size: 0.92rem; }
+      .note { color: var(--text-dim); font-size: 0.82rem; margin: 0 0 20px; max-width: 48rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; }
+      .chip {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 7px 13px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      .chip.active { border-color: var(--accent); background: #1a2838; }
+      .layout { display: grid; grid-template-columns: var(--popup-w) 1fr; gap: 28px; align-items: start; }
+      @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+      .phone-cap { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; }
+      .phone {
+        width: var(--popup-w);
+        min-height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+      }
+      .top h2 { margin: 0; flex: 1; font-size: 0.95rem; font-weight: 650; text-align: center; }
+      .icon-btn {
+        width: 34px;
+        height: 34px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .icon-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+      .body { flex: 1; overflow: auto; padding: 14px 12px 16px; }
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        margin-bottom: 14px;
+      }
+      .toggle-row .name { font-size: 0.88rem; font-weight: 600; }
+      .switch {
+        width: 42px;
+        height: 24px;
+        border-radius: 999px;
+        border: 1px solid #2f5a45;
+        background: #1a3a2a;
+        position: relative;
+        flex-shrink: 0;
+      }
+      .switch::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 20px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--ok);
+      }
+      .block {
+        margin: 0 0 16px;
+        padding: 12px;
+        border: 1px solid var(--stroke-soft);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+      }
+      .block-title {
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        margin: 0 0 8px;
+        font-weight: 600;
+        text-transform: none;
+        letter-spacing: 0.02em;
+      }
+      .seg {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+      .seg button {
+        border: 1px solid var(--stroke);
+        background: var(--fill);
+        color: var(--text-muted);
+        padding: 8px 10px;
+        border-radius: var(--radius-sm);
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .seg button[aria-pressed="true"] {
+        border-color: var(--accent);
+        color: var(--text);
+        background: #1a2838;
+      }
+      .chain { display: flex; flex-direction: column; gap: 6px; }
+      .chain-row {
+        display: grid;
+        grid-template-columns: 1.4rem 1fr;
+        gap: 6px;
+        align-items: center;
+      }
+      .chain-row .idx {
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .chain-row input {
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 0.72rem;
+      }
+      .chain-row input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .chain-row input::placeholder { color: var(--text-dim); }
+      .chain-row input:disabled {
+        opacity: 0.85;
+        color: var(--text-muted);
+        background: var(--fill);
+        border-color: var(--stroke-soft);
+        cursor: not-allowed;
+      }
+      .set-field { margin: 0 0 14px; }
+      .set-field > label {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        margin-bottom: 5px;
+      }
+      .secret .mask {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+      }
+      .aside h3 { margin: 0 0 8px; font-size: 0.95rem; }
+      .aside p { margin: 0 0 10px; color: var(--text-muted); font-size: 0.86rem; }
+      .aside ul { margin: 0; padding-left: 1.1rem; color: var(--text-muted); font-size: 0.86rem; }
+      .aside li { margin: 0 0 6px; }
+      .aside code { font-size: 0.8em; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>交易 AI 分析 · 模型（預設／自訂）</h1>
+      <p class="lede">
+        0.44.0 方向：報告與定級各選 <strong>預設</strong> 或 <strong>自訂</strong>。選預設時，下方列出程式內建鏈（<strong>disabled</strong>，不可改）；自訂最多 5 個可編輯 id（備援 1→5）。
+      </p>
+      <p class="note">概念稿，不是契約。衝突時以 <code>dev-docs/roadmap/0.44.0/INDEX.md</code> 為準。預設列的值來自常數，不寫 storage。</p>
+      <div class="controls" id="chips">
+        <button type="button" class="chip active" data-scene="all-default">兩邊預設</button>
+        <button type="button" class="chip" data-scene="report-custom">報告自訂（2 槽）</button>
+        <button type="button" class="chip" data-scene="grade-custom">定級自訂</button>
+        <button type="button" class="chip" data-scene="both-custom">兩邊自訂</button>
+      </div>
+      <div class="layout">
+        <div>
+          <div class="phone-cap" id="cap">兩邊預設：內建鏈 disabled 列出</div>
+          <div class="phone" id="phone"></div>
+        </div>
+        <aside class="aside">
+          <h3>與 0.39 差異</h3>
+          <p>0.39 是下拉固定項 +「其他」一行。本稿改為預設／自訂分段；預設時鏈唯讀列出，自訂時 1–5 行可編輯。</p>
+          <h3>預設（不進 storage）</h3>
+          <ul>
+            <li>報告：<code>inclusionai/ling-3.0-flash</code> → <code>nvidia/nemotron-3.5-lightning</code> → <code>~deepseek/deepseek-flash-latest</code></li>
+            <li>定級：<code>liquid/d1</code> → <code>nace-ai/drex-v1.5</code></li>
+          </ul>
+          <h3>Hub 摘要（示意）</h3>
+          <ul>
+            <li>預設 → 顯示「預設」</li>
+            <li>自訂 → 顯示鏈上第一個 id</li>
+          </ul>
+        </aside>
+      </div>
+    </div>
+    <script>
+      const DEFAULT_REPORT = [
+        "inclusionai/ling-3.0-flash",
+        "nvidia/nemotron-3.5-lightning",
+        "~deepseek/deepseek-flash-latest",
+      ];
+      const DEFAULT_GRADE = ["liquid/d1", "nace-ai/drex-v1.5"];
+      const phone = document.getElementById("phone");
+      const cap = document.getElementById("cap");
+      const chips = document.getElementById("chips");
+      const CAPS = {
+        "all-default": "兩邊預設：內建鏈 disabled 列出",
+        "report-custom": "報告自訂：兩個備援 id",
+        "grade-custom": "定級自訂",
+        "both-custom": "報告與定級皆自訂",
+      };
+      const SCENES = {
+        "all-default": {
+          reportMode: "default",
+          reportChain: ["", "", "", "", ""],
+          gradeMode: "default",
+          gradeChain: ["", "", "", "", ""],
+        },
+        "report-custom": {
+          reportMode: "custom",
+          reportChain: ["moonshotai/kimi-k2-0905", "~deepseek/deepseek-pro-latest", "", "", ""],
+          gradeMode: "default",
+          gradeChain: ["", "", "", "", ""],
+        },
+        "grade-custom": {
+          reportMode: "default",
+          reportChain: ["", "", "", "", ""],
+          gradeMode: "custom",
+          gradeChain: ["nace-ai/drex-v1.5", "", "", "", ""],
+        },
+        "both-custom": {
+          reportMode: "custom",
+          reportChain: ["custom/vendor-a", "", "", "", ""],
+          gradeMode: "custom",
+          gradeChain: ["liquid/d1", "nace-ai/drex-v1.5", "", "", ""],
+        },
+      };
+      let scene = "all-default";
+      let state = { ...SCENES["all-default"] };
+
+      function esc(value) {
+        return String(value).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+      }
+
+      function chainRows(prefix, values, disabled) {
+        return values
+          .map(
+            (value, index) => `
+          <div class="chain-row">
+            <span class="idx">${index + 1}</span>
+            <input type="text" id="${prefix}-${index}" spellcheck="false" autocomplete="off"
+              placeholder="${disabled ? "" : index === 0 ? "必填" : "可留空"}"
+              value="${esc(value)}"
+              ${disabled ? "disabled readonly" : ""} />
+          </div>`,
+          )
+          .join("");
+      }
+
+      function modeBlock(title, prefix, modeKey, chainKey, builtIn) {
+        const isCustom = state[modeKey] === "custom";
+        const rows = isCustom
+          ? state[chainKey]
+          : builtIn;
+        return `
+          <div class="block" data-block="${prefix}">
+            <p class="block-title">${title}</p>
+            <div class="seg" role="group" aria-label="${title}">
+              <button type="button" data-mode="${prefix}" data-value="default" aria-pressed="${!isCustom}">預設</button>
+              <button type="button" data-mode="${prefix}" data-value="custom" aria-pressed="${isCustom}">自訂</button>
+            </div>
+            <div class="chain" id="${prefix}-chain">
+              ${chainRows(prefix, rows, !isCustom)}
+            </div>
+          </div>`;
+      }
+
+      function render() {
+        cap.textContent = CAPS[scene] ?? scene;
+        chips.querySelectorAll(".chip").forEach((chip) => {
+          chip.classList.toggle("active", chip.dataset.scene === scene);
+        });
+        phone.innerHTML = `
+          <div class="top">
+            <span class="icon-btn" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></span>
+            <h2>交易 AI 分析</h2>
+            <span style="width:34px"></span>
+          </div>
+          <div class="body">
+            <div class="toggle-row"><span class="name">啟用</span><span class="switch" role="switch" aria-checked="true"></span></div>
+            <div class="set-field">
+              <label>OpenRouter API key</label>
+              <div class="secret"><div class="mask">••••••</div></div>
+            </div>
+            ${modeBlock("報告模型", "report", "reportMode", "reportChain", DEFAULT_REPORT)}
+            ${modeBlock("定級模型", "grade", "gradeMode", "gradeChain", DEFAULT_GRADE)}
+          </div>`;
+
+        phone.querySelectorAll("[data-mode]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const prefix = button.dataset.mode;
+            const value = button.dataset.value;
+            if (prefix === "report") {
+              state.reportMode = value;
+              if (value === "default") state.reportChain = ["", "", "", "", ""];
+            } else {
+              state.gradeMode = value;
+              if (value === "default") state.gradeChain = ["", "", "", "", ""];
+            }
+            scene = "custom";
+            render();
+          });
+        });
+
+        ["report", "grade"].forEach((prefix) => {
+          const modeKey = prefix === "report" ? "reportMode" : "gradeMode";
+          const chainKey = prefix === "report" ? "reportChain" : "gradeChain";
+          if (state[modeKey] !== "custom") return;
+          for (let i = 0; i < 5; i += 1) {
+            const input = phone.querySelector(`#${prefix}-${i}`);
+            if (!input) continue;
+            input.addEventListener("input", () => {
+              state[chainKey][i] = input.value;
+            });
+          }
+        });
+      }
+
+      chips.addEventListener("click", (event) => {
+        const button = event.target.closest(".chip");
+        if (!button) return;
+        scene = button.dataset.scene;
+        state = {
+          reportMode: SCENES[scene].reportMode,
+          reportChain: [...SCENES[scene].reportChain],
+          gradeMode: SCENES[scene].gradeMode,
+          gradeChain: [...SCENES[scene].gradeChain],
+        };
+        render();
+      });
+
+      render();
+    </script>
+  </body>
+</html>

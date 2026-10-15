@@ -1066,14 +1066,58 @@ textarea:focus-visible {
   text-overflow: ellipsis;
 }
 
-.delta-token-mint {
+.delta-token-mint-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   margin-top: 1px;
+  min-width: 0;
+  font-size: 0.78rem;
+  line-height: 1;
+}
+
+.delta-token-mint {
   font-family: var(--mono, ui-monospace, monospace);
-  font-size: 0.68rem;
+  font-size: inherit;
+  line-height: 1;
   color: var(--text-dim);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.icon-btn.delta-mint-copy {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.82em;
+  height: 1em;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--text-dim);
+  line-height: 0;
+}
+
+.icon-btn.delta-mint-copy:hover,
+.icon-btn.delta-mint-copy:focus-visible,
+.icon-btn.delta-mint-copy:active {
+  border: none;
+  background: none;
+  box-shadow: none;
+  color: var(--text);
+}
+
+.icon-btn.delta-mint-copy svg {
+  display: block;
+  width: 0.82em;
+  height: 0.82em;
+  stroke-width: 1.75;
 }
 
 .delta-amount {

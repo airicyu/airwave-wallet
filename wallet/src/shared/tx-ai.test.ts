@@ -1,5 +1,5 @@
 /**
- * Pure checks for the transaction AI floor, model fallback, and tool admission.
+ * Pure checks for the transaction AI floor, model chains, and tool admission.
  * Does not call the network or Chrome APIs.
  */
 import assert from "node:assert/strict";
@@ -9,10 +9,14 @@ import { parseTxAiMarkdown } from "./tx-ai-markdown.ts";
 import {
   applyFlagsFloor,
   assessLevelWithoutChain,
+  classifyOpenRouterFailure,
+  effectiveDecisionsModelChain,
+  effectiveReportModelChain,
   hostToolVerdict,
   isLegalOpenRouterModelId,
   mentionsBannedRpc,
   normalizeDecisionsModel,
+  normalizeModelChain,
   normalizeReportModel,
 } from "./tx-ai.ts";
 
@@ -22,11 +26,39 @@ test("model normalize: presets, custom ids, and illegal fallback", () => {
   assert.equal(normalizeDecisionsModel("bad id"), "liquid/d1");
   assert.equal(normalizeReportModel("not-a-model"), "not-a-model");
   assert.equal(normalizeReportModel("custom/vendor-model"), "custom/vendor-model");
-  assert.equal(normalizeReportModel("bad id"), "~deepseek/deepseek-flash-latest");
-  assert.equal(normalizeReportModel("~deepseek/deepseek-flash-latest"), "~deepseek/deepseek-flash-latest");
+  assert.equal(normalizeReportModel("bad id"), "inclusionai/ling-3.0-flash");
   assert.equal(isLegalOpenRouterModelId("  trim-me  "), true);
   assert.equal(isLegalOpenRouterModelId(""), false);
   assert.equal(isLegalOpenRouterModelId("has space"), false);
+});
+
+test("model chains: default, custom, normalize", () => {
+  assert.deepEqual(effectiveReportModelChain({ openRouterReportModelMode: "default" }), [
+    "inclusionai/ling-3.0-flash",
+    "nvidia/nemotron-3.5-lightning",
+    "~deepseek/deepseek-flash-latest",
+  ]);
+  assert.deepEqual(
+    effectiveReportModelChain({
+      openRouterReportModelMode: "custom",
+      openRouterReportModelChain: ["a/x", "a/x", "bad id", "b/y"],
+    }),
+    ["a/x", "b/y"],
+  );
+  assert.deepEqual(effectiveDecisionsModelChain({ openRouterDecisionsModelMode: "default" }), [
+    "liquid/d1",
+    "nace-ai/drex-v1.5",
+  ]);
+  assert.equal(normalizeModelChain([" z ", "", "a", "a", "b", "c", "d", "e", "f", "g"]).length, 5);
+});
+
+test("classifyOpenRouterFailure", () => {
+  assert.equal(classifyOpenRouterFailure(429), "retry_same");
+  assert.equal(classifyOpenRouterFailure(404), "try_next");
+  assert.equal(classifyOpenRouterFailure(502), "try_next");
+  assert.equal(classifyOpenRouterFailure(401), "fatal");
+  assert.equal(classifyOpenRouterFailure(500), "fatal");
+  assert.equal(classifyOpenRouterFailure(null), "fatal");
 });
 
 test("flags floor raises and does not lower", () => {
@@ -78,5 +110,6 @@ test("public settings omit the OpenRouter key", () => {
   assert.equal(pub.openRouterConfigured, true);
   assert.equal(JSON.stringify(pub).includes(secret), false);
   assert.equal(pub.txAiAnalysisEnabled, true);
-  assert.equal(pub.openRouterDecisionsModel, "liquid/d1");
+  assert.equal(pub.openRouterReportModelMode, "default");
+  assert.equal(pub.openRouterDecisionsModelMode, "default");
 });

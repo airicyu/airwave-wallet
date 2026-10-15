@@ -15,6 +15,8 @@ export type TxAiSession = {
   preflightManifest?: ReadonlySet<string>;
   preflightFeePayer?: string;
   preflightFeePayerBalanceLamports?: string;
+  reportModelChain: string[];
+  reportModelUsed?: string;
   state: TxAiAssessState;
 };
 

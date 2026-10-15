@@ -2,7 +2,8 @@
  * Persistent sign-transaction body: delta card shell, inner content paint, and auto-sim timer.
  * Does not run RPC simulation or resolve pending requests.
  */
-import { NATIVE_SOL_ICON_URL } from "../shared/home-tokens";
+import { copyPublicKeyWithFeedback, COPY_ICON_SVG } from "../shared/copy-pk-feedback";
+import { NATIVE_SOL_ICON_URL, WRAPPED_SOL_MINT } from "../shared/home-tokens";
 import type {
   SimulatePendingTxResult,
   SimulateTxDelta,
@@ -217,6 +218,13 @@ const TRUST_VERIFIED_SVG =
   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" fill="currentColor"/><path d="M8.5 12.2l2.3 2.3 4.7-5" stroke="#0f1419" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 
+function splMintCopyTarget(d: SimulateTxDelta): string | null {
+  if (d.kind === "native") return null;
+  const mint = d.mint?.trim();
+  if (!mint || mint === WRAPPED_SOL_MINT) return null;
+  return mint;
+}
+
 function fallbackDisplay(d: SimulateTxDelta): SimulateTxDeltaDisplay {
   if (d.kind === "native") {
     return {
@@ -289,10 +297,28 @@ function appendDeltaRow(
   primary.textContent = disp.labelPrimary;
   label.append(primary);
   if (disp.labelMintShort) {
-    const mintLine = document.createElement("div");
+    const mintRow = document.createElement("div");
+    mintRow.className = "delta-token-mint-row";
+    const mintLine = document.createElement("span");
     mintLine.className = "delta-token-mint";
     mintLine.textContent = disp.labelMintShort;
-    label.append(mintLine);
+    mintRow.append(mintLine);
+    const copyMint = splMintCopyTarget(d);
+    if (copyMint) {
+      const copyBtn = document.createElement("button");
+      copyBtn.type = "button";
+      copyBtn.className = "icon-btn ghost-inline delta-mint-copy";
+      const copyLabel = t(locale, "common.copy");
+      copyBtn.title = copyLabel;
+      copyBtn.setAttribute("aria-label", copyLabel);
+      copyBtn.innerHTML = COPY_ICON_SVG;
+      copyBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        void copyPublicKeyWithFeedback(copyBtn, copyMint, locale);
+      });
+      mintRow.append(copyBtn);
+    }
+    label.append(mintRow);
   }
 
   const amt = document.createElement("span");

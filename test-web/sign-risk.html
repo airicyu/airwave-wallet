@@ -15,6 +15,8 @@
       .run-compare { display: flex; gap: 1rem; align-items: flex-start; }
       .run-compare > section { flex: 1 1 0; min-width: 0; }
       pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #f4f4f4; padding: 0.75rem; }
+      .run-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.75rem 0; }
+      .run-actions button { width: auto; }
     </style>
   </head>
   <body>
@@ -25,7 +27,8 @@
         與錢包連線頁分開。分析前先做跟錢包報告步驟相同的預檢（decode、交易自己的 blockhash 模擬、分批查帳戶），
         再跑 vendored <code>bubble-harness</code>。模型看不到 <code>decode_message</code>／<code>simulate</code>，也不寫等級。
         本地樣本用 <strong>mainnet 公開地址</strong>組草稿（非可簽名），方便 RPC 查到帳戶；請配 mainnet RPC。
-        OpenRouter key 與 RPC URL 只留在這個欄位，不會寫進檔案或 localStorage。
+        RPC URL 與 OpenRouter key 會存進本頁 <strong>sessionStorage</strong>（僅此瀏覽器分頁，不進 git）；重新整理仍保留。
+        模型 A／B 可並行分析，<strong>不做</strong>備援換模型（備援規則見錢包 0.44.0 proposal）。
       </p>
       <label>
         領域說明（送給模型的固定 context）
@@ -85,7 +88,10 @@
         OpenRouter API key
         <input id="risk-key" type="password" autocomplete="off" spellcheck="false" />
       </label>
-      <button id="risk-ask" type="button">用 harness 分析（多輪 tool）</button>
+      <div class="run-actions">
+        <button id="risk-ask" type="button">用 harness 分析（多輪 tool）</button>
+        <button id="risk-stop" type="button" disabled>停止分析</button>
+      </div>
       <hr />
       <h2>Decisions 定級（不經 harness）</h2>
       <p>

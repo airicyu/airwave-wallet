@@ -2,7 +2,6 @@
  * test-web only: OpenRouter Decisions API client + canned risk samples +
  * deterministic flags floor. Product host path will mirror this; not harness.
  */
-
 export type TxAiLevel = "low" | "watch" | "high" | "unknown";
 
 export type DecisionsSample = {

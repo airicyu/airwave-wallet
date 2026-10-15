@@ -5,7 +5,15 @@
 import type { PendingRecord } from "../../shared/commands";
 import { buildAssessPrompt } from "../../shared/tx-ai-prompt";
 import { TX_AI_BRIDGE_KIND, type TxAiBridgeMessage } from "../../shared/tx-ai-protocol";
-import { isTxAiKind, TX_AI_WALL_MS, assessLevelWithoutChain, type TxAiAssessState, type TxAiFlag } from "../../shared/tx-ai";
+import {
+  effectiveDecisionsModelChain,
+  effectiveReportModelChain,
+  isTxAiKind,
+  TX_AI_WALL_MS,
+  assessLevelWithoutChain,
+  type TxAiAssessState,
+  type TxAiFlag,
+} from "../../shared/tx-ai";
 import { getPending } from "../pending/pending";
 import { getWorkingTx } from "../pending/sign-tx-pending-state";
 import { readSettings } from "../storage";
@@ -85,6 +93,7 @@ async function startIfConfigured(
     snapshot,
     abort: new AbortController(),
     decodedPubkeys: [],
+    reportModelChain: effectiveReportModelChain(settings),
     state: { status: "running", startedAt: Date.now() },
   });
   void pump();
@@ -180,7 +189,7 @@ async function runSession(session: TxAiSession): Promise<void> {
     }
     const graded = await gradeReport({
       apiKey: settings.openRouterApiKey,
-      model: settings.openRouterDecisionsModel,
+      chain: effectiveDecisionsModelChain(settings),
       reportText,
       flags: enriched.flags,
       kind: session.kind,
@@ -198,6 +207,7 @@ async function runSession(session: TxAiSession): Promise<void> {
       decisionsLevel: graded.decisionsLevel,
       reportText,
       flags: enriched.flags,
+      reportModelUsed: session.reportModelUsed,
     };
     setTxAiState(requestId, done);
   } catch {
@@ -216,12 +226,14 @@ async function runSession(session: TxAiSession): Promise<void> {
 
 function publishWithoutChain(requestId: string, reportText: string, flags: TxAiFlag[]): void {
   const graded = assessLevelWithoutChain(flags);
+  const session = getTxAiSession(requestId);
   setTxAiState(requestId, {
     status: "done",
     level: graded.level,
     decisionsLevel: graded.decisionsLevel,
     reportText,
     flags,
+    reportModelUsed: session?.reportModelUsed,
   });
 }
 

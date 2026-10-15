@@ -40,6 +40,20 @@ import {
 import { formatLoopEvent, runSignRiskHarness } from "./sign-risk-harness";
 import { runSignRiskPreflight } from "./sign-risk-preflight";
 
+const SESSION_RPC_KEY = "airwave.sign-risk.rpc";
+const SESSION_API_KEY = "airwave.sign-risk.openrouterKey";
+
+function loadSessionField(id: "risk-rpc" | "risk-key"): void {
+  const stored = sessionStorage.getItem(id === "risk-rpc" ? SESSION_RPC_KEY : SESSION_API_KEY);
+  if (!stored) return;
+  el<HTMLInputElement>(id).value = stored;
+}
+
+function persistSessionFields(): void {
+  sessionStorage.setItem(SESSION_RPC_KEY, el<HTMLInputElement>("risk-rpc").value);
+  sessionStorage.setItem(SESSION_API_KEY, el<HTMLInputElement>("risk-key").value);
+}
+
 const BLOCKHASH = "11111111111111111111111111111111" as Blockhash;
 const RECENT_BLOCKHASHES = "SysvarRecentB1ockHashes11111111111111111111";
 const U64_MAX = 18446744073709551615n;
@@ -299,9 +313,17 @@ export function mountSignRiskPoc(): void {
   const decisionsOut = el<HTMLPreElement>("risk-decisions-out");
   const status = el<HTMLParagraphElement>("risk-status");
   const ask = el<HTMLButtonElement>("risk-ask");
+  const stop = el<HTMLButtonElement>("risk-stop");
   const decisionsModel = el<HTMLSelectElement>("risk-decisions-model");
   const decisionsSample = el<HTMLSelectElement>("risk-decisions-sample");
+  const rpcInput = el<HTMLInputElement>("risk-rpc");
+  const keyInput = el<HTMLInputElement>("risk-key");
+  let harnessAbort: AbortController | null = null;
   context.value = CONTEXT;
+  loadSessionField("risk-rpc");
+  loadSessionField("risk-key");
+  rpcInput.addEventListener("input", persistSessionFields);
+  keyInput.addEventListener("input", persistSessionFields);
   document.querySelectorAll<HTMLButtonElement>("[data-risk-model]").forEach((button) => {
     button.addEventListener("click", () => {
       const id = button.dataset.riskModel;
@@ -311,6 +333,11 @@ export function mountSignRiskPoc(): void {
       input.value = id;
       input.focus();
     });
+  });
+
+  stop.addEventListener("click", () => {
+    harnessAbort?.abort();
+    status.textContent = "正在停止…";
   });
 
   for (const model of DECISIONS_MODELS) {
@@ -412,6 +439,7 @@ export function mountSignRiskPoc(): void {
       status.textContent = "沒有可送出的交易";
       return;
     }
+    persistSessionFields();
     const runs = (["a", "b"] as const)
       .map((slot) => ({ slot, model: el<HTMLInputElement>(`risk-model-${slot}`).value.trim() }))
       .filter((row) => row.model);
@@ -419,7 +447,7 @@ export function mountSignRiskPoc(): void {
       status.textContent = "先填模型";
       return;
     }
-    const rpcUrl = el<HTMLInputElement>("risk-rpc").value.trim();
+    const rpcUrl = rpcInput.value.trim();
     const session = {
       transactionBase64: latest.transactionBase64,
       wireForm: latest.wireForm,
@@ -427,7 +455,10 @@ export function mountSignRiskPoc(): void {
       rpcUrl,
       rpcJsonMessage: latest.rpcJsonMessage,
     };
+    harnessAbort?.abort();
+    harnessAbort = new AbortController();
     ask.disabled = true;
+    stop.disabled = false;
     status.textContent = "預檢…";
     let preflight;
     try {
@@ -435,12 +466,14 @@ export function mountSignRiskPoc(): void {
     } catch (error) {
       status.textContent = `預檢失敗：${error instanceof Error ? error.message : String(error)}`;
       ask.disabled = false;
+      stop.disabled = true;
       return;
     }
     latest = { ...latest, staticFlags: preflight.decode };
     flagsOut.textContent = preflight.userMessage;
     status.textContent = runs.map((row) => row.model).join(" ＋ ");
     const reports: Partial<Record<"a" | "b", string>> = {};
+    const signal = harnessAbort.signal;
     for (const slot of ["a", "b"] as const) {
       const active = runs.some((row) => row.slot === slot);
       el<HTMLElement>(`risk-slot-${slot}`).hidden = !active;
@@ -449,6 +482,7 @@ export function mountSignRiskPoc(): void {
       el<HTMLPreElement>(`risk-answer-${slot}`).textContent = "";
       el<HTMLParagraphElement>(`risk-meta-${slot}`).textContent = "";
     }
+    let stopped = false;
     try {
       await Promise.all(
         runs.map(async (row) => {
@@ -471,6 +505,7 @@ export function mountSignRiskPoc(): void {
               systemMessage: context.value,
               apiKey: key,
               model: row.model,
+              signal,
               onEvent: (event) => {
                 const line = formatLoopEvent(event);
                 if (line) {
@@ -487,22 +522,36 @@ export function mountSignRiskPoc(): void {
               latest = { ...latest, chainAccounts: view.lastAccounts };
             }
             traceOut.textContent = view.trace || "(no events)";
-            reports[row.slot] = view.finalText || "";
-            answerOut.textContent = reports[row.slot] || "(empty assistant content)";
-            phase = `${view.stopReason}，${view.steps} 步`;
+            if (view.aborted) {
+              stopped = true;
+              answerOut.textContent = "(已停止)";
+              phase = "已停止";
+            } else {
+              reports[row.slot] = view.finalText || "";
+              answerOut.textContent = reports[row.slot] || "(empty assistant content)";
+              phase = `${view.stopReason}，${view.steps} 步`;
+            }
           } catch (error) {
-            answerOut.textContent = error instanceof Error ? error.message : String(error);
-            phase = "失敗";
+            if (signal.aborted) {
+              stopped = true;
+              answerOut.textContent = "(已停止)";
+              phase = "已停止";
+            } else {
+              answerOut.textContent = error instanceof Error ? error.message : String(error);
+              phase = "失敗";
+            }
           } finally {
             window.clearInterval(timer);
             paint();
           }
         }),
       );
-      lastHarnessReport = (reports.a ?? "").trim() || reports.b || "";
-      status.textContent = "分析結束";
+      lastHarnessReport = stopped ? "" : (reports.a ?? "").trim() || reports.b || "";
+      status.textContent = stopped ? "分析已停止" : "分析結束";
     } finally {
       ask.disabled = false;
+      stop.disabled = true;
+      harnessAbort = null;
     }
   });
 
@@ -515,6 +564,7 @@ export function mountSignRiskPoc(): void {
       status.textContent = "先填 OpenRouter API key";
       return;
     }
+    persistSessionFields();
     const model = decisionsModel.value.trim() || DEFAULT_DECISIONS_MODEL;
     btn.disabled = true;
     decisionsOut.textContent = "";

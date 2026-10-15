@@ -74,7 +74,7 @@ Steps:
 1. Sign up at [OpenRouter](https://openrouter.ai/) and create an API key (dashboard → Keys).
 2. Wallet **Settings → AI settings**: paste the key (`••••••` / Reveal, same as other secrets).
 3. Turn **On**.
-4. (Optional) Pick the **report model** and the **Decisions** grading model. Defaults are `~deepseek/deepseek-flash-latest` and LiquidAI d1. You can choose **Other** and enter any OpenRouter model id (confirm with the check button).
+4. (Optional) Under **Report model** and **Grading model**, choose **Default** (built-in ordered chain for this wallet version; shown read-only) or **Custom** (up to five OpenRouter model ids in fallback order). Leaving the AI settings screen saves a custom chain when at least one id is valid.
 
 Then `signTransaction`, `signAndSendTransaction`, or an in-wallet send shows an **AI analysis** row under the approval title. Analysis never blocks approve or reject. `signMessage` is not analyzed.
 

@@ -13,7 +13,6 @@ import {
   type UiLocale,
 } from "../../shared/storage-keys";
 import { apiErrorMessage, messageForErrorCode, t } from "../../shared/ui-i18n";
-import { decisionsModelLabelKey } from "../../shared/tx-ai";
 import type { MessageKey } from "../../shared/ui-messages";
 import type { State } from "../types";
 
@@ -34,7 +33,7 @@ export function rpcFingerprint(settings: PublicSettings): string {
 }
 
 export function settingsFingerprint(settings: PublicSettings): string {
-  return `${settings.cluster}|${rpcFingerprint(settings)}|${settings.heliusConfigured}|${settings.jupiterConfigured}|${settings.openRouterConfigured}|${settings.openRouterModel}|${settings.openRouterDecisionsModel}|${settings.txAiAnalysisEnabled}|${settings.defaultCuPrice}`;
+  return `${settings.cluster}|${rpcFingerprint(settings)}|${settings.heliusConfigured}|${settings.jupiterConfigured}|${settings.openRouterConfigured}|${settings.openRouterReportModelMode}|${settings.openRouterReportModelChain.join("\u001f")}|${settings.openRouterDecisionsModelMode}|${settings.openRouterDecisionsModelChain.join("\u001f")}|${settings.txAiAnalysisEnabled}|${settings.defaultCuPrice}`;
 }
 
 export function cloneRpcByCluster(
@@ -101,8 +100,16 @@ export function apiKeysHubSummary(settings: PublicSettings, locale: UiLocale): s
 
 export function txAiHubSummary(settings: PublicSettings, locale: UiLocale): string {
   if (!settings.txAiAnalysisEnabled) return t(locale, "settings.txAiAnalysis.off");
-  const model = t(locale, decisionsModelLabelKey(settings.openRouterDecisionsModel));
-  return t(locale, "settings.txAiAnalysis.onSummary", { model });
+  const reportCustom = settings.openRouterReportModelMode === "custom";
+  const decisionsCustom = settings.openRouterDecisionsModelMode === "custom";
+  if (!reportCustom && !decisionsCustom) {
+    return t(locale, "settings.txAiAnalysis.defaultSummary");
+  }
+  const head = reportCustom
+    ? settings.openRouterReportModelChain[0]
+    : settings.openRouterDecisionsModelChain[0];
+  if (!head) return t(locale, "settings.txAiAnalysis.defaultSummary");
+  return t(locale, "settings.txAiAnalysis.onSummary", { model: head });
 }
 
 export function changePasswordCanSubmit(current: string, next: string, confirm: string): boolean {

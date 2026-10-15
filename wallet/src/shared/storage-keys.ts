@@ -3,7 +3,7 @@
  * Does not read or write storage records (see background storage-io).
  */
 import { resolveHeliusApiTarget } from "./helius-api-target";
-import { DEFAULT_DECISIONS_MODEL, DEFAULT_REPORT_MODEL } from "./tx-ai";
+import { DEFAULT_DECISIONS_MODEL, DEFAULT_REPORT_MODEL, type TxAiModelMode } from "./tx-ai";
 export const STORAGE = {
   settings: "airwave.settings.v1",
   accounts: "airwave.accounts.v1",
@@ -50,8 +50,14 @@ export type Settings = {
   jupiterApiKey: string;
   /** OpenRouter key for transaction AI. Omitted from public settings. */
   openRouterApiKey: string;
+  /** Legacy 0.39 single model; migrate-only, not runtime truth. */
   openRouterModel: string;
+  /** Legacy 0.39 single model; migrate-only, not runtime truth. */
   openRouterDecisionsModel: string;
+  openRouterReportModelMode: TxAiModelMode;
+  openRouterReportModelChain: string[];
+  openRouterDecisionsModelMode: TxAiModelMode;
+  openRouterDecisionsModelChain: string[];
   txAiAnalysisEnabled: boolean;
   /** micro-lamports per CU; default CU price for unsigned signTransaction. */
   defaultCuPrice: number;
@@ -105,6 +111,10 @@ export const DEFAULT_SETTINGS: Settings = {
   openRouterApiKey: "",
   openRouterModel: DEFAULT_REPORT_MODEL,
   openRouterDecisionsModel: DEFAULT_DECISIONS_MODEL,
+  openRouterReportModelMode: "default",
+  openRouterReportModelChain: [],
+  openRouterDecisionsModelMode: "default",
+  openRouterDecisionsModelChain: [],
   txAiAnalysisEnabled: true,
   defaultCuPrice: 25_000,
   locale: "zh-Hant",
