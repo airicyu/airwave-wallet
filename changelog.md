@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.45.0 — 2026-10-15
+
+dApp 連線面板的 Wallet Standard `icon` 改為內嵌與擴充同一張 `public/icon128.png`，不再顯示 1×1 紅方塊。
+
 ## 0.44.0 — 2026-10-15
 
 交易 AI：報告與定級各可選 **預設**（程式內建有序鏈，不寫進 storage）或 **自訂**（最多 5 個 id）。OpenRouter completion 依序備援（404／502／503 換下一個；429 等 1s 重試一次）。**簽署審批 AI 列**維持原版面（本版不改 widget）。簽署 **預期變動** SPL 行可在 mint 短址旁複製完整 mint（SOL／Wrapped SOL 不顯示複製）。

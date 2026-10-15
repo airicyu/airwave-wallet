@@ -33,7 +33,7 @@ Version and changes: [version.md](../version.md), [changelog.md](../changelog.md
 
 ## Sites and signing (Wallet Standard)
 
-What a site sees: connect, disconnect, `signMessage`, `signTransaction`, `signAndSendTransaction`.
+What a site sees: connect, disconnect, `signMessage`, `signTransaction`, `signAndSendTransaction`. The wallet list icon is the same product PNG as the extension toolbar.
 
 - Connect and sign use the approval surface: in-shell overlay if the side panel is open, otherwise a popout.
 - `signTransaction` only signs and ends immediately. `signAndSendTransaction` and in-wallet send are broadcast by the wallet and wait until confirmed.

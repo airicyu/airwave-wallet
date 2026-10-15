@@ -56,6 +56,8 @@
 | [0.41.0](./0.41.0/INDEX.md) | shipped | 產生助記詞／拋棄式：draft 公鑰、骰子重骰、移除助記詞 copy |
 | [0.42.0](./0.42.0/INDEX.md) | shipped | 聚合帳戶送出：復用現有送出；可動用＝目前錢包餘額 |
 | [0.43.0](./0.43.0/INDEX.md) | shipped | 地址簿：名稱＋地址，可拖曳排序；送出可全螢幕選錢包或地址簿，仍可手貼 |
+| [0.44.0](./0.44.0/INDEX.md) | shipped | 交易 AI：報告／定級可選預設鏈或自訂；OpenRouter completion 備援 |
+| [0.45.0](./0.45.0/INDEX.md) | shipped | Wallet Standard `icon` 內嵌 `public/icon128.png`；dApp 連線面板不再顯示紅方塊 |
 
 **版本號：** `x.y.z` 的 **patch**（例如 **0.3.1**）留給該 minor 的 **bugfix**，不排新功能。新功能走下一個 **minor**（0.3.0 → 0.4.0 → 0.5.0）。
 

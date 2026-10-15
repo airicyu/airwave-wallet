@@ -18,9 +18,12 @@ import {
   StandardEvents,
   type StandardEventsFeature,
 } from "@wallet-standard/features";
-import type { Wallet, WalletAccount } from "@wallet-standard/base";
+import type { Wallet, WalletAccount, WalletIcon } from "@wallet-standard/base";
 import bs58 from "bs58";
+import icon128 from "../../public/icon128.png?inline";
 import { bridgeRequest } from "./bridge-client";
+
+const AIRWAVE_ICON = icon128 as WalletIcon;
 
 const AIRWAVE_CHAINS = ["solana:mainnet", "solana:devnet"] as const;
 
@@ -94,7 +97,7 @@ window.addEventListener("airwave-disconnected", () => {
 export const airwaveWallet: Wallet = {
   version: "1.0.0",
   name: "Airwave",
-  icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+  icon: AIRWAVE_ICON,
   chains: [...AIRWAVE_CHAINS],
   get accounts(): readonly WalletAccount[] {
     return currentPublicKeyBase58 ? [accountFromPublicKey()] : [];
