@@ -65,7 +65,7 @@
 
 ## 工作習慣
 
-- **Do not commit unless the user asks.**
+- **Do not commit unless the user asks.** **Do not push unless the user asks.** Push 交使用者人手做；出貨、commit 都不包含 push。
 - Roadmap／審查報告**禁止**寫入真實助記詞、私鑰、密碼、生產秘密（見 GUIDELINES 隱私節）。
 - 實作範圍只在本倉庫；測試優先用 `test-web/`，勿假設必須改外部 dApp。
 - 對話裡談過但沒寫進 roadmap／契約檔的內容，對下一個 agent **等於不存在**——定案要落檔。
