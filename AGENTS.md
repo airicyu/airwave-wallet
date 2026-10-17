@@ -26,7 +26,7 @@
 | 情境 | 必讀 |
 |------|------|
 | 實作某個已排程版本 | 該版 `dev-docs/roadmap/X.Y.Z/INDEX.md` 及其連結；遵守 [`dev-docs/roadmap/GUIDELINES.md`](dev-docs/roadmap/GUIDELINES.md)、[`dev-docs/roadmap/agent-workflow.md`](dev-docs/roadmap/agent-workflow.md)；畫面互動另守 [`dev-docs/design-principles.md`](dev-docs/design-principles.md)（INDEX 有明文則以 INDEX 為準） |
-| 使用者點名版本／`/roadmap-version` | 技能 [`.agents/skills/roadmap-version/SKILL.md`](.agents/skills/roadmap-version/SKILL.md) |
+| 使用者點名版本／`/version-delivery` | 技能 [`.agents/skills/version-delivery/SKILL.md`](.agents/skills/version-delivery/SKILL.md) |
 | Popup 怎麼操作才一致 | [`dev-docs/design-principles.md`](dev-docs/design-principles.md) |
 | 帳戶、地址、聚合等用詞 | [`dev-docs/DOMAIN.md`](dev-docs/DOMAIN.md)（該版 INDEX 明文覆寫時以 INDEX 為準，並回寫 DOMAIN） |
 
@@ -69,6 +69,18 @@
 - Roadmap／審查報告**禁止**寫入真實助記詞、私鑰、密碼、生產秘密（見 GUIDELINES 隱私節）。
 - 實作範圍只在本倉庫；測試優先用 `test-web/`，勿假設必須改外部 dApp。
 - 對話裡談過但沒寫進 roadmap／契約檔的內容，對下一個 agent **等於不存在**——定案要落檔。
+
+### 切版
+
+版本狀態以 [`dev-docs/roadmap/README.md`](dev-docs/roadmap/README.md) 的表為準。INDEX 的狀態要跟這張表一樣。出貨版本號以根 [`version.md`](version.md) 為準，且等於 README 裡最新一個 `shipped`。
+
+一個版本的過程：先講要做什麼、寫進該版 proposal（INDEX），再改。這段期間該版是 `in progress`。使用者明確說 ship 之後才做：README 那一列改 `shipped`、INDEX 一起改、核對 [`changelog.md`](changelog.md) 該版已有句子。使用者沒說 ship，不要自己標 shipped，也不要自己開下一個版本號。
+
+前一個版本還不是 `shipped` 時，不要開新版本。這是軟規則：提醒使用者，不硬擋。使用者仍要開，就開。
+
+最新版已 `shipped`、下一版還沒開時，新的改動是未歸版。記在 [`dev-docs/roadmap/unversioned.md`](dev-docs/roadmap/unversioned.md)，並在 changelog 最上方的 `Next` 用一句話跟上。兩處寫同一批改動。最後由使用者選：算進剛出貨的那一版、開下一版承接、或出貨後仍留在未歸版。選定前不要自己猜。
+
+進行中的版本又有新改動：追加進該版 INDEX，changelog 寫在該版標題下，不開下一版。
 
 ---
 

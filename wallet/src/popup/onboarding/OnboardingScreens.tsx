@@ -12,7 +12,7 @@ import type { AccountMeta } from "../../shared/storage-keys";
 import { BrandMark } from "../components/BrandMark";
 import { FirstRunBrand } from "../components/FirstRunBrand";
 import { DiceRerollButton } from "../components/DiceRerollButton";
-import { IconCopy } from "../components/StrokeIcon";
+import { CopyIconButton } from "../components/CopyPkButton";
 import { SensitiveTextArea, SensitiveTextInput, WalletPasswordInput } from "../components/WalletPasswordInput";
 import { shortAddr } from "../lib/format";
 import { apiErrorMessage, displayStoredError, messageForErrorCode } from "../../shared/ui-i18n";
@@ -448,18 +448,11 @@ export function GenerateSeedScreen(): JSX.Element {
         <span id="generate-seed-pk" className="addr-row-pk" title={draft.pk ?? ""}>
           {draft.pk ? shortAddr(draft.pk) : ""}
         </span>
-        <button
-          type="button"
-          className="icon-btn sm-inline"
+        <CopyIconButton
           id="btn-copy-seed-pk"
-          title={t("common.copy")}
-          aria-label={t("common.copy")}
-          onClick={() => {
-            if (draft.pk) void navigator.clipboard.writeText(draft.pk);
-          }}
-        >
-          <IconCopy />
-        </button>
+          className="icon-btn sm-inline"
+          text={draft.pk ?? ""}
+        />
       </div>
       <p id="generate-seed-err" className="inline-err" aria-live="polite">
         {draft.err ? displayStoredError(locale, draft.err) : ""}
@@ -586,17 +579,7 @@ export function GenerateBurnerScreen(): JSX.Element {
         <span id="generate-pk" className="addr-row-pk" title={draft?.pk ?? ""}>
           {draft?.pk ? shortAddr(draft.pk) : ""}
         </span>
-        <button
-          type="button"
-          className="icon-btn sm-inline"
-          title={t("common.copy")}
-          aria-label={t("common.copy")}
-          onClick={() => {
-            if (draft?.pk) void navigator.clipboard.writeText(draft.pk);
-          }}
-        >
-          <IconCopy />
-        </button>
+        <CopyIconButton className="icon-btn sm-inline" text={draft?.pk ?? ""} />
       </div>
       <p id="generate-err" className="inline-err" aria-live="polite">
         {err}

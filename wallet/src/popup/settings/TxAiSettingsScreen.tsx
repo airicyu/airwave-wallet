@@ -4,9 +4,6 @@
  */
 import type { JSX } from "react";
 import { useEffect, useRef, useState } from "react";
-import { hardenApiKeyInput } from "../lib/password-input";
-import { IconCheck, IconEye } from "../components/StrokeIcon";
-import { sendExtensionRequest } from "../../shared/ext-api";
 import type { PublicSettings, Settings } from "../../shared/storage-keys";
 import {
   DEFAULT_DECISIONS_MODEL_CHAIN,
@@ -17,11 +14,11 @@ import {
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
 import {
-  MASKED_SECRET_DISPLAY,
   patchSettingsPartial,
   persistOpenRouterField,
   type SettingsIo,
 } from "./settings-logic";
+import { SecretKeyField } from "./SecretKeyField";
 
 const CHAIN_SLOTS = 5;
 
@@ -159,18 +156,7 @@ export function TxAiSettingsScreen({ settings }: { settings: PublicSettings }): 
   const { wallet } = usePopupContext();
   const io = useSettingsIo();
   const { locale, t } = useT();
-  const [revealed, setRevealed] = useState(false);
-  const [draft, setDraft] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (inputRef.current) hardenApiKeyInput(inputRef.current);
-  }, []);
-  const storedMask = settings.openRouterConfigured ? MASKED_SECRET_DISPLAY : "";
-  const display = !revealed && storedMask ? MASKED_SECRET_DISPLAY : draft;
-  const commit = (value: string): void => {
-    if (!wallet) return;
-    void persistOpenRouterField({ draft: value, io, locale });
-  };
+  const [claimedId, setClaimedId] = useState<string | null>(null);
 
   return (
     <>
@@ -186,56 +172,19 @@ export function TxAiSettingsScreen({ settings }: { settings: PublicSettings }): 
           }}
         />
       </div>
-      <div className="field keys-field">
-        <label htmlFor="openrouter-api-key">{t("settings.openRouter.apiKey")}</label>
-        <div className="keys-input-row">
-          <input
-            ref={inputRef}
-            id="openrouter-api-key"
-            type="text"
-            autoComplete="off"
-            placeholder={t("common.optional")}
-            readOnly={!revealed && !!storedMask}
-            value={display}
-            onChange={(event) => {
-              const value = event.target.value;
-              setDraft(value);
-              if (value === "") commit(value);
-            }}
-            onBlur={(event) => commit(event.currentTarget.value)}
-          />
-          <button
-            type="button"
-            className="icon-btn ghost-inline keys-reveal-btn"
-            title={t("common.show")}
-            aria-label={t("common.show")}
-            onClick={() => {
-              setRevealed((current) => {
-                const next = !current;
-                if (next) {
-                  void sendExtensionRequest("wallet.readIntegrationSecrets", {}).then((res) => {
-                    if (!res.ok) return;
-                    const key = (res.result as { openRouterApiKey?: string } | undefined)?.openRouterApiKey ?? "";
-                    setDraft((existing) => (existing.trim() ? existing : key));
-                  });
-                }
-                return next;
-              });
-            }}
-          >
-            <IconEye />
-          </button>
-          <button
-            type="button"
-            className="icon-btn ghost-inline keys-confirm-btn"
-            title={t("common.confirm")}
-            aria-label={t("common.confirm")}
-            onClick={() => commit(inputRef.current?.value ?? draft)}
-          >
-            <IconCheck />
-          </button>
-        </div>
-      </div>
+      <SecretKeyField
+        id="openrouter-api-key"
+        label={t("settings.openRouter.apiKey")}
+        configured={settings.openRouterConfigured}
+        secretName="openRouterApiKey"
+        claimedId={claimedId}
+        onClaim={setClaimedId}
+        onRelease={(rowId) => setClaimedId((current) => (current === rowId ? null : current))}
+        persist={(value) => {
+          if (!wallet) return Promise.resolve(false);
+          return persistOpenRouterField({ draft: value, io, locale });
+        }}
+      />
       <ModelChainSection
         title={t("settings.openRouter.model")}
         mode={settings.openRouterReportModelMode}

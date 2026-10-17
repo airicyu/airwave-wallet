@@ -1,17 +1,16 @@
 ---
-name: roadmap-version
+name: version-delivery
 description: >-
-  Runs an Airwave Wallet roadmap version through design-review rounds then
-  Track-based implementation. Spawns a fresh design reviewer, merges findings
-  into INDEX/docs/HANDOFF, repeats until the design gate passes, or stops if
-  the proposal is not feasible. Then implements Track by Track using the test
-  or manual checks named in that version. Use when the user names a version
-  (e.g. 0.1.0), asks to execute dev-docs/roadmap/X.Y.Z, invokes /roadmap-version,
-  or asks to follow agent-workflow for a version.
+  Delivers one Airwave Wallet version: design-review rounds, then Track
+  implementation, then the ship checklist. Spawns a fresh design reviewer,
+  merges findings into INDEX/docs/HANDOFF, and repeats until the design gate
+  passes, or stops if the proposal is not feasible. Use when the user names a
+  version (e.g. 0.1.0), asks to execute dev-docs/roadmap/X.Y.Z, invokes
+  /version-delivery, or asks to deliver or ship a roadmap version.
 disable-model-invocation: true
 ---
 
-# Roadmap version（設計審查閘門 → Track 實作）
+# 版本交付（設計審查閘門 → Track 實作 → 出貨）
 
 本技能執行一份 **Airwave Wallet roadmap 版本**。規範來源：[`dev-docs/roadmap/agent-workflow.md`](../../../dev-docs/roadmap/agent-workflow.md)、[`dev-docs/roadmap/GUIDELINES.md`](../../../dev-docs/roadmap/GUIDELINES.md)、倉庫根 `AGENTS.md`。
 
@@ -23,9 +22,15 @@ disable-model-invocation: true
 
 ## 觸發與版本
 
-使用者須給出版本（`0.1.0`）或目錄（`dev-docs/roadmap/0.1.0/`）。未給則問一次，勿猜。
+版本狀態以 [`dev-docs/roadmap/README.md`](../../../dev-docs/roadmap/README.md) 的表為準。切版細則在倉庫根 `AGENTS.md`。
 
-工作目錄：`dev-docs/roadmap/<VER>/`。必讀：`INDEX.md`；有則讀 `docs/*`、`HANDOFF.md`。對照上一版 INDEX、相關 `backlog/*.md`（構想，**不得覆寫本版已定案**）。
+使用者給了版本（`0.1.0`）或目錄就做那一版。沒給時先看表，不要猜一個新號：
+
+- 最新一版是 `in progress`：追加進那一版的 INDEX 與 changelog 該版標題，不開下一版。
+- 最新一版已 `shipped`、下一版目錄還沒有：改動寫進 [`dev-docs/roadmap/unversioned.md`](../../../dev-docs/roadmap/unversioned.md)，並在根 `changelog.md` 最上方 `Next` 用一句話跟上。兩處同一批。不要自己開下一版。歸屬等使用者選：算進剛出貨的那一版、開下一版承接、或出貨後仍留未歸版。
+- 上一版還不是 `shipped`，使用者卻點名新版本：先提醒軟規則，不硬擋。使用者仍要開，才建立下一版。
+
+工作目錄：`dev-docs/roadmap/<VER>/`。必讀：`INDEX.md`；有則讀 `docs/*`、`HANDOFF.md`。對照上一版 INDEX、相關 `backlog/*.md`（構想，**不得覆寫本版已定案**）。該版承接未歸版時，把 `unversioned.md` 的條目寫進 INDEX，並把 changelog `Next` 的句子移到該版標題下，兩處改回沒有待歸項。
 
 ## 角色分工（強制）
 
@@ -172,9 +177,11 @@ Findings 分級與出貨門檻同 agent-workflow：HIGH 必須關；MEDIUM 預�
 - [ ] 同意的 MEDIUM 已修或標非阻擋
 - [ ] INDEX **驗收**全勾（或 implementation-review 逐條通過）
 - [ ] 該版約定的測試或手驗已通過，且 UI 流程已在擴充裡走完（或報告寫明無法走完的原因）
-- [ ] 倉庫根 `CHANGELOG.md` 已記本版；若已有 `package.json`，`version` 與 `X.Y.Z` 一致；根 `README.md` 的版本句與 `version.md` 相同
+- [ ] 倉庫根 `changelog.md` 已記本版，且 `Next` 沒有仍屬本版的句子；若已有 `package.json`，`version` 與 `X.Y.Z` 一致；根 `README.md` 的版本句與 `version.md` 相同，且 `version.md` 等於 README 表裡最新一個 `shipped`
+- [ ] [`dev-docs/roadmap/README.md`](../../../dev-docs/roadmap/README.md) 該列改 `shipped`。這張表是狀態來源；INDEX 狀態與它相同
 - [ ] 本版新增或改動的訊息／storage／custody／能力表路徑已寫進 INDEX
 - [ ] 該構想已出貨則從 `dev-docs/roadmap/backlog/` **刪列＋刪獨立檔**
+- [ ] 若本版吃進未歸版：`unversioned.md` 與 changelog `Next` 已清空那些條目
 - [ ] INDEX 狀態 `shipped` **僅在**驗收與測試通過且使用者同意出貨時改；否則維持 `in progress`
 
 **不要 git commit**，除非使用者明確要求。

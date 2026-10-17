@@ -33,6 +33,8 @@ export type AirwaveCommand =
   | "wallet.addCombinedSub"
   | "wallet.removeCombinedSub"
   | "wallet.setCombinedMain"
+  | "wallet.reorderCombinedSubs"
+  | "wallet.setCombinedMemberName"
   | "wallet.exportAccountSecret"
   | "wallet.disconnectOrigin"
   | "wallet.disconnectAllOrigins"

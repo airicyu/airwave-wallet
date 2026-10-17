@@ -164,6 +164,16 @@ export function IconSettings({ size = 16 }: { size?: number }): JSX.Element {
   );
 }
 
+export function IconNetwork({ size = 16 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <circle cx="12" cy="16" r="1.6" fill="currentColor" stroke="none" />
+      <path d="M8.2 12.2a5.4 5.4 0 0 1 7.6 0" />
+      <path d="M5 9a9.6 9.6 0 0 1 14 0" />
+    </StrokeIcon>
+  );
+}
+
 export function IconGlobe({ size = 16 }: { size?: number }): JSX.Element {
   return (
     <StrokeIcon size={size}>

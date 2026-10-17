@@ -20,6 +20,8 @@ export {
   handleRenameAccount,
   handleSetActiveAccount,
   handleAddCombinedSub,
+  handleReorderCombinedSubs,
+  handleSetCombinedMemberName,
   handleCreateCombinedAccount,
   handleRemoveCombinedSub,
   handleSetCombinedMain,

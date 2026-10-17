@@ -82,6 +82,7 @@ export type CombinedAccountMeta = {
   kind: "combined";
   subPubkeys: string[];
   mainPubkey: string;
+  memberNames?: Record<string, string>;
 };
 
 export type AccountMeta = SigningOrWatchMeta | CombinedAccountMeta;

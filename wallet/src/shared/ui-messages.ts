@@ -81,13 +81,13 @@ const messages = {
     "en": "RPC",
   },
   "nav.settingsKeys": {
-    "zh-Hant": "API keys",
-    "zh-Hans": "API keys",
+    "zh-Hant": "API 金鑰",
+    "zh-Hans": "API 密钥",
     "en": "API keys",
   },
   "nav.settingsCuPrice": {
-    "zh-Hant": "Default CU price",
-    "zh-Hans": "Default CU price",
+    "zh-Hant": "預設 CU 單價",
+    "zh-Hans": "预设 CU 单价",
     "en": "Default CU price",
   },
   "nav.settingsPassword": {
@@ -306,13 +306,13 @@ const messages = {
     "en": "RPC",
   },
   "settings.hub.apiKeys": {
-    "zh-Hant": "API keys",
-    "zh-Hans": "API keys",
+    "zh-Hant": "API 金鑰",
+    "zh-Hans": "API 密钥",
     "en": "API keys",
   },
   "settings.hub.cuPrice": {
-    "zh-Hant": "Default CU price",
-    "zh-Hans": "Default CU price",
+    "zh-Hant": "預設 CU 單價",
+    "zh-Hans": "预设 CU 单价",
     "en": "Default CU price",
   },
   "settings.hub.walletPassword": {
@@ -655,6 +655,16 @@ const messages = {
     "zh-Hans": "显示",
     "en": "Show",
   },
+  "common.edit": {
+    "zh-Hant": "編輯",
+    "zh-Hans": "编辑",
+    "en": "Edit",
+  },
+  "common.discard": {
+    "zh-Hant": "捨棄",
+    "zh-Hans": "舍弃",
+    "en": "Discard",
+  },
   "common.refresh": {
     "zh-Hant": "重新整理",
     "zh-Hans": "刷新",
@@ -736,19 +746,19 @@ const messages = {
     "en": "Current",
   },
   "common.currentWallet": {
-    "zh-Hant": "目前錢包",
-    "zh-Hans": "当前钱包",
-    "en": "Current wallet",
+    "zh-Hant": "主錢包",
+    "zh-Hans": "主钱包",
+    "en": "Main wallet",
   },
   "common.setAsCurrentWallet": {
-    "zh-Hant": "設為目前錢包",
-    "zh-Hans": "设为当前钱包",
-    "en": "Set as current wallet",
+    "zh-Hant": "設為主錢包",
+    "zh-Hans": "设为主钱包",
+    "en": "Set as main wallet",
   },
   "accounts.changeCurrentWallet": {
-    "zh-Hant": "切換目前錢包",
-    "zh-Hans": "切换当前钱包",
-    "en": "Change current wallet",
+    "zh-Hant": "切換主錢包",
+    "zh-Hans": "切换主钱包",
+    "en": "Change main wallet",
   },
   "common.localAccounts": {
     "zh-Hant": "本機帳戶",
@@ -809,6 +819,11 @@ const messages = {
     "zh-Hant": "RPC 請求失敗，請稍後再試",
     "zh-Hans": "RPC 请求失败，请稍后再试",
     "en": "RPC request failed. Try again later.",
+  },
+  "error.code.MEMBER_NAME_LOCKED": {
+    "zh-Hant": "此成員名稱跟本機帳戶",
+    "zh-Hans": "此成员名称跟本机账户",
+    "en": "This member name follows the local account",
   },
   "error.code.HOLDINGS_LOAD_FAILED": {
     "zh-Hant": "無法載入持倉",
@@ -1230,6 +1245,16 @@ const messages = {
     "zh-Hans": "隐私权政策",
     "en": "Privacy policy",
   },
+  "accounts.members": {
+    "zh-Hant": "成員",
+    "zh-Hans": "成员",
+    "en": "Members",
+  },
+  "accounts.alreadyIn": {
+    "zh-Hant": "已加入",
+    "zh-Hans": "已加入",
+    "en": "Already added",
+  },
   "accounts.memberCount": {
     "zh-Hant": "{count} 個成員地址",
     "zh-Hans": "{count} 个成员地址",
@@ -1246,9 +1271,9 @@ const messages = {
     "en": "Remove this member address?",
   },
   "accounts.currentWalletAddress": {
-    "zh-Hant": "目前錢包地址",
-    "zh-Hans": "当前钱包地址",
-    "en": "Current wallet address",
+    "zh-Hant": "主錢包地址",
+    "zh-Hans": "主钱包地址",
+    "en": "Main wallet address",
   },
   "accounts.sectionMembers": {
     "zh-Hant": "成員地址",
@@ -1346,9 +1371,9 @@ const messages = {
     "en": "Disconnect",
   },
   "accounts.currentWalletSuffix": {
-    "zh-Hant": " · 目前錢包",
-    "zh-Hans": " · 当前钱包",
-    "en": " · Current wallet",
+    "zh-Hant": " · 主錢包",
+    "zh-Hans": " · 主钱包",
+    "en": " · Main wallet",
   },
   "accounts.copyPrivateKey": {
     "zh-Hant": "複製私鑰",

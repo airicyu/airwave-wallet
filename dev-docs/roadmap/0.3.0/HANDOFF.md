@@ -1,6 +1,6 @@
 # HANDOFF — 0.3.0
 
-設計審查通過前亦可當規劃稿；**實作前**應跑 `.agents/skills/roadmap-version` 設計閘門（除非使用者明示跳過）。
+設計審查通過前亦可當規劃稿；**實作前**應跑 `.agents/skills/version-delivery` 設計閘門（除非使用者明示跳過）。
 
 ## 讀檔順序
 

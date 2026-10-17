@@ -3,11 +3,9 @@
  * Does not write chrome.storage; persistence goes through settings-logic commands.
  */
 import type { JSX } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { hardenApiKeyInput } from "../lib/password-input";
-import { IconCheck, IconEye, IconPlus, IconTrash } from "../components/StrokeIcon";
+import { useCallback, useRef, useState } from "react";
+import { IconCheck, IconPlus, IconTrash, IconX } from "../components/StrokeIcon";
 import { WalletPasswordInput } from "../components/WalletPasswordInput";
-import { sendExtensionRequest } from "../../shared/ext-api";
 import { isMainnetRpcReady, type PublicSettings, type UiLocale } from "../../shared/storage-keys";
 import { DEFAULT_UI_LOCALE, LOCALE_ENDONYM, UI_LOCALES } from "../../shared/ui-i18n";
 import { usePopupContext } from "../state/PopupContext";
@@ -18,19 +16,19 @@ import {
   changePasswordCanSubmit,
   cloneRpcByCluster,
   confirmRpcUrl,
-  MASKED_SECRET_DISPLAY,
   parseDefaultCuPriceInput,
   patchRpcByCluster,
   patchSettingsPartial,
   persistHeliusField,
   persistJupiterField,
-  txAiHubSummary,
   PUBLIC_RPC_BY_CLUSTER,
   rpcOptionKey,
   submitChangePassword,
+  txAiHubSummary,
   type Cluster,
   type SettingsIo,
 } from "./settings-logic";
+import { SecretKeyField } from "./SecretKeyField";
 
 function useSettingsIo(): SettingsIo {
   const { refresh, showError, wallet } = usePopupContext();
@@ -52,20 +50,12 @@ export function SettingsHub({ settings }: { settings: PublicSettings }): JSX.Ele
         </button>
       </li>
       <li>
-        <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-network")}>
-          <span className="hub-label">{t("settings.hub.network")}</span>
-          <span className="hub-summary" id="hub-summary-network">
-            {settings.cluster === "mainnet" ? "Mainnet" : "Devnet"}
-          </span>
-        </button>
-      </li>
-      <li>
         <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-rpc")}>
           <span className="hub-label">{t("settings.hub.rpc")}</span>
-          <span className="hub-summary hub-summary-ellipsis" id="hub-summary-rpc">
+          <span className="hub-summary" id="hub-summary-rpc">
             {settings.cluster === "mainnet" && !isMainnetRpcReady(settings.rpcByCluster.mainnet)
               ? t("settings.rpc.mainnetUnset")
-              : settings.rpcUrl}
+              : t("settings.hub.changePassword")}
           </span>
         </button>
       </li>
@@ -384,87 +374,31 @@ function RpcEditor({
         }}
       />
       {!isPublic ? (
-        <button
-          type="button"
-          className="icon-btn ghost-inline rpc-icon-btn"
-          title={t("common.confirm")}
-          aria-label={t("common.confirm")}
-          onClick={() => confirm()}
-        >
-          <IconCheck />
-        </button>
+        <>
+          <button
+            type="button"
+            className="icon-btn ghost-inline rpc-icon-btn"
+            title={t("common.confirm")}
+            aria-label={t("common.confirm")}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => confirm()}
+          >
+            <IconCheck />
+          </button>
+          {isNew ? (
+            <button
+              type="button"
+              className="icon-btn ghost-inline rpc-icon-btn danger"
+              title={t("common.discard")}
+              aria-label={t("common.discard")}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={onClose}
+            >
+              <IconX />
+            </button>
+          ) : null}
+        </>
       ) : null}
-    </div>
-  );
-}
-
-function KeysField({
-  id,
-  label,
-  revealed,
-  stored,
-  draft,
-  onReveal,
-  onDraft,
-  onPersist,
-}: {
-  id: string;
-  label: string;
-  revealed: boolean;
-  stored: string;
-  draft: string;
-  onReveal: () => void;
-  onDraft: (v: string) => void;
-  onPersist: (value: string) => void;
-}): JSX.Element {
-  const { t } = useT();
-  const inputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (inputRef.current) hardenApiKeyInput(inputRef.current);
-  }, []);
-  const display = !revealed && stored ? MASKED_SECRET_DISPLAY : draft;
-  const commit = (value: string): void => {
-    onPersist(value);
-  };
-  return (
-    <div className="field keys-field">
-      <label htmlFor={id}>{label}</label>
-      <div className="keys-input-row">
-        <input
-          ref={inputRef}
-          id={id}
-          type="text"
-          autoComplete="off"
-          placeholder={t("common.optional")}
-          readOnly={!revealed && !!stored}
-          value={display}
-          onChange={(e) => {
-            const v = e.target.value;
-            onDraft(v);
-            if (v === "") commit(v);
-          }}
-          onBlur={(e) => commit(e.currentTarget.value)}
-        />
-        <button
-          type="button"
-          className="icon-btn ghost-inline keys-reveal-btn"
-          title={t("common.show")}
-          aria-label={t("common.show")}
-          onClick={onReveal}
-        >
-          <IconEye />
-        </button>
-        <button
-          type="button"
-          className="icon-btn ghost-inline keys-confirm-btn"
-          title={t("common.confirm")}
-          aria-label={t("common.confirm")}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => commit(inputRef.current?.value ?? draft)}
-        >
-          <IconCheck />
-        </button>
-      </div>
     </div>
   );
 }
@@ -473,63 +407,37 @@ export function KeysScreen({ settings }: { settings: PublicSettings }): JSX.Elem
   const { wallet } = usePopupContext();
   const io = useSettingsIo();
   const { locale } = useT();
-  const [heliusRevealed, setHeliusRevealed] = useState(false);
-  const [jupiterRevealed, setJupiterRevealed] = useState(false);
-  const [heliusDraft, setHeliusDraft] = useState("");
-  const [jupiterDraft, setJupiterDraft] = useState("");
-  const heliusShown = heliusDraft;
-  const jupiterShown = jupiterDraft;
+  const [claimedId, setClaimedId] = useState<string | null>(null);
+  const release = (rowId: string): void => {
+    setClaimedId((current) => (current === rowId ? null : current));
+  };
 
   return (
     <>
-      <KeysField
+      <SecretKeyField
         id="helius-api-url"
         label="Helius API URL"
-        revealed={heliusRevealed}
-        stored={settings.heliusConfigured ? MASKED_SECRET_DISPLAY : ""}
-        draft={heliusShown}
-        onReveal={() => {
-          setHeliusRevealed((v) => {
-            const next = !v;
-            if (next) {
-              void sendExtensionRequest("wallet.readIntegrationSecrets", {}).then((res) => {
-                if (!res.ok) return;
-                const url = (res.result as { heliusApiUrl?: string } | undefined)?.heliusApiUrl ?? "";
-                setHeliusDraft((current) => (current.trim() ? current : url));
-              });
-            }
-            return next;
-          });
-        }}
-        onDraft={setHeliusDraft}
-        onPersist={(value) => {
-          if (!wallet) return;
-          void persistHeliusField({ draft: value, io, locale });
+        configured={settings.heliusConfigured}
+        secretName="heliusApiUrl"
+        claimedId={claimedId}
+        onClaim={setClaimedId}
+        onRelease={release}
+        persist={(value) => {
+          if (!wallet) return Promise.resolve(false);
+          return persistHeliusField({ draft: value, io, locale });
         }}
       />
-      <KeysField
+      <SecretKeyField
         id="jupiter-api-key"
         label="Jupiter API key"
-        revealed={jupiterRevealed}
-        stored={settings.jupiterConfigured ? MASKED_SECRET_DISPLAY : ""}
-        draft={jupiterShown}
-        onReveal={() => {
-          setJupiterRevealed((v) => {
-            const next = !v;
-            if (next) {
-              void sendExtensionRequest("wallet.readIntegrationSecrets", {}).then((res) => {
-                if (!res.ok) return;
-                const key = (res.result as { jupiterApiKey?: string } | undefined)?.jupiterApiKey ?? "";
-                setJupiterDraft((current) => (current.trim() ? current : key));
-              });
-            }
-            return next;
-          });
-        }}
-        onDraft={setJupiterDraft}
-        onPersist={(value) => {
-          if (!wallet) return;
-          void persistJupiterField({ draft: value, io, locale });
+        configured={settings.jupiterConfigured}
+        secretName="jupiterApiKey"
+        claimedId={claimedId}
+        onClaim={setClaimedId}
+        onRelease={release}
+        persist={(value) => {
+          if (!wallet) return Promise.resolve(false);
+          return persistJupiterField({ draft: value, io, locale });
         }}
       />
     </>

@@ -2,6 +2,8 @@
 
 構想尚未排進某版 INDEX，**不是契約**。排程後以該版 INDEX 為準。
 
+**先不做。** SNS 正在把既有 SPL Name Service 域名從 `.sol` 改掛 `.sns`，官方 SDK 在 slot 452,825,395 之後暫停 `.sol` 解析；新的 SRS `.sol` 要到遷移後段才恢復，且與 `.sns` 是兩筆域名。等 SNS 把 `.sol`／`.sns` 的解析契約定下來再排程。在那之前不要開工、也不要排進某版 INDEX。
+
 與 [address-book.md](./address-book.md) 分開：地址簿只存名稱＋base58 地址，不做域名解析。本項是送出收款人時，把 `XXX.sol` 這類 [SNS](https://sns.id) 名稱解成一條 Solana 地址。
 
 ## 現況

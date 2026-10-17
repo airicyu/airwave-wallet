@@ -14,8 +14,8 @@ export function accountVisualKind(account: AccountMeta): AccountVisualKind {
 }
 
 export const ACCOUNT_KIND_COLOR: Record<AccountVisualKind, string> = {
-  signing: "#4ecb8d",
-  readOnly: "#e8b84a",
+  signing: "#D08B5B",
+  readOnly: "#6CB4E8",
   combined: "#c084fc",
 };
 

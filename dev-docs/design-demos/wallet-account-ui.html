@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 錢包帳戶 UI DRAFT</title>
+    <!--
+      非正式。給使用者看完再改 wallet/。
+      管理頁只做兩件事：主錢包、成員。
+      加入成員才進子畫面，先選「新地址」或「本機帳戶」；本機清單只在後者出現。
+    -->
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --danger: #c75050;
+        --ok: #4ecb8d;
+        --popup-w: 422px;
+        --popup-h: 600px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", "Microsoft JhengHei UI", system-ui, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1200px; margin: 0 auto; padding: 28px 20px 48px; }
+      h1 { font-size: 1.2rem; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 20px; max-width: 46rem; font-size: 0.9rem; }
+      .layout { display: flex; flex-wrap: wrap; gap: 28px; align-items: start; }
+      .notes { flex: 1 1 280px; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .top {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+      }
+      .icon {
+        width: 34px;
+        height: 34px;
+        border: none;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+      }
+      .icon:hover { background: var(--fill); }
+      .top h2 { flex: 1; font-size: 0.95rem; margin: 0; font-weight: 600; text-align: center; }
+      .body { flex: 1; min-height: 0; overflow: auto; padding: 16px 14px 12px; display: flex; flex-direction: column; }
+      #view-manage { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+      .dock {
+        flex-shrink: 0;
+        padding: 10px 14px 14px;
+        border-top: 1px solid var(--stroke-soft);
+      }
+      .name { margin: 0 0 16px; font-size: 1rem; font-weight: 600; }
+      .sec {
+        margin: 0 0 8px;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+      }
+      .current-head {
+        display: flex;
+        align-items: center;
+        margin: 0 0 8px;
+        min-height: 28px;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+      }
+      .current-card {
+        height: 56px;
+        margin: 0 0 22px;
+        padding: 8px 12px;
+        border: 1px solid var(--accent);
+        border-radius: 12px;
+        background: var(--bg-elevated);
+      }
+      .current-card .who b { font-size: 0.92rem; }
+      .hero-addr-row { display: flex; align-items: center; }
+      .hero-addr-row .icon { width: 28px; height: 28px; }
+      .sheet-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 0;
+        padding: 4px 12px 4px 12px;
+        min-height: 40px;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        border-bottom: 1px solid #4a5968;
+      }
+      .sheet-head .icon {
+        background: var(--accent);
+        color: #fff;
+      }
+      .sheet-head .icon:hover { background: #5aadee; }
+      .sheet {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--stroke);
+        border-radius: 12px;
+        background: var(--fill);
+        overflow: hidden;
+      }
+      .lines { flex: 1; min-height: 0; overflow: auto; }
+      .line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px 8px 4px;
+        border-bottom: 1px solid #4a5968;
+      }
+      .line:hover, .acct:hover { background: #243040; }
+      .line .grip, .acct .grip, .book-list .grip { cursor: grab; }
+      .main-pick {
+        flex: none; width: 28px; height: 28px; border-radius: 50%;
+        border: 1px solid #3a4654; background: transparent; color: var(--text-dim);
+        display: inline-flex; align-items: center; justify-content: center; padding: 0; cursor: pointer;
+      }
+      .main-pick svg path { opacity: 0.35; }
+      .main-pick.on { border-color: var(--accent); color: var(--accent); }
+      .main-pick.on svg path { opacity: 1; }
+      .main-pick:not(.on):hover { border-color: #6b7785; color: var(--text-muted); }
+      .main-pick:not(.on):hover svg path { opacity: 0.7; }
+      .kind-slot { width: 22px; flex: none; display: grid; place-items: center; color: #D08B5B; }
+      .line .who { padding-left: 4px; flex: 1; min-width: 0; }
+      .name-row, .addr-row { display: flex; align-items: center; min-height: 22px; gap: 2px; }
+      .name-row b { display: inline; font-size: 0.86rem; white-space: nowrap; }
+      .addr-row span { white-space: nowrap; }
+      .addr-row .icon { width: 28px; height: 28px; }
+      .acct > .icon, .line > .icon, .line [data-rename-btn] { width: 28px; height: 28px; }
+      .acct > .icon svg, .line > .icon svg { width: 14px; height: 14px; }
+      .line .trash, .acct .trash {
+        flex: none;
+        width: 28px;
+        height: 28px;
+        margin-left: 10px;
+        background: var(--danger);
+        color: #fff;
+      }
+      .line .trash:hover, .acct .trash:hover { background: #d86666; }
+      .line .trash:disabled { opacity: 0.35; }
+      .line:last-of-type { border-bottom: none; }
+      .row, .choice {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--fill);
+        border: 1px solid var(--stroke);
+        border-radius: 10px;
+        padding: 10px 10px;
+      }
+      .who { flex: 1; min-width: 0; }
+      .choice b, .current-card .who b { display: block; font-weight: 600; font-size: 0.86rem; }
+      .name-row b { font-weight: 600; }
+      .who span, .choice span, .addr-only {
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        color: var(--text-muted);
+      }
+      .choice span { font-family: var(--font); }
+      .members { display: flex; flex-direction: column; gap: 8px; }
+      .tools { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+      .acct [data-acct-rename], .acct [data-book-rename] { margin-right: 0; }
+      .add-row {
+        width: 100%;
+        text-align: left;
+        border: none;
+        border-top: 1px solid var(--stroke-soft);
+        background: transparent;
+        color: var(--text);
+        padding: 10px 12px;
+        font: inherit;
+        cursor: pointer;
+      }
+      .choice { width: 100%; text-align: left; color: inherit; font: inherit; cursor: pointer; margin-bottom: 8px; }
+      .choice:hover { border-color: var(--accent); }
+      .field { margin-top: 8px; }
+      .field input {
+        width: 100%;
+        background: var(--bg-elevated);
+        border: 1px solid var(--stroke);
+        border-radius: 8px;
+        color: var(--text);
+        padding: 10px 12px;
+        font: inherit;
+      }
+      .tag {
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        flex-shrink: 0;
+      }
+      .tag.in { color: var(--text-muted); }
+      .danger, .primary {
+        width: 100%;
+        border-radius: 10px;
+        padding: 10px 12px;
+        font: inherit;
+        cursor: pointer;
+      }
+      .danger { border: 1px solid var(--danger); background: transparent; color: var(--danger); }
+      .primary { border: none; background: var(--accent); color: #fff; }
+      .notes { color: var(--text-muted); font-size: 0.88rem; }
+      .notes h3 { color: var(--text); font-size: 0.95rem; margin: 18px 0 8px; }
+      .notes h3:first-child { margin-top: 0; }
+      .notes ul { margin: 0; padding-left: 1.1rem; }
+      .notes li { margin: 0 0 8px; }
+      .copy-ok { color: var(--ok); }
+      .acct-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 10px; }
+      .acct-head span { font-size: 0.78rem; color: var(--text-muted); }
+      .acct-add { width: 34px; height: 34px; border: none; border-radius: 8px; background: var(--accent); color: #fff; cursor: pointer; }
+      .acct {
+        display: flex; align-items: center; gap: 8px;
+        padding: 10px; margin: 0 0 8px;
+        background: var(--fill); border: 1px solid var(--stroke); border-radius: 12px;
+      }
+      .acct.active { border-color: var(--accent); }
+      .grip { width: 12px; display: grid; grid-template-columns: 3px 3px; gap: 3px; flex: none; align-content: center; }
+      .grip i { width: 3px; height: 3px; border-radius: 50%; background: var(--text-dim); display: block; }
+      .kind { width: 18px; flex: none; display: grid; place-items: center; }
+      .kind.sign { color: #D08B5B; }
+      .kind.watch { color: #6CB4E8; }
+      .kind.comb { color: #c084fc; }
+      .acct .who { flex: 1; }
+      .acct .name-row, .acct .addr-row { display: flex; align-items: center; gap: 4px; min-height: 22px; }
+      .book-list .grip { cursor: grab; }
+      .pill { font-size: 0.72rem; color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; padding: 1px 6px; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>錢包帳戶</h1>
+      <p class="lede">帳戶列表、聚合管理、地址簿。地址簿的鉛筆在刪除左邊，改名子畫面與另外兩個相同。三格都可以點。</p>
+      <div class="layout">
+        <div class="phone">
+          <header class="top">
+            <button class="icon" type="button" id="acct-back" aria-label="返回">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <h2 id="acct-title">帳戶</h2>
+            <button class="icon" type="button" aria-label="選單">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </button>
+          </header>
+          <div class="body" id="acct-list" style="overflow:auto">
+            <div class="acct-head"><span>帳戶</span><button class="acct-add" type="button" aria-label="加入">+</button></div>
+            <div class="acct">
+              <span class="grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              <span class="kind sign" title="可簽"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="15" r="4"/><path d="M12 13l7-7"/><path d="M16 6h3v3"/></svg></span>
+              <div class="who">
+                <div class="name-row"><b>Imported 1</b></div>
+                <div class="addr-row"><span>7CoH…c2yh</span><button class="icon" type="button" data-copy title="複製" aria-label="複製"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
+              </div>
+              <button class="icon" type="button" data-acct-rename aria-label="重新命名"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></button>
+              <button class="icon" type="button" aria-label="管理"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+            </div>
+            <div class="acct">
+              <span class="grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              <span class="kind watch" title="唯讀"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span>
+              <div class="who">
+                <div class="name-row"><b>Watch 8CqeJ4</b></div>
+                <div class="addr-row"><span>8Cqe…W6MM</span><button class="icon" type="button" data-copy title="複製" aria-label="複製"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
+              </div>
+              <button class="icon" type="button" data-acct-rename aria-label="重新命名"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></button>
+              <button class="icon" type="button" aria-label="管理"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+            </div>
+            <div class="acct active">
+              <span class="grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              <span class="kind comb" title="聚合"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="8" width="12" height="10" rx="2"/><rect x="8" y="5" width="12" height="10" rx="2"/></svg></span>
+              <div class="who">
+                <div class="name-row"><b>綜合Wallet</b><span class="pill">使用中</span></div>
+                <div class="addr-row"><span>7CoH…c2yh</span><button class="icon" type="button" data-copy title="複製" aria-label="複製"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
+              </div>
+              <button class="icon" type="button" aria-label="切換主錢包"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3l4 4-4 4"/><path d="M20 7H9"/><path d="M8 21l-4-4 4-4"/><path d="M4 17h11"/></svg></button>
+              <button class="icon" type="button" data-acct-rename aria-label="重新命名"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></button>
+              <button class="icon" type="button" aria-label="管理"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+            </div>
+          </div>
+          <div class="body" id="acct-rename" hidden>
+            <p class="sec" id="acct-rename-addr"></p>
+            <div class="field">
+              <input id="acct-rename-input" type="text" placeholder="名稱" aria-label="名稱" />
+            </div>
+          </div>
+          <div class="dock" id="acct-dock-rename" hidden>
+            <button class="primary" type="button" id="acct-rename-save">確認</button>
+          </div>
+        </div>
+        <div class="phone">
+          <header class="top">
+            <button class="icon" type="button" id="back" aria-label="返回">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <h2 id="title">管理</h2>
+            <button class="icon" type="button" aria-label="選單">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </button>
+          </header>
+
+          <div class="body" id="view-manage">
+            <p class="current-head">主錢包</p>
+            <div class="current-card" id="hero">
+              <div class="who">
+                <b id="hero-name">Imported 1</b>
+                <div class="hero-addr-row">
+                  <span id="hero-addr">7CoH…c2yh</span>
+                  <button class="icon" type="button" data-copy title="複製" aria-label="複製">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="sheet">
+              <div class="sheet-head">
+                <span>成員</span>
+                <button class="icon" type="button" data-go="add" title="加入成員" aria-label="加入成員">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+              </div>
+              <div class="lines">
+              <div class="line">
+                <span class="grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+                <button class="main-pick on" type="button" data-name="Imported 1" data-addr="7CoH…c2yh" aria-label="主錢包"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><path d="M5 12.5l4.2 4.2L19 7"/></svg></button>
+                <span class="kind-slot" title="可簽" aria-label="可簽"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="15" r="4"/><path d="M12 13l7-7"/><path d="M16 6h3v3"/></svg></span>
+                <div class="who">
+                  <div class="name-row"><b>Imported 1</b></div>
+                  <div class="addr-row"><span>7CoH…c2yh</span><button class="icon" type="button" data-copy title="複製" aria-label="複製"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
+                </div>
+                <button class="icon trash" type="button" title="刪除" aria-label="刪除" disabled>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                </button>
+              </div>
+              <div class="line">
+                <span class="grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+                <button class="main-pick" type="button" data-name="冷錢包" data-addr="8Cqe…W6MM" aria-label="設為主錢包"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><path d="M5 12.5l4.2 4.2L19 7"/></svg></button>
+                <span class="kind-slot"></span>
+                <div class="who" data-rename>
+                  <div class="name-row"><b>冷錢包</b></div>
+                  <div class="addr-row"><span>8Cqe…W6MM</span><button class="icon" type="button" data-copy title="複製" aria-label="複製"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
+                </div>
+                <button class="icon" type="button" data-rename-btn title="編輯" aria-label="編輯">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
+                </button>
+                <button class="icon trash" type="button" title="刪除" aria-label="刪除">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                </button>
+              </div>
+              <div class="line">
+                <span class="grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+                <button class="main-pick" type="button" data-name="" data-addr="buwa…9XsS" aria-label="設為主錢包"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><path d="M5 12.5l4.2 4.2L19 7"/></svg></button>
+                <span class="kind-slot"></span>
+                <div class="who" data-rename>
+                  <div class="name-row"></div>
+                  <div class="addr-row"><span>buwa…9XsS</span><button class="icon" type="button" data-copy title="複製" aria-label="複製"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
+                </div>
+                <button class="icon" type="button" data-rename-btn title="編輯" aria-label="編輯">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
+                </button>
+                <button class="icon trash" type="button" title="刪除" aria-label="刪除">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                </button>
+              </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="body" id="view-add" hidden>
+            <button class="choice" type="button" data-go="paste">
+              <div class="who"><b>新地址</b><span>貼上一個地址</span></div>
+            </button>
+            <button class="choice" type="button" data-go="local">
+              <div class="who"><b>本機帳戶</b><span>從已有的錢包帳戶加入</span></div>
+            </button>
+          </div>
+
+          <div class="body" id="view-rename" hidden>
+            <p class="sec" id="rename-addr">8Cqe…W6MM</p>
+            <div class="field">
+              <input id="rename-input" type="text" placeholder="名稱" aria-label="名稱" />
+            </div>
+          </div>
+
+          <div class="body" id="view-paste" hidden>
+            <div class="field">
+              <input type="text" placeholder="地址" aria-label="地址" />
+            </div>
+          </div>
+
+          <div class="body" id="view-local" hidden>
+            <div class="members">
+              <div class="row">
+                <div class="who"><b>Imported 1</b><span>7CoH…c2yh</span></div>
+                <span class="tag in">已加入</span>
+              </div>
+              <div class="row">
+                <div class="who"><b>Watch buwa6j</b><span>buwa…9XsS</span></div>
+                <span class="tag in">已加入</span>
+              </div>
+              <div class="row">
+                <div class="who"><b>Watch 2nho33</b><span>2nho…14bH</span></div>
+                <span class="tag in">已加入</span>
+              </div>
+              <div class="row">
+                <div class="who"><b>Watch GusXnR</b><span>GusX…xf3n</span></div>
+                <button class="icon" type="button" title="加入" aria-label="加入">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+              </div>
+              <div class="row">
+                <div class="who"><b>Watch tB41EQ</b><span>tB41…oEzm</span></div>
+                <button class="icon" type="button" title="加入" aria-label="加入">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+              </div>
+              <div class="row">
+                <div class="who"><b>Watch hoasWU</b><span>hoas…Yxx7</span></div>
+                <button class="icon" type="button" title="加入" aria-label="加入">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="dock" id="dock-remove">
+            <button class="danger" type="button">移除錢包帳戶</button>
+          </div>
+          <div class="dock" id="dock-paste" hidden>
+            <button class="primary" type="button">加入</button>
+          </div>
+          <div class="dock" id="dock-rename" hidden>
+            <button class="primary" type="button" id="rename-save">確認</button>
+          </div>
+        </div>
+        <div class="phone">
+          <header class="top">
+            <button class="icon" type="button" id="book-back" aria-label="返回">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <h2 id="book-title">地址簿</h2>
+            <button class="icon" type="button" aria-label="選單">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </button>
+          </header>
+          <div class="body" id="book-list" style="overflow:auto">
+            <div class="acct-head"><span>地址簿</span><button class="acct-add" type="button" aria-label="加入">+</button></div>
+            <div class="book-list">
+              <div class="acct">
+                <span class="grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+                <div class="who">
+                  <div class="name-row"><b>7CoH</b></div>
+                  <div class="addr-row"><span>7CoH…c2yh</span><button class="icon" type="button" data-copy title="複製" aria-label="複製"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
+                </div>
+                <button class="icon" type="button" data-book-rename aria-label="重新命名"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></button>
+                <button class="icon trash" type="button" title="刪除" aria-label="刪除"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
+              </div>
+              <div class="acct">
+                <span class="grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+                <div class="who">
+                  <div class="name-row"><b>冷錢包</b></div>
+                  <div class="addr-row"><span>8Cqe…W6MM</span><button class="icon" type="button" data-copy title="複製" aria-label="複製"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
+                </div>
+                <button class="icon" type="button" data-book-rename aria-label="重新命名"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></button>
+                <button class="icon trash" type="button" title="刪除" aria-label="刪除"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
+              </div>
+            </div>
+          </div>
+          <div class="body" id="book-rename" hidden>
+            <p class="sec" id="book-rename-addr"></p>
+            <div class="field">
+              <input id="book-rename-input" type="text" placeholder="名稱" aria-label="名稱" />
+            </div>
+          </div>
+          <div class="dock" id="book-dock-rename" hidden>
+            <button class="primary" type="button" id="book-rename-save">確認</button>
+          </div>
+        </div>
+        <div class="notes">
+          <h3>管理</h3>
+          <ul>
+            <li>「主錢包」在小卡外面、小卡上方。小卡只放名稱、地址、複製。</li>
+            <li>成員自含一塊。握把之後是圓形勾：主錢包高亮完整勾，其餘淡勾，滑過稍亮。刪除在最右，和前一顆隔開。右側圖示 28px。滑過整列只把底色稍為變淺。拖曳只從握把開始。加號在標題列右上。Imported 1 對到本機帳戶，沒有鉛筆。另外兩列的鉛筆進入改名子畫面，名稱可以留空。</li>
+          </ul>
+          <h3>加入成員</h3>
+          <ul>
+            <li>兩個選項：新地址、本機帳戶。</li>
+            <li>新地址是再下一層，只有輸入與底欄加入。</li>
+            <li>本機帳戶才列出全部本機錢包：已加入只標狀態，尚未加入才有加號。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <script>
+      let acctNameEl = null;
+      function acctShow(rename) {
+        document.getElementById("acct-list").hidden = rename;
+        document.getElementById("acct-rename").hidden = !rename;
+        document.getElementById("acct-dock-rename").hidden = !rename;
+        document.getElementById("acct-title").textContent = rename ? "名稱" : "帳戶";
+      }
+      document.querySelectorAll("[data-acct-rename]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const card = btn.closest(".acct");
+          acctNameEl = card.querySelector(".name-row b");
+          document.getElementById("acct-rename-addr").textContent = card.querySelector(".addr-row span").textContent;
+          document.getElementById("acct-rename-input").value = acctNameEl.textContent;
+          acctShow(true);
+        });
+      });
+      document.getElementById("acct-back").addEventListener("click", () => acctShow(false));
+      let bookNameEl = null;
+      function bookShow(rename) {
+        document.getElementById("book-list").hidden = rename;
+        document.getElementById("book-rename").hidden = !rename;
+        document.getElementById("book-dock-rename").hidden = !rename;
+        document.getElementById("book-title").textContent = rename ? "名稱" : "地址簿";
+      }
+      document.querySelectorAll("[data-book-rename]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const card = btn.closest(".acct");
+          bookNameEl = card.querySelector(".name-row b");
+          document.getElementById("book-rename-addr").textContent = card.querySelector(".addr-row span").textContent;
+          document.getElementById("book-rename-input").value = bookNameEl.textContent;
+          bookShow(true);
+        });
+      });
+      document.getElementById("book-back").addEventListener("click", () => bookShow(false));
+      document.getElementById("book-rename-save").addEventListener("click", () => {
+        const name = document.getElementById("book-rename-input").value.trim();
+        if (bookNameEl) bookNameEl.textContent = name;
+        bookShow(false);
+      });
+      const bookList = document.querySelector(".book-list");
+      bookList.querySelectorAll(".grip").forEach((grip) => {
+        grip.addEventListener("pointerdown", (ev) => {
+          ev.preventDefault();
+          const card = grip.closest(".acct");
+          const move = (e) => {
+            const rows = [...bookList.querySelectorAll(".acct")];
+            const after = rows.find((row) => {
+              if (row === card) return false;
+              const box = row.getBoundingClientRect();
+              return e.clientY < box.top + box.height / 2;
+            });
+            if (after) bookList.insertBefore(card, after);
+            else bookList.appendChild(card);
+          };
+          const up = () => {
+            window.removeEventListener("pointermove", move);
+            window.removeEventListener("pointerup", up);
+          };
+          window.addEventListener("pointermove", move);
+          window.addEventListener("pointerup", up);
+        });
+      });
+      document.getElementById("acct-rename-save").addEventListener("click", () => {
+        if (acctNameEl) acctNameEl.textContent = document.getElementById("acct-rename-input").value.trim() || acctNameEl.textContent;
+        acctShow(false);
+      });
+    </script>
+    <script>
+      const titles = { manage: "管理", add: "加入成員", paste: "新地址", local: "本機帳戶", rename: "名稱" };
+      const parent = { manage: null, add: "manage", paste: "add", local: "add", rename: "manage" };
+      let screen = "manage";
+      let renameWho = null;
+      const views = ["manage", "add", "paste", "local", "rename"];
+
+      function show(next) {
+        screen = next;
+        views.forEach((id) => {
+          document.getElementById("view-" + id).hidden = id !== next;
+        });
+        document.getElementById("title").textContent = titles[next];
+        document.getElementById("dock-remove").hidden = next !== "manage";
+        document.getElementById("dock-paste").hidden = next !== "paste";
+        document.getElementById("dock-rename").hidden = next !== "rename";
+      }
+
+      document.getElementById("back").addEventListener("click", () => {
+        show(parent[screen] || "manage");
+      });
+      const memberList = document.querySelector(".lines");
+      memberList.querySelectorAll(".line .grip").forEach((grip) => {
+        grip.addEventListener("pointerdown", (ev) => {
+          ev.preventDefault();
+          const line = grip.closest(".line");
+          const move = (e) => {
+            const rows = [...memberList.querySelectorAll(".line")];
+            const after = rows.find((row) => {
+              if (row === line) return false;
+              const box = row.getBoundingClientRect();
+              return e.clientY < box.top + box.height / 2;
+            });
+            if (after) memberList.insertBefore(line, after);
+            else memberList.appendChild(line);
+          };
+          const up = () => {
+            window.removeEventListener("pointermove", move);
+            window.removeEventListener("pointerup", up);
+          };
+          window.addEventListener("pointermove", move);
+          window.addEventListener("pointerup", up);
+        });
+      });
+      document.querySelectorAll("[data-go]").forEach((el) => {
+        el.addEventListener("click", () => show(el.getAttribute("data-go")));
+      });
+      document.querySelectorAll("[data-rename-btn]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          renameWho = btn.parentElement.querySelector("[data-rename]");
+          const nameEl = renameWho.querySelector(".name-row b");
+          document.getElementById("rename-addr").textContent = renameWho.querySelector(".addr-row span").textContent;
+          document.getElementById("rename-input").value = nameEl ? nameEl.textContent : "";
+          show("rename");
+        });
+      });
+      document.getElementById("rename-save").addEventListener("click", () => {
+        if (!renameWho) return;
+        const name = document.getElementById("rename-input").value.trim();
+        const nameRow = renameWho.querySelector(".name-row");
+        nameRow.replaceChildren();
+        if (name) {
+          const b = document.createElement("b");
+          b.textContent = name;
+          nameRow.append(b);
+        }
+        const pick = renameWho.parentElement.querySelector(".main-pick");
+        pick.setAttribute("data-name", name);
+        if (pick.classList.contains("on")) pick.dispatchEvent(new Event("click"));
+        show("manage");
+      });
+      document.querySelectorAll(".main-pick").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".main-pick").forEach((other) => other.classList.remove("on"));
+          btn.classList.add("on");
+          const name = btn.getAttribute("data-name");
+          const addr = btn.getAttribute("data-addr");
+          document.getElementById("hero-name").textContent = name || addr;
+          document.getElementById("hero-addr").hidden = !name;
+          if (name) document.getElementById("hero-addr").textContent = addr;
+        });
+      });
+
+      const check =
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.5l4.2 4.2L19 7"/></svg>';
+      document.querySelectorAll("[data-copy]").forEach((btn) => {
+        const idle = btn.innerHTML;
+        btn.addEventListener("click", () => {
+          btn.classList.add("copy-ok");
+          btn.innerHTML = check;
+          btn.title = "已複製";
+          setTimeout(() => {
+            btn.classList.remove("copy-ok");
+            btn.innerHTML = idle;
+            btn.title = "複製";
+          }, 1600);
+        });
+      });
+    </script>
+  </body>
+</html>

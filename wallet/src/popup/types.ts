@@ -46,6 +46,12 @@ export type View =
   | "add-combined"
   | "account-rename"
   | "account-manage"
+  | "account-switch"
+  | "account-manage-add"
+  | "account-manage-paste"
+  | "account-manage-local"
+  | "account-member-rename"
+  | "address-card-rename"
   | "account-reveal-key"
   | "settings"
   | "settings-locale"
@@ -71,8 +77,13 @@ export const SUBPAGE_TITLE_KEYS: Record<Exclude<View, "home-token" | "home-activ
   "add-import-seed": "nav.addImportSeed",
   "add-watch": "nav.addWatch",
   "add-combined": "nav.addCombined",
-  "account-rename": "nav.accountRename",
+  "account-rename": "common.name",
   "account-manage": "nav.accountManage",
+  "account-switch": "accounts.changeCurrentWallet",
+  "account-manage-add": "common.add",
+  "account-manage-paste": "common.address",
+  "account-manage-local": "common.localAccounts",
+  "account-member-rename": "common.name",
   "account-reveal-key": "nav.accountRevealKey",
   settings: "nav.settings",
   "settings-locale": "settings.locale.title",
@@ -92,6 +103,7 @@ export const SUBPAGE_TITLE_KEYS: Record<Exclude<View, "home-token" | "home-activ
   "send-pick": "addressCards.pick",
   "address-cards": "menu.addressCards",
   "address-cards-add": "addressCards.add",
+  "address-card-rename": "common.name",
   "send-approval": "nav.sendApproval",
   "close-empty-pick": "nav.closeEmptyPick",
   "close-empty-confirm": "nav.closeEmptyConfirm",

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Airwave — 主錢包圓形勾 DRAFT</title>
+    <style>
+      :root {
+        --bg: #0f1419; --stroke: #2a3542; --text: #e8eef4; --muted: #9aa7b4; --dim: #6b7785;
+        --accent: #3d9cf0; --danger: #c75050; --line: #4a5968;
+        --font: "Segoe UI", "Microsoft JhengHei UI", system-ui, sans-serif;
+        --mono: ui-monospace, Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #080b0e; color: var(--text); font-family: var(--font); }
+      .page { max-width: 480px; margin: 0 auto; padding: 28px 20px 48px; }
+      h1 { font-size: 18px; margin: 0 0 8px; }
+      p { color: var(--muted); font-size: 13px; }
+      .sheet { border: 1px solid var(--line); border-radius: 12px; background: var(--bg); }
+      .label { font-size: 12px; color: var(--dim); margin: 0 0 6px; }
+      .card { border: 1px solid var(--accent); border-radius: 12px; padding: 8px 12px; margin-bottom: 16px; min-height: 56px; }
+      .line { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--line); }
+      .line:hover { background: #1a222c; }
+      .line:first-child { border-top: none; }
+      .grip { width: 16px; align-self: stretch; cursor: grab; background-image: radial-gradient(circle, var(--dim) 1px, transparent 1.2px); background-size: 4px 4px; opacity: 0.35; }
+      .who { flex: 1; min-width: 0; }
+      .who b { display: block; font-size: 13px; }
+      .addr { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+      .trash { width: 28px; height: 28px; margin-left: 10px; border: none; border-radius: 8px; background: var(--danger); color: #fff; }
+      .main-pick {
+        flex: none; width: 28px; height: 28px; border-radius: 50%; border: 1px solid #3a4654; background: transparent;
+        color: var(--dim); display: inline-flex; align-items: center; justify-content: center; padding: 0; cursor: pointer;
+      }
+      .main-pick svg path { stroke-dasharray: 20; stroke-dashoffset: 0; opacity: 0.35; }
+      .main-pick.on { border-color: var(--accent); color: var(--accent); }
+      .main-pick.on svg path { opacity: 1; }
+      .main-pick:not(.on):hover { border-color: #6b7785; color: var(--muted); }
+      .main-pick:not(.on):hover svg path { opacity: 0.7; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>圓形勾</h1>
+      <p>「主錢包」在小卡外面。勾是圓形：選中高亮，其餘淡勾，滑過稍亮。拖曳只從握把開始。滑過整列只把底色稍為變淺。</p>
+      <p class="label">主錢包</p>
+      <div class="card"><b>Imported 1</b><div class="addr">7CoH…c2yh</div></div>
+      <div class="sheet">
+        <div class="line">
+          <span class="grip"></span>
+          <button class="main-pick on" type="button" aria-label="主錢包"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><path d="M5 12.5l4.2 4.2L19 7"/></svg></button>
+          <div class="who"><b>Imported 1</b><div class="addr">7CoH…c2yh</div></div>
+          <button class="trash" type="button">⌫</button>
+        </div>
+        <div class="line">
+          <span class="grip"></span>
+          <button class="main-pick" type="button" aria-label="設為主錢包"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><path d="M5 12.5l4.2 4.2L19 7"/></svg></button>
+          <div class="who"><b>Watch</b><div class="addr">8Cqe…W6MM</div></div>
+          <button class="trash" type="button">⌫</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

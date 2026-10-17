@@ -5,5 +5,7 @@ export { handleCreateCombinedAccount } from "./create-combined";
 export {
   handleAddCombinedSub,
   handleRemoveCombinedSub,
+  handleReorderCombinedSubs,
   handleSetCombinedMain,
+  handleSetCombinedMemberName,
 } from "./combined-members";

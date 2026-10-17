@@ -12,6 +12,12 @@ export const BACK_PARENT: Partial<Record<View, View>> = {
   "account-reveal-key": "account-manage",
   "account-rename": "accounts",
   "account-manage": "accounts",
+  "account-switch": "accounts",
+  "account-manage-add": "account-manage",
+  "account-manage-paste": "account-manage-add",
+  "account-manage-local": "account-manage-add",
+  "account-member-rename": "account-manage",
+  "address-card-rename": "address-cards",
   "add-account": "accounts",
   "add-generate": "add-account",
   "add-generate-seed": "add-account",
@@ -21,7 +27,7 @@ export const BACK_PARENT: Partial<Record<View, View>> = {
   "add-import-seed": "add-import",
   "add-import": "add-account",
   "settings-locale": "settings",
-  "settings-network": "settings",
+  "settings-network": "home-token",
   "settings-rpc": "settings",
   "settings-keys": "settings",
   "settings-cu-price": "settings",
@@ -54,6 +60,9 @@ export const ENTER_RESET_VIEWS = new Set<View>([
   "add-import-seed",
   "add-watch",
   "account-rename",
+  "account-member-rename",
+  "address-card-rename",
+  "account-manage-paste",
 ]);
 
 export function screenEnterKey(view: View, navSeq: number): string | undefined {

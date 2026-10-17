@@ -9,7 +9,8 @@
 | [../design-principles.md](../design-principles.md) | Popup UI／UX 原則（寫入時機、icon 按鈕、長字串）；INDEX 沉默時依此 |
 | [../design-demos/](../design-demos/) | 非正式 HTML 概念稿；衝突時以某版 INDEX 為準 |
 | [agent-workflow.md](./agent-workflow.md) | 誰審查、何時 HANDOFF、Track 之間測什麼 |
-| `.agents/skills/roadmap-version/` | 使用者點名某版時，設計審查閘門 → Track 實作的執行技能 |
+| [unversioned.md](./unversioned.md) | 已出貨、下一版未開時的改動。狀態以本表為準 |
+| `.agents/skills/version-delivery/` | 交付一個版本：設計審查閘門、Track 實作、出貨檢查 |
 
 | 版本 | 狀態 | 說明 |
 |------|------|------|
@@ -36,13 +37,13 @@
 | [0.21.0](./0.21.0/INDEX.md) | shipped | 清理空 token account，收回 rent SOL |
 | [0.22.0](./0.22.0/INDEX.md) | shipped | Home pill／Devnet 徽章／複製回饋／刷新冷卻／Activity Orb／收回租金確認中／Kit 估 CU |
 | [0.23.0](./0.23.0/INDEX.md) | shipped | Wallet UI 多語言（繁中／簡中／英文）＋系統雙字體（方案 B） |
-| [0.24.0](./0.24.0/INDEX.md) | in progress | 原始檔職責分檔（命令／模擬／收回租金）；行為與 0.23.0 相同 |
+| [0.24.0](./0.24.0/INDEX.md) | shipped | 原始檔職責分檔（命令／模擬／收回租金）；行為與 0.23.0 相同 |
 | [0.25.0](./0.25.0/INDEX.md) | shipped | 工具列 popup 與 Chrome 側欄互切；側欄活著則網站審批進殼內 |
 | [0.26.0](./0.26.0/INDEX.md) | shipped | 小修：匯入預覽、Combined 展開、解鎖聚焦、類型圖示、卡片拖曳、schema 世代骨架 |
 | [0.27.0](./0.27.0/INDEX.md) | shipped | 保管與簽名邊界：session 不含明文 secret、本地 CU、dApp origin／chain／連線 |
 | [0.28.0](./0.28.0/INDEX.md) | shipped | Home Activity：捲到底載入更舊紀錄、本地時間、token icon／symbol |
 | [0.29.0](./0.29.0/INDEX.md) | shipped | Mainnet RPC 必填；官方公用節點不當後備；首次語言／密碼／RPC 引導 |
-| [0.30.0](./0.30.0/INDEX.md) | planned | 簽署 AI 分析：sandbox harness、Decisions 等級、Settings OpenRouter |
+| [0.30.0](./0.30.0/INDEX.md) | shipped | 簽署 AI 分析：sandbox harness、Decisions 等級、Settings OpenRouter |
 | [0.31.0](./0.31.0/INDEX.md) | shipped | Vite 8／plugin-react 5／TypeScript 7；service worker 監聽不在擴充頁執行 |
 | [0.32.0](./0.32.0/INDEX.md) | shipped | 審批模擬用交易 blockhash；每 3 秒只更新預期變動；交易費本地計算；站點置中可複製；AI 單列卡與逾時 UX |
 | [0.33.0](./0.33.0/INDEX.md) | shipped | 預期變動列：Jupiter 圖示／symbol；固定信任盾欄；anti-spoof 主標規則 |
@@ -58,6 +59,8 @@
 | [0.43.0](./0.43.0/INDEX.md) | shipped | 地址簿：名稱＋地址，可拖曳排序；送出可全螢幕選錢包或地址簿，仍可手貼 |
 | [0.44.0](./0.44.0/INDEX.md) | shipped | 交易 AI：報告／定級可選預設鏈或自訂；OpenRouter completion 備援 |
 | [0.45.0](./0.45.0/INDEX.md) | shipped | Wallet Standard `icon` 內嵌 `public/icon128.png`；dApp 連線面板不再顯示紅方塊 |
+| [0.46.0](./0.46.0/INDEX.md) | shipped | 密鑰列平時鉛筆；網路改到漢堡選單 |
+| [0.47.0](./0.47.0/INDEX.md) | shipped | 帳戶列表、聚合管理、地址簿：改名子畫面、成員名稱與排序、種類圖示色 |
 
 **版本號：** `x.y.z` 的 **patch**（例如 **0.3.1**）留給該 minor 的 **bugfix**，不排新功能。新功能走下一個 **minor**（0.3.0 → 0.4.0 → 0.5.0）。
 

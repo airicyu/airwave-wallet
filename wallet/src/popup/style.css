@@ -622,6 +622,177 @@ h1.first-run-name,
   stroke-width: 1.75;
 }
 
+.account-card-body > .icon-btn {
+  width: 28px;
+  height: 28px;
+}
+.account-card-body > .icon-btn svg {
+  width: 14px;
+  height: 14px;
+}
+.account-side-rename {
+  margin-right: 0;
+}
+.icon-btn.trash-solid {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin-left: 10px;
+  background: var(--danger);
+  color: #fff;
+  border: none;
+}
+.icon-btn.trash-solid svg,
+.member-line > .icon-btn svg {
+  width: 14px;
+  height: 14px;
+}
+.member-line > .icon-btn {
+  width: 28px;
+  height: 28px;
+}
+.member-line > .icon-btn.trash-solid {
+  margin-left: 0;
+}
+.icon-btn.trash-solid:hover {
+  background: #d86666;
+}
+.icon-btn.accent-fill {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+}
+.combined-manage {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.main-wallet {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.main-wallet-label {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+.main-wallet-card {
+  min-height: 56px;
+  padding: 8px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+}
+.main-wallet-card .account-name,
+.member-copy .account-name,
+.member-copy .addr {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.member-sheet {
+  border: 1px solid #4a5968;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.member-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #4a5968;
+}
+.member-sheet-head h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.member-line {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid #4a5968;
+  cursor: pointer;
+}
+.member-line .account-grip {
+  width: 16px;
+  cursor: grab;
+}
+.member-sheet.is-reordering,
+.member-sheet.is-reordering * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+.member-sheet.is-reordering .member-line {
+  cursor: grabbing;
+}
+.member-line.is-dragging {
+  opacity: 0.55;
+}
+.member-line:hover {
+  background: #1a222c;
+}
+.member-line .account-drop-line {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: -1px;
+  margin: 0;
+}
+.member-line .account-drop-line:last-child {
+  top: auto;
+  bottom: -1px;
+}
+.main-pick {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid #3a4654;
+  background: transparent;
+  color: var(--text-dim);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.main-pick svg path {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 0;
+  opacity: 0.35;
+}
+.main-pick.on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.main-pick.on svg path {
+  opacity: 1;
+}
+.main-pick:not(.on):hover {
+  border-color: #6b7785;
+  color: var(--text-muted);
+}
+.main-pick:not(.on):hover svg path {
+  opacity: 0.7;
+}
+.member-kind-slot {
+  width: 22px;
+  flex: none;
+  color: #d08b5b;
+}
+.member-copy {
+  flex: 1;
+  min-width: 0;
+}
+.member-copy .account-name {
+  min-height: 1.2em;
+}
+.member-rename {
+  margin-right: 8px;
+}
 .icon-btn.copy-ok {
   color: var(--ok);
 }
@@ -2522,7 +2693,7 @@ h1.first-run-name,
 .account-card-body {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   padding: 8px 10px;
   border: 1px solid var(--stroke-soft);
   border-radius: var(--radius);
@@ -2549,13 +2720,13 @@ h1.first-run-name,
   display: flex;
   align-items: center;
   gap: 8px;
-  cursor: grab;
+  cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
 }
 
-.account-card-main:active {
-  cursor: grabbing;
+.account-card-body:hover {
+  background: #1c2530;
 }
 
 .account-card-copy {
@@ -2564,21 +2735,14 @@ h1.first-run-name,
 }
 
 .account-grip {
-  width: 8px;
+  width: 16px;
+  cursor: grab;
   flex-shrink: 0;
   align-self: stretch;
   min-height: 22px;
   background-image: radial-gradient(circle, var(--text-dim) 1px, transparent 1.2px);
   background-size: 4px 4px;
   opacity: 0.35;
-}
-
-.account-card-main:hover {
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.28));
-}
-
-.account-card-main:hover .account-grip {
-  opacity: 0.85;
 }
 
 .account-drop-line {
@@ -2884,8 +3048,23 @@ input.wallet-pwd-masked {
 }
 
 .keys-reveal-btn,
-.keys-confirm-btn {
+.keys-confirm-btn,
+.keys-discard-btn,
+.keys-edit-btn {
   flex-shrink: 0;
+}
+
+.keys-confirm-btn.is-pressed,
+.keys-discard-btn.is-pressed {
+  transform: scale(0.86);
+}
+
+.keys-confirm-btn.is-pressed {
+  background: color-mix(in srgb, var(--ok) 18%, transparent);
+}
+
+.keys-discard-btn.is-pressed {
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
 }
 
 .settings-now {

@@ -1,4 +1,4 @@
-# Subagent prompts（roadmap-version）
+# Subagent prompts（version-delivery）
 
 呼叫本技能的 agent 用 Task spawn。每次 **新** invocation，**禁止** `resume`。`subagent_type`：`generalPurpose`。將 `<VER>` 換成例如 `0.1.0`。HOW／錨點檔名依該版 INDEX 文件地圖填入。
 

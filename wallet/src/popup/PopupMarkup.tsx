@@ -33,6 +33,7 @@ import {
   IconInfo,
   IconLock,
   IconMenu,
+  IconNetwork,
   IconSettings,
   IconSidebar,
 } from "./components/StrokeIcon";
@@ -59,7 +60,14 @@ import { SetupFlow } from "./onboarding/SetupFlow";
 import { RpcGuideScreen } from "./onboarding/RpcGuideScreen";
 import { screenEnterKey, subpageTitle } from "./runtime";
 import { TokenSendForm } from "./send/TokenSendForm";
-import { AddressCardsAddScreen, AddressCardsScreen, SendPickScreen } from "./address-cards/AddressCardsScreens";
+import { AddressCardRenameScreen, AddressCardsAddScreen, AddressCardsScreen, SendPickScreen } from "./address-cards/AddressCardsScreens";
+import {
+  CombinedAddChoice,
+  CombinedSwitchScreen,
+  CombinedLocalScreen,
+  CombinedPasteScreen,
+  MemberRenameScreen,
+} from "./accounts/CombinedManage";
 import {
   ChangePasswordScreen,
   CuPriceScreen,
@@ -104,6 +112,10 @@ function MenuItems(): JSX.Element {
       <button type="button" className="menu-item" onClick={() => navigateTo("address-cards")}>
         <IconBook />
         {t("menu.addressCards")}
+      </button>
+      <button type="button" className="menu-item" onClick={() => navigateTo("settings-network")}>
+        <IconNetwork />
+        {t("settings.hub.network")}
       </button>
       <button type="button" className="menu-item" onClick={() => navigateTo("settings")}>
         <IconSettings />
@@ -405,6 +417,12 @@ export function PopupMarkup(): JSX.Element {
             </section>
           ) : null}
 
+          {currentView === "address-card-rename" ? (
+            <section id="screen-address-card-rename" className="screen">
+              <AddressCardRenameScreen key={screenEnterKey("address-card-rename", navSeq)} wallet={wallet} />
+            </section>
+          ) : null}
+
           {currentView === "send-approval" && activeWalletSendRequestId ? (
             <section id="screen-send-approval" className="screen approval-shell-host">
               <ApprovalHost key={activeWalletSendRequestId} requestId={activeWalletSendRequestId} />
@@ -542,9 +560,39 @@ export function PopupMarkup(): JSX.Element {
             </section>
           ) : null}
 
+          {currentView === "account-switch" ? (
+            <section className="screen">
+              <CombinedSwitchScreen wallet={wallet} />
+            </section>
+          ) : null}
+
           {currentView === "account-manage" ? (
             <section id="screen-account-manage" className="screen">
               <ManageScreen wallet={wallet} />
+            </section>
+          ) : null}
+
+          {currentView === "account-manage-add" ? (
+            <section className="screen">
+              <CombinedAddChoice />
+            </section>
+          ) : null}
+
+          {currentView === "account-manage-paste" ? (
+            <section className="screen">
+              <CombinedPasteScreen key={screenEnterKey("account-manage-paste", navSeq)} wallet={wallet} />
+            </section>
+          ) : null}
+
+          {currentView === "account-manage-local" ? (
+            <section className="screen">
+              <CombinedLocalScreen wallet={wallet} />
+            </section>
+          ) : null}
+
+          {currentView === "account-member-rename" ? (
+            <section className="screen">
+              <MemberRenameScreen key={screenEnterKey("account-member-rename", navSeq)} wallet={wallet} />
             </section>
           ) : null}
 

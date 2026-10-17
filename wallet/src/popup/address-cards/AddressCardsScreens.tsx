@@ -1,5 +1,5 @@
 /**
- * Address cards list, inline rename, add page, and full-screen send picker.
+ * Address cards list, rename subpage, add page, and full-screen send picker.
  * Does not write chrome.storage; mutations go through addressBook commands.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -10,7 +10,9 @@ import { accountVisualKind } from "../../shared/account-kind-visual";
 import { sendExtensionRequest } from "../../shared/ext-api";
 import { apiErrorMessage } from "../../shared/ui-i18n";
 import { AccountKindMark } from "../components/AccountKindMark";
-import { IconCheck, IconCopy, IconPlus, IconRename, IconTrash } from "../components/StrokeIcon";
+import { CopyIconButton } from "../components/CopyPkButton";
+import { ACCOUNT_LABEL_MAX } from "../../shared/account-label";
+import { IconPlus, IconRename, IconTrash } from "../components/StrokeIcon";
 import { shortAddr } from "../lib/format";
 import { patchSendDraft } from "../send/send-draft";
 import { usePopupContext } from "../state/PopupContext";
@@ -30,8 +32,6 @@ const DRAG_PX = 6;
 export function AddressCardsScreen({ wallet }: { wallet: State }): JSX.Element {
   const { navigateTo, showError } = usePopupContext();
   const { t, locale } = useT();
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [draftName, setDraftName] = useState("");
   const [notice, setNotice] = useState("");
   const [order, setOrder] = useState(() => wallet.addressBook.map((c) => c.id));
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -97,20 +97,12 @@ export function AddressCardsScreen({ wallet }: { wallet: State }): JSX.Element {
   }, [onPointerMove, persistOrder]);
 
   const startDrag = (id: string, ev: ReactPointerEvent) => {
-    if ((ev.target as HTMLElement).closest("button, input")) return;
+    if (!(ev.target as HTMLElement).closest(".account-grip")) return;
     ev.preventDefault();
     dragRef.current = { id, startY: ev.clientY, live: false };
     window.addEventListener("pointermove", onPointerMove, { passive: false });
     window.addEventListener("pointerup", onPointerUp);
   };
-
-  async function commitRename(id: string, current: string): Promise<void> {
-    const name = draftName.trim();
-    setEditingId(null);
-    if (!name || name === current) return;
-    const res = await sendExtensionRequest("addressBook.rename", { id, name });
-    if (!res.ok) setNotice(errorText(res.error?.code, t) || res.error?.message || "");
-  }
 
   async function remove(id: string, address: string): Promise<void> {
     if (!confirm(`${t("addressCards.deleteTitle")}\n${shortAddr(address)}`)) return;
@@ -151,9 +143,7 @@ export function AddressCardsScreen({ wallet }: { wallet: State }): JSX.Element {
     {head}
     <div id="address-cards-list" className={draggingId ? "is-reordering" : undefined}>
       {notice ? <p className="inline-err">{notice}</p> : null}
-      {ordered.map((card) => {
-        const editing = editingId === card.id;
-        return (
+      {ordered.map((card) => (
           <div
             key={card.id}
             className={`account-card${draggingId === card.id ? " is-dragging" : ""}`}
@@ -165,51 +155,26 @@ export function AddressCardsScreen({ wallet }: { wallet: State }): JSX.Element {
                 <span className="account-grip" aria-hidden="true" />
                 <div className="account-card-copy">
                   <div className="account-title-row">
-                    {editing ? (
-                      <input
-                        className="address-card-input"
-                        value={draftName}
-                        aria-label={t("addressCards.name")}
-                        onChange={(e) => setDraftName(e.target.value)}
-                        onBlur={() => void commitRename(card.id, card.name)}
-                      />
-                    ) : (
-                      <span className="account-name">{card.name}</span>
-                    )}
-                    <button
-                      type="button"
-                      className="icon-btn ghost-inline"
-                      title={editing ? t("common.confirm") : t("accounts.renameAccount")}
-                      aria-label={editing ? t("common.confirm") : t("accounts.renameAccount")}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => {
-                        if (editing) void commitRename(card.id, card.name);
-                        else {
-                          setDraftName(card.name);
-                          setEditingId(card.id);
-                        }
-                      }}
-                    >
-                      {editing ? <IconCheck /> : <IconRename />}
-                    </button>
+                    <span className="account-name">{card.name}</span>
                   </div>
                   <div className="account-addr-row">
                     <span className="addr">{shortAddr(card.address)}</span>
-                    <button
-                      type="button"
-                      className="icon-btn ghost-inline"
-                      title={t("common.copy")}
-                      aria-label={t("common.copy")}
-                      onClick={() => void navigator.clipboard.writeText(card.address)}
-                    >
-                      <IconCopy />
-                    </button>
+                    <CopyIconButton text={card.address} />
                   </div>
                 </div>
               </div>
               <button
                 type="button"
-                className="icon-btn"
+                className="icon-btn account-side-rename"
+                title={t("accounts.renameAccount")}
+                aria-label={t("accounts.renameAccount")}
+                onClick={() => navigateTo("address-card-rename", card.id)}
+              >
+                <IconRename />
+              </button>
+              <button
+                type="button"
+                className="icon-btn trash-solid"
                 title={t("common.delete")}
                 aria-label={t("common.delete")}
                 onClick={() => void remove(card.id, card.address)}
@@ -219,8 +184,7 @@ export function AddressCardsScreen({ wallet }: { wallet: State }): JSX.Element {
             </div>
             {dropLine?.id === card.id && dropLine.edge === "after" ? <div className="account-drop-line" /> : null}
           </div>
-        );
-      })}
+      ))}
     </div>
     </>
   );
@@ -234,7 +198,7 @@ export function AddressCardsAddScreen(): JSX.Element {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [blocked, setBlocked] = useState(false);
-  const canSubmit = name.trim().length > 0 && isAddress(address.trim()) && !busy && !blocked;
+  const canSubmit = isAddress(address.trim()) && !busy && !blocked;
 
   useRegisterDock({
     label: t("addressCards.add"),
@@ -289,6 +253,39 @@ export function AddressCardsAddScreen(): JSX.Element {
         <p className="inline-err">{error || t("addressCards.invalid")}</p>
       ) : null}
     </div>
+  );
+}
+
+export function AddressCardRenameScreen({ wallet }: { wallet: State }): JSX.Element {
+  const { focusAccountId, showError, navigateTo } = usePopupContext();
+  const { t, locale } = useT();
+  const card = wallet.addressBook.find((c) => c.id === focusAccountId);
+  const [name, setName] = useState(card?.name ?? "");
+  useRegisterDock({
+    label: t("common.confirm"),
+    disabled: false,
+    onPrimary: async () => {
+      if (!focusAccountId) return;
+      const next = name.trim();
+      const res = await sendExtensionRequest("addressBook.rename", { id: focusAccountId, name: next });
+      if (!res.ok) showError(apiErrorMessage(locale, res.error, "error.renameFailed"));
+      else navigateTo("address-cards");
+    },
+  });
+  return (
+    <>
+      <p className="muted addr-hint">{card ? shortAddr(card.address) : ""}</p>
+      <div className="field">
+        <label htmlFor="card-rename">{t("common.name")}</label>
+        <input
+          id="card-rename"
+          type="text"
+          maxLength={ACCOUNT_LABEL_MAX}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
+    </>
   );
 }
 

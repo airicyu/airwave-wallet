@@ -36,6 +36,8 @@ import {
   handleReadIntegrationSecrets,
   handlePreviewSeedAccounts,
   handleRemoveCombinedSub,
+  handleReorderCombinedSubs,
+  handleSetCombinedMemberName,
   handleReorderAccounts,
   handleRenameAccount,
   handleSetActiveAccount,
@@ -74,6 +76,8 @@ export async function handleWalletCommand(
   if (req.command === "wallet.addCombinedSub") return handleAddCombinedSub(req);
   if (req.command === "wallet.removeCombinedSub") return handleRemoveCombinedSub(req);
   if (req.command === "wallet.setCombinedMain") return handleSetCombinedMain(req);
+  if (req.command === "wallet.reorderCombinedSubs") return handleReorderCombinedSubs(req);
+  if (req.command === "wallet.setCombinedMemberName") return handleSetCombinedMemberName(req);
   if (req.command === "wallet.deleteAccount") return handleDeleteAccount(req);
   if (req.command === "wallet.disconnectOrigin") return handleDisconnectOrigin(req);
   if (req.command === "wallet.disconnectAllOrigins") return handleDisconnectAllOrigins(req);

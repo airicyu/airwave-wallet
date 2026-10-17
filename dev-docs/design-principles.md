@@ -34,7 +34,7 @@
 |------|--------------------------------|
 | 切換（cluster、作用中 RPC、開關、radio、分段控制） | **立刻** |
 | 新增／刪除清單項（RPC、成員勾選若定為即時等） | **立刻** |
-| 單行文字設定（Helius URL、Jupiter key、RPC 自訂 URL） | **失焦**或短 debounce（約 400–800ms）寫入；正在打字不算完成 |
+| 單行文字設定 | Helius API URL、Jupiter API key、OpenRouter API key 只在列內確認圖示寫入；失焦與捨棄不寫入。RPC 自訂 URL 仍是失焦或短 debounce（約 400–800ms）寫入；正在打字不算完成 |
 | 展開列裡改長字串 | 列內 **確認圖示**＝提交這一格；收合／Esc＝放棄未提交的編輯。這不是「整頁儲存」 |
 | 不可逆、高代價（刪帳戶、Reveal 解密、斷開全部站點） | **必須**明確確認（對話或二次點擊），禁止靜默 auto-save 當成刪除 |
 
@@ -50,6 +50,8 @@
 不要用「加入」「刪除」「重新整理」這類佔寬文字當列內主按鈕。
 
 適用：加入項目、刪除列、複製、重新整理、返回、選單、鎖定、展開／收合。
+
+**複製圖示：** 寫入剪貼簿成功後換成勾（`--ok`），`title`／`aria-label` 改 catalog `copy.copied`，約 **1.6 秒**後回到複製圖示與原本的複製標（如 `common.copy`）。寫入失敗維持複製圖示。複製的永遠是完整字串，畫面上仍可縮寫。同一套用在頂欄錢包、帳戶列、地址簿、建立帳戶公鑰、顯示私鑰。不要用 toast 或旁白代替這個勾。
 
 **文字按鈕只留給：**
 
@@ -105,11 +107,11 @@ Icon 用現有 stroke SVG 風格（約 16–18px、2px stroke），按鈕熱區�
 
 Settings **第一層是選項列表**，再進子頁。不要一打開就把 Helius URL／Jupiter key 攤在主頁（錄影／demo 會露出秘密）。概念稿：[`design-demos/settings-hub-ux.html`](design-demos/settings-hub-ux.html)。
 
-列表意向（第一列 **語言**，摘要為 endonym；其後）：網路、RPC、API keys、Default CU price、錢包密碼。列上可寫狀態摘要（Mainnet、已設定／未設定），**不**寫出 key 或含 `api-key` 的 URL。語言列摘要永遠是 `繁體中文`／`简体中文`／`English`，不隨介面語改寫語言本名。
+列表意向（第一列 **語言**，摘要為 endonym；其後）：RPC、API 金鑰、交易 AI、預設 CU 單價、錢包密碼。英文介面仍是 API keys、Default CU price。列上可寫狀態摘要（已設定／未設定），**不**寫出 key 或 RPC URL。RPC 列已設定時摘要是「變更」，與錢包密碼相同；Mainnet 尚未有自訂 RPC 時仍是「未設定」。語言列摘要永遠是 `繁體中文`／`简体中文`／`English`，不隨介面語改寫語言本名。網路不在這張列表。
 
-- **網路：** 兩列單選（Devnet、Mainnet），圓點表示目前；立刻寫入。**不要**用分段 tab／seg 來選 cluster。
+- **網路：** 漢堡選單一項，在地址簿與設定之間。頁面仍是兩列單選（Devnet、Mainnet），圓點表示目前；立刻寫入。**不要**用分段 tab／seg 來選 cluster。返回回主畫面。
 - **RPC：** 同一頁兩張卡（Devnet、Mainnet）各自編清單；radio + ellipsis URL。目前 cluster 的卡標「目前」。選／加／刪立刻寫入。
-- **API keys：** 標籤寫 **Helius API URL**、**Jupiter API key**。皆 `type="text"`，**不要** `type="password"`。有值時都顯示 `••••••`（不要「已設定」、不要露出後 4 或 `?api-key=`）。Reveal 才給全文（單行 ellipsis），**不要**再要錢包密碼。空值＝可貼上後確認圖示提交該列；清除圖示立刻寫成空。失焦或確認才寫入，禁止整頁 Save。樞紐摘要：兩支都有值才是已設定，一支都沒有才是未設定，其餘是部分設定。
+- **API keys：** 標籤寫 **Helius API URL**、**Jupiter API key**。交易 AI 的 OpenRouter API key 用同一列。皆 `type="text"`，**不要** `type="password"`。有值時都顯示 `••••••`（不要「已設定」、不要露出後 4 或 `?api-key=`）。平時右側是顯示與鉛筆；點鉛筆並讀到明文後才可改，並出現確認與捨棄。確認才寫入。捨棄、失焦、離開頁面都不寫入。禁止整頁 Save，也沒有清除圖示立刻寫空。Reveal 不要再要錢包密碼。樞紐摘要：兩支都有值才是已設定，一支都沒有才是未設定，其餘是部分設定。
 - **錢包密碼：** 獨立子頁，殼底主按鈕；遮罩規則見 [`research/secret-field-autofill.md`](research/secret-field-autofill.md) 類 B 與 [`design-demos/change-wallet-password-ux.html`](design-demos/change-wallet-password-ux.html)。
 
 舊稿 [`design-demos/settings-rpc-ux.html`](design-demos/settings-rpc-ux.html) 只保留 RPC 列互動細節；樞紐結構以 hub 稿為準。

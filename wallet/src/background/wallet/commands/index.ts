@@ -18,7 +18,9 @@ export {
   handleAddCombinedSub,
   handleCreateCombinedAccount,
   handleRemoveCombinedSub,
+  handleReorderCombinedSubs,
   handleSetCombinedMain,
+  handleSetCombinedMemberName,
 } from "./combined";
 export {
   handleChangeVaultPassword,

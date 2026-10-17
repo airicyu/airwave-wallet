@@ -2,7 +2,7 @@
 
 **依賴：** [0.3.0](../0.3.0/INDEX.md) 應已 shipped（方案 A 卡片 + `HomeTokenRow`）。若 0.3.0 未完成，不要開始本版實作。
 
-實作前建議跑 roadmap-version 設計閘門（除非使用者明示跳過）。
+實作前建議跑 version-delivery 設計閘門（除非使用者明示跳過）。
 
 ## 讀檔順序
 

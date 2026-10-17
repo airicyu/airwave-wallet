@@ -29,7 +29,6 @@ export async function handleAddressBookAdd(req: ExtensionRequest): Promise<Exten
   const body = payload(req);
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const address = typeof body.address === "string" ? body.address.trim() : "";
-  if (!name) return fail(req, "EMPTY_NAME", "Name is empty");
   if (!isAddress(address)) return fail(req, "INVALID_ADDRESS", "Invalid address");
   const cards = await readAddressBook();
   if (cards.some((c) => c.address === address)) return fail(req, "DUPLICATE_ADDRESS", "Duplicate address");
@@ -42,7 +41,6 @@ export async function handleAddressBookRename(req: ExtensionRequest): Promise<Ex
   const body = payload(req);
   const id = typeof body.id === "string" ? body.id : "";
   const name = typeof body.name === "string" ? body.name.trim() : "";
-  if (!name) return fail(req, "EMPTY_NAME", "Name is empty");
   const cards = await readAddressBook();
   const index = cards.findIndex((c) => c.id === id);
   if (index < 0) return fail(req, "NOT_FOUND", "Not found");

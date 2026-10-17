@@ -1,6 +1,6 @@
 # 0.30.0 — 簽署交易 AI 分析（sandbox harness + Decisions 等級）
 
-- **狀態：** `in progress`
+- **狀態：** `shipped`
 - **上游版本：** [0.29.0](../0.29.0/INDEX.md)（Mainnet RPC 就緒語意）。簽署審批殼與模擬：[0.10.0](../0.10.0/INDEX.md)／[0.11.0](../0.11.0/INDEX.md)／[0.19.0](../0.19.0/INDEX.md)。第三方 key 形狀：[0.27.0](../0.27.0/INDEX.md)
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
 - **構想來源：** 原 `backlog/sign-tx-ai-security-eval.md`、`backlog/bubble-harness-runtime.md`、`backlog/bubble-harness-handoff.md`（出貨後已刪）。POC：`test-web/sign-risk.html`

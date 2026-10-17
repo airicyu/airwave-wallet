@@ -4,7 +4,7 @@
 
 [`GUIDELINES.md`](./GUIDELINES.md) 管 roadmap **文件寫作**；本檔管 **誰開新 session、何時審查、何時 HANDOFF、何時測**。
 
-執行某一版（設計審查迴圈 → Track 實作）時，用倉庫內技能 `.agents/skills/roadmap-version`。本檔是該技能的規範來源，不另認上層目錄的通用模板。
+交付某一版（設計審查迴圈 → Track 實作 → 出貨）時，用倉庫內技能 `.agents/skills/version-delivery`。本檔是該技能的規範來源，不另認上層目錄的通用模板。
 
 ---
 
@@ -96,7 +96,7 @@
 
 ### 審查 agent 貼用 prompt（可選）
 
-技能 `.agents/skills/roadmap-version/prompts.md` 有完整貼用稿。臨時手貼時至少包含：
+技能 `.agents/skills/version-delivery/prompts.md` 有完整貼用稿。臨時手貼時至少包含：
 
 ```text
 你是 Airwave Wallet 實作審查 agent。只認檔案，不認 chat history。

@@ -15,6 +15,7 @@ import { canWalletSendFromActiveAccount, homeTokenRowForSendBalance } from "../.
 import { MainnetRpcStop } from "./MainnetRpcStop";
 import { formatOrganicScoreLabel } from "../../shared/organic-score-label";
 import { NATIVE_SOL_ID, shortMint, sortCombinedTokenMembers, type HomeTokenRow } from "../home/home-tokens";
+import { CopyIconButton } from "./CopyPkButton";
 import { IconChevronDown } from "./StrokeIcon";
 import { shortAddr } from "../lib/format";
 import { usePopupContext } from "../state/PopupContext";
@@ -327,7 +328,14 @@ export function TokenDetailView({
         </div>
         <div className="token-detail-row">
           <span className="label">{t("token.mint")}</span>
-          <span>{row.id === NATIVE_SOL_ID ? t("token.native") : shortMint(row.id)}</span>
+          {row.id === NATIVE_SOL_ID ? (
+            <span>{t("token.native")}</span>
+          ) : (
+            <span className="token-detail-mint">
+              <span>{shortMint(row.id)}</span>
+              <CopyIconButton text={row.id} />
+            </span>
+          )}
         </div>
       </div>
     </div>

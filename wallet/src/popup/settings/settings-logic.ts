@@ -57,10 +57,14 @@ export async function patchRpcByCluster(next: Record<Cluster, ClusterRpcConfig>,
   } else await io.refresh();
 }
 
-export async function patchSettingsPartial(patch: Partial<Settings>, io: SettingsIo, locale: UiLocale): Promise<void> {
+export async function patchSettingsPartial(patch: Partial<Settings>, io: SettingsIo, locale: UiLocale): Promise<boolean> {
   const res = await sendExtensionRequest("storage.patchSettings", patch);
-  if (!res.ok) io.showError(apiErrorMessage(locale, res.error, "error.saveSettingsFailed"));
-  else await io.refresh();
+  if (!res.ok) {
+    io.showError(apiErrorMessage(locale, res.error, "error.saveSettingsFailed"));
+    return false;
+  }
+  await io.refresh();
+  return true;
 }
 
 export function looksHttpUrl(s: string): boolean {
@@ -166,9 +170,8 @@ export async function persistHeliusField(args: {
   const stored = (await readStoredIntegrationSecrets()).heliusApiUrl;
   let heliusApiUrl = args.draft.trim();
   if (heliusApiUrl === MASKED_SECRET_DISPLAY) heliusApiUrl = stored;
-  if (heliusApiUrl === stored) return false;
-  await patchSettingsPartial({ heliusApiUrl }, args.io, args.locale);
-  return true;
+  if (heliusApiUrl === stored) return true;
+  return patchSettingsPartial({ heliusApiUrl }, args.io, args.locale);
 }
 
 export async function persistJupiterField(args: {
@@ -179,9 +182,8 @@ export async function persistJupiterField(args: {
   const stored = (await readStoredIntegrationSecrets()).jupiterApiKey;
   let jupiterApiKey = args.draft.trim();
   if (jupiterApiKey === MASKED_SECRET_DISPLAY) jupiterApiKey = stored;
-  if (jupiterApiKey === stored) return false;
-  await patchSettingsPartial({ jupiterApiKey }, args.io, args.locale);
-  return true;
+  if (jupiterApiKey === stored) return true;
+  return patchSettingsPartial({ jupiterApiKey }, args.io, args.locale);
 }
 
 export async function persistOpenRouterField(args: {
@@ -192,9 +194,8 @@ export async function persistOpenRouterField(args: {
   const stored = (await readStoredIntegrationSecrets()).openRouterApiKey;
   let openRouterApiKey = args.draft.trim();
   if (openRouterApiKey === MASKED_SECRET_DISPLAY) openRouterApiKey = stored;
-  if (openRouterApiKey === stored) return false;
-  await patchSettingsPartial({ openRouterApiKey }, args.io, args.locale);
-  return true;
+  if (openRouterApiKey === stored) return true;
+  return patchSettingsPartial({ openRouterApiKey }, args.io, args.locale);
 }
 
 export function confirmRpcUrl(args: {
