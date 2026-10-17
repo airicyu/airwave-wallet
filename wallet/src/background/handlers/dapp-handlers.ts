@@ -24,12 +24,7 @@ import { isSidebarWalletOpen } from "../shell";
 import { pendingTimeoutHandlers } from "../send";
 import { signMessageEnqueueGateError } from "../session";
 import * as session from "../session";
-
-const ACCEPTED_CHAIN_IDS = new Set(["solana:devnet", "solana:mainnet"]);
-
-function settingsChainId(cluster: "devnet" | "mainnet"): string {
-  return cluster === "mainnet" ? "solana:mainnet" : "solana:devnet";
-}
+import { resolveDappSignChain } from "./dapp-sign-chain";
 
 function pendingInsertRefusal(requestId: string): ExtensionResponse {
   const code = pendingInsertError(requestId);
@@ -231,27 +226,17 @@ export async function handleDappCommand(
 
   if (req.command === "dapp.signTransaction") {
     const payload = req.payload as SignTransactionPayload | undefined;
-    const chain = payload?.chain;
-    if (!chain || typeof chain !== "string" || !ACCEPTED_CHAIN_IDS.has(chain)) {
-      return respond({
-        kind: "airwave-ext-res",
-        requestId: req.requestId,
-        ok: false,
-        error: { code: "INVALID_CHAIN", message: "Unsupported chain" },
-      });
-    }
     const settings = await readSettings();
-    if (settingsChainId(settings.cluster) !== chain) {
+    const resolved = resolveDappSignChain(payload?.chain, settings.cluster);
+    if (!resolved.ok) {
       return respond({
         kind: "airwave-ext-res",
         requestId: req.requestId,
         ok: false,
-        error: {
-          code: "CHAIN_MISMATCH",
-          message: "Wallet cluster does not match request chain",
-        },
+        error: { code: resolved.code, message: resolved.message },
       });
     }
+    const chain = resolved.chain;
     const activeForConn = await readActiveAccountId();
     const connections = await readConnections();
     if (!activeForConn || connections[origin]?.accountId !== activeForConn) {
@@ -286,7 +271,7 @@ export async function handleDappCommand(
       tabId,
       frameId,
       origin,
-      payload: req.payload as SignTransactionPayload,
+      payload: { ...(req.payload as SignTransactionPayload), chain },
       signAccountId: activeId,
       createdAt: Date.now(),
     });
@@ -294,27 +279,17 @@ export async function handleDappCommand(
 
   if (req.command === "dapp.signAndSendTransaction") {
     const payload = req.payload as SignAndSendTransactionPayload | undefined;
-    const chain = payload?.chain;
-    if (!chain || typeof chain !== "string" || !ACCEPTED_CHAIN_IDS.has(chain)) {
-      return respond({
-        kind: "airwave-ext-res",
-        requestId: req.requestId,
-        ok: false,
-        error: { code: "INVALID_CHAIN", message: "Unsupported chain" },
-      });
-    }
     const settings = await readSettings();
-    if (settingsChainId(settings.cluster) !== chain) {
+    const resolved = resolveDappSignChain(payload?.chain, settings.cluster);
+    if (!resolved.ok) {
       return respond({
         kind: "airwave-ext-res",
         requestId: req.requestId,
         ok: false,
-        error: {
-          code: "CHAIN_MISMATCH",
-          message: "Wallet cluster does not match request chain",
-        },
+        error: { code: resolved.code, message: resolved.message },
       });
     }
+    const chain = resolved.chain;
     const activeForConn = await readActiveAccountId();
     const connections = await readConnections();
     if (!activeForConn || connections[origin]?.accountId !== activeForConn) {
@@ -349,7 +324,7 @@ export async function handleDappCommand(
       tabId,
       frameId,
       origin,
-      payload: payload as SignAndSendTransactionPayload,
+      payload: { ...(payload as SignAndSendTransactionPayload), chain },
       createdAt: Date.now(),
       signAccountId: activeId,
     });

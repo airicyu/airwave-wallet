@@ -61,6 +61,7 @@ This directory is the version contract for **airwave-wallet**. An agent with no 
 | [0.45.0](./0.45.0/INDEX.md) | shipped | Wallet Standard `icon` embeds `public/icon128.png`. The dApp connect picker no longer shows a red square |
 | [0.46.0](./0.46.0/INDEX.md) | shipped | Secret rows use a pencil until edit. Network is in the hamburger menu |
 | [0.47.0](./0.47.0/INDEX.md) | shipped | Account list, combined manage, and address book: rename sub-screen, member names and order, kind colors |
+| [0.47.1](./0.47.1/INDEX.md) | shipped | dApp sign without `chain` uses the wallet's selected cluster |
 
 **Version numbers:** a **patch** on `x.y.z` (for example **0.3.1**) is only a bugfix for that minor. It does not schedule a new feature. A new feature is the next **minor** (0.3.0 → 0.4.0 → 0.5.0).
 

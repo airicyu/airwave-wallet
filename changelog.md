@@ -4,6 +4,10 @@
 
 (No unversioned changes. The list is [`dev-docs/roadmap/unversioned.md`](dev-docs/roadmap/unversioned.md). After a batch is assigned to a version, move the sentence under that version's heading and leave this section empty.)
 
+## 0.47.1 — 2026-10-18
+
+A dApp `signTransaction` or `signAndSendTransaction` that omits `chain` uses the cluster selected in the wallet (`solana:mainnet` or `solana:devnet`). A chain the dApp does send must still match that cluster.
+
 ## 0.47.0 — 2026-10-17
 
 Account list, combined manage, and address book rename all use a sub-screen. Combined manage shows only the main wallet and members: the main-wallet label sits outside the card; members use a circular check to pick the main wallet, and clicking the row (except the grip and the buttons on the right) also switches it. Members can be reordered and can have an optional name. Switch-main hides rename, delete, and add. Signing icons are copper; watch-only icons are blue. Address-book names may be empty.
