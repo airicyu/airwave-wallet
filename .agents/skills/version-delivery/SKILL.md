@@ -27,7 +27,7 @@ disable-model-invocation: true
 使用者給了版本（`0.1.0`）或目錄就做那一版。沒給時先看表，不要猜一個新號：
 
 - 最新一版是 `in progress`：追加進那一版的 INDEX 與 changelog 該版標題，不開下一版。
-- 最新一版已 `shipped`、下一版目錄還沒有：改動寫進 [`dev-docs/roadmap/unversioned.md`](../../../dev-docs/roadmap/unversioned.md)，並在根 `changelog.md` 最上方 `Next` 用一句話跟上。兩處同一批。不要自己開下一版。歸屬等使用者選：算進剛出貨的那一版、開下一版承接、或出貨後仍留未歸版。
+- 最新一版已 `shipped`、下一版目錄還沒有：**程式**改動寫進 [`dev-docs/roadmap/unversioned.md`](../../../dev-docs/roadmap/unversioned.md)，並在根 `changelog.md` 最上方 `Next` 用一句話跟上。兩處同一批。不要自己開下一版。歸屬等使用者選：算進剛出貨的那一版、開下一版承接、或出貨後仍留未歸版。文件、隱私權政策、使用條款不記入 roadmap。
 - 上一版還不是 `shipped`，使用者卻點名新版本：先提醒軟規則，不硬擋。使用者仍要開，才建立下一版。
 
 工作目錄：`dev-docs/roadmap/<VER>/`。必讀：`INDEX.md`；有則讀 `docs/*`、`HANDOFF.md`。對照上一版 INDEX、相關 `backlog/*.md`（構想，**不得覆寫本版已定案**）。該版承接未歸版時，把 `unversioned.md` 的條目寫進 INDEX，並把 changelog `Next` 的句子移到該版標題下，兩處改回沒有待歸項。
