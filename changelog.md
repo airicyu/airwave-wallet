@@ -2,200 +2,200 @@
 
 ## Next
 
-（尚無未歸版改動。清單見 [`dev-docs/roadmap/unversioned.md`](dev-docs/roadmap/unversioned.md)。歸進某一版後，把句子移到該版標題下，這裡留空。）
+(No unversioned changes. The list is [`dev-docs/roadmap/unversioned.md`](dev-docs/roadmap/unversioned.md). After a batch is assigned to a version, move the sentence under that version's heading and leave this section empty.)
 
 ## 0.47.0 — 2026-10-17
 
-帳戶列表、聚合管理、地址簿的改名都進子畫面。聚合管理只顯示主錢包與成員：主錢包標籤在小卡外；成員用圓形勾選主錢包，點列（握把與右側按鈕除外）也會換主錢包；可拖曳排序、可有選填名稱。切換主錢包不顯示改名、刪除與加入。可簽圖示為銅色，唯讀為藍色。地址簿名稱可留空。
+Account list, combined manage, and address book rename all use a sub-screen. Combined manage shows only the main wallet and members: the main-wallet label sits outside the card; members use a circular check to pick the main wallet, and clicking the row (except the grip and the buttons on the right) also switches it. Members can be reordered and can have an optional name. Switch-main hides rename, delete, and add. Signing icons are copper; watch-only icons are blue. Address-book names may be empty.
 
 ## 0.46.0 — 2026-10-17
 
-Settings 的 Helius、Jupiter、OpenRouter 密鑰列平時只有顯示與鉛筆。點鉛筆並讀到明文後才可改，確認才寫入；捨棄與失焦不寫入。網路從設定樞紐移到漢堡選單，放在地址簿與設定之間；頁面仍是 Devnet／Mainnet 單選。
+Helius, Jupiter, and OpenRouter secret rows show only reveal and a pencil until edit. After the pencil loads the plaintext, confirm writes; discard and blur do not. Network moved from the settings hub to the hamburger menu, between Address book and Settings. The page is still a Devnet / Mainnet radio.
 
 ## 0.45.0 — 2026-10-15
 
-dApp 連線面板的 Wallet Standard `icon` 改為內嵌與擴充同一張 `public/icon128.png`，不再顯示 1×1 紅方塊。
+The Wallet Standard `icon` in the dApp connect picker is the same embedded `public/icon128.png` as the extension, not a 1×1 red square.
 
 ## 0.44.0 — 2026-10-15
 
-交易 AI：報告與定級各可選 **預設**（程式內建有序鏈，不寫進 storage）或 **自訂**（最多 5 個 id）。OpenRouter completion 依序備援（404／502／503 換下一個；429 等 1s 重試一次）。**簽署審批 AI 列**維持原版面（本版不改 widget）。簽署 **預期變動** SPL 行可在 mint 短址旁複製完整 mint（SOL／Wrapped SOL 不顯示複製）。
+Tx AI report and grade can each be **default** (a built-in ordered chain, not stored) or **custom** (up to 5 ids). OpenRouter completion falls through the chain (404 / 502 / 503 try the next; 429 waits 1s and retries once). The sign-approval AI row keeps its previous layout. An SPL expected-delta row can copy the full mint next to the short mint. SOL and Wrapped SOL do not show copy.
 
 ## 0.43.0 — 2026-10-15
 
-地址簿：漢堡選單「錢包帳戶」下一項可新增、改名、複製、刪除、拖曳排序。送出時可全螢幕從錢包帳戶或地址簿選收款人，仍可手貼其他地址。名單存在 `airwave.addressBook.v1`，不升 schema 世代。
+Address book: the hamburger item under Wallet accounts can add, rename, copy, delete, and drag-reorder. Send can pick a recipient full-screen from wallet accounts or the address book, and can still paste another address. Stored in `airwave.addressBook.v1` without a schema-generation bump.
 
 ## 0.42.0 — 2026-10-14
 
-聚合錢包帳戶在目前錢包可簽時，可從持倉詳情走既有送出。可送出數量是目前這一條地址的餘額，不是 Home 加總。其他成員不能併進同一筆。目前錢包不可簽時沒有送出。不另做畫面，也不做歸集。
+A combined wallet account can send from token detail through the existing send flow when the current wallet can sign. The spendable amount is that one address's balance, not the Home total. Other members are not merged into the same transaction. No send when the current wallet cannot sign. No new screen and no sweep.
 
 ## 0.41.0 — 2026-10-14
 
-新增帳戶的助記詞錢包與拋棄式錢包改為先預覽再入庫：進頁即有公鑰，骰子可本機重骰，滿意後才按建立／產生。助記詞頁移除整組複製。拋棄式產生會帶入畫面上那組鑰匙；解不開則拒絕，不會改產生另一個隨機帳戶。交易 AI 報告模型固定項改回 `~deepseek/deepseek-flash-latest` 為第一項與新安裝預設；已存的模型 id 不會被改寫。
+New mnemonic and burner accounts preview before they are saved: the page opens with a public key, the dice rerolls locally, and create / generate writes only after that. The mnemonic page no longer copies the whole phrase. Burner generate saves the key shown on screen; if it cannot be unlocked the command fails and does not mint a different random account. The tx AI report chain's first fixed id is `~deepseek/deepseek-flash-latest` again, including new installs. Stored model ids are not rewritten.
 
 ## 0.40.0 — 2026-10-14
 
-網站連線確認：置中顯示站點與目前帳戶，主按鈕改為「連線」；移除說明句。修復 Settings · 交易 AI 分析：報告／定級模型選「其他」時無法展開自訂 id 欄。
+Site connect consent centers the site and the current account. The primary button is Connect. The explainer sentence is gone. Settings tx AI: choosing Other for the report or grade model opens the custom id field again.
 
 ## 0.39.0 — 2026-10-14
 
-側欄審批 `signTransaction`／`signAndSendTransaction` 時，關閉 Chrome 側欄即拒絕並回發起頁（對齊 popout 關窗）。Settings · 交易 AI：報告／定級各兩個固定模型加「其他」自填 OpenRouter id；報告預設改為 `apodex/apodex-1.1-mini:free`。
+Closing the Chrome side panel while it is approving `signTransaction` or `signAndSendTransaction` rejects and returns to the opener, matching popout close. Settings tx AI: report and grade each have two fixed models plus Other for an OpenRouter id. The report default is `apodex/apodex-1.1-mini:free`.
 
 ## 0.38.0 — 2026-10-13
 
-Home 持倉與簽署預期變動列對齊：已驗證綠盾在代幣圖前，organic score 大於 0 時整數分掛在盾右下。未驗證最左格留空、不畫分數。
+Home holdings and sign expected-delta rows share a trust shield: a green verified shield before the token image, with the integer organic score on the shield's lower right when the score is greater than 0. Unverified rows leave the left cell empty and do not draw a score.
 
 ## 0.37.0 — 2026-10-13
 
-安全修復：進行中的批准不能被同一個 requestId 換成另一筆內容。已連線分頁離開該網站後，帳戶變更與斷線不再把公鑰送到新頁面；該網站的連線信任仍在。
+Security: an in-flight approval cannot be swapped for different content under the same requestId. After a connected tab leaves that site, account-changed and disconnect no longer send the public key to the new page. The site's connection trust remains.
 
 ## 0.36.0 — 2026-10-12
 
-簽署審批：交易已帶 Compute Budget 的 CU limit／price 時，預設不再改寫 message（無 `workingTx`，簽原始 bytes）。僅缺 limit 或 price 時才自動補該項。審批仍顯示 CU 與費用；使用者「套用 CU」後才以 payload 寫入並重模擬。修 Jupiter 等已嵌入 CU 的 swap。
+Sign approval: if the transaction already sets Compute Budget CU limit and price, the message is not rewritten by default (no `workingTx`; the original bytes are signed). Only a missing limit or price is filled in. The approval still shows CU and fees. Apply CU writes the payload and re-simulates. Fixes swaps such as Jupiter that already embed CU.
 
 ## 0.35.0 — 2026-10-12
 
-視窗標題與 `html lang` 跟 Settings 語言對齊。popup／側欄／審批 popout 的 `document.title` 是單一語文 catalog 句（錢包／Wallet、審批／Approval、連線／Connect 等），不再前綴 `Airwave —`。殼內審批不改錢包窗名。sandbox／offscreen 未改。
+Window title and `html lang` follow the Settings language. Popup, sidebar, and approval popout `document.title` is one catalog sentence (Wallet, Approval, Connect, and so on) with no `Airwave —` prefix. An in-shell approval does not rename the wallet window. Sandbox and offscreen are unchanged.
 
 ## 0.34.0 — 2026-10-12
 
-簽署 AI：service worker 在 sandbox 前先跑 decode、與審批相同的 simulate（交易 blockhash）、分批 `getMultipleAccounts`（最多 60 個已解析帳戶 + fee payer balance），`preflightPubkeys` 寫進 prompt；模型勿重查 manifest 內 pubkey（host 回 note）。OpenRouter 僅移除 `decode_message`、`simulate`；其餘唯讀 RPC 僅補洞。定級重用 preflight。`TX_AI_MAX_STEPS` 8。審批預期變動 `BlockhashNotFound` **不**影響 AI 分析（可先看報告再讓 dApp 重送新交易）。
+Sign AI: the service worker runs decode, the same simulate as approval (transaction blockhash), and batched `getMultipleAccounts` (up to 60 resolved accounts plus fee-payer balance) before the sandbox. `preflightPubkeys` go into the prompt. The model should not re-query pubkeys already in the manifest (the host returns a note). OpenRouter drops only `decode_message` and `simulate`. Other read-only RPC tools stay for gaps. Grading reuses preflight. `TX_AI_MAX_STEPS` is 8. A `BlockhashNotFound` on the approval delta does not stop AI analysis.
 
 ## 0.33.0 — 2026-10-12
 
-簽署審批「預期變動」每列改為固定信任盾（已驗證／未驗證）、圓形代幣圖、名稱與差額。Mainnet 模擬後由 service worker 以 Jupiter Tokens v2 補 icon／symbol／`isVerified`；未驗證列不以 symbol 當主標。Devnet 不打 Jupiter。0.32.0 的 3 秒刷新仍只更新預期變動內容區。
+Each sign-approval expected-delta row is a fixed trust shield (verified or not), a round token image, a name, and the delta. On mainnet, after simulate, the service worker fills icon, symbol, and `isVerified` from Jupiter Tokens v2. An unverified row does not use the symbol as the primary label. Devnet does not call Jupiter. The 0.32.0 three-second refresh still updates only the delta body.
 
 ## 0.32.0 — 2026-10-11
 
-簽署審批模擬改用交易自己的 blockhash（不再 `replaceRecentBlockhash`）；頁面可見時每 3 秒只刷新「預期變動」。失敗文案在該卡內；重新整理與 Inspector 從第一屏並排。交易費由簽名費與 CU 在當地計算，可展開明細；模擬往返不改費用文字。站點置中、過長省略、可複製完整 origin；帳戶 widget 下分隔線。AI 改標題下單列卡（分析中右側「AI 分析中」；完成後風險指數＋report；逾時 60s／單次 LLM 55s 顯示「分析逾時」、其他失敗「分析沒有完成」，無正文不開 report）；overlay 標題下固定免責句、底列回到頂部。Settings 的 AI 分析開關預設 on（仍須 OpenRouter key）。AI `simulate` tool 仍換 blockhash。
+Sign-approval simulate uses the transaction's own blockhash (no `replaceRecentBlockhash`). While the page is visible, only Expected changes refreshes every 3 seconds. Failure copy stays in that card. Refresh and Inspector sit side by side on the first screen. The fee is signature fee plus CU, computed locally, with an expandable breakdown. The simulate round trip does not change the fee text. The site is centered, ellipsized when long, and copies the full origin. A divider sits under the account widget. AI is one card under the title (while running, "AI analyzing" on the right; when done, risk index plus report). Timeout is 60s, a single LLM call 55s, shown as analysis timed out. Other failures say analysis did not finish. No report opens without a body. A fixed disclaimer sits under the overlay title. The bottom row returns to the top. The Settings AI switch defaults on (an OpenRouter key is still required). The AI `simulate` tool still replaces the blockhash.
 
 ## 0.31.0 — 2026-10-11
 
-建置鏈升到 Vite 8.3.4（Rolldown）與 `@vitejs/plugin-react` 5.2.0，TypeScript 7.0.2；`@crxjs/vite-plugin` 維持 2.7.1。`wallet` 直接依賴改精確版號。Content script 與 inject 入口改名，避免 Rolldown 同檔名 chunk 撞車。擴充頁 HTML 的 `/assets/` 與 `crossorigin` 改寫成相對路徑。Rolldown 會把 service worker 進入點分享給擴充頁，背景監聽只在 service worker 註冊，否則審批頁會先回失敗、交易 AI 只走一輪。簽署、送出與 AI 多輪到 Decisions 已手測。過期 blockhash 的失敗文案本版不改。
+Build chain is Vite 8.3.4 (Rolldown), `@vitejs/plugin-react` 5.2.0, and TypeScript 7.0.2. `@crxjs/vite-plugin` stays 2.7.1. Direct `wallet` dependencies use exact versions. Content-script and inject entries were renamed so Rolldown does not collide same-name chunks. Extension-page HTML rewrites `/assets/` and `crossorigin` to relative paths. Rolldown shares the service-worker entry with extension pages, so background listeners register only in the service worker. Otherwise the approval page answers failure first and tx AI runs only one round. Sign, send, and multi-step AI through Decisions were hand-tested. Expired-blockhash copy is unchanged.
 
 ## 0.29.0 — 2026-10-10
 
-Mainnet 必須自備 JSON-RPC，不再打官方公用節點。首次：選語言 → 設密碼 → RPC 引導（略過或設定才結束）。Home 未就緒停住。Helius／Jupiter 仍選填，不當 RPC 後備。Devnet 仍可用官方公用 RPC。
+Mainnet requires the user's own JSON-RPC. The official public endpoint is not used. First run: language, then password, then the RPC guide (skip or configure to finish). Home stops until mainnet RPC is ready. Helius and Jupiter stay optional and are not an RPC fallback. Devnet may still use the official public RPC.
 
 ## 0.28.0 — 2026-10-10
 
-Home Activity 捲到底載入更舊一頁（Helius／RPC `before`）。列上時間改為本地 `YYYY-MM-DD HH:MM:SS`。有 mint 時左側 https token icon，Jupiter／持倉快取的 symbol 覆寫 mint 縮寫。
+Home Activity loads an older page when the list hits the bottom (Helius / RPC `before`). Row time is local `YYYY-MM-DD HH:MM:SS`. When a mint is known, the left side is an https token icon, and a Jupiter or holdings-cache symbol replaces the short mint.
 
 ## 0.27.0 — 2026-10-10
 
-保管與簽名邊界：session 只留 salt 與 AES key，明文 secret 只在 service worker 記憶體；`workingTx` 只做本地 Compute Budget 修補，不再為了改 CU 去拉 lookup table。dApp 簽名須已連線、`signTransaction` 須帶與錢包一致的 chain，核准前分頁 origin 必須仍是當初那一個。新 vault 的 PBKDF2 迭代為 600000；`getState` 不再帶出 Jupiter／Helius 明文。
+Custody and signing boundary: session keeps only salt and the AES key. Plaintext secrets stay in service-worker memory. `workingTx` only patches Compute Budget locally and no longer fetches lookup tables to edit CU. A dApp signature requires an existing connection. `signTransaction` must carry the same chain as the wallet. Before approve, the tab origin must still be the original one. New vaults use 600000 PBKDF2 iterations. `getState` no longer returns Jupiter or Helius plaintext.
 
 ## 0.26.0 — 2026-10-10
 
-小修：匯入助記詞切「標準」／「CLI／Ledger」後預覽列會跟著變。Combined 持倉展開改 34px chevron、成員兩行＋比例條並依數量排序。解鎖畫面可見即聚焦密碼欄。帳戶類型改三色 stroke 圖（可簽／唯讀／聚合），頂欄不再用字母頭像。Accounts 可拖卡片改序。Combined Manage 分成員地址與本機帳戶兩區；刪帳戶與刪成員皆須確認。`airwave.schemaGeneration` 蓋第 1 代戳，不改既有 `*.v1` 資料形狀。
+Fixes: mnemonic import preview follows Standard versus CLI / Ledger. Combined holdings expand with a 34px chevron, two-line members, and a share bar sorted by amount. The unlock screen focuses the password field when it is shown. Account kinds use three stroke icons (signing, watch-only, combined). The top bar no longer uses a letter avatar. Accounts can drag cards to reorder. Combined manage splits member addresses and local accounts. Deleting an account or a member asks first. `airwave.schemaGeneration` stamps generation 1 and does not change existing `*.v1` shapes.
 
 ## 0.25.0 — 2026-10-10
 
-錢包主殼在工具列 action popup 與 Chrome 側欄之間切換：Home 頂欄一顆圖示；殼模式＝側欄文件現在是否活著，不寫 settings。側欄開著時點工具列走側欄、網站審批進殼內 stack；否則 popup／popout。錢包送出與收回租金留在當下殼。`uiHost` 寫 `"window"` 或 `"sidebar"`，不再寫 `"popup"`。
+The wallet shell switches between the toolbar action popup and the Chrome side panel: one Home icon. Shell mode is whether the side-panel document is alive, not a setting. While the side panel is open, the toolbar action focuses it and site approvals stack inside the shell. Otherwise popup / popout. Wallet send and close-empty stay in the current shell. `uiHost` is `"window"` or `"sidebar"`, not `"popup"`.
 
 ## 0.24.0 — 2026-10-09
 
-重構、行為與 0.23.0 相同：`AGENTS.md` 規定 `wallet/src` 的 `.ts` 少於 50 行可不寫檔首註解、50 行以上必須英文職責註解（≤100 words），並補齊全 tree（不含 `ui-messages.ts`）；400／150 行門檻。`background/wallet` 命令搬入 `commands/` 並分 account／combined／session；`simulate-pending-tx.ts` 與 `close-empty-service.ts` 拆成同層模組並刪除舊檔。不改命令字串、storage、畫面與三語 catalog。
+Refactor with the same behavior as 0.23.0. `AGENTS.md` says a `wallet/src` `.ts` under 50 lines may omit a file header, and 50 lines or more need an English responsibility comment (at most 100 words). The tree was filled in, except `ui-messages.ts`. The 400 and 150 line thresholds apply. `background/wallet` commands moved under `commands/` split into account, combined, and session. `simulate-pending-tx.ts` and `close-empty-service.ts` split into sibling modules and the old files were removed. Command strings, storage, screens, and the three-locale catalog are unchanged.
 
 ## 0.23.0 — 2026-10-08
 
-Wallet chrome 三語（繁體／简体／English）：Settings 第一列語言、共用 `ui-messages` catalog 與 `t(locale, key)`；SW 錯誤改穩定 code，UI 再翻譯。popup／popout 字體方案 B；解鎖與確認中標題去掉標題字距 0.02em。產品圖放在解鎖與首次建立密碼（64px）以及關於（40px）。
+Wallet chrome in three languages (Traditional Chinese, Simplified Chinese, English). Settings' first row is language. Shared `ui-messages` catalog and `t(locale, key)`. Service-worker errors use stable codes that the UI translates. Popup and popout use font plan B. Unlock and confirming titles drop `letter-spacing: 0.02em`. The product image is on unlock and first password (64px) and About (40px).
 
 ## 0.22.1 — 2026-10-08
 
-Activity 列尾 Orb 網址去掉 `/history`（`https://orb.helius.dev/tx/{sig}?cluster=…`）。帶 `/history` 的頁面不存在。
+Activity row Orb URLs drop `/history` (`https://orb.helius.dev/tx/{sig}?cluster=…`). Pages with `/history` do not exist.
 
 ## 0.22.0 — 2026-10-08
 
-Home 頂欄 pill 貼內容（圓形兩字頭像｜名稱置中｜複製靠右、不顯示地址縮寫）；僅 Devnet 在 pill 外右側橙黃徽章。複製地址成功後勾與「已複製」約 1.6 秒。持倉手動刷新 3 秒冷卻弧。Activity 列尾改開 Helius Orb。收回租金確認中藏頂欄、與簽署送出同一 dash-ring。簽署交易 phase 1 改 Kit `estimateResourceLimitsFactory`，建議 CU limit 公式仍為 0.11.0。
+Home top pill hugs its content (round two-letter avatar, centered name, copy on the right, no short address). Devnet only: an orange badge to the right of the pill. A successful address copy shows a check and "Copied" for about 1.6 seconds. Manual holdings refresh has a 3 second cooldown arc. Activity row tails open Helius Orb. Close-empty confirming hides the top bar and uses the same dash-ring as send. Sign phase 1 uses Kit `estimateResourceLimitsFactory`. The suggested CU limit formula stays 0.11.0.
 
 ## 0.21.1 — 2026-10-08
 
-Close-empty 修補：`planCloseEmpty` 對 Kit 估出的 CU 加 margin（×1.25、Compute Budget 兩條 ix headroom、最低 10k），避免 preflight `ComputationalBudgetExceeded`。`commitCloseEmpty` 在 WebSocket 確認失敗時以 HTTP 輪詢 `getSignatureStatuses`，避免鏈上已成功卻顯示「鏈上失敗」。回收勾選清單補 SYMBOL 與 icon（持倉 → mainnet Helius 零餘額 balances → Jupiter）。
+Close-empty: `planCloseEmpty` adds margin to Kit's CU estimate (×1.25, headroom for two Compute Budget instructions, minimum 10k) so preflight does not hit `ComputationalBudgetExceeded`. If WebSocket confirm fails, `commitCloseEmpty` polls `getSignatureStatuses` over HTTP so a chain success is not shown as a chain failure. The recycle checklist shows SYMBOL and icon (holdings, then mainnet Helius zero balances, then Jupiter).
 
 ## 0.21.0 — 2026-10-08
 
-Home Tokens 可掃描並關閉餘額為 0 的 token account，收回 rent 為 SOL。流程在 popup 內勾選→確認→一次送出；命令 `wallet.listClosableTokenAccounts`、`wallet.planCloseEmpty`、`wallet.commitCloseEmpty`；Kit 估 CU、plan executor 並發送出（`@solana/kit-plugin-rpc`）。無 popout、無新 pending kind、不改 `walletSend`。持倉 RPC 限流或 Kit 技術錯誤改底部 warn toast（約 4 秒、可點關），不再在列表下顯示 decode 長文；刷新時合併 token account 掃描、避免重複背景 refresh。
+Home Tokens can scan and close token accounts with a zero balance and reclaim rent as SOL. The flow stays in the popup: pick, confirm, one send. Commands are `wallet.listClosableTokenAccounts`, `wallet.planCloseEmpty`, and `wallet.commitCloseEmpty`. Kit estimates CU. The plan executor signs and sends (`@solana/kit-plugin-rpc`). No popout, no new pending kind, and `walletSend` is unchanged. RPC rate limits and Kit technical errors use a bottom warn toast (about 4 seconds, click to dismiss) instead of a long decode under the list. Refresh merges the token-account scan so background refresh does not run twice.
 
 ## 0.20.0 — 2026-10-07
 
-`wallet/` 與 `test-web/` 的 Solana 客戶端自 `@solana/web3.js` v1 全轉 `@solana/kit` 與 `@solana-program/*`（system、token、token-2022、compute-budget）。RPC、編解碼、session signer、簽交易、模擬、CU 改寫、錢包自組送出、inject 地址驗證與 test-web 組 tx 皆走 Kit；vault 仍 bs58 64-byte secrets；`signMessage` 仍 tweetnacl detached。使用者可見流程、pending／storage／Wallet Standard 能力表與 0.19.0 相同。直接依賴不再含 web3.js 與 `@solana/compat`。
+`wallet/` and `test-web/` Solana clients moved from `@solana/web3.js` v1 to `@solana/kit` and `@solana-program/*` (system, token, token-2022, compute-budget). RPC, codec, session signer, sign, simulate, CU rewrite, wallet-built send, inject address checks, and test-web transaction build all use Kit. The vault still stores bs58 64-byte secrets. `signMessage` is still tweetnacl detached. User-visible flow, pending, storage, and the Wallet Standard surface match 0.19.0. Direct dependencies no longer include web3.js or `@solana/compat`.
 
 ## 0.19.0 — 2026-10-07
 
-簽署交易審批：常見 program 靜態解讀指令名與欄位（System Transfer、Compute Budget limit／price、Token／Token-2022 Transfer 與 TransferChecked、ATA Create、Memo UTF-8）；其餘仍帳戶縮寫＋ hex。預期變動列新增 Solana Explorer Transaction Inspector 外連（message base64、`cluster` 依設定）；34px 有底重試與 Explorer 鈕。解讀與 URL 僅在 service worker、不進 `chrome.storage`；未加套件。
+Sign approval: static decode of common programs (System Transfer, Compute Budget limit and price, Token and Token-2022 Transfer and TransferChecked, ATA Create, Memo UTF-8). Everything else stays short accounts plus hex. Expected-delta rows add a Solana Explorer Transaction Inspector link (message base64, `cluster` from settings). Retry and Explorer are 34px filled buttons. Decode and the URL stay in the service worker and are not written to `chrome.storage`. No new package.
 
 ## 0.18.0 — 2026-10-07
 
-Home Activity：列出目前帳戶對外地址在目前 cluster 上最近最多 20 筆交易。mainnet 且有可解析 Helius key 時用已解析歷史（送出／收到／互換／交易）；否則 `getSignaturesForAddress` 粗列。每一列一筆交易；列尾圖示以新分頁開啟 Solscan（devnet 帶 `cluster=devnet`）。查詢在 service worker；歷史不進 `chrome.storage`。
+Home Activity lists up to the 20 most recent transactions for the current account's exposed address on the current cluster. Mainnet with a parseable Helius key uses parsed history (sent, received, swap, transaction). Otherwise a coarse `getSignaturesForAddress` list. One row is one transaction. The row-end icon opens Solscan in a new tab (`cluster=devnet` on devnet). The query runs in the service worker. History is not stored in `chrome.storage`.
 
 ## 0.17.0 — 2026-10-07
 
-宣告並實作 Wallet Standard `solana:signAndSendTransaction`：網站請求仍走 popout；批准後錢包簽名、`sendRawTransaction`、等到 `confirmed`，確認中→已確認 hold 1s 再關窗，signature 只回發起 tab。`signTransaction` 仍只簽立刻關；`walletSend` 宿主與成功回 Home 不變。test-web 改走真 feature 路徑。
+Wallet Standard `solana:signAndSendTransaction` is declared and implemented. The site request still uses a popout. After approve the wallet signs, calls `sendRawTransaction`, and waits for `confirmed`. Confirming holds on Confirmed for 1 second, then the window closes. The signature returns only to the originating tab. `signTransaction` still signs and closes immediately. The `walletSend` host and the return to Home are unchanged. test-web uses the real feature path.
 
 ## 0.16.0 — 2026-10-06
 
-Popup 收斂 React state：廢止模組級 `session`／`bindPopupShell` 與輸入時全樹 `bumpUi`。畫面草稿改元件 `useState`，跨頁暫存與導航走 App context；Back／離開清除／dock 以對照表為準。行為與 0.15.0 相同。未加依賴；審批殼仍 vanilla。
+Popup React state: the module-level `session`, `bindPopupShell`, and full-tree `bumpUi` on input are gone. Screen drafts are component `useState`. Cross-page scratch and navigation live in App context. Back, leave-and-clear, and the dock follow a lookup table. Behavior matches 0.15.0. No new dependency. The approval shell stays vanilla.
 
 ## 0.15.0 — 2026-10-06
 
-Popup 改 Vite + React functional component（`createRoot`、`App`、`PopupMarkup`）；行為與 0.14.0 相同。新增 `react`、`react-dom`、`@vitejs/plugin-react`；`@types/react`／`@types/react-dom` 因 npm 上的 React 19.3 未附 TS 定義而加為 devDependency。Service worker、content、inject、popout、審批殼仍 vanilla；`mountApprovalShell` 橋接不變。命令字串與 storage key 未改。
+Popup is Vite plus React function components (`createRoot`, `App`, `PopupMarkup`). Behavior matches 0.14.0. Added `react`, `react-dom`, and `@vitejs/plugin-react`. `@types/react` and `@types/react-dom` are devDependencies because the React 19.3 packages on npm did not ship TypeScript types. Service worker, content, inject, popout, and the approval shell stay vanilla. `mountApprovalShell` is unchanged. Command strings and storage keys are unchanged.
 
 ## 0.14.0 — 2026-10-05
 
-原始碼目錄化，使用者可見行為與 0.13.0 相同。Service worker 依職責分入 `messaging`、`session`、`storage`、`pending`、`simulate`、`send`、`home-tokens`、`handlers`、`wallet`。`wallet-handlers.ts` 改為 `wallet-dispatch.ts` 只分派命令。Popup 畫面進 `home`、`send`、`accounts`、`settings`、`onboarding`，小工具進 `lib`。審批殼抽出不讀模組狀態的格式化函式與模擬 notice 卡。未改訊息名、storage key、CSS、HTML，也未加依賴。
+Source directories. User-visible behavior matches 0.13.0. The service worker is split into `messaging`, `session`, `storage`, `pending`, `simulate`, `send`, `home-tokens`, `handlers`, and `wallet`. `wallet-handlers.ts` is `wallet-dispatch.ts` and only routes commands. Popup screens live in `home`, `send`, `accounts`, `settings`, and `onboarding`. Small helpers live in `lib`. The approval shell extracted formatters and the simulate notice card that do not read module state. Message names, storage keys, CSS, and HTML are unchanged. No new dependency.
 
 ## 0.13.0 — 2026-10-05
 
-審批宿主：`walletSend` 改在 popup 殼內（`uiHost: popup`），`beginSend` 不再開 popout；網站 `connect`／`signMessage`／`signTransaction` 仍 popout。抽出 `wallet/src/approval/shell.ts` 共用審批 UI。錢包送出：批准後全頁「確認中」轉圈，鏈上 `confirmed` 後同一畫面變「已確認」，約 0.5s 回 Home 並重查。SW 立刻 `walletSendSettled`，不 sleep。`signTransaction` 批准仍立刻關窗。新增 `ui.abortPending`（關 popup／離審批 view 語意同拒絕）。Sidebar 宿主僅契約預留。
+Approval host: `walletSend` runs inside the popup shell (`uiHost: popup`). `beginSend` no longer opens a popout. Site `connect`, `signMessage`, and `signTransaction` still use a popout. Shared approval UI is `wallet/src/approval/shell.ts`. Wallet send: after approve, a full-page Confirming spinner becomes Confirmed on chain `confirmed`, then returns Home and refreshes after about 0.5s. The service worker emits `walletSendSettled` immediately and does not sleep. `signTransaction` approve still closes at once. New `ui.abortPending` (closing the popup or leaving the approval view means reject). A sidebar host is only reserved in the contract.
 
 ## 0.12.0 — 2026-10-05
 
-代幣詳情與單一可簽送出：Home 持倉列進詳情；signing 帳戶可填數量／地址後 `wallet.beginSend` 組未簽轉帳，開既有簽署 popout（`walletSend`）。批准後錢包廣播並等到 `confirmed`（再約 500ms 關窗）；popup 回 Tokens 並重查。持倉列帶 `decimals`／SPL `tokenProgram`。送出頁顯示餘額、50%／全部快捷；離開頁或切帳戶清空表單。dApp `signTransaction` 仍只簽不廣播。聚合／觀察無「送出」。
+Token detail and single-signer send. A Home holdings row opens detail. A signing account fills amount and address, then `wallet.beginSend` builds an unsigned transfer and opens the existing sign popout (`walletSend`). After approve the wallet broadcasts and waits for `confirmed` (then about 500ms before close). The popup returns to Tokens and refreshes. Holdings rows carry `decimals` and the SPL `tokenProgram`. The send page shows balance and 50% / Max shortcuts. Leaving the page or switching accounts clears the form. dApp `signTransaction` still only signs. Combined and watch-only have no Send.
 
 ## 0.11.0 — 2026-10-04
 
-未簽 `signTransaction` 可改 CU limit／price（Compute Budget 取代不 append），批准簽 `workingTx`；已簽不改 instruction。獨立交易費卡（總費＝簽名費＋優先費）；改 CU 須點套用圖示，dirty 時批准不可按。Settings **Default CU price** 出廠 25000。交易明細每條 ix 列帳戶縮寫與 data hex。簽署 popout 頂欄／底欄釘住、中間捲動。`connect`／`signMessage` 不變。
+Unsigned `signTransaction` can change CU limit and price (Compute Budget instructions are replaced, not appended). Approve signs `workingTx`. A signed transaction's instructions are not edited. A fee card shows signature fee plus priority fee. Changing CU requires the apply icon. Approve is disabled while dirty. Settings **Default CU price** ships at 25000. Each instruction row lists short accounts and data hex. The sign popout pins the top and bottom bars and scrolls the middle. `connect` and `signMessage` are unchanged.
 
 ## 0.10.1 — 2026-10-04
 
-`ui.simulatePendingTx` 改打 JSON-RPC `simulateTransaction`，用 `preBalances`／`postBalances`／`preTokenBalances`／`postTokenBalances` 對凍結簽署帳戶算差；不再 `getMultipleAccounts` 或傳 `accounts.addresses`。手續費優先用 `value.fee`。假設現行 Helius／Agave，缺欄當無法模擬。
+`ui.simulatePendingTx` calls JSON-RPC `simulateTransaction` and diffs `preBalances` / `postBalances` / `preTokenBalances` / `postTokenBalances` for the frozen signing account. It no longer calls `getMultipleAccounts` or passes `accounts.addresses`. Fee prefers `value.fee`. Assumes current Helius / Agave. Missing fields mean the transaction cannot be simulated.
 
 ## 0.10.0 — 2026-10-04
 
-`signTransaction` 專用 popout：主舞台為 SW `ui.simulatePendingTx` 回傳的簽署帳戶 SOL／SPL 預期變動；「預計交易失敗」或「無法模擬」notice 在預期變動上方；交易明細預設收合且指令列只信 SW。鎖定時仍 pending＋開窗（對齊 0.9.0 signMessage）；enqueue 凍結 `signAccountId`；批准只簽名不廣播。無法 deserialize 時批准 disabled，強制 approve 回 `INVALID_TRANSACTION`。test-web 新增「預期模擬失敗」簽交易入口。`connect`／`signMessage` popout 維持 0.8.0／0.9.0。
+`signTransaction` popout: the stage is the signing account's expected SOL and SPL deltas from service-worker `ui.simulatePendingTx`. "Expected to fail" or "Cannot simulate" sits above the deltas. Transaction details start collapsed and instruction rows trust only the service worker. While locked, the request stays pending and the window still opens (same as 0.9.0 signMessage). Enqueue freezes `signAccountId`. Approve only signs. If the transaction cannot be deserialized, approve is disabled and a forced approve returns `INVALID_TRANSACTION`. test-web adds a sign entry expected to fail simulation. `connect` and `signMessage` popouts stay on 0.8.0 / 0.9.0.
 
 ## 0.9.0 — 2026-10-04
 
-`signMessage` 專用 popout：站點、凍結帳戶 widget、UTF-8 Message payload 或 Raw binary hex；SDK 整段判定的 transaction message 僅顯示「不能把交易當成訊息簽署。」且永不代簽（拒絕／關窗／誤批准回 `SIGN_MESSAGE_LOOKS_LIKE_TRANSACTION`）。鎖定時仍 pending＋開窗，popout 類 B 解鎖（無殼底 dock）；本窗解鎖後批准 700ms hold。enqueue 寫入 `signAccountId`／`messageLooksLikeTx`（僅 SW Map）。`connect`／`signTransaction` popout 維持 JSON 版面。popup 鎖定屏對齊 HOW；popup／popout 文字欄 focus 用 `--accent`。test-web 新增簽 UTF-8／二進位／交易當訊息三入口。
+`signMessage` popout: site, frozen account widget, UTF-8 message payload or raw binary hex. A transaction message detected by the SDK shows only "Cannot sign a transaction as a message." and is never signed (reject, close, or a mistaken approve returns `SIGN_MESSAGE_LOOKS_LIKE_TRANSACTION`). While locked, the request stays pending and the window opens. The popout unlocks with a class-B field and no dock. After unlock in this window, approve holds 700ms. Enqueue writes `signAccountId` and `messageLooksLikeTx` (service-worker map only). `connect` and `signTransaction` popouts keep the JSON layout. The popup lock screen matches HOW. Popup and popout text fields focus with `--accent`. test-web adds UTF-8, binary, and transaction-as-message sign entries.
 
 ## 0.8.0 — 2026-10-03
 
-Settings 可變更錢包密碼：`wallet.changeVaultPassword` 用目前密碼解開 `airwave.vault.v1`，新 salt 重加密後寫回，session 工作金鑰換成新的（先刪舊 session blob 再寫 vault）。Settings 改為四列樞紐（網路兩列單選、RPC Devnet／Mainnet 兩卡、API keys 標籤與 `••••••` 遮罩、錢包密碼子頁）。建庫／解鎖／Reveal／改密改為遮罩 `type="text"`，禁止 `type="password"` 與 `current-password`／`new-password`。無忘記密碼。
+Settings can change the wallet password. `wallet.changeVaultPassword` unlocks `airwave.vault.v1` with the current password, re-encrypts with a new salt, writes it back, and replaces the session working key (the old session blob is deleted before the vault write). Settings is a four-row hub (network as two radios, RPC as Devnet and Mainnet cards, API keys labeled with a `••••••` mask, wallet password on its own page). Create, unlock, reveal, and change-password use a masked `type="text"`. `type="password"` and `current-password` / `new-password` are forbidden. There is no forgot-password flow.
 
 ## 0.7.0 — 2026-10-03
 
-Home 持倉不再走 Helius DAS `getAssetsByOwner`。mainnet 且 Helius URL 可解析 `api-key`（或 `apiKey`）時，SPL 改打 Helius Wallet API `GET /v1/wallet/{wallet}/balances`（`showNfts=false`、分頁串行）；native SOL 與 wSOL 仍用 `rpcUrl` 拆開（`getBalance` + wrapped mint token accounts），`native-sol` 永遠第一、有 wSOL 則第二列（Wrapped SOL／wSOL）。否則整表 `rpcUrl`：`getBalance` + legacy Token 與 Token-2022 的 `getParsedTokenAccountsByOwner`；濾 `decimals === 0` SPL。mainnet Jupiter Tokens v2 可覆寫其它 mint 的 name／symbol／https icon 與 USD；SOL／wSOL 名稱寫死。devnet 不打 Wallet API、不打 Jupiter。combined 跨 owner 有限 `usdTotal` 加總並重寫 `usdLabel`。
+Home holdings no longer use Helius DAS `getAssetsByOwner`. On mainnet, when the Helius URL has a parseable `api-key` (or `apiKey`), SPL uses Helius Wallet API `GET /v1/wallet/{wallet}/balances` (`showNfts=false`, pages in series). Native SOL and wSOL still split on `rpcUrl` (`getBalance` plus wrapped-mint token accounts). `native-sol` is always first. wSOL, when present, is second (Wrapped SOL / wSOL). Otherwise the whole table uses `rpcUrl`: `getBalance` plus legacy Token and Token-2022 `getParsedTokenAccountsByOwner`, dropping SPL with `decimals === 0`. Mainnet Jupiter Tokens v2 may override other mints' name, symbol, https icon, and USD. SOL and wSOL names are fixed. Devnet does not call the Wallet API or Jupiter. Combined accounts sum a bounded `usdTotal` across owners and rewrite `usdLabel`.
 
 ## 0.6.0 — 2026-10-03
 
-助記詞匯入：英文 BIP39 12／24 詞；選 phantom／CLI／自訂 path；預覽 index 0–19 公鑰（每列三詞詞格）；挑一列寫入 signing。Add 拆成「建立助記詞錢包」與「建立 Burner 錢包」。助記詞錢包單屏：名稱＋12 詞＋地址，建立才寫 vault（phantom index 0）；離開不寫入、不把助記詞存進 storage。Burner 仍為隨機密鑰，之後可 Reveal。密鑰匯入語意不變。
+Mnemonic import: English BIP39 12 or 24 words, phantom / CLI / custom path, preview of public keys at index 0–19 (three words per row), pick one row to write a signing account. Add splits into Create mnemonic wallet and Create burner wallet. The mnemonic wallet is one screen: name, 12 words, and address. Create is what writes the vault (phantom index 0). Leaving does not write and does not store the mnemonic. A burner is still a random key and can be revealed later. Secret-key import is unchanged.
 
 ## 0.5.0 — 2026-10-02
 
-Combined 聚合帳戶：`AccountMeta` 判別聯合（signing／read-only／combined）；subs 永遠 ≥1；連線綁 combined id、暴露 main 公鑰；切 main 對已連 origin 發 `account-changed`（targeted）。簽名對 main 解析 signing 列 id；觀察／無列先於鎖定。Home `getHomeTokens` 對 subs 串行 DAS／RPC 加總並附 `members` 供展開列。popup 方案 A Add→Combined 填表（可貼地址、勾本機帳戶）與 Manage（本機帳戶勾選加刪成員、切目前錢包）。解鎖工作金鑰鏡到 `chrome.storage.session`（不存密碼）；SW 回收後仍維持解鎖直到按鎖或關閉瀏覽器。Reveal 仍須再輸入密碼。安裝後第一屏設密碼即建立保險庫；產生／匯入／觀察假設 vault 已存在，不再中途建庫或索密碼。錯誤 toast 換頁即清、約 4 秒自動消失（可點關閉）。頁級主行動貼 popup 殼底（flex、不進內容捲動、不用 floating／sticky）。Settings：RPC 按 cluster 分清單、autosave、列內 icon 增刪。
+Combined accounts: `AccountMeta` is a discriminated union (signing, read-only, combined). Subs are always at least 1. A connection binds the combined id and exposes the main public key. Changing main sends `account-changed` to connected origins (targeted). Signing resolves the main address to a signing row id. Watch-only and a missing row are checked before lock. Home `getHomeTokens` sums subs in series over DAS or RPC and attaches `members` for the expand row. Popup plan A: Add → Combined form (paste an address or check local accounts) and Manage (check local accounts to add or remove members, switch the current wallet). The unlock working key is mirrored to `chrome.storage.session` (the password is not stored). After the service worker is collected the wallet stays unlocked until Lock or the browser closes. Reveal still asks for the password again. The first screen after install sets a password and creates the vault. Generate, import, and watch assume the vault exists. They do not create a vault or ask for a password mid-flow. An error toast clears on navigation and disappears after about 4 seconds (click to dismiss). Page-level primary actions stick to the popup shell bottom (flex, not inside content scroll, not floating or sticky). Settings: RPC lists per cluster, autosave, and in-row icons to add and delete.
 
 ## 0.4.0 — 2026-10-01
 
-Home Token 持倉由 service worker 查詢：可選 Helius DAS（名稱、icon、底價）或 `rpcUrl` fallback。mainnet Jupiter Tokens v2 search 只補認證勾、organic score，並在有 `usdPrice` 時覆寫 USD。keyless 0.5 rps；有 portal key 按 Free 1 rps。不打 Price v3。App icon 採氣流疊浪（`wallet/public/icon{16,32,48,128}.png`）。連線 popout 不再顯示 `silent` JSON。test-web `change` 監聽只訂一次；公鑰未變更則 `connect` 不重發 `change`。
+Home token holdings are queried by the service worker: optional Helius DAS (name, icon, floor) or `rpcUrl` fallback. Mainnet Jupiter Tokens v2 search only fills the verified check and organic score, and overrides USD when `usdPrice` is present. Keyless is 0.5 rps. A portal key uses Free 1 rps. Price v3 is not called. The app icon is stacked air waves (`wallet/public/icon{16,32,48,128}.png`). The connect popout no longer shows `silent` JSON. test-web subscribes to `change` once. `connect` does not re-emit `change` when the public key is unchanged.
 
 ## 0.3.0 — 2026-10-01
 
-Popup 方案 A：384px 殼、mini wallet 頂欄、Menu、Home Token／Activity（Activity empty）、Token 卡片（RPC legacy SPL、同 mint 加總、濾零 SPL、USD「—」）；Accounts／Rename／Manage／Add 整頁；`wallet.exportAccountSecret` Reveal 流程；鎖定後僅 `#locked`；Settings／Connected sites 沿用 0.2.0 能力。
+Popup plan A: a 384px shell, mini-wallet top bar, Menu, Home Token / Activity (Activity empty), token cards (RPC legacy SPL, same mint summed, zero SPL filtered, USD "—"). Accounts, Rename, Manage, and Add are full pages. `wallet.exportAccountSecret` is the reveal flow. After lock only `#locked` shows. Settings and Connected sites keep the 0.2.0 capabilities.
 
 ## 0.2.0 — 2026-10-01
 
-帳戶 rename／delete／read-only 觀察帳戶；popup 首頁 Tokens 列表（SOL 固定第一列＋legacy SPL；鎖定亦可看）；Wallet Standard `disconnect` 與 popup 已連線站點管理；`test-web` Disconnect 回歸。
+Account rename, delete, and read-only watch accounts. Popup home token list (SOL fixed first, plus legacy SPL; visible while locked). Wallet Standard `disconnect` and popup connected-site management. `test-web` Disconnect regression.
 
 ## 0.1.0 — 2026-10-01
 
-Minimal Solana Chrome 錢包 MVP：`wallet/` 擴充 + `test-web/` 手測 dApp。Wallet Standard connect／signMessage／signTransaction；SW pending hub、password-boxed vault、popout 審批。使用者已完成 Chrome 載入未封裝與 test-web 手驗。
+Minimal Solana Chrome wallet MVP: `wallet/` extension plus `test-web/` manual dApp. Wallet Standard connect, signMessage, and signTransaction. Service-worker pending hub, password-boxed vault, popout approval. The user finished an unpacked Chrome load and a test-web hand check.

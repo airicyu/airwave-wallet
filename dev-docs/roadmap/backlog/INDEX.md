@@ -1,15 +1,15 @@
-# Backlog 目錄
+# Backlog
 
-這裡是構想清單，**不是契約**。排進某版之後以該版 `INDEX.md` 為準。出貨後刪該列與對應 `.md`。
+This is a list of ideas, **not a contract**. After an item is scheduled, that version's `INDEX.md` wins. After it ships, delete the row and the matching `.md`.
 
-新項目：在本目錄加一列，並寫 `backlog/<名稱>.md`。
+New item: add a row here and write `backlog/<name>.md`.
 
-## 未排程
+## Unscheduled
 
-| 項目 | 說明 |
-|------|------|
-| [版本升級與 storage 遷移](./storage-migration.md) | [0.26.0](../0.26.0/INDEX.md) 已蓋第 1 代戳；之後形狀變更仍走具名世代步驟 |
-| [SNS `.sol` 名稱解析](./sns-name.md) | 暫緩：等 SNS `.sol`／`.sns` 遷移定案再接；不寫進地址簿 |
-| [錢包帳戶指定頭像](./account-avatar.md) | 每個錢包帳戶可設一張 icon；沒設則維持現況 |
-| [簽署交易 Anchor IDL 解析](./sign-transaction-ix-decode.md) | 靜態 common parser 已於 [0.19.0](../0.19.0/INDEX.md) 出貨；鏈上／metadata IDL 層仍未排程 |
-| [簽署交易 Durable Nonce 提醒](./sign-tx-durable-nonce-alert.md) | 審批時若第一條是 System `AdvanceNonceAccount`，提醒這筆用了 durable nonce；不擋批准 |
+| Item | Notes |
+|------|--------|
+| [Version upgrades and storage migration](./storage-migration.md) | [0.26.0](../0.26.0/INDEX.md) stamped generation 1. Later shape changes still use a named generation step |
+| [SNS `.sol` name resolution](./sns-name.md) | Deferred until the SNS `.sol` / `.sns` migration is settled. Not part of the address book |
+| [Wallet-account avatar](./account-avatar.md) | Each wallet account can have an icon. Unset accounts stay as they are |
+| [Sign-transaction Anchor IDL decode](./sign-transaction-ix-decode.md) | The static common parser shipped in [0.19.0](../0.19.0/INDEX.md). On-chain / metadata IDL is still unscheduled |
+| [Sign-transaction durable-nonce notice](./sign-tx-durable-nonce-alert.md) | If the first instruction is System `AdvanceNonceAccount`, tell the user this transaction uses a durable nonce. Do not block approve |

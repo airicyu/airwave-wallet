@@ -1,30 +1,30 @@
-# 錢包帳戶指定頭像 — backlog
+# Wallet-account avatar — backlog
 
-構想尚未排進某版 INDEX，**不是契約**。排程後以該版 INDEX 為準。
+Not scheduled in any version INDEX. **Not a contract.** After it is scheduled, that version's INDEX wins.
 
-對象是 [DOMAIN](../../DOMAIN.md) 裡的**錢包帳戶**（清單每一列，含單一與聚合）。不是地址簿的收款人，也不是聚合成員地址各自一張圖。
+The subject is a **錢包帳戶** (wallet account) in [DOMAIN](../../DOMAIN.md): one list row, single or combined. Not an address-book recipient, and not one image per combined member address.
 
-## 現況
+## Current
 
-錢包帳戶只有名稱與地址。清單與 Home 沒有使用者指定的頭像；辨識靠名稱與縮寫地址。
+A wallet account has a name and an address. The list and Home have no user-chosen avatar. Recognition uses the name and the short address.
 
-## 產品意向
+## Intent
 
-每一個錢包帳戶可以指定一張頭像 icon。指定後，帳戶出現的地方用這張圖，不再只靠文字。沒指定的帳戶維持現況，不強制每戶都有圖。
+Each wallet account can have an avatar icon. Where that account appears, the image is used instead of text alone. An account with no avatar stays as it is. An image is not required for every account.
 
-- 可設定、可更換、可清除。清除後回到沒有頭像。
-- 頭像跟該錢包帳戶走，存在 `chrome.storage`（使用者資料，不是金庫秘密）。重新開啟後還在。不放進助記詞匯出，也不進鏈上。
-- 聚合錢包帳戶整戶一張。切換目前錢包不換頭像。
-- 讀寫經 service worker command。popup 只渲染。
+- The user can set, replace, and clear it. Clearing returns to no avatar.
+- The avatar belongs to that wallet account and lives in `chrome.storage` (user data, not a vault secret). It is still there after restart. It is not part of a mnemonic export and it is not on-chain.
+- A combined wallet account has one image for the whole account. Switching the main wallet does not change the avatar.
+- Reads and writes go through a service-worker command. The popup only renders.
 
-## 開工前仍須拍板（排進 INDEX 時）
+## Decide before scheduling
 
-- 圖從哪來：內建一組 icon、使用者上傳，或兩者都要。
-- 上傳時的格式、尺寸與存在 storage 的上限。
-- 出現在哪些表面（帳戶清單、Home、審批頁的帳戶 pill）。
+- Where the image comes from: a built-in set, a user upload, or both.
+- Upload format, size, and the storage cap.
+- Which surfaces show it (account list, Home, the account pill on an approval).
 
-## 非目標（構想層）
+## Out of scope
 
-- 依地址自動抓鏈上頭像、NFT 或 SNS 頭像
-- 地址簿收款人各自一張頭像
-- 聚合成員地址各自一張頭像
+- Automatically fetching an on-chain avatar, NFT, or SNS avatar from an address
+- One avatar per address-book recipient
+- One avatar per combined member address

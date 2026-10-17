@@ -1,9 +1,9 @@
-# 未歸版改動
+# Unversioned changes
 
-最新一個版本已是 `shipped`、下一版還沒開時，改動先寫在這裡，並在根 [`changelog.md`](../../changelog.md) 的 `Next` 用一句話跟上。兩處是同一批。
+When the latest version is `shipped` and the next version is not opened yet, write the change here and add one sentence under `Next` at the top of the root [`changelog.md`](../../changelog.md). Both places are the same batch.
 
-使用者選定歸屬之後，把條目移進那個版本的 INDEX 與 changelog 標題，這裡改回「無」。
+After the user assigns the batch, move the items into that version's INDEX and changelog heading, and set this file back to none.
 
-## 目前
+## Current
 
-（無）
+(none)

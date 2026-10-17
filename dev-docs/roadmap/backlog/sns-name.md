@@ -1,33 +1,33 @@
-# SNS `.sol` 名稱解析 — backlog
+# SNS `.sol` name resolution — backlog
 
-構想尚未排進某版 INDEX，**不是契約**。排程後以該版 INDEX 為準。
+Not scheduled in any version INDEX. **Not a contract.** After it is scheduled, that version's INDEX wins.
 
-**先不做。** SNS 正在把既有 SPL Name Service 域名從 `.sol` 改掛 `.sns`，官方 SDK 在 slot 452,825,395 之後暫停 `.sol` 解析；新的 SRS `.sol` 要到遷移後段才恢復，且與 `.sns` 是兩筆域名。等 SNS 把 `.sol`／`.sns` 的解析契約定下來再排程。在那之前不要開工、也不要排進某版 INDEX。
+**Do not start.** SNS is moving existing SPL Name Service domains from `.sol` to `.sns`. The official SDK pauses `.sol` resolution after slot 452,825,395. The new SRS `.sol` returns only late in the migration, and it is a different domain from `.sns`. Schedule this after SNS settles the `.sol` / `.sns` resolution contract. Until then, do not implement it and do not put it in a version INDEX.
 
-與 [address-book.md](./address-book.md) 分開：地址簿只存名稱＋base58 地址，不做域名解析。本項是送出收款人時，把 `XXX.sol` 這類 [SNS](https://sns.id) 名稱解成一條 Solana 地址。
+Separate from the address book: the address book stores a name plus a base58 address and does not resolve domains. This item resolves an [SNS](https://sns.id) name such as `XXX.sol` into one Solana address when the user sends.
 
-## 現況
+## Current
 
-送出收款人只接受 base58 公鑰。貼上 `alice.sol` 不會被當成地址。錢包不查 SNS、也不快取解析結果。
+The send recipient accepts only a base58 public key. Pasting `alice.sol` is not treated as an address. The wallet does not query SNS and does not cache a resolution.
 
-## 產品意向
+## Intent
 
-使用者在送出收款欄輸入以 `.sol` 結尾的名稱時，錢包向 SNS 解析出對應的 Solana 地址，解析成功就把該地址當這筆的 recipient。畫面上仍看得到使用者打的名稱，以及解析出來的地址，避免只顯示名稱就送出。
+When the user types a name ending in `.sol` in the send recipient field, the wallet asks SNS for the Solana address. On success, that address is the recipient. The screen still shows the name the user typed and the resolved address, so a send is not made from the name alone.
 
-- 只處理 `.sol` 名稱。其他鏈的域名（例如 `.eth`）不在本項。
-- 解析失敗、名稱未註冊、或結果不是有效 Solana 地址時，不能送出；錯誤用短句，不把未解析的字串當收款人。
-- 解析是查詢，不寫鏈、不簽名、不碰金庫。
-- 解析出的地址不必先存在地址簿。地址簿仍是另一份白名單；本項不把每次解析結果自動存進地址簿。
+- Only `.sol` names. Other-chain names (for example `.eth`) are out of this item.
+- If resolution fails, the name is not registered, or the result is not a valid Solana address, the user cannot send. The error is one short sentence. An unresolved string is not a recipient.
+- Resolution is a query. It does not write to the chain, sign, or touch the vault.
+- The resolved address does not have to exist in the address book. The address book stays a separate list. This item does not auto-save each resolution into the address book.
 
-## 開工前仍須拍板（排進 INDEX 時）
+## Decide before scheduling
 
-- 查詢走哪一個 SNS 解析端點，以及 mainnet／devnet 是否同一套。
-- 送出前要不要再查一次，避免名稱在輸入與送出之間換了擁有者。
-- 解析結果要不要讓使用者手動加進地址簿（預設不做自動寫入）。
+- Which SNS resolution endpoint, and whether mainnet and devnet share it.
+- Whether to resolve again before send, so a name that changed owner between typing and sending is not used stale.
+- Whether the user can manually add a result to the address book (default: no automatic write).
 
-## 非目標（構想層）
+## Out of scope
 
-- 註冊、續約、轉移 `.sol` 名稱
-- 把名稱當地址簿的主鍵，取代 base58
-- 反向解析：由地址顯示對方的 `.sol` 名稱
-- `.eth` 或其他非 SNS 域名
+- Registering, renewing, or transferring a `.sol` name
+- Using the name as the address-book primary key instead of base58
+- Reverse resolution: showing the counterparty's `.sol` name from an address
+- `.eth` or other non-SNS domains

@@ -1,38 +1,38 @@
-# 簽署交易：Durable Nonce 檢查並提醒 — backlog
+# Sign transaction: durable-nonce notice — backlog
 
-構想尚未排進以本檔為範圍的版本，**不是契約**。
+Not scheduled into a version that uses this file as its scope. **Not a contract.**
 
-構想尚未排進版本。曾考慮併進已撤銷的 0.28.0 評估卡旗標；該版未開工。本檔仍是**獨立 notice** 構想。若之後與簽署安全評估同一張卡出現，須避免三點文案重複。
+Not scheduled. It was once considered as a flag on the cancelled 0.28.0 assessment card. That version was not started. This file is still a **standalone notice**. If it later shares a card with the sign-risk check, the three sentences must not be repeated.
 
-## 現況
+## Current
 
-`signTransaction`／`signAndSendTransaction` 的審批（`wallet/src/approval/`）不會檢查交易是否使用 durable nonce，也不會為此另開提醒。
+The `signTransaction` and `signAndSendTransaction` approval (`wallet/src/approval/`) does not check whether the transaction uses a durable nonce, and it does not show a notice for that.
 
-[0.10.0](../0.10.0/INDEX.md) 只處理模擬副作用：`simulateTransaction` 帶 `replaceRecentBlockhash: true`，durable nonce 的差額可能失真，落入 `fail`／`rpc`，不要把差額當可信。那條沒有告訴使用者「這筆交易用了 durable nonce」。
+[0.10.0](../0.10.0/INDEX.md) only covers a simulation side effect: `simulateTransaction` uses `replaceRecentBlockhash: true`, so a durable-nonce delta can be wrong and land in `fail` or `rpc`. Do not treat that delta as trusted. That path does not tell the user "this transaction uses a durable nonce."
 
-## 產品意向
+## Intent
 
-審批畫出一筆未簽交易時，在 service worker 對 message 做靜態檢查。**第一條** instruction 是 System Program 的 `AdvanceNonceAccount`（instruction enum index `4`）時，判定這筆交易使用 durable nonce。
+When the approval draws an unsigned transaction, the service worker statically checks the message. If the **first** instruction is the System Program `AdvanceNonceAccount` (instruction enum index `4`), the transaction uses a durable nonce.
 
-判定只看交易位元組裡的這條指令。不要為了核對 nonce 帳戶餘額或帳戶資料再打 RPC。第一條不是 `AdvanceNonceAccount` 時，鏈上不會把它當 durable nonce，後面出現同名指令不算。
+The check reads only that instruction in the transaction bytes. Do not make an RPC call to compare the nonce account balance or account data. If the first instruction is not `AdvanceNonceAccount`, the chain will not treat the transaction as a durable nonce. A later instruction with the same name does not count.
 
-判定為是時，審批畫面顯示一張提醒（沿用現有 notice 卡即可），文案要讓使用者知道三件事：
+When the check matches, the approval shows a notice (the existing notice card is enough). The copy tells the user three things:
 
-1. 這筆交易使用 durable nonce，不會像一般 recent blockhash 那樣在短時間內過期。
-2. 交易落地會推進（消耗）該 nonce。
-3. 畫面上的模擬差額在 `replaceRecentBlockhash` 下可能失真，不要單靠差額判斷。
+1. This transaction uses a durable nonce. It does not expire in a short window the way a recent blockhash does.
+2. Landing the transaction advances (consumes) that nonce.
+3. The simulated delta on screen can be wrong under `replaceRecentBlockhash`. Do not judge the transaction from the delta alone.
 
-提醒**不**把批准 disabled。拒絕維持可按。`signMessage` 不適用。
+The notice does **not** disable approve. Reject stays available. `signMessage` does not apply.
 
-## 開工前仍須拍板（排進 INDEX 時）
+## Decide before scheduling
 
-- 文案走 [0.23.0](../0.23.0/INDEX.md) catalog（`t(locale, key)` 三語）；排進 INDEX 時補鍵，不要另寫單語。
-- 提醒放在模擬 notice 之上，還是與「無法模擬／預計交易失敗」同一張卡。
+- Copy goes through the [0.23.0](../0.23.0/INDEX.md) catalog (`t(locale, key)`, three languages). Add keys when this is scheduled. Do not write a single-language string.
+- Whether the notice sits above the simulation notice, or on the same card as "cannot simulate / expected to fail."
 
-## 非目標（構想層）
+## Out of scope
 
-- 改 0.10.0 的模擬參數、`replaceRecentBlockhash`，或為了 nonce 改跑另一套模擬
-- 偵測到就禁用批准，或自動拒絕
-- 建立、匯入、列出 nonce 帳戶，或代使用者組 `AdvanceNonce`
-- 用 RPC 確認 nonce 帳戶資料與 message 裡的 blockhash 是否一致
-- 宣告新的 Wallet Standard 方法
+- Changing the 0.10.0 simulation parameters, `replaceRecentBlockhash`, or running a second simulation for the nonce
+- Disabling approve on detection, or auto-rejecting
+- Creating, importing, or listing nonce accounts, or building `AdvanceNonce` for the user
+- Using RPC to check that the nonce account data matches the blockhash in the message
+- Declaring a new Wallet Standard method

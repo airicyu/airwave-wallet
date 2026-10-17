@@ -1,146 +1,78 @@
-# Airwave — Popup UI／UX 原則
+# Design principles
 
-給做 **popup／popout 畫面** 的 agent 與人。視覺概念稿見 [`design-demos/`](design-demos/)（非正式契約；衝突時以某版 **INDEX／HOW** 為準，INDEX 沉默時以**本檔**為準）。
+Popup and approval UI. An INDEX overrides this file when it says so. Informal demos live in [design-demos/](design-demos/).
 
-架構禁區（pending、custody、訊息）仍只看 [`roadmap/GUIDELINES.md`](roadmap/GUIDELINES.md)。本檔不管鏈上語意，只管 **怎麼操作、何時寫入、按鈕長什麼樣子**。
+## 1. Icon buttons
 
-**視覺改版流程：** 先在 [`design-demos/`](design-demos/) 寫可直接開啟的 HTML 概念稿（popup 寬高、現有 CSS 變數），給使用者看完並同意後，才改 `wallet/` 產品 CSS／markup。禁止先改產品再補 demo。小修（對齊、sticky 失效、漏 `min-height: 0`）不必走 demo。
+A button whose only content is an icon has no border, background, or fill. Do not use a gray square or a bordered box.
 
----
+- Default: transparent background, no border, no shadow. The icon uses `--muted`.
+- Hover: icon `--text` only. Do not lighten the button background.
+- `:active`: `transform: scale(0.94)`.
+- `:disabled`: opacity about 0.35, `cursor: not-allowed`, no hover or press.
+- Hit target at least 34×34px (padding around the icon). Do not shrink the control to the icon's pixels.
+- `title` is the accessible name (for example Copy address). Do not put visible text next to the icon.
+- Do not reuse `.icon-btn` for a control that also has a label. That class is icon-only.
 
-## 1. 表面與密度
+## 2. Long strings
 
-- 主表面是 Chrome **工具列 action popup**（`default_popup`，寬約 **422px**、高約 **600px**）或 **Chrome 側欄**（內容 **寬高 100%** 跟面板）。**不要**用 `chrome.windows.create` 另開錢包獨立窗當主殼。審批 popout（網站簽名獨立窗）仍約 **420×640**，不算主表面。所有列、按鈕、輸入須在當下主表面寬度內可掃、可點；側欄拉寬時內容跟著拉滿，**禁止** 422px 置中固定欄。
-- 一屏只做一件事。第一層是 **選項列表**（Accounts 的 Add、Settings 的分區）；選了再進 **操作頁或展開列**。禁止把產生／匯入／觀察／Combined 的表單全攤在同一頁。
-- 頂欄沿用方案 A：Home 為 widget；子頁為 **Back + 標題 + Menu**。**簽署確認例外：** 錢包送出確認、側欄／popup 的 dApp 審批 overlay、審批 popout **沒有** Home 頂欄；帳戶 pill 在內容區 **第一列、hug 寬、靠左**；站點為標籤＋值同一列靠左。Bottom Token／Activity **只**在 Home。Devnet 時在頂欄**下方**一條橙底狀態列寫 `Devnet`（Mainnet 不標）；不要把徽章塞進帳戶 pill 旁。Home 頂欄圖示（切到側欄、關閉側欄、選單）預設無底框，hover／focus 才顯底。側欄那顆是關側欄，不程式化打開工具列 popup。鎖定錢包在選單內，不在 Home 頂欄放鎖圖示。選單項圖示在左、文字在右；選單觸發為直向三點，不是三橫。
-- 色票與圓角對齊 [`design-demos/wallet-030-ui-concepts.html`](design-demos/wallet-030-ui-concepts.html) 的 CSS 變數（`--bg`、`--fill`、`--accent` 等）。不要另開一套高對比主題。
-- **頁殼（popup 與 popout 每一個有頂欄／殼底主行動的新 SCREEN 都要過這關，不是某一版特例）：**
-  1. 整窗 **直欄 flex**，`html`／`body`／頁根 **高度 100%、`overflow: hidden`**。禁止整份文件跟著內容長高、讓視窗捲軸捲走頂欄與底欄。
-  2. **頂欄**（帳戶 widget 或 Back＋標題＋Menu）：`flex-shrink: 0`，永遠釘在視窗頂。
-  3. **中間內容：** `flex: 1; min-height: 0; overflow: auto`。**漏寫 `min-height: 0` 會讓頂欄／底欄被整頁捲走。這是已知反覆錯誤，開新畫面第一件事核對。**
-  4. **殼底主行動**（拒絕／批准、匯入、產生、建立）：`flex-shrink: 0` 釘在視窗底。主按鈕在這列，**不**進內容捲動。
-  5. **禁止**用 `position: fixed`／`absolute`／`sticky` 冒充頁殼。沒有頁級主行動的選項列表不畫底列。
-- **鎖定／解鎖全屏：** 無頂欄、無殼底 dock。垂直置中：產品圖（`public/icon128.png`，64px 圓角）＋置中標題 Airwave＋鎖定說明（catalog，如 `unlock.lead`）＋全寬密碼欄＋內容區主按鈕（catalog，如 `unlock.submit`）。首次建立密碼用同一套置中（無鎖定說明）。關於頁在版本列上方放 40px 同一張圖。Home 頂欄與簽署主畫面不放產品圖。解鎖標題與送出／收回租金「確認中」標題 **不要**加 `letter-spacing: 0.02em`（漢字會被拉開）。背景為中檔 Solana 北極光（左下 `#9945FF` 11%、右上 `#14F195` 8%、中下 `#5B8CFF` 7% 光斑），**不要**正中 `--accent` 光。欄位 `--fill` 底、focus `--accent` 邊框且 `outline: none`。主按鈕 `flex: none; width: 100%`，禁止沿用殼底批准的 `flex: 1`。錢包密碼用類 B 遮罩（`type="text"` + `-webkit-text-security`）。popup／popout／審批鎖定同一套。概念稿：[`design-demos/unlock-aurora-ux.html`](design-demos/unlock-aurora-ux.html)「中檔」。
-- **錢包送出確認中／已確認：** **禁止**帶邊框大卡、也**不要**解鎖頁那種 radial 漸變底。確認中：置中 112px Solana 經典色 dash-ring（頭 `#14F195`、中 `#5B8CFF`、尾 `#9945FF`），dash 從 0 伸長再被 offset 抽走、重來（旋轉 4s、伸縮 2.4s）；標題與說明走 catalog（如 `approval.confirming`、`approval.waitingChain`）。已確認：同一位置換成 `--ok` 勾＋catalog 已確認文案＋可選簽名前 4…後 4，**停留 1s** 再 auto-exit。語意仍是同一畫面轉換。概念稿：[`design-demos/send-status-spinner-ux.html`](design-demos/send-status-spinner-ux.html) 右側。
-- **先定組件層次，再掛碼。** 一頁裡有幾塊、誰是誰的孩子、生命週期跟哪一層走、誰有權拆誰的 DOM——這是設計，不是實作時順便決定。掛之前問：這塊活在「這一頁／這次請求」，還是活在「這一輪重繪」？父層重畫時，子層該更新內容，還是根本不該被拆掉？沒想清楚就往現成會重畫的函式裡塞，樹是碰巧長出來的。
+A control width is content or a cap, not "whatever is left in the row."
 
----
+- Single-line label (origin, address, txid): `ellipsis`; the cap is the column or popup content width.
+- Do not stretch a button or card to 100% unless it is a primary action.
+- Code, addresses, and hashes: `min-width: 0` on the flex child, plus `overflow: hidden`.
 
-## 2. 寫入時機（整產品預設）
+## 3. Naming accounts
 
-**預設自動保存。禁止同一頁混用「有的立刻存、有的要按大 Save」。**
+The **rename screen** is one field. The **account list card** is a rename button.
 
-| 動作 | 何時寫入 `chrome.storage`／生效 |
-|------|--------------------------------|
-| 切換（cluster、作用中 RPC、開關、radio、分段控制） | **立刻** |
-| 新增／刪除清單項（RPC、成員勾選若定為即時等） | **立刻** |
-| 單行文字設定 | Helius API URL、Jupiter API key、OpenRouter API key 只在列內確認圖示寫入；失焦與捨棄不寫入。RPC 自訂 URL 仍是失焦或短 debounce（約 400–800ms）寫入；正在打字不算完成 |
-| 展開列裡改長字串 | 列內 **確認圖示**＝提交這一格；收合／Esc＝放棄未提交的編輯。這不是「整頁儲存」 |
-| 不可逆、高代價（刪帳戶、Reveal 解密、斷開全部站點） | **必須**明確確認（對話或二次點擊），禁止靜默 auto-save 當成刪除 |
+- **Rename screen:** label `Name` and the field on one row. No hint and no counter. Placeholder is the short public key (`Ab3…x9K2`). Submitting empty or whitespace saves the short public key. Confirm label is `Save`.
+- **Account list:** the card's main line is the non-empty `label`, otherwise the short public key. A failed save restores the card. There is no inline field.
 
-底部不要放「儲存設定」來涵蓋整頁。若舊畫面有整頁 Save，新做或重做該頁時拿掉，改走本表。
+## 4. Account list
 
-互動本身就是儲存。不要在畫面上寫「改了就會存」。
+One card is one account.
 
----
+- **Main line:** display name (the non-empty `label`, otherwise the short public key).
+- **Second line:** short public key (about 4 + … + 4). The copy control sits after the address on the same line.
+- **Kind:** a small mark on the card (signing, watch-only, or combined). The mark is an icon, not a sentence.
+- **Rename:** a rename control on the card navigates to the rename screen. The card itself is not a field.
+- **Delete:** a delete control on the card. Confirm, then `wallet.deleteAccount`.
+- **Combined:** the card navigates to **manage the combined account**. Do not expand the member list on Home.
+- **Add:** a list-level button navigates to the add screen. Not a new card.
 
-## 3. 按鈕：圖示為主
+## 5. Popup shell
 
-**工具列、列尾、重複性動作 → icon button + `title` + `aria-label`（同一句）。**  
-不要用「加入」「刪除」「重新整理」這類佔寬文字當列內主按鈕。
+- **Width** 384px (Chrome popup usable width). Height follows content up to the browser cap. A short view does not stretch to 600px. The shell background matches the page (no empty band showing the browser default).
+- **Top bar:** one account chip (round letter avatar, display name, copy). The menu is a separate icon button (icon-only, 34px). Do not put the short public key in the bar.
+- **Menu:** a layer over the current view (not a route). Entries in order: **Wallet accounts**, **Address book**, **Network**, **Settings**, **Connected sites**, **About this app**, **Lock wallet**. Network is a Devnet / Mainnet radio, the same as before. Connected sites, Settings, and About are full pages.
+- **Connected sites:** rows of granted origins. Disconnect uses an icon-only button (`title` Disconnect). Do not use "Disconnect all." An empty list is one short line, not a table.
+- **Home:** two segments, **Tokens** and **Activity**. Tokens is the default. The list area scrolls inside the shell (`overflow-y: auto`, `min-height: 0`). Activity may be empty in this version. Empty copy is one short line.
+- **Token rows:** amount and symbol. USD fiat is not in this version.
+- **Primary actions:** full-width at the bottom (Create account, Save). Follow the [extension-page skill](../.agents/skills/extension-page/SKILL.md).
 
-適用：加入項目、刪除列、複製、重新整理、返回、選單、鎖定、展開／收合。
+## 6. Do not
 
-**複製圖示：** 寫入剪貼簿成功後換成勾（`--ok`），`title`／`aria-label` 改 catalog `copy.copied`，約 **1.6 秒**後回到複製圖示與原本的複製標（如 `common.copy`）。寫入失敗維持複製圖示。複製的永遠是完整字串，畫面上仍可縮寫。同一套用在頂欄錢包、帳戶列、地址簿、建立帳戶公鑰、顯示私鑰。不要用 toast 或旁白代替這個勾。
+- A popup that is a long settings form or a dashboard.
+- Visible button text that repeats the icon meaning ("Copy" next to a copy icon).
+- A second copy control in the top bar.
+- A full-screen route for the menu overlay.
 
-**文字按鈕只留給：**
+## 7. Readability
 
-- 頁級 **主行動**（建立 Combined、產生簽名帳戶、匯入、解鎖）
-- 破壞性確認（Remove wallet account）
-- 沒有公認圖示、或圖示會造成誤解的動作
+Body text and form labels at least 12px. Button labels and amounts at least 13px. Hints and secondary text at least 11px. Weights 400 or 500. Do not use 600 or bold for body. Color is not the only separator: amount and name go on separate lines, or use a tabular figure.
 
-同一頁不要又有文字「加入」又有加號圖示做同一件事。
+## 8. Visual
 
-Icon 用現有 stroke SVG 風格（約 16–18px、2px stroke），按鈕熱區約 **28–34px**。Tooltip／`aria-label` 跟目前 `settings.locale`，走 `ui-messages` catalog（如 `common.add`、`common.delete`、`common.copy`）。Home Tokens 重新整理冷卻：鈕 `disabled` 並變淡，**不要**外圈倒數弧。
+- One accent (links, the current segment, primary buttons). Secondary numbers and labels use `--muted`.
+- Spacing scale: 4 / 8 / 12 / 16 / 24. Cards and rows share one padding (12 or 16).
+- Corners: inputs and buttons 8px. Cards 12px.
+- Shorten with ellipsis or a short public key. Do not shrink the font to fit a long string.
 
----
+## 9. Motion
 
-## 4. 長字串（URL、公鑰、mint）
+Keep CSS transitions at 120–160ms, opacity or color only. A segment change does not slide the whole page. Respect `prefers-reduced-motion`: no transform animation.
 
-- **列表／摘要永遠單行**：`nowrap` + `ellipsis`。禁止 URL 把 radio 擠到上一行、自己掉到下一行（常見原因：全域 `input { width:100% }` 套到 radio——列內 radio 必須是固定寬、不可 `display:block; width:100%`）。
-- **要看全文或編輯：點該列（或 URL 文字）展開**。內建／不可改的值展開後唯讀；自訂值展開後可編輯，確認圖示提交，垃圾桶刪（若允許刪）。
-- 公鑰縮寫展示用 **前 4…後 4**；複製永遠是 **完整** 字串。
-- 不要用 hover-only tooltip 當讀取全文的主路徑（popup 不一定有穩定 hover）。`title` 只是輔助。
+## 10. Copy
 
----
-
-## 5. 選擇與狀態
-
-- **互斥選擇**用 radio 或整列可點的單選列（例如 Settings「網路」兩列）。**不要**用分段 tab 來表示「目前是 Devnet 還是 Mainnet」——那看起來像在切另一份清單，不是在選作用中網路。
-- **作用中狀態**（目前網路、目前 RPC、目前帳戶）放在區塊最上方，用短標籤 + 單行值，不要只靠列表裡哪顆 radio 被勾。
-- 編輯「另一個情境的清單」（例如活網路是 mainnet、卻在編 devnet RPC 列表）必須有 **一句狀態提示**，避免改錯對象。
-- 切換活情境時，可見清單應對齊活情境，或清楚標成「僅編輯、非目前使用」。
-
----
-
-## 6. 文案：少說話
-
-- Wallet chrome 跟 **`settings.locale`**（`zh-Hant`／`zh-Hans`／`en`），`t(locale, key)` 查 `ui-messages`；專有名詞可英文（RPC、Helius、Jupiter、Combined、Devnet）。
-- **禁止把操作說明寫進畫面。** 能靠版面、狀態、placeholder、icon tooltip 表達的，不要再加一句「互不共用」「失焦即儲存」「點選即生效」。那是設計原則給實作者看的，不是給使用者看的。
-- 欄位只要 **標籤 + 輸入**；placeholder 最多幾個字（「留空＝不用」）。欄位下方不要再跟一段 hint。
-- 區塊標題只要名詞（「RPC」「Helius」），不要括號裡的教學（「選填」「清單互不共用」）。
-- 錯誤才用短句；空狀態才解釋下一步。平時畫面保持安靜。
-- **用 UX 說話，不要 NPC 旁白。** 語意若已由版面成立，禁止再加一句解釋給使用者聽。例：分析／模擬進行中、批准與拒絕仍可按 → 使用者已能直覺「這不擋」；不要再寫「可不候，仍可核准或拒絕」。狀態給 spinner／短標，主行動給按鈕。多餘的副標是 noise。垂直空間貴，不為無意義的說明換行。
-- **RPC／Helius 限流（429、Kit `#8100002` 等）：** 用底部 **toast**（沿用 `#error`／`.toast-error`，約 4 秒自動消失、可點關閉），文案走 catalog（如 `error.rpcRateLimit`）。**禁止**在持倉列表下顯示 `npx @solana/errors decode` 或整段 base64。有快取持倉時列表照常顯示。概念稿：[`design-demos/rpc-rate-limit-toast-ux.html`](design-demos/rpc-rate-limit-toast-ux.html)。
-
----
-
-## 7. 確認與危險
-
-- 刪帳戶、Reveal、斷開全部：確認後才打 command。
-- 刪自訂 RPC、從 combined 移除非最後一個成員：可立刻生效，但必須是 **明確點擊刪除圖示**，不可滑過或誤觸 radio。
-- 最後一個 combined 成員不可刪（既有錯誤碼）；UI 應 disable 或點了給錯誤，列表不變。
-
----
-
-## 8. 對照例子（Settings）
-
-Settings **第一層是選項列表**，再進子頁。不要一打開就把 Helius URL／Jupiter key 攤在主頁（錄影／demo 會露出秘密）。概念稿：[`design-demos/settings-hub-ux.html`](design-demos/settings-hub-ux.html)。
-
-列表意向（第一列 **語言**，摘要為 endonym；其後）：RPC、API 金鑰、交易 AI、預設 CU 單價、錢包密碼。英文介面仍是 API keys、Default CU price。列上可寫狀態摘要（已設定／未設定），**不**寫出 key 或 RPC URL。RPC 列已設定時摘要是「變更」，與錢包密碼相同；Mainnet 尚未有自訂 RPC 時仍是「未設定」。語言列摘要永遠是 `繁體中文`／`简体中文`／`English`，不隨介面語改寫語言本名。網路不在這張列表。
-
-- **網路：** 漢堡選單一項，在地址簿與設定之間。頁面仍是兩列單選（Devnet、Mainnet），圓點表示目前；立刻寫入。**不要**用分段 tab／seg 來選 cluster。返回回主畫面。
-- **RPC：** 同一頁兩張卡（Devnet、Mainnet）各自編清單；radio + ellipsis URL。目前 cluster 的卡標「目前」。選／加／刪立刻寫入。
-- **API keys：** 標籤寫 **Helius API URL**、**Jupiter API key**。交易 AI 的 OpenRouter API key 用同一列。皆 `type="text"`，**不要** `type="password"`。有值時都顯示 `••••••`（不要「已設定」、不要露出後 4 或 `?api-key=`）。平時右側是顯示與鉛筆；點鉛筆並讀到明文後才可改，並出現確認與捨棄。確認才寫入。捨棄、失焦、離開頁面都不寫入。禁止整頁 Save，也沒有清除圖示立刻寫空。Reveal 不要再要錢包密碼。樞紐摘要：兩支都有值才是已設定，一支都沒有才是未設定，其餘是部分設定。
-- **錢包密碼：** 獨立子頁，殼底主按鈕；遮罩規則見 [`research/secret-field-autofill.md`](research/secret-field-autofill.md) 類 B 與 [`design-demos/change-wallet-password-ux.html`](design-demos/change-wallet-password-ux.html)。
-
-舊稿 [`design-demos/settings-rpc-ux.html`](design-demos/settings-rpc-ux.html) 只保留 RPC 列互動細節；樞紐結構以 hub 稿為準。
-
-Add account：第一層四個選項；各自進操作頁。Back 回選項列表。這與第 1 節相同。
-
----
-
-## 9. 秘密輸入
-
-助記詞與私鑰欄位不要被瀏覽器或密碼管理器當成可記住的登入資料。原因、現有屬性與做不到的部分見 [`research/secret-field-autofill.md`](research/secret-field-autofill.md)。
-
-- 這類欄位維持一般文字輸入，套上該筆記裡的 harden；離開頁面就清空。
-- 不要改成 `type="password"` 來藏助記詞或私鑰。
-- 錢包密碼欄位才用 `type="password"`。
-- 文件、測試、截圖不寫真實助記詞、私鑰或密碼。
-
-## 10. 不要做
-
-- 為了塞資料把 popup 做成寬桌面後台。
-- 把頁級主按鈕做成 floating／sticky overlay，或放進可捲動內容末尾（長表單時按鈕被捲走或蓋住上層）。
-- 新 SCREEN 讓頂欄或拒絕／批准跟著中間內容一起捲（內容區漏 `min-height: 0` 或讓 `html`／`body` 長高）。
-- 同一設定既 auto-save 又要求 Save 才算數。
-- 用文字按鈕堆列尾。
-- 用說明文字教使用者「這頁怎麼存、清單怎麼分」。
-- 在設計原則或 roadmap 寫真實 API key、助記詞、個人 gateway。
-
----
-
-## 與版本契約
-
-新畫面或重做舊畫面時：先讀該版 INDEX／HOW；再讀本檔補 INDEX 沒寫的互動。若 INDEX 明文要求整頁 Save 或文字按鈕，以 **INDEX** 為準，並在該版 reasoning 註明對本檔的例外。
+Errors and empty states are one short sentence (one line when possible). Buttons are verbs (Save, Cancel, Lock wallet). Do not use "please" or feature essays. Traditional Chinese, Simplified Chinese, and English share one catalog and the same line breaks.

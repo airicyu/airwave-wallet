@@ -1,119 +1,123 @@
-# Airwave Wallet — Agent 指引
+# Airwave Wallet — agent guide
 
-本倉庫是 **Airwave**：Solana Chrome Extension 錢包，中長期會加 **無鑰、query-only** 的隔離 agent 解讀能力。
+This repo is **Airwave**, a Solana Chrome extension wallet. Later it may add a keyless, query-only isolated agent for reading transactions and programs.
 
-功能意向：[`dev-docs/roadmap/backlog/INDEX.md`](dev-docs/roadmap/backlog/INDEX.md)。
+Feature ideas: [`dev-docs/roadmap/backlog/INDEX.md`](dev-docs/roadmap/backlog/INDEX.md).
+
+**Replies to the user are Traditional Chinese written prose.** Proper names, paths, APIs, and file names stay in English.
+
+**Documents default to English** unless the user says otherwise, or a spec already requires another language. Shipped version docs at or before 0.47.0 stay as they were written. Domain entries keep their Chinese term names.
 
 ---
 
-## 倉庫結構（意向）
+## Repo layout (intent)
 
-| 路徑 | 角色 |
+| Path | Role |
 |------|------|
-| [`wallet/`](wallet/) | Chrome extension 子專案（錢包本體） |
-| [`test-web/`](test-web/) | 最小 Solana web3 dApp，專供連線／簽名手測與回歸 |
-| [`docs/`](docs/README.md) | 用家文件（指南、功能、法律） |
-| [`dev-docs/`](dev-docs/README.md) | 工程文件：契約、畫面原則、概念稿、領域用語、本機建置 |
-| [`changelog.md`](changelog.md)／[`version.md`](version.md) | 出貨紀錄與目前版本號 |
-| 之後可選：`agent-harness/`（或同等 package） | 瀏覽器友善的 minimal agent harness library（roadmap ②） |
+| [`wallet/`](wallet/) | Chrome extension (the wallet) |
+| [`test-web/`](test-web/) | Minimal Solana web3 dApp for connect and sign checks |
+| [`docs/`](docs/README.md) | User docs (guide, features, legal) |
+| [`dev-docs/`](dev-docs/README.md) | Engineering docs: contracts, screen rules, demos, domain terms, local setup |
+| [`changelog.md`](changelog.md) / [`version.md`](version.md) | Ship log and current shipped version |
+| Later, optional: `agent-harness/` (or an equivalent package) | Browser-friendly minimal agent harness (roadmap step 2) |
 
-**不要改** 上層 `docs/agent-roadmap/`（若存在）。
-
----
-
-## 開工前讀什麼
-
-| 情境 | 必讀 |
-|------|------|
-| 實作某個已排程版本 | 該版 `dev-docs/roadmap/X.Y.Z/INDEX.md` 及其連結；遵守 [`dev-docs/roadmap/GUIDELINES.md`](dev-docs/roadmap/GUIDELINES.md)、[`dev-docs/roadmap/agent-workflow.md`](dev-docs/roadmap/agent-workflow.md)；畫面互動另守 [`dev-docs/design-principles.md`](dev-docs/design-principles.md)（INDEX 有明文則以 INDEX 為準） |
-| 使用者點名版本／`/version-delivery` | 技能 [`.agents/skills/version-delivery/SKILL.md`](.agents/skills/version-delivery/SKILL.md) |
-| Popup 怎麼操作才一致 | [`dev-docs/design-principles.md`](dev-docs/design-principles.md) |
-| 帳戶、地址、聚合等用詞 | [`dev-docs/DOMAIN.md`](dev-docs/DOMAIN.md)（該版 INDEX 明文覆寫時以 INDEX 為準，並回寫 DOMAIN） |
-
-**優先級：** 某版 INDEX 已定案 ＞ GUIDELINES 架構禁區 ＞ [`dev-docs/design-principles.md`](dev-docs/design-principles.md)（僅畫面）。
+Do **not** edit a parent `docs/agent-roadmap/` if one exists.
 
 ---
 
-## 架構硬規則（INDEX 未明文推翻前一律有效）
+## What to read first
 
-細節與寫作規範見 [`dev-docs/roadmap/GUIDELINES.md`](dev-docs/roadmap/GUIDELINES.md)。摘要：
+| Situation | Read |
+|-----------|------|
+| Implementing a scheduled version | That version's `dev-docs/roadmap/X.Y.Z/INDEX.md` and its links. Follow [`dev-docs/roadmap/GUIDELINES.md`](dev-docs/roadmap/GUIDELINES.md) and [`dev-docs/roadmap/agent-workflow.md`](dev-docs/roadmap/agent-workflow.md). Screen behavior also follows [`dev-docs/design-principles.md`](dev-docs/design-principles.md) unless that INDEX says otherwise |
+| User names a version or `/version-delivery` | [`.agents/skills/version-delivery/SKILL.md`](.agents/skills/version-delivery/SKILL.md) |
+| Consistent popup behavior | [`dev-docs/design-principles.md`](dev-docs/design-principles.md) |
+| Account, address, combined wording | [`dev-docs/DOMAIN.md`](dev-docs/DOMAIN.md). If that version's INDEX overrides a term in plain sentences, the INDEX wins and DOMAIN is updated to match |
 
-1. **Pending 請求**只活在 service worker（或該版契約指定的 hub）；UI 不靠 `chrome.storage` hydrate「碰運氣找包裹」。
-2. **持久 state：** `chrome.storage` 為真相，`onChanged` 更新各 UI 鏡像；禁止手寫 rehydrate 同步總線當主路徑。
-3. **Custody：** 使用者密碼加密的 password-boxed vault；禁止硬編碼密碼當安全機制；解鎖金鑰不長期明文 persist。
-4. **訊息：** typed command + `requestId`；結果只回發起 tab；禁止預設全 tab 廣播。
-5. **不要**對 inject↔extension 每筆 operation result 做 RSA encrypt/decrypt 劇場。
-6. **依賴：** 擴充本體壓低 3rd-party；引入依賴須能說明必要理由。
-7. **數字：** 金額、餘額、手續費、模擬差額禁止用 JavaScript `number` 做加減乘除。鏈上整數單位（lamport、代幣最小單位）用 `BigInt`，並從字串建成，不可先經 JSON `number`。需要小數時用 `big.js`（尚未安裝；第一次做小數運算再加入），不要改用 `decimal.js`。
-8. **Agent（若實作）：** 跑在無 `chrome.*` 的 sandbox（或同等隔離）；query-only；host 代打 LLM/MCP；永遠不碰 vault／不代簽。不依賴 long-living 背景當正確性前提。
-
-就算本版只做垂直切片，**請求生命週期、持久 state 同步、custody** 仍須符合上列，不可用 storage hydrate 或硬編碼密碼「先跑起來」。
+**Priority:** a version INDEX decision > GUIDELINES architecture bans > [`dev-docs/design-principles.md`](dev-docs/design-principles.md) (screens only).
 
 ---
 
-## 三步產品順序（背景）
+## Architecture rules
+
+Details are in [`dev-docs/roadmap/GUIDELINES.md`](dev-docs/roadmap/GUIDELINES.md). These hold until an INDEX explicitly replaces one:
+
+1. **Pending requests** live in the service worker (or the hub that version names). UI does not hydrate `chrome.storage` hoping to find the package.
+2. **Durable state:** `chrome.storage` is the source of truth. `onChanged` updates UI mirrors. Do not invent a hand-written rehydrate bus as the main sync path.
+3. **Custody:** a password-boxed vault encrypted with the user's password. No hardcoded password as a security mechanism. Unlock key material is not persisted in plaintext.
+4. **Messages:** typed command plus `requestId`. The result returns only to the originating tab. Do not broadcast to every tab by default.
+5. Do **not** RSA-encrypt every inject↔extension operation result.
+6. **Dependencies:** keep third-party libraries out of the extension unless the reason is necessary and stated.
+7. **Numbers:** do not add, subtract, multiply, or divide amounts, balances, fees, or simulated deltas with JavaScript `number`. Chain integer units (lamports, token base units) are `BigInt` built from strings, never via a JSON `number` first. Decimals use `big.js` (not installed yet; add it the first time a decimal calculation is needed). Do not switch to `decimal.js`.
+8. **Agent (if built):** runs in a sandbox with no `chrome.*` (or equivalent isolation); query-only; the host calls the LLM or MCP; it never touches the vault and never signs. Correctness must not depend on a long-lived background page.
+
+Even a vertical slice must still match the request lifecycle, durable-state sync, and custody rules above. Do not "get it running" with storage hydrate or a hardcoded password.
+
+---
+
+## Three-step product order (background)
 
 ```text
-① Minimal wallet MVP（wallet + test-web）
-② Minimal agent harness library（瀏覽器／extension 限制環境）
-③ 錢包內 isolated agent：交易／合約解讀等 query-only
+1. Minimal wallet MVP (wallet + test-web)
+2. Minimal agent harness library (browser / extension constraints)
+3. Isolated in-wallet agent: query-only reading of transactions and programs
 ```
 
-未排進某版 INDEX 前，②③ 只是方向，不要擅自開做膨脹 scope。
+Steps 2 and 3 are direction only until an INDEX schedules them. Do not start them and expand scope.
 
 ---
 
-## 工作習慣
+## Working habits
 
-- **Do not commit unless the user asks.** **Do not push unless the user asks.** Push 交使用者人手做；出貨、commit 都不包含 push。
-- Roadmap／審查報告**禁止**寫入真實助記詞、私鑰、密碼、生產秘密（見 GUIDELINES 隱私節）。
-- 實作範圍只在本倉庫；測試優先用 `test-web/`，勿假設必須改外部 dApp。
-- 對話裡談過但沒寫進 roadmap／契約檔的內容，對下一個 agent **等於不存在**——定案要落檔。
+- **Do not commit unless the user asks.** **Do not push unless the user asks.** The user pushes by hand. Shipping and committing do not include a push.
+- Roadmap and review reports must **not** contain real mnemonics, private keys, passwords, or production secrets (see GUIDELINES privacy).
+- Implementation stays in this repo. Prefer `test-web/` for tests. Do not assume an external dApp must change.
+- Anything discussed in chat but not written into the roadmap or a contract file **does not exist** for the next agent. Decisions go into files.
 
-### 切版
+### Cutting a version
 
-版本狀態以 [`dev-docs/roadmap/README.md`](dev-docs/roadmap/README.md) 的表為準。INDEX 的狀態要跟這張表一樣。出貨版本號以根 [`version.md`](version.md) 為準，且等於 README 裡最新一個 `shipped`。
+Version status lives in the table in [`dev-docs/roadmap/README.md`](dev-docs/roadmap/README.md). Each INDEX status matches that row. The shipped version number is the root [`version.md`](version.md), and it equals the latest `shipped` row in that table.
 
-一個版本的過程：先講要做什麼、寫進該版 proposal（INDEX），再改。這段期間該版是 `in progress`。使用者明確說 ship 之後才做：README 那一列改 `shipped`、INDEX 一起改、核對 [`changelog.md`](changelog.md) 該版已有句子。使用者沒說 ship，不要自己標 shipped，也不要自己開下一個版本號。
+A version proceeds by stating the work, writing it into that version's proposal (INDEX), then changing code. While that happens the version is `in progress`. Only after the user explicitly says ship: mark that README row `shipped`, match the INDEX, and check that [`changelog.md`](changelog.md) has a paragraph for that version. Do not mark shipped, and do not open the next version number, unless the user says ship.
 
-前一個版本還不是 `shipped` 時，不要開新版本。這是軟規則：提醒使用者，不硬擋。使用者仍要開，就開。
+If the previous version is not `shipped`, do not open a new version. This is a soft rule: remind the user, do not hard-block. If they still want it opened, open it.
 
-最新版已 `shipped`、下一版還沒開時，新的改動是未歸版。記在 [`dev-docs/roadmap/unversioned.md`](dev-docs/roadmap/unversioned.md)，並在 changelog 最上方的 `Next` 用一句話跟上。兩處寫同一批改動。最後由使用者選：算進剛出貨的那一版、開下一版承接、或出貨後仍留在未歸版。選定前不要自己猜。
+When the latest version is `shipped` and the next version is not opened, new work is unversioned. Record it in [`dev-docs/roadmap/unversioned.md`](dev-docs/roadmap/unversioned.md) and add one sentence under `Next` at the top of the changelog. Both places list the same changes. The user later chooses: fold them into the version just shipped, open the next version for them, or leave them unversioned after shipping. Do not guess before they choose.
 
-進行中的版本又有新改動：追加進該版 INDEX，changelog 寫在該版標題下，不開下一版。
-
----
-
-## 原始檔職責註解
-
-`wallet/src` 底下的 `.ts`：
-
-- **少於 50 行**（以檔案總行數計，含空行）：可以不寫檔首註解。
-- **50 行以上**：檔案最頂必須有英文區塊註解（職責說明），最多 **100 words**。
-- 之後改到一個已達 50 行、卻還沒有註解的 `.ts`（含只改 import），同一輪必須補上。
-- 平常一兩句，寫這個檔負責什麼，以及它不做的相鄰那一步。
-- 註解需要描述第二件不同的事時，分檔，不要把註解寫長。
-- 禁止用 `related logic`、`etc.`、`and so on` 帶過第二個職責。
-- `index.ts` 寫它 re-export 這個資料夾的對外介面（可以含多個子資料夾）。
-- 純資料表只寫這是哪一張表。
-- 同一輪改動若碰到超過 400 行的 `.ts`、`.tsx` 或 `.css`，必須 review 要不要拆。
-- `background/wallet/` 的命令檔：低於 150 行維持一個檔；達到或超過 150 行放進該組資料夾，裡頭把會一起改的函式放在同一個模組。150 行不遞迴。資料夾內模組可以超過 150 行，只要註解仍是一件事且檔案不超過 400 行。禁止把同一職責切成一命令一檔。一個職責只有一個 `handle*` 時，該檔可以只有這一個命令。
+More changes while a version is in progress go into that version's INDEX and under that version's changelog heading. Do not open the next version.
 
 ---
 
-## 快速連結
+## Source-file responsibility comments
 
-| 文件 | 用途 |
-|------|------|
-| [README.md](README.md) | 專案首頁（給人看） |
-| [docs/user-guide.md](docs/user-guide.md) | 用家上手 |
-| [docs/features.md](docs/features.md) | 現況功能 |
-| [dev-docs/README.md](dev-docs/README.md) | 工程文件地圖 |
-| [dev-docs/setup.md](dev-docs/setup.md) | 本機建置 |
-| [docs/README.md](docs/README.md) | 用家文件地圖 |
-| [dev-docs/design-principles.md](dev-docs/design-principles.md) | Popup／審批畫面 |
-| [dev-docs/design-demos/](dev-docs/design-demos/) | HTML 概念稿 |
-| [dev-docs/roadmap/README.md](dev-docs/roadmap/README.md) | Roadmap 入口 |
-| [dev-docs/DOMAIN.md](dev-docs/DOMAIN.md) | 領域用語（帳戶／地址／聚合） |
-| [dev-docs/roadmap/GUIDELINES.md](dev-docs/roadmap/GUIDELINES.md) | 怎麼寫自足版本契約 |
-| [dev-docs/roadmap/agent-workflow.md](dev-docs/roadmap/agent-workflow.md) | 審查閘門與 Track 流程 |
+For `.ts` files under `wallet/src`:
+
+- **Under 50 lines** (total lines, including blanks): a file header is optional.
+- **50 lines or more:** the top of the file must have an English block comment of what the file is responsible for, at most **100 words**.
+- If you edit a file that is already 50 lines or more and has no header (including an import-only edit), add the header in the same change.
+- Usually one or two sentences: what this file does, and the neighboring step it does not do.
+- If the comment needs a second different responsibility, split the file. Do not lengthen the comment.
+- Do not paper over a second responsibility with `related logic`, `etc.`, or `and so on`.
+- `index.ts` says it re-exports this folder's public surface (it may name subfolders).
+- A pure data table only says which table it is.
+- If one change touches a `.ts`, `.tsx`, or `.css` file over 400 lines, review whether to split it.
+- Command files under `background/wallet/`: under 150 lines stay one file. At 150 lines or more, move the group into that command's folder and keep functions that change together in the same module. The 150-line rule does not recurse. A module inside the folder may exceed 150 lines if the comment is still one responsibility and the file stays under 400 lines. Do not split one responsibility into one file per command. A file may contain only one `handle*` when that is the whole responsibility.
+
+---
+
+## Links
+
+| Doc | Use |
+|-----|-----|
+| [README.md](README.md) | Project home (for people) |
+| [docs/user-guide.md](docs/user-guide.md) | User guide |
+| [docs/features.md](docs/features.md) | Current features |
+| [dev-docs/README.md](dev-docs/README.md) | Engineering doc map |
+| [dev-docs/setup.md](dev-docs/setup.md) | Local build |
+| [docs/README.md](docs/README.md) | User doc map |
+| [dev-docs/design-principles.md](dev-docs/design-principles.md) | Popup and approval screens |
+| [dev-docs/design-demos/](dev-docs/design-demos/) | HTML concept demos |
+| [dev-docs/roadmap/README.md](dev-docs/roadmap/README.md) | Roadmap entry |
+| [dev-docs/DOMAIN.md](dev-docs/DOMAIN.md) | Domain terms (accounts, addresses, combined) |
+| [dev-docs/roadmap/GUIDELINES.md](dev-docs/roadmap/GUIDELINES.md) | How to write a self-sufficient version contract |
+| [dev-docs/roadmap/agent-workflow.md](dev-docs/roadmap/agent-workflow.md) | Review gates and Track flow |
