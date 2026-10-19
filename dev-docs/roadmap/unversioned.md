@@ -8,4 +8,4 @@ After the user assigns the batch, move the items into that version's INDEX and c
 
 ## Current
 
-(none)
+- Confirm ticks on secret rows and custom RPC rows use `--ok`. Discard crosses use `--danger`.

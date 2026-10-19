@@ -1,6 +1,6 @@
 /**
- * Renders the approval popout: unlock, connect consent, and sign review.
- * Does not own the pending map or sign with vault keys.
+ * Imperative approval shell session: pending load, simulation, resolve, and send status.
+ * Does not render React markup; the host passes DOM refs from ApprovalShell components.
  */
 
 import { sendExtensionRequest } from "../shared/ext-api";
@@ -54,23 +54,12 @@ import {
   hexCompact,
   hexGrouped,
   isDisplayableUtf8,
-  shortPk,
   shortSignature,
 } from "./format";
 
-export type ApprovalShellCallbacks = {
-  onClose: () => void;
-  onWalletSendReject?: () => void;
-  onWalletSendSuccessExit?: () => void;
-};
+import type { ApprovalShellCallbacks, ApprovalShellConfig, ApprovalShellDomRefs } from "./approval-shell-types";
 
-export type ApprovalShellConfig = {
-  requestId: string;
-  host: UiHost;
-  callbacks: ApprovalShellCallbacks;
-  /** Prefix ids when mounted inside the popup so they do not collide with existing popup ids. */
-  elementIdPrefix?: string;
-};
+export type { ApprovalShellCallbacks, ApprovalShellConfig, ApprovalShellDomRefs } from "./approval-shell-types";
 
 let shellLocale: UiLocale = DEFAULT_UI_LOCALE;
 let shellTitleKey: MessageKey | null = null;
@@ -114,11 +103,8 @@ function applyShellLocaleToStaticChrome(): void {
   }
   signReject.textContent = tr("approval.reject");
   signApprove.textContent = tr("approval.approve");
-  legacyReject.textContent = tr("approval.reject");
-  legacyApprove.textContent = tr("approval.approve");
   btnCloseExpired.textContent = tr("common.return");
   goneTitle.textContent = tr("approval.expired");
-  legacyTitle.textContent = tr("approval.legacyTitle");
   siteLabel.textContent = tr("approval.site");
   signPageTitle.textContent = tr("approval.signMsg");
   document.documentElement.lang = shellLocale;
@@ -139,17 +125,11 @@ let viewUnlock!: HTMLElement;
 let viewGone!: HTMLElement;
 let goneTitle!: HTMLElement;
 let goneLead!: HTMLElement;
-let legacyTitle!: HTMLElement;
 let siteLabel!: HTMLElement;
-let viewLegacy!: HTMLElement;
 let viewSign!: HTMLElement;
 let unlockPassword!: HTMLInputElement;
 let unlockError!: HTMLElement;
 let btnUnlock!: HTMLElement;
-let legacyOrigin!: HTMLElement;
-let legacyKind!: HTMLElement;
-let legacyDetail!: HTMLElement;
-let legacyError!: HTMLElement;
 let signOrigin!: HTMLElement;
 let signBody!: HTMLElement;
 let signError!: HTMLElement;
@@ -161,8 +141,6 @@ let btnCopyPk!: HTMLElement;
 let signReject!: HTMLButtonElement;
 let signApprove!: HTMLButtonElement;
 let signDock!: HTMLElement;
-let legacyReject!: HTMLButtonElement;
-let legacyApprove!: HTMLButtonElement;
 let btnCloseExpired!: HTMLElement;
 let shellDomBound = false;
 
@@ -173,20 +151,6 @@ function closeHost(): void {
 function walletSendRejectExit(): void {
   const cb = shellConfig?.callbacks.onWalletSendReject ?? shellConfig?.callbacks.onClose;
   cb?.();
-}
-
-function elementId(base: string): string {
-  return `${shellConfig?.elementIdPrefix ?? ""}${base}`;
-}
-
-function q<T extends HTMLElement>(root: ParentNode, baseId: string): T {
-  const id = elementId(baseId);
-  const el =
-    root instanceof Document
-      ? root.getElementById(id)
-      : (root as Element).querySelector(`#${CSS.escape(id)}`);
-  if (!el) throw new Error(`approval shell: missing #${id}`);
-  return el as T;
 }
 
 let pending: PendingRecord | null = null;
@@ -267,7 +231,6 @@ function parseCuFieldInput(raw: string): number | null {
 function hideAll(): void {
   viewUnlock.hidden = true;
   viewGone.hidden = true;
-  viewLegacy.hidden = true;
   viewSign.hidden = true;
 }
 
@@ -431,7 +394,6 @@ function enterWalletSendFailedPage(errorCode: string, extra?: SendFailUiExtra): 
   simGen += 1;
   viewUnlock.hidden = true;
   viewGone.hidden = true;
-  viewLegacy.hidden = true;
   viewSign.hidden = false;
   setSendStatusChrome(true);
   signDock.hidden = true;
@@ -527,7 +489,6 @@ function enterWalletSendConfirmedPage(signature?: string): void {
   sendStatusPhase = "confirmed";
   viewUnlock.hidden = true;
   viewGone.hidden = true;
-  viewLegacy.hidden = true;
   viewSign.hidden = false;
   setSendStatusChrome(true);
   signDock.hidden = true;
@@ -652,16 +613,6 @@ function armExpiry(createdAt: number): void {
     return;
   }
   expiryTimer = window.setTimeout(() => showGone(), remain);
-}
-
-function showLegacyConnect(p: PendingRecord): void {
-  hideAll();
-  setPopoutWindowTitle("window.title.approval");
-  viewLegacy.hidden = false;
-  legacyOrigin.textContent = p.origin;
-  legacyKind.textContent = tr("approval.connectLead");
-  legacyDetail.hidden = true;
-  legacyDetail.textContent = "";
 }
 
 function renderSignMessageBody(p: PendingRecord, bytes: Uint8Array): void {
@@ -1282,7 +1233,7 @@ async function showConnectOrFinishReconnect(): Promise<void> {
     await resolve("approve");
     return;
   }
-  showLegacyConnect(pending);
+  closeHost();
 }
 
 async function refreshAfterUnlock(holdAfterUnlock: boolean): Promise<void> {
@@ -1353,9 +1304,6 @@ async function resolve(decision: "approve" | "reject"): Promise<void> {
     enterWalletSendConfirming();
   } else if (pending?.kind === "signMessage" || (pending && isSignTxKind(pending.kind))) {
     setSignButtons({ reject: true, approve: true, approveLabel: tr("approval.approving") });
-  } else {
-    legacyReject.disabled = true;
-    legacyApprove.disabled = true;
   }
   const res = await sendExtensionRequest("ui.resolvePending", { requestId, decision });
   if (!res.ok) {
@@ -1381,11 +1329,6 @@ async function resolve(decision: "approve" | "reject"): Promise<void> {
         approveLabel: tr("approval.approve"),
       });
       if (pending && isSignTxKind(pending.kind)) applyApproveFromSimulation(lastSim);
-    } else {
-      legacyError.hidden = false;
-      legacyError.textContent = msg;
-      legacyReject.disabled = false;
-      legacyApprove.disabled = false;
     }
     return;
   }
@@ -1477,8 +1420,6 @@ function wireShellEvents(): void {
 
   signReject.addEventListener("click", () => void resolve("reject"), { signal });
   signApprove.addEventListener("click", () => void resolve("approve"), { signal });
-  legacyReject.addEventListener("click", () => void resolve("reject"), { signal });
-  legacyApprove.addEventListener("click", () => void resolve("approve"), { signal });
 
   storageUnlockListener = (changes, area) => {
     if (area !== "session") return;
@@ -1522,7 +1463,7 @@ function wireShellEvents(): void {
   hardenWalletPasswordInput(unlockPassword);
 }
 
-export function disposeApprovalShell(): void {
+function disposeApprovalShellRuntime(): void {
   stopTxAiWatch();
   stopAutoSim();
   disposeSignTxBody();
@@ -1587,48 +1528,40 @@ export function disposeApprovalShell(): void {
   feeDetailsOpen = false;
 }
 
-export function mountApprovalShell(config: ApprovalShellConfig, root: ParentNode): () => void {
-  disposeApprovalShell();
+function assignDomRefs(refs: ApprovalShellDomRefs): void {
+  viewUnlock = refs.viewUnlock;
+  viewGone = refs.viewGone;
+  goneTitle = refs.goneTitle;
+  goneLead = refs.goneLead;
+  viewSign = refs.viewSign;
+  unlockPassword = refs.unlockPassword;
+  unlockError = refs.unlockError;
+  btnUnlock = refs.btnUnlock;
+  signOrigin = refs.signOrigin;
+  signBody = refs.signBody;
+  signError = refs.signError;
+  signPageTitle = refs.signPageTitle;
+  signAvatar = refs.signAvatar;
+  signLabel = refs.signLabel;
+  signAddr = refs.signAddr;
+  btnCopyPk = refs.btnCopyPk;
+  btnCopySite = refs.btnCopySite;
+  signReject = refs.signReject;
+  signApprove = refs.signApprove;
+  signDock = refs.signDock;
+  btnCloseExpired = refs.btnCloseExpired;
+  siteLabel = viewSign.querySelector(".site-label") as HTMLElement;
+}
+
+/** Binds the approval shell runtime to React-owned DOM refs. Returns dispose. */
+export function bindApprovalShell(refs: ApprovalShellDomRefs, config: ApprovalShellConfig): () => void {
+  disposeApprovalShellRuntime();
+  assignDomRefs(refs);
   shellConfig = config;
   requestId = config.requestId;
-  mountRoot = root;
+  mountRoot = refs.viewSign.parentElement;
   requestEnded = false;
   sendStatusPhase = "idle";
-
-  viewUnlock = q(root, "view-unlock");
-  viewGone = q(root, "view-gone");
-  goneTitle = viewGone.querySelector("h1") as HTMLElement;
-  goneLead = q(root, "gone-lead");
-  viewLegacy = q(root, "view-legacy");
-  legacyTitle = viewLegacy.querySelector("h1") as HTMLElement;
-  siteLabel = q(root, "view-sign").querySelector(".site-label") as HTMLElement;
-  viewSign = q(root, "view-sign");
-  unlockPassword = q(root, "unlock-password");
-  unlockError = q(root, "unlock-error");
-  btnUnlock = q(root, "btn-unlock");
-  legacyOrigin = q(root, "legacy-origin");
-  legacyKind = q(root, "legacy-kind");
-  legacyDetail = q(root, "legacy-detail");
-  legacyError = q(root, "legacy-error");
-  signOrigin = q(root, "sign-origin");
-  signBody = q(root, "sign-body");
-  signError = q(root, "sign-error");
-  signPageTitle = q(root, "sign-page-title");
-  signAvatar = q(root, "sign-avatar");
-  signLabel = q(root, "sign-label");
-  signAddr = q(root, "sign-addr");
-  btnCopyPk = q(root, "btn-copy-pk");
-  signReject = q(root, "sign-reject");
-  signApprove = q(root, "sign-approve");
-  signDock = q(root, "sign-dock");
-  legacyReject = q(root, "legacy-reject");
-  legacyApprove = q(root, "legacy-approve");
-  btnCloseExpired = q(root, "btn-close-expired");
-  try {
-    btnCopySite = q<HTMLButtonElement>(root, "btn-copy-site");
-  } catch {
-    btnCopySite = null;
-  }
   shellDomBound = true;
 
   hideAll();
@@ -1648,5 +1581,5 @@ export function mountApprovalShell(config: ApprovalShellConfig, root: ParentNode
   chrome.storage.onChanged.addListener(settingsChangeListener);
   void loadPending();
 
-  return disposeApprovalShell;
+  return disposeApprovalShellRuntime;
 }

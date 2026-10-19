@@ -3,7 +3,7 @@
  * Does not open the wallet window or side panel.
  */
 import { createRoot } from "react-dom/client";
-import { mountApprovalShell } from "../approval/shell";
+import { ApprovalShell } from "../approval/ApprovalShell";
 import "../approval/tx-ai.css";
 import { ConnectPage } from "../flow/ConnectPage";
 import { brandIconUrl } from "../shared/brand-icon";
@@ -52,17 +52,17 @@ async function boot(): Promise<void> {
     return;
   }
 
-  mountApprovalShell(
-    {
-      requestId,
-      host: "popout",
-      callbacks: {
+  root.innerHTML = "";
+  createRoot(root).render(
+    <ApprovalShell
+      requestId={requestId}
+      host="popout"
+      callbacks={{
         onClose: () => window.close(),
         onWalletSendReject: () => window.close(),
         onWalletSendSuccessExit: () => window.close(),
-      },
-    },
-    root,
+      }}
+    />,
   );
 }
 

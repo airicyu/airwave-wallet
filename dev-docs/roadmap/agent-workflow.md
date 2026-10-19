@@ -31,11 +31,14 @@ draft  (INDEX, reasoning, how)
 
 | Gate | When | Skip? |
 |------|------|-------|
+| **Source-file smell reminder** | A version is opened, before implementation | No. List the files; do not block and do not split unless the INDEX says so |
 | **Design review** | `INDEX` is `draft` and `reasoning` and `how` are readable | No. A tiny doc typo can be one paragraph, but the file must exist |
 | **Implementation review** | All Tracks for the version are done, or the human asks for a review | No, unless the version changes no code (docs only) |
 | **Security review** | The version touches the vault, session, pending, message routing, or inject | May be a section inside the implementation review. Use a dedicated pass when the diff is large |
 
 `/version-delivery` runs the design review itself. It does not spawn a sub-agent for that gate.
+
+The source-file smell reminder is the list in the root `AGENTS.md` under "Cutting a version". Count total lines, including blanks, under `wallet/src`. Tell the user, in Traditional Chinese, each path and count for: a `.ts`, `.tsx`, or `.css` file over 400 lines; a command file directly under `background/wallet/` at 150 lines or more that is not already inside that command's folder; a `.ts` file of 50 lines or more with no English responsibility header.
 
 ---
 

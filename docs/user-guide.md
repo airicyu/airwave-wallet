@@ -1,8 +1,8 @@
 # User guide
 
-For people who want to **start using Airwave**. Build steps: [dev-docs/setup.md](../dev-docs/setup.md). Feature list: [features.md](./features.md).
+For people who want to **start using Airwave**. Feature list: [features.md](./features.md).
 
-Airwave is a developer preview: build from this repo and load it as an unpacked Chrome extension. It is not a Chrome Web Store listing.
+Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/airwave-wallet/jnkcbpnkihckfiapbbcgcmopmlhmhggb). To build from this repo and load an unpacked extension, see [dev-docs/setup.md](../dev-docs/setup.md).
 
 In-product disclaimer, terms, and privacy policy: [legal/disclaimer.md](./legal/disclaimer.md), [legal/terms-of-use.md](./legal/terms-of-use.md), [legal/privacy-policy.md](./legal/privacy-policy.md).
 
@@ -10,7 +10,14 @@ In-product disclaimer, terms, and privacy policy: [legal/disclaimer.md](./legal/
 
 ---
 
-## 1. Load it into Chrome
+## 1. Install
+
+### Chrome Web Store (recommended)
+
+1. Open the [Airwave Wallet listing](https://chromewebstore.google.com/detail/airwave-wallet/jnkcbpnkihckfiapbbcgcmopmlhmhggb) and choose **Add to Chrome**.
+2. Pin Airwave on the toolbar and open the popup.
+
+### From this repo (developers)
 
 1. Build `wallet/dist` using [dev-docs/setup.md](../dev-docs/setup.md).
 2. Chrome → **Extensions** → turn on **Developer mode** → **Load unpacked** → choose `wallet/dist`.

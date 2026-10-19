@@ -4,7 +4,7 @@
 
 Airwave is a non-custodial Solana Chrome extension wallet. Private keys stay on this machine: they are encrypted with your wallet password and written to extension storage. Sites never see the vault. Before you approve, the wallet shows the site, expected balance changes, the fee, and each instruction. Optional transaction AI is read-only: it can explain the transaction, and it never signs for you.
 
-This is a developer preview. Build from this repo and load it into Chrome. It is not on the Chrome Web Store.
+Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/airwave-wallet/jnkcbpnkihckfiapbbcgcmopmlhmhggb). To build from this repo and load an unpacked extension, see [dev-docs/setup.md](dev-docs/setup.md).
 
 Official account: [@airwavewallet](https://x.com/airwavewallet) on X.
 
@@ -37,6 +37,7 @@ Approving is still your action. The risk report is there to read, not to approve
 
 | If you want to… | Read |
 |-----------------|------|
+| Install the wallet | [Chrome Web Store](https://chromewebstore.google.com/detail/airwave-wallet/jnkcbpnkihckfiapbbcgcmopmlhmhggb) |
 | Use the wallet | [docs/user-guide.md](docs/user-guide.md) (Helius RPC / API, optional OpenRouter transaction AI) |
 | See what it can do | [docs/features.md](docs/features.md) |
 | Build or change the code | [dev-docs/setup.md](dev-docs/setup.md) |

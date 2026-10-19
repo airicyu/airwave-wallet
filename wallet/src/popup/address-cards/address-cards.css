@@ -1,0 +1,79 @@
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+  min-height: 28px;
+}
+
+.addr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  background: #1a2838;
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  padding: 2px 4px 2px 10px;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+}
+
+.addr-chip.main {
+  border-color: var(--accent);
+}
+
+.addr-chip .chip-pick {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 2px 4px;
+  max-width: 9.5em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.addr-tag {
+  font-size: 0.62rem;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #1a2838;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.addr-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  background: var(--fill);
+}
+
+.address-cards-empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 28px 8px;
+}
+
+.address-card-input {
+  width: 8rem;
+  border: 0;
+  border-bottom: 1px solid var(--accent);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  outline: none;
+}
+
+.address-cards-add {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

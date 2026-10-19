@@ -2,6 +2,7 @@
  * Settings edit helpers, RPC/settings fingerprints, and patch flows for the popup settings screens.
  * Does not write chrome.storage directly without typed wallet extension commands.
  */
+import { usePopupContext } from "../state/PopupContext";
 import { sendExtensionRequest } from "../../shared/ext-api";
 import {
   customRpcForCluster,
@@ -12,7 +13,7 @@ import {
   type Settings,
   type UiLocale,
 } from "../../shared/storage-keys";
-import { apiErrorMessage, messageForErrorCode, t } from "../../shared/ui-i18n";
+import { apiErrorMessage, DEFAULT_UI_LOCALE, messageForErrorCode, t } from "../../shared/ui-i18n";
 import type { MessageKey } from "../../shared/ui-messages";
 import type { State } from "../types";
 
@@ -222,6 +223,12 @@ export function confirmRpcUrl(args: {
     if (next[args.cluster].active === args.url) next[args.cluster].active = nextUrl;
   }
   return { ok: true, next, nextUrl };
+}
+
+export function useSettingsIo(): SettingsIo {
+  const { refresh, showError, wallet } = usePopupContext();
+  const locale = wallet ? wallet.settings.locale : DEFAULT_UI_LOCALE;
+  return { refresh, showError, locale };
 }
 
 export { PUBLIC_RPC_BY_CLUSTER };
