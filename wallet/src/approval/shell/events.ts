@@ -110,6 +110,9 @@ export function wireShellEvents(): void {
     const rec = message as Record<string, unknown>;
     if (rec.requestId !== sess.requestId) return;
     if (rec.kind === "airwave-wallet-send-progress" && typeof rec.error === "string") {
+      if (!sess.pending || !isBroadcastAfterApproveKind(sess.pending.kind)) {
+        return;
+      }
       sess.resolving = false;
       enterWalletSendFailedPage(rec.error, {
         detail: typeof rec.detail === "string" ? rec.detail : undefined,
@@ -119,12 +122,11 @@ export function wireShellEvents(): void {
       return;
     }
     if (rec.kind === "airwave-wallet-send-settled" && rec.ok === true) {
-      if (sess.pending && isBroadcastAfterApproveKind(sess.pending.kind)) {
-        const sig = typeof rec.signature === "string" ? rec.signature : undefined;
-        enterWalletSendConfirmedPage(sig);
+      if (!sess.pending || !isBroadcastAfterApproveKind(sess.pending.kind)) {
         return;
       }
-      closeHost();
+      const sig = typeof rec.signature === "string" ? rec.signature : undefined;
+      enterWalletSendConfirmedPage(sig);
     }
   };
   chrome.runtime.onMessage.addListener(runtimeMessageListener);

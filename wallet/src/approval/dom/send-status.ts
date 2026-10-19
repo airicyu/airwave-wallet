@@ -2,7 +2,7 @@
  * Wallet-send confirming, failed, and confirmed status cards inside the sign body.
  * Does not resolve pending or run simulation.
  */
-import { stopAutoSim } from "../sign-tx-body";
+import { disposeSignTxBody, stopAutoSim } from "../sign-tx-body";
 import { SEND_STATUS_AURORA_SVG } from "../../shared/send-status-mark";
 import { shortSignature } from "../format";
 import { sess } from "../shell/session";
@@ -15,9 +15,58 @@ const SEND_STATUS_CHECK_SVG =
 const SEND_STATUS_FAIL_SVG =
   '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M9 9l6 6M15 9l-6 6"/></svg>';
 
+const confirmedDismissTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+/** Auto-close after wallet-send confirmed; keyed by request so rebind/pause does not cancel other layers. */
+export function scheduleWalletSendConfirmedDismiss(requestId: string, exit: () => void): void {
+  cancelWalletSendConfirmedDismiss(requestId);
+  confirmedDismissTimers.set(
+    requestId,
+    setTimeout(() => {
+      confirmedDismissTimers.delete(requestId);
+      exit();
+    }, 1000),
+  );
+}
+
+export function cancelWalletSendConfirmedDismiss(requestId: string): void {
+  const timer = confirmedDismissTimers.get(requestId);
+  if (timer == null) return;
+  clearTimeout(timer);
+  confirmedDismissTimers.delete(requestId);
+}
+
+/** Clears wallet-send status chrome so a sign-only pending does not inherit the prior send UI. */
+export function resetSendStatusUiForNewReview(): void {
+  sess.sendStatusPhase = "idle";
+  sess.requestEnded = false;
+  setSendStatusChrome(false);
+  sess.signDock.hidden = false;
+  sess.signError.hidden = true;
+  sess.signError.textContent = "";
+  const hadSendStatusCard = Boolean(sess.signBody.querySelector(".send-status-card"));
+  if (hadSendStatusCard) {
+    sess.signBody.innerHTML = "";
+  }
+  if (hadSendStatusCard || sess.signTxBodyReady) {
+    disposeSignTxBody();
+    sess.signTxBodyReady = false;
+    sess.feeFrozenForSim = false;
+    sess.feeBreakdownReady = false;
+    sess.txDetailsReady = false;
+    sess.lastDeltaFingerprint = "";
+    sess.lastDeltaPaintFingerprint = "";
+  }
+}
+
 function ensureSendStatusCard(): HTMLElement {
   let card = sess.signBody.querySelector<HTMLElement>(".send-status-card");
   if (card) return card;
+  disposeSignTxBody();
+  sess.signTxBodyReady = false;
+  sess.feeFrozenForSim = false;
+  sess.feeBreakdownReady = false;
+  sess.txDetailsReady = false;
   sess.signBody.replaceChildren();
   card = document.createElement("div");
   card.className = "send-status-card";
@@ -204,10 +253,9 @@ export function enterWalletSendFailedPage(errorCode: string, extra?: SendFailUiE
 }
 
 export function enterWalletSendConfirmedPage(signature?: string): void {
-  if (sess.confirmedTimer != null) {
-    clearTimeout(sess.confirmedTimer);
-    sess.confirmedTimer = null;
-  }
+  const requestId = sess.requestId;
+  const exit =
+    sess.shellConfig?.callbacks.onWalletSendSuccessExit ?? sess.shellConfig?.callbacks.onClose;
   if (sess.expiryTimer != null) {
     window.clearTimeout(sess.expiryTimer);
     sess.expiryTimer = null;
@@ -246,9 +294,7 @@ export function enterWalletSendConfirmedPage(signature?: string): void {
     sigEl.hidden = true;
     sigEl.textContent = "";
   }
-  sess.confirmedTimer = setTimeout(() => {
-    sess.confirmedTimer = null;
-    const exit = sess.shellConfig?.callbacks.onWalletSendSuccessExit ?? sess.shellConfig?.callbacks.onClose;
-    exit?.();
-  }, 1000);
+  if (requestId && exit) {
+    scheduleWalletSendConfirmedDismiss(requestId, exit);
+  }
 }

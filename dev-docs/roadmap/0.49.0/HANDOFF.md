@@ -2,15 +2,14 @@
 
 ## Done this session
 
-**Track 5 landed (React shell hosts).** Removed `shell.ts`, `mountApprovalShell`, `disposeApprovalShell`, and `buildApprovalRootHtml`. Added `ApprovalShell.tsx` plus `ApprovalUnlock`, `ApprovalExpired`, `ApprovalSign` (fee/send-status placeholders `ApprovalFeeDetails` / `ApprovalSendStatus`; imperative paint still in `approval-shell-runtime.ts`). `bindApprovalShell` wires React DOM refs to the former shell logic. `ApprovalHost`, `SignFlowPage`, and `popout/main.tsx` render `ApprovalShell`; popout connect still uses `ConnectPage`. `cd wallet && npm run typecheck` passed. User hand-verified Track 5 on unpacked extension.
+**0.49.0 shipped.** Tracks 1–5 landed: popup CSS and screen splits, React approval shell, runtime split under `approval/shell/` and `approval/dom/`, sidebar stacked-flow and wallet-send confirmed-dismiss fixes. Roadmap row and INDEX are `shipped`; root `changelog.md`, `version.md`, and `wallet/package.json` are 0.49.0.
 
 ## Next session
 
-- Implementation review (spawn fresh agent per `agent-workflow.md`).
-- Optional second commit: `approval-shell-*` module split (post–Track 5 React port).
+- Open **0.50.0** when there is a new contract, or fold [`unversioned.md`](../unversioned.md) into a patch/minor per user choice.
 
 ## Paste-ready
 
 ```text
-Implement one phase of dev-docs/roadmap/0.49.0. Status must be in progress or the design gate must already have passed. Read INDEX.md, then only the matching phase in docs/how.md. Stop after that phase. Do not edit the other oversized files. Run cd wallet && npm run typecheck.
+Read dev-docs/roadmap/README.md for the latest shipped version. Unversioned code notes are in dev-docs/roadmap/unversioned.md.
 ```

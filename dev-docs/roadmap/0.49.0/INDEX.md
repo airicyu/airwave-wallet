@@ -1,6 +1,6 @@
 # 0.49.0 — Split oversized UI files
 
-- **Status:** `in progress`
+- **Status:** `shipped`
 - **Upstream:** [0.48.0](../0.48.0/INDEX.md). Behavior, class names, commands, and storage keys match that version. The approval shell becomes React in this version.
 - **Changelog:** write into [`changelog.md`](../../../changelog.md) on ship
 - **Ideas:** none in the backlog. Popup work is a file split. The approval shell is a React port.
@@ -28,6 +28,10 @@ A session reads this INDEX, then only the phase section it is implementing in `d
 | CSS import path | `popup/main.tsx` keeps importing `style.css` once. Screen CSS files are pulled in with `@import` from `style.css`. A CSS phase does not edit screen `.tsx` files. A screen phase does not move CSS |
 | File shape | One exported screen per file, except a private helper used only by that screen, which stays in that file. `RpcScreen` keeps `RpcClusterCard` and `RpcEditor`. `ImportSeedScreen` keeps its word grid and account pick. `AccountsList` keeps `AccountCard`. `WalletLockSettingsScreen` keeps `IdleAutoLockSection`. Each new `.ts` file of 50 lines or more gets an English responsibility header of at most 100 words. New files stay under 400 lines |
 | What a phase may edit | A popup phase edits only the file it splits, new files in that same folder, and that folder's `index.ts`. The React phase edits `wallet/src/approval/`, `ApprovalHost.tsx`, `flow/SignFlowPage.tsx`, and `popout/main.tsx`. It does not edit the four popup files |
+| Sidebar flow stack | Several `ApprovalShell` instances can mount at once (stacked `FlowHost` layers). Only the top layer binds the shared imperative runtime (`paused` on lower layers). Runtime `dispose` does not mutate another layer's `sign-body` DOM. Finishing a flow removes that entry by `requestId` (`popFlowByRequestId`), not only `popFlow` on the stack top |
+| Wallet-send confirmed dismiss | After `signAndSendTransaction` or in-wallet broadcast approve reaches confirmed, the UI auto-dismisses after about one second, same as 0.48.0. The dismiss timer is keyed by `requestId` so runtime rebind and `resetSendStatusUiForNewReview` on a new layer do not cancel another layer's timer |
+| Sign body after send-status | Clearing wallet-send status or detached `sign-tx-body` refs resets `signTxBodyReady` and remounts the delta shell when `renderSignTransactionBody` runs again |
+| Settings edit actions | On API secret rows (`SecretKeyField`) and the custom RPC editor, confirm uses `--ok` and discard uses `--danger`. No new strings |
 
 ## Out of scope
 
@@ -68,6 +72,7 @@ A session reads this INDEX, then only the phase section it is implementing in `d
 
 - **Does:** replace `shell.ts` with React components under `wallet/src/approval/`. Hosts render the component instead of injecting HTML and calling `mountApprovalShell`
 - **Does not:** move CSS; rewrite `sign-tx-body.ts`; change simulation, approve, or reject commands
+- **Also fixes (React port regressions, sidebar wallet-send):** stacked shell runtime ownership, per-`requestId` confirmed dismiss, sign-body remount after send-status; see Decided rows *Sidebar flow stack*, *Wallet-send confirmed dismiss*, and *Sign body after send-status*
 - **Acceptance:** Track 5 rows below; `cd wallet && npm run typecheck`
 
 ## Acceptance
@@ -90,6 +95,7 @@ Track 3:
 - [x] `SettingsScreens.tsx` only re-exports. Screens: settings hub, locale, network, RPC, keys, CU price, change password, wallet lock
 - [x] `TxAiSettingsScreen.tsx` is unchanged
 - [x] `PopupMarkup.tsx` still imports those names from `./settings/SettingsScreens`
+- [x] Secret and custom RPC edit rows: confirm tick `--ok`, discard cross `--danger`
 
 Track 4:
 
@@ -103,6 +109,9 @@ Track 5:
 - [x] `ApprovalHost`, `SignFlowPage`, and `popout/main.tsx` render the same approval React component. Popout connect still renders `ConnectPage`
 - [x] Component files, each under 400 lines, cover unlock, expired, sign chrome (account, site, approve, reject), fee card and transaction details with CU draft, and wallet-send confirming, failed, and confirmed (`approval-fee-details-dom.ts`, `approval-send-status-dom.ts`, plus React chrome components)
 - [x] The expected-delta card is still painted by `sign-tx-body.ts` into a ref. Pending payloads still come from the service worker. Approve and reject still use the existing commands
+- [x] Sidebar: `signAndSendTransaction` (test-web) reaches confirmed and auto-dismisses the flow layer after about one second
+- [x] Sidebar: after `signAndSendTransaction` confirmed (or still on stack), `signTransaction` then Reject does not leave a blank sign shell or resurrect the prior send-status card on the wrong layer
+- [x] Runtime modules live under `wallet/src/approval/shell/` and `wallet/src/approval/dom/` (not a single `approval-shell-runtime.ts` monolith)
 
 All tracks:
 
@@ -125,6 +134,9 @@ All tracks:
 | `wallet/src/approval/components/` | Unlock, expired, and sign chrome React pieces |
 | `wallet/src/popup/components/ApprovalHost.tsx` | Renders the React approval shell |
 | `wallet/src/flow/SignFlowPage.tsx` | Same component, in-wallet shell host |
+| `wallet/src/flow/FlowHost.tsx` | Passes `paused` so only the top stacked layer binds runtime |
+| `wallet/src/flow/stack.ts` | `popFlowByRequestId` for per-request flow finish |
+| `wallet/src/approval/dom/send-status.ts` | Wallet-send status cards and per-`requestId` confirmed dismiss |
 | `wallet/src/popout/main.tsx` | Same component after the connect branch |
 | `wallet/src/approval/sign-tx-body.ts` | Delta painter, unchanged |
 

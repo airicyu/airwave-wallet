@@ -90,6 +90,15 @@ function paintDeltaOnly(sim: SimulatePendingTxResult | null, loading: boolean): 
 
 export function renderSignTransactionBody(sim: SimulatePendingTxResult | null, loading: boolean): void {
   if (isSendStatusLocked()) return;
+  if (
+    sess.signTxBodyReady &&
+    (!getSignTxBodyRefs() || sess.signBody.childElementCount === 0)
+  ) {
+    sess.signTxBodyReady = false;
+    sess.feeBreakdownReady = false;
+    sess.txDetailsReady = false;
+    sess.feeFrozenForSim = false;
+  }
   if (!sess.signTxBodyReady) {
     const feeCard = renderFeeCard(sim, loading);
     mountSignTxBodyShell(

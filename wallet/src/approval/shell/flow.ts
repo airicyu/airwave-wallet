@@ -36,6 +36,7 @@ import {
   enterWalletSendConfirming,
   enterWalletSendConfirmedPage,
   enterWalletSendFailedPage,
+  resetSendStatusUiForNewReview,
 } from "../dom/send-status";
 
 function clearApproveHold(): void {
@@ -100,7 +101,11 @@ async function renderSignShell(
   holdAfterUnlock: boolean,
   mode: "signMessage" | "signTransaction",
 ): Promise<void> {
-  if (isSendStatusLocked()) return;
+  if (!isBroadcastAfterApproveKind(p.kind)) {
+    resetSendStatusUiForNewReview();
+  } else if (isSendStatusLocked()) {
+    return;
+  }
 
   const stateRes = await sendExtensionRequest("wallet.getState", {});
   if (isSendStatusLocked() || sess.requestEnded) return;
@@ -190,12 +195,14 @@ export async function loadPending(): Promise<void> {
   const mountedId = sess.requestId;
   if (!mountedId) {
     showGone();
+    closeHost();
     return;
   }
   const res = await sendExtensionRequest("ui.getPending", { requestId: mountedId });
   if (isSendStatusLocked() || sess.requestId !== mountedId || sess.requestEnded) return;
   if (!res.ok) {
     showGone();
+    closeHost();
     return;
   }
   sess.pending = res.result as PendingRecord;
@@ -239,8 +246,16 @@ export async function resolvePending(decision: "approve" | "reject"): Promise<vo
   sess.resolving = true;
   if (sess.pending && isBroadcastAfterApproveKind(sess.pending.kind) && decision === "approve") {
     enterWalletSendConfirming();
-  } else if (sess.pending?.kind === "signMessage" || (sess.pending && isSignTxKind(sess.pending.kind))) {
+  } else if (
+    decision === "approve" &&
+    (sess.pending?.kind === "signMessage" || (sess.pending && isSignTxKind(sess.pending.kind)))
+  ) {
     setSignButtons({ reject: true, approve: true, approveLabel: tr("approval.approving") });
+  } else if (
+    decision === "reject" &&
+    (sess.pending?.kind === "signMessage" || (sess.pending && isSignTxKind(sess.pending.kind)))
+  ) {
+    setSignButtons({ reject: true, approve: true });
   }
   const res = await sendExtensionRequest("ui.resolvePending", { requestId: sess.requestId, decision });
   if (!res.ok) {
@@ -285,6 +300,7 @@ export async function resolvePending(decision: "approve" | "reject"): Promise<vo
       return;
     }
   }
+  sess.resolving = false;
   closeHost();
 }
 

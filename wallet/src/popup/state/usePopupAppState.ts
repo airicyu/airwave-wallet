@@ -11,6 +11,7 @@ import {
 import {
   flowPageIdFromKind,
   popFlow,
+  popFlowByRequestId,
   pushFlow,
   rejectFlowPending,
   topFlow,
@@ -349,8 +350,10 @@ export function usePopupAppState() {
       activeWalletSendRequestId,
       setActiveWalletSendRequestId: setActiveWalletSendRequestIdTracked,
       flowStack,
-      finishFlowPage: () => {
-        setFlowStack((prev) => popFlow(prev));
+      finishFlowPage: (requestId?: string) => {
+        setFlowStack((prev) =>
+          requestId ? popFlowByRequestId(prev, requestId) : popFlow(prev),
+        );
       },
       homeTokenRows,
       setHomeTokenRows,

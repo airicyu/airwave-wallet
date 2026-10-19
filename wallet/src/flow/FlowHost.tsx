@@ -16,8 +16,9 @@ export function FlowHost({
   entry: FlowEntry;
   layer: number;
   paused: boolean;
-  onFinished: () => void;
+  onFinished: (requestId: string) => void;
 }): JSX.Element {
+  const finishThis = () => onFinished(entry.requestId);
   return (
     <div
       className={paused ? "flow-layer is-paused" : "flow-layer"}
@@ -26,9 +27,9 @@ export function FlowHost({
       inert={paused}
     >
       {entry.pageId === "connect" ? (
-        <ConnectPage requestId={entry.requestId} onFinished={onFinished} />
+        <ConnectPage requestId={entry.requestId} onFinished={finishThis} />
       ) : (
-        <SignFlowPage requestId={entry.requestId} onFinished={onFinished} />
+        <SignFlowPage requestId={entry.requestId} onFinished={finishThis} paused={paused} />
       )}
     </div>
   );

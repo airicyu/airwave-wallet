@@ -10,9 +10,11 @@ import { walletShellSurfaceFromHref } from "../shared/shell-constants";
 export const SignFlowPage = memo(function SignFlowPage({
   requestId,
   onFinished,
+  paused = false,
 }: {
   requestId: string;
   onFinished: () => void;
+  paused?: boolean;
 }): JSX.Element {
   const finishedRef = useRef(onFinished);
   finishedRef.current = onFinished;
@@ -24,8 +26,10 @@ export const SignFlowPage = memo(function SignFlowPage({
       <ApprovalShell
         requestId={requestId}
         host={host}
+        paused={paused}
         callbacks={{
           onClose: () => finishedRef.current(),
+          onWalletSendSuccessExit: () => finishedRef.current(),
         }}
       />
     </div>

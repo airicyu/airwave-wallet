@@ -114,6 +114,11 @@ export function startAutoSim(tick: () => void, shouldSkip: () => boolean): void 
 }
 
 export function getSignTxBodyRefs(): SignTxBodyRefs | null {
+  if (!refs) return null;
+  if (!refs.deltaCard.isConnected) {
+    refs = null;
+    return null;
+  }
   return refs;
 }
 

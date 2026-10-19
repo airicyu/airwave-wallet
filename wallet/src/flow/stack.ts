@@ -14,6 +14,10 @@ export function popFlow(stack: FlowEntry[]): FlowEntry[] {
   return stack.slice(0, -1);
 }
 
+export function popFlowByRequestId(stack: FlowEntry[], requestId: string): FlowEntry[] {
+  return stack.filter((e) => e.requestId !== requestId);
+}
+
 export function topFlow(stack: FlowEntry[]): FlowEntry | null {
   return stack.length === 0 ? null : stack[stack.length - 1]!;
 }

@@ -63,7 +63,7 @@ This directory is the version contract for **airwave-wallet**. An agent with no 
 | [0.47.0](./0.47.0/INDEX.md) | shipped | Account list, combined manage, and address book: rename sub-screen, member names and order, kind colors |
 | [0.47.1](./0.47.1/INDEX.md) | shipped | dApp sign without `chain` uses the wallet's selected cluster |
 | [0.48.0](./0.48.0/INDEX.md) | shipped | Idle auto-lock, wallet lock settings UI, API key edit actions, Network picker |
-| [0.49.0](./0.49.0/INDEX.md) | in progress | Split popup CSS and three screen modules. Approval shell becomes React. Behavior unchanged |
+| [0.49.0](./0.49.0/INDEX.md) | shipped | Popup CSS and screen splits. React approval shell. Green confirm and red discard on secret and RPC edit rows |
 
 **Version numbers:** a **patch** on `x.y.z` (for example **0.3.1**) is only a bugfix for that minor. It does not schedule a new feature. A new feature is the next **minor** (0.3.0 → 0.4.0 → 0.5.0).
 

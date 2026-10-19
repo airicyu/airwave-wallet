@@ -11,6 +11,7 @@ import {
   resetShellSessionState,
   sess,
 } from "./session";
+import { resetSendStatusUiForNewReview } from "../dom/send-status";
 import { hideAll, isSendStatusLocked, setSignButtons } from "./dom";
 import { applyShellLocaleToStaticChrome, loadShellLocale, tr } from "./locale";
 import { unwireShellEvents, wireShellEvents } from "./events";
@@ -43,18 +44,12 @@ function wireSessionActions(): void {
   };
 }
 
+/** Unbind listeners and session state. Does not clear sign-body DOM (stacked sidebar layers keep their paint). */
 function disposeApprovalShellRuntime(): void {
   stopTxAiWatch();
   resetSignTxSession();
   unwireShellEvents();
-  if (sess.shellDomBound) {
-    sess.viewSign.classList.remove("send-status-mode");
-  }
   sess.shellDomBound = false;
-  if (sess.confirmedTimer != null) {
-    clearTimeout(sess.confirmedTimer);
-    sess.confirmedTimer = null;
-  }
   if (sess.expiryTimer != null) {
     window.clearTimeout(sess.expiryTimer);
     sess.expiryTimer = null;
@@ -70,6 +65,7 @@ function disposeApprovalShellRuntime(): void {
 export function bindApprovalShell(refs: ApprovalShellDomRefs, config: ApprovalShellConfig): () => void {
   disposeApprovalShellRuntime();
   assignShellDomRefs(refs);
+  resetSendStatusUiForNewReview();
   sess.shellConfig = config;
   sess.requestId = config.requestId;
   sess.mountRoot = refs.viewSign.parentElement;

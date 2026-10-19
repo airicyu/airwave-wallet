@@ -17,6 +17,8 @@ export type ApprovalShellProps = {
   requestId: string;
   host: UiHost;
   callbacks: ApprovalShellCallbacks;
+  /** When true (stacked flow under another layer), do not bind the shared shell runtime. */
+  paused?: boolean;
 };
 
 function useShellTranslate(): (key: Parameters<typeof t>[1], vars?: Record<string, string>) => string {
@@ -45,6 +47,7 @@ export const ApprovalShell = memo(function ApprovalShell({
   requestId,
   host,
   callbacks,
+  paused = false,
 }: ApprovalShellProps): JSX.Element {
   const translate = useShellTranslate();
   const callbacksRef = useRef(callbacks);
@@ -126,7 +129,7 @@ export const ApprovalShell = memo(function ApprovalShell({
       };
     })();
 
-    if (!refs) return;
+    if (!refs || paused) return;
 
     const config: ApprovalShellConfig = {
       requestId,
@@ -139,7 +142,7 @@ export const ApprovalShell = memo(function ApprovalShell({
     };
 
     return bindApprovalShell(refs, config);
-  }, [requestId, host]);
+  }, [requestId, host, paused]);
 
   return (
     <div id="approval-root" className="approval-root">
