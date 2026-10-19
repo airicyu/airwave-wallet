@@ -34,6 +34,12 @@ let vaultKey: CryptoKey | null = null;
 let vaultSaltB64: string | null = null;
 const accountsById = new Map<string, LoadedAccountKeys>();
 let hydratePromise: Promise<void> | null = null;
+let lockFinishedListener: (() => void) | null = null;
+
+/** One listener; idle-lock registers to clear alarms after any `lock()`. */
+export function setLockFinishedListener(listener: (() => void) | null): void {
+  lockFinishedListener = listener;
+}
 
 export function setVaultCrypto(key: CryptoKey, saltB64: string): void {
   vaultKey = key;
@@ -52,6 +58,7 @@ export function isUnlocked(): boolean {
 export async function lock(): Promise<void> {
   clearUnlockedMemory();
   await chrome.storage.session.remove(SESSION_UNLOCKED);
+  lockFinishedListener?.();
 }
 
 function clearUnlockedMemory(): void {

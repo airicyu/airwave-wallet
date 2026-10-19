@@ -76,6 +76,7 @@ import {
   NetworkScreen,
   RpcScreen,
   SettingsHub,
+  WalletLockSettingsScreen,
 } from "./settings/SettingsScreens";
 import { TxAiSettingsScreen } from "./settings/TxAiSettingsScreen";
 import { usePopupContext } from "./state/PopupContext";
@@ -641,6 +642,12 @@ export function PopupMarkup(): JSX.Element {
           {currentView === "settings-cu-price" ? (
             <section id="screen-settings-cu-price" className="screen">
               <CuPriceScreen settings={wallet.settings} />
+            </section>
+          ) : null}
+
+          {currentView === "settings-wallet-lock" ? (
+            <section id="screen-settings-wallet-lock" className="screen">
+              <WalletLockSettingsScreen settings={wallet.settings} />
             </section>
           ) : null}
 

@@ -4,6 +4,10 @@ This is a list of ideas, **not a contract**. After an item is scheduled, that ve
 
 New item: add a row here and write `backlog/<name>.md`.
 
+## Scheduled
+
+(none)
+
 ## Unscheduled
 
 | Item | Notes |

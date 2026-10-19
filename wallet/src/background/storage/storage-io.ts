@@ -67,6 +67,21 @@ function normalizeUiLocale(raw: unknown): UiLocale {
   return "zh-Hant";
 }
 
+function normalizeIdleAutoLockEnabled(raw: unknown): boolean {
+  if (raw === false) return false;
+  if (raw === true) return true;
+  return true;
+}
+
+function normalizeIdleAutoLockMinutes(raw: unknown): number {
+  if (typeof raw === "number" && Number.isInteger(raw) && raw >= 1 && raw <= 1440) return raw;
+  return 10;
+}
+
+export function isPatchIdleAutoLockMinutesValid(value: unknown): boolean {
+  return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 1440;
+}
+
 function normalizeTxAiMode(raw: unknown): TxAiModelMode {
   return raw === "custom" ? "custom" : "default";
 }
@@ -165,6 +180,8 @@ export function normalizeSettings(raw: Partial<Settings> | undefined): Settings 
     locale: normalizeUiLocale(raw?.locale),
     shell: normalizeShellMode(raw?.shell),
     rpcGuideDismissed: raw?.rpcGuideDismissed === true,
+    idleAutoLockEnabled: normalizeIdleAutoLockEnabled(raw?.idleAutoLockEnabled),
+    idleAutoLockMinutes: normalizeIdleAutoLockMinutes(raw?.idleAutoLockMinutes),
   };
 }
 

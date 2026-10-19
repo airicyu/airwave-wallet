@@ -13,6 +13,7 @@ import {
 } from "./pending";
 import { finishSignAndSendWindowClosed } from "./send";
 import { pendingTimeoutHandlers } from "./send";
+import { registerIdleLockListeners } from "./idle-lock/idle-lock";
 import { registerWalletShellListeners } from "./shell";
 import * as session from "./session";
 import { ensureLocalMigrated } from "./storage";
@@ -29,6 +30,7 @@ if (inServiceWorker) bootServiceWorker();
 
 function bootServiceWorker(): void {
   registerWalletShellListeners();
+  registerIdleLockListeners();
   installConnectionTabWatch();
   installTxAiAssess();
   setPendingAddedHook((id) => {

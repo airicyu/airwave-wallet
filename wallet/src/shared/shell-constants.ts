@@ -5,6 +5,8 @@ export const POPOUT_PAGE_PATH = "src/popout/index.html";
 export const SHELL_LAST_NORMAL_WINDOW_MSG = "airwave-shell-last-normal-window";
 /** Side panel document holds this port so the SW knows the wallet sidebar is alive. */
 export const SIDEBAR_SURFACE_PORT = "airwave-sidebar-surface";
+/** Wallet shell documents hold this port so the SW knows a popup, side panel, or popout is open. */
+export const IDLE_SURFACE_PORT = "airwave-idle-surface";
 
 export function isPopoutApprovalUrl(url: string | undefined): boolean {
   if (!url) return false;

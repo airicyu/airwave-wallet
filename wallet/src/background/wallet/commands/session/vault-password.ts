@@ -19,6 +19,7 @@ import {
   secretToStored,
 } from "../../../session";
 import * as session from "../../../session";
+import { syncIdleLockAlarm } from "../../../idle-lock/idle-lock";
 import {
   readAccounts,
   readSettings,
@@ -54,6 +55,7 @@ export async function handleUnlock(req: ExtensionRequest): Promise<ExtensionResp
       }
     }
     await session.persistUnlockedSession();
+    await syncIdleLockAlarm(false);
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,

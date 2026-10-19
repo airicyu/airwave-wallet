@@ -90,10 +90,15 @@ const messages = {
     "zh-Hans": "预设 CU 单价",
     "en": "Default CU price",
   },
-  "nav.settingsPassword": {
-    "zh-Hant": "錢包密碼",
-    "zh-Hans": "钱包密码",
-    "en": "Wallet password",
+  "nav.settingsWalletLock": {
+    "zh-Hant": "錢包鎖定設定",
+    "zh-Hans": "钱包锁定设置",
+    "en": "Wallet lock settings",
+  },
+  "nav.settingsWalletLockPassword": {
+    "zh-Hant": "錢包鎖定密碼",
+    "zh-Hans": "钱包锁定密码",
+    "en": "Wallet lock password",
   },
   "nav.about": {
     "zh-Hant": "關於此應用",
@@ -314,6 +319,46 @@ const messages = {
     "zh-Hant": "預設 CU 單價",
     "zh-Hans": "预设 CU 单价",
     "en": "Default CU price",
+  },
+  "settings.idleAutoLock.enable": {
+    "zh-Hant": "閒置自動鎖定",
+    "zh-Hans": "闲置自动锁定",
+    "en": "Idle auto-lock",
+  },
+  "settings.idleAutoLock.minutes": {
+    "zh-Hant": "分鐘",
+    "zh-Hans": "分钟",
+    "en": "Minutes",
+  },
+  "settings.idleAutoLock.lockAfter": {
+    "zh-Hant": "閒置後鎖定（分鐘）",
+    "zh-Hans": "闲置后锁定（分钟）",
+    "en": "Lock after (minutes)",
+  },
+  "settings.idleAutoLock.increase": {
+    "zh-Hant": "增加分鐘",
+    "zh-Hans": "增加分钟",
+    "en": "Increase minutes",
+  },
+  "settings.idleAutoLock.decrease": {
+    "zh-Hant": "減少分鐘",
+    "zh-Hans": "减少分钟",
+    "en": "Decrease minutes",
+  },
+  "settings.hub.walletLock": {
+    "zh-Hant": "錢包鎖定設定",
+    "zh-Hans": "钱包锁定设置",
+    "en": "Wallet lock settings",
+  },
+  "settings.hub.walletLockPassword": {
+    "zh-Hant": "錢包鎖定密碼",
+    "zh-Hans": "钱包锁定密码",
+    "en": "Wallet lock password",
+  },
+  "settings.idleAutoLock.hubSummary": {
+    "zh-Hant": "{minutes} 分鐘",
+    "zh-Hans": "{minutes} 分钟",
+    "en": "{minutes} min",
   },
   "settings.hub.walletPassword": {
     "zh-Hant": "錢包密碼",

@@ -11,7 +11,10 @@ import type { PendingRecord } from "../shared/commands";
 import { sendExtensionRequest } from "../shared/ext-api";
 import { DEFAULT_UI_LOCALE, parseUiLocale, t } from "../shared/ui-i18n";
 import { applyWindowChrome } from "../shared/window-chrome";
+import { keepIdleSurfacePort } from "../shared/idle-surface-port";
 import { STORAGE } from "../shared/storage-keys";
+
+keepIdleSurfacePort();
 
 const params = new URLSearchParams(location.search);
 const requestId = params.get("requestId");

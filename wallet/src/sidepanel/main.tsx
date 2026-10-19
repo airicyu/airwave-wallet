@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { App } from "../popup/App";
+import { keepIdleSurfacePort } from "../shared/idle-surface-port";
 import { SIDEBAR_SURFACE_PORT } from "../shared/shell-constants";
 import "../popout/style.css";
 import "../approval/tx-ai.css";
@@ -15,6 +16,7 @@ function keepSidebarPresence(): void {
   });
 }
 keepSidebarPresence();
+keepIdleSurfacePort();
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Side panel missing #root");

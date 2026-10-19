@@ -65,6 +65,10 @@ export type Settings = {
   shell: ShellMode;
   /** First-account RPC guide already seen (Skip or open Settings both count). */
   rpcGuideDismissed: boolean;
+  /** Idle auto-lock switch; default on. */
+  idleAutoLockEnabled: boolean;
+  /** Whole minutes for idle lock when enabled; default 10. */
+  idleAutoLockMinutes: number;
 };
 
 export type AccountKind = "signing" | "readOnly";
@@ -121,6 +125,8 @@ export const DEFAULT_SETTINGS: Settings = {
   locale: "zh-Hant",
   shell: "window",
   rpcGuideDismissed: false,
+  idleAutoLockEnabled: true,
+  idleAutoLockMinutes: 10,
 };
 
 export const PUBLIC_RPC_BY_CLUSTER: Record<Cluster, string> = {

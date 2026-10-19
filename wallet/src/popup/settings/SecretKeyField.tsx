@@ -90,7 +90,6 @@ export function SecretKeyField({
       }
       setDraft(value);
       setPhase("editing");
-      setRevealed(true);
       queueMicrotask(() => inputRef.current?.focus());
     });
   };
@@ -121,13 +120,14 @@ export function SecretKeyField({
     }, PRESS_MS);
   };
 
-  const display = phase === "editing"
-    ? (revealed ? draft : MASKED_SECRET_DISPLAY)
-    : revealed
-      ? plain
-      : configured
-        ? MASKED_SECRET_DISPLAY
-        : "";
+  const display =
+    phase === "editing"
+      ? draft
+      : revealed
+        ? plain
+        : configured
+          ? MASKED_SECRET_DISPLAY
+          : "";
 
   return (
     <div className="field keys-field">
@@ -139,29 +139,28 @@ export function SecretKeyField({
           type="text"
           autoComplete="off"
           placeholder={t("common.optional")}
-          readOnly={phase !== "editing" || !revealed}
+          readOnly={phase !== "editing"}
           value={display}
           onChange={(e) => {
-            if (phase === "editing" && revealed) setDraft(e.target.value);
+            if (phase === "editing") setDraft(e.target.value);
           }}
           onBlur={() => {
             if (holdBlur.current) return;
             if (phase === "editing") idle();
           }}
         />
-        <button
-          type="button"
-          className="icon-btn ghost-inline keys-reveal-btn"
-          title={t("common.show")}
-          aria-label={t("common.show")}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => {
-            if (phase === "editing") setRevealed((v) => !v);
-            else if (phase === "idle") revealIdle();
-          }}
-        >
-          <IconEye />
-        </button>
+        {phase === "idle" ? (
+          <button
+            type="button"
+            className="icon-btn ghost-inline keys-reveal-btn"
+            title={t("common.show")}
+            aria-label={t("common.show")}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={revealIdle}
+          >
+            <IconEye />
+          </button>
+        ) : null}
         {phase === "editing" ? (
           <>
             <button

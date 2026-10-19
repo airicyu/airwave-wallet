@@ -6,8 +6,10 @@ import type { ExtensionRequest, ExtensionResponse } from "../../../shared/comman
 import { notifyAccountChanged } from "../../messaging";
 import { respond } from "../../messaging";
 import { isAllowedCustomRpc, isPublicClusterRpc, toPublicSettings } from "../../../shared/storage-keys";
+import { syncIdleLockAlarm } from "../../idle-lock/idle-lock";
 import {
   getActivePublicKey,
+  isPatchIdleAutoLockMinutesValid,
   normalizeSettings,
   readSettings,
   writeSettings,
@@ -56,9 +58,28 @@ export async function handlePatchSettings(req: ExtensionRequest): Promise<Extens
       error: { code: "INVALID_RPC", message: "Invalid RPC URL" },
     });
   }
+  if (
+    Object.prototype.hasOwnProperty.call(patch, "idleAutoLockMinutes") &&
+    !isPatchIdleAutoLockMinutesValid(patch.idleAutoLockMinutes)
+  ) {
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: { code: "INVALID_PAYLOAD", message: "Idle lock minutes must be 1–1440" },
+    });
+  }
   const settings = await readSettings();
   const next = normalizeSettings({ ...settings, ...patch });
   await writeSettings(next);
+  if (patch.idleAutoLockEnabled === false) {
+    await syncIdleLockAlarm(false);
+  } else if (
+    patch.idleAutoLockEnabled === true ||
+    Object.prototype.hasOwnProperty.call(patch, "idleAutoLockMinutes")
+  ) {
+    await syncIdleLockAlarm(true);
+  }
   const pubkey = await getActivePublicKey();
   if (pubkey) await notifyAccountChanged(pubkey);
   return respond({
