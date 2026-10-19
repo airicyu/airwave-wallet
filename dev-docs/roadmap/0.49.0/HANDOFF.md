@@ -6,9 +6,8 @@
 
 ## Next session
 
-- Split `approval-shell-runtime.ts` (still ~1.5k lines) into modules under 400 lines; move fee/CU and wallet-send status DOM into real `ApprovalFeeDetails` / `ApprovalSendStatus` implementations if desired.
-- Track 5 INDEX: mark component-file row when split is done.
 - Implementation review (spawn fresh agent per `agent-workflow.md`).
+- Optional second commit: `approval-shell-*` module split (post–Track 5 React port).
 
 ## Paste-ready
 

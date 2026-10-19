@@ -1,4 +1,4 @@
-import type { UiHost } from "../shared/commands";
+import type { UiHost } from "../../shared/commands";
 
 export type ApprovalShellCallbacks = {
   onClose: () => void;

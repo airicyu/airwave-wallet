@@ -1,6 +1,6 @@
 import type { JSX, Ref } from "react";
-import { brandIconUrl } from "../shared/brand-icon";
-import type { MessageKey } from "../shared/ui-messages";
+import { brandIconUrl } from "../../shared/brand-icon";
+import type { MessageKey } from "../../shared/ui-messages";
 
 export type ApprovalUnlockRefs = {
   sectionRef: Ref<HTMLElement>;

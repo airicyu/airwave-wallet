@@ -4,11 +4,11 @@
  */
 import type { JSX } from "react";
 import { memo, useEffect, useLayoutEffect, useRef } from "react";
-import { bindApprovalShell } from "./approval-shell-runtime";
-import type { ApprovalShellCallbacks, ApprovalShellConfig, ApprovalShellDomRefs } from "./approval-shell-types";
-import { ApprovalExpired } from "./ApprovalExpired";
-import { ApprovalSign } from "./ApprovalSign";
-import { ApprovalUnlock } from "./ApprovalUnlock";
+import { bindApprovalShell } from "./shell/runtime";
+import type { ApprovalShellCallbacks, ApprovalShellConfig, ApprovalShellDomRefs } from "./shell/types";
+import { ApprovalExpired } from "./components/ApprovalExpired";
+import { ApprovalSign } from "./components/ApprovalSign";
+import { ApprovalUnlock } from "./components/ApprovalUnlock";
 import { STORAGE, type Settings } from "../shared/storage-keys";
 import { DEFAULT_UI_LOCALE, parseUiLocale, t } from "../shared/ui-i18n";
 import type { UiHost } from "../shared/commands";

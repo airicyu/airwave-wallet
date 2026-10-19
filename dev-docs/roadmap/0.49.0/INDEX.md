@@ -101,7 +101,7 @@ Track 5:
 
 - [x] `mountApprovalShell`, `disposeApprovalShell`, and `buildApprovalRootHtml` are gone. No host uses `dangerouslySetInnerHTML` for the approval skeleton
 - [x] `ApprovalHost`, `SignFlowPage`, and `popout/main.tsx` render the same approval React component. Popout connect still renders `ConnectPage`
-- [ ] Component files, each under 400 lines, cover unlock, expired, sign chrome (account, site, approve, reject), fee card and transaction details with CU draft, and wallet-send confirming, failed, and confirmed (`approval-shell-runtime.ts` still oversized; fee/send status DOM remains in runtime pending split)
+- [x] Component files, each under 400 lines, cover unlock, expired, sign chrome (account, site, approve, reject), fee card and transaction details with CU draft, and wallet-send confirming, failed, and confirmed (`approval-fee-details-dom.ts`, `approval-send-status-dom.ts`, plus React chrome components)
 - [x] The expected-delta card is still painted by `sign-tx-body.ts` into a ref. Pending payloads still come from the service worker. Approve and reject still use the existing commands
 
 All tracks:
@@ -119,7 +119,10 @@ All tracks:
 | `wallet/src/popup/onboarding/OnboardingScreens.tsx` | Becomes a barrel in Track 2 |
 | `wallet/src/popup/settings/SettingsScreens.tsx` | Becomes a barrel in Track 3 |
 | `wallet/src/popup/accounts/AccountsScreens.tsx` | Becomes a barrel in Track 4 |
-| `wallet/src/approval/ApprovalShell.tsx` | React approval root; `approval-shell-runtime.ts` holds session logic |
+| `wallet/src/approval/ApprovalShell.tsx` | React approval root |
+| `wallet/src/approval/shell/` | Session bind, flow, events, simulation wiring |
+| `wallet/src/approval/dom/` | Fee, send-status, and sign-message imperative paint |
+| `wallet/src/approval/components/` | Unlock, expired, and sign chrome React pieces |
 | `wallet/src/popup/components/ApprovalHost.tsx` | Renders the React approval shell |
 | `wallet/src/flow/SignFlowPage.tsx` | Same component, in-wallet shell host |
 | `wallet/src/popout/main.tsx` | Same component after the connect branch |
