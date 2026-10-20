@@ -4,9 +4,9 @@
  */
 import type { JSX } from "react";
 import { isCombinedAccount, isSigningOrWatch } from "../../shared/accounts";
-import { sendExtensionRequest } from "../../shared/ext-api";
-import { accountKind } from "../../shared/storage-keys";
-import { apiErrorMessage } from "../../shared/ui-i18n";
+import { sendExtensionRequest } from "../../shared/protocol";
+import { accountKind } from "../../shared/protocol";
+import { apiErrorMessage } from "../../shared/i18n";
 import { CombinedManagePanel } from "./CombinedManage";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";

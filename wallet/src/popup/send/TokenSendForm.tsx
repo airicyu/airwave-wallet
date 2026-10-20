@@ -5,13 +5,13 @@
 import type { JSX } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { NATIVE_SOL_ID } from "../home/home-tokens";
-import { messageForErrorCode } from "../../shared/ui-i18n";
+import { messageForErrorCode } from "../../shared/i18n";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
 import { useRegisterDock } from "../state/dock";
-import { solReserveLamports } from "../../shared/wallet-send-amount";
+import { solReserveLamports } from "../../shared/send";
 import type { State } from "../types";
-import { homeTokenRowForSendBalance } from "../../shared/wallet-send-eligibility";
+import { homeTokenRowForSendBalance } from "../../shared/send";
 import { beginTokenSend, findTokenRowById, halfSendAmount, maxSendAmount, sendFormValid, tokenBalanceRaw } from "./send-logic";
 import { patchSendDraft, readSendDraft } from "./send-draft";
 import { IconBook, IconX } from "../components/StrokeIcon";

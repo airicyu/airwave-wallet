@@ -4,7 +4,7 @@
  */
 import { isHomeView } from "./lib/format";
 import type { HomeTokenRow } from "./home/home-tokens";
-import { t, type UiLocale } from "../shared/ui-i18n";
+import { t, type UiLocale } from "../shared/i18n";
 import { SUBPAGE_TITLE_KEYS, type View } from "./types";
 
 /** Parent view for Back navigation. Special cases (burner success, seed pick, token-detail) skip this map. */

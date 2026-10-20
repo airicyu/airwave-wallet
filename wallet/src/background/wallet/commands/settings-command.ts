@@ -2,10 +2,10 @@
  * Patches persisted wallet settings and notifies connected tabs when the active pubkey changes.
  * Does not unlock the vault or modify account records.
  */
-import type { ExtensionRequest, ExtensionResponse } from "../../../shared/commands";
+import type { ExtensionRequest, ExtensionResponse } from "../../../shared/protocol";
 import { notifyAccountChanged } from "../../messaging";
 import { respond } from "../../messaging";
-import { isAllowedCustomRpc, isPublicClusterRpc, toPublicSettings } from "../../../shared/storage-keys";
+import { isAllowedCustomRpc, isPublicClusterRpc, toPublicSettings } from "../../../shared/protocol";
 import { syncIdleLockAlarm } from "../../idle-lock/idle-lock";
 import {
   getActivePublicKey,
@@ -15,7 +15,7 @@ import {
   writeSettings,
 } from "../../storage";
 
-function incomingCustomRpcRejected(patch: Partial<import("../../../shared/storage-keys").Settings>): boolean {
+function incomingCustomRpcRejected(patch: Partial<import("../../../shared/protocol").Settings>): boolean {
   const check = (url: unknown): boolean => {
     if (typeof url !== "string") return false;
     const t = url.trim();
@@ -37,7 +37,7 @@ function incomingCustomRpcRejected(patch: Partial<import("../../../shared/storag
 }
 
 export async function handlePatchSettings(req: ExtensionRequest): Promise<ExtensionResponse> {
-  const patch = { ...(req.payload as Partial<import("../../../shared/storage-keys").Settings>) };
+  const patch = { ...(req.payload as Partial<import("../../../shared/protocol").Settings>) };
   const patchKeys = Object.keys(patch) as (keyof typeof patch)[];
   const shellOnly = patchKeys.length === 1 && patchKeys[0] === "shell";
   delete patch.shell;

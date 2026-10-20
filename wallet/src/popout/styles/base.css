@@ -1,0 +1,95 @@
+:root {
+  --bg: #0f1419;
+  --bg-elevated: #161c24;
+  --fill: #1e2630;
+  --stroke: #2a3542;
+  --stroke-soft: #222a34;
+  --text: #e8eef4;
+  --text-muted: #9aa7b4;
+  --text-dim: #6b7785;
+  --accent: #3d9cf0;
+  --accent-dim: #2a6ea8;
+  --danger: #c75050;
+  --ok: #4ecb8d;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --card-lines: 6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: "Segoe UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.root {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.flow-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.flow-page-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 20px 16px;
+}
+
+.flow-page > .unlock-screen {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+}
+
+.bar-subpage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  min-height: 52px;
+}
+
+.bar-subpage-title {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 0.92rem;
+  font-weight: 600;
+}

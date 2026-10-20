@@ -1,13 +1,13 @@
 /**
- * React hook mirroring wallet chrome.storage state, navigation, send/close-empty UI, and storage.onChanged updates.
- * Does not run in the service worker or handle dapp bridge commands.
+ * Composes popup screen state from the wallet mirror, navigation, and close-empty hooks.
+ * Does not paint screens or run in the service worker.
  */
-import { sendExtensionRequest } from "../../shared/ext-api";
-import type { PendingRecord, WalletSendSettledNotice } from "../../shared/commands";
+import { sendExtensionRequest } from "../../shared/protocol";
+import type { PendingRecord, WalletSendSettledNotice } from "../../shared/protocol";
 import {
   DAPP_APPROVAL_IN_SHELL_MSG,
   type DappApprovalInShellNotice,
-} from "../../shared/dapp-approval-notice";
+} from "../../shared/protocol";
 import {
   flowPageIdFromKind,
   popFlow,
@@ -17,18 +17,17 @@ import {
   topFlow,
   type FlowEntry,
 } from "../../flow";
-import { walletShellSurfaceFromHref } from "../../shared/shell-constants";
-import type { ClosableEntry, CloseEmptyCommitResult, CloseEmptyPlanResult } from "../../shared/close-empty-types";
+import { walletShellSurfaceFromHref } from "../../shared/shell";
 import type { HomeTokenRow } from "../home/home-tokens";
 import { abortWalletSendOnPopupUnload, syncWalletSendAbortId } from "../components/ApprovalHost";
+import { useCloseEmptyPopup } from "./useCloseEmptyPopup";
+import { usePopupNavigation } from "./usePopupNavigation";
 import {
   bindLastNormalWindowPush,
   bindWalletShellFocusHydrate,
   hydrateLastNormalWindowId,
 } from "../shell/shell-bridge";
 import { shouldShowRpcGuide } from "../lib/rpc-guide";
-import { BACK_PARENT } from "../runtime";
-import { clearSendDraft } from "../send/send-draft";
 import type { State, View } from "../types";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 
@@ -57,7 +56,7 @@ function reducer(state: WalletMirror, action: Action): WalletMirror {
 
 export function usePopupAppState() {
   const [mirror, dispatch] = useReducer(reducer, { wallet: null });
-  const [currentView, setCurrentView] = useState<View>("home-token");
+  const closeEmpty = useCloseEmptyPopup();
   const [detailTokenId, setDetailTokenId] = useState<string | null>(null);
   const [activeWalletSendRequestId, setActiveWalletSendRequestId] = useState<string | null>(null);
   const [flowStack, setFlowStack] = useState<FlowEntry[]>([]);
@@ -69,35 +68,17 @@ export function usePopupAppState() {
   const bumpClosableScan = useCallback(() => setClosableScanGen((g) => g + 1), []);
   const [toast, setToast] = useState("");
   const [toastVariant, setToastVariant] = useState<"error" | "warn">("error");
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [navSeq, setNavSeq] = useState(0);
   const [pendingSendFormError, setPendingSendFormError] = useState<string | null>(null);
-  const [titleOverride, setTitleOverride] = useState<string | null>(null);
-  const [closeEmptyEntries, setCloseEmptyEntries] = useState<ClosableEntry[]>([]);
-  const [closeEmptySelected, setCloseEmptySelected] = useState<Set<string>>(() => new Set());
-  const [closeEmptyPlan, setCloseEmptyPlan] = useState<CloseEmptyPlanResult | null>(null);
-  const [closeEmptyResult, setCloseEmptyResult] = useState<CloseEmptyCommitResult | null>(null);
-  const [closeEmptyStaleError, setCloseEmptyStaleError] = useState<string | null>(null);
-  const [closeEmptySending, setCloseEmptySending] = useState(false);
-
   const errorHideTimer = useRef<number | null>(null);
   const lastActiveAccountId = useRef<string | null>(null);
-  const backOverrideRef = useRef<(() => boolean) | null>(null);
 
   const bagRef = useRef({
-    currentView,
+    currentView: "home-token" as View,
     detailTokenId,
     activeWalletSendRequestId,
     flowStack,
     focusAccountId,
   });
-  bagRef.current = {
-    currentView,
-    detailTokenId,
-    activeWalletSendRequestId,
-    flowStack,
-    focusAccountId,
-  };
 
   const clearError = useCallback(() => {
     if (errorHideTimer.current != null) {
@@ -140,77 +121,51 @@ export function usePopupAppState() {
     setActiveWalletSendRequestId(id);
   }, []);
 
-  const navigateTo = useCallback((next: View, accountId?: string) => {
-    const current = bagRef.current.currentView;
-    clearError();
+  const {
+    currentView,
+    menuOpen,
+    setMenuOpen,
+    navSeq,
+    titleOverride,
+    setTitleOverride,
+    navigateTo,
+    handleBack,
+    setBackOverride,
+  } = usePopupNavigation({
+    accountCount: mirror.wallet?.accounts.length ?? 0,
+    clearError,
+    setDetailTokenId,
+    setFocusAccountId,
+    setPendingSendFormError,
+    setActiveWalletSendRequestId,
+    bagRef,
+    resetCloseEmptyFlow: closeEmpty.resetCloseEmptyFlow,
+    clearCloseEmptyDraft: closeEmpty.clearCloseEmptyDraft,
+  });
+  bagRef.current = {
+    currentView,
+    detailTokenId,
+    activeWalletSendRequestId,
+    flowStack,
+    focusAccountId,
+  };
 
-    if (current !== next) {
-      if (current === "send-approval" && next !== "send-approval" && bagRef.current.activeWalletSendRequestId) {
-        abortWalletSendOnPopupUnload();
-        bagRef.current.activeWalletSendRequestId = null;
-        setActiveWalletSendRequestId(null);
-      }
-      if (current === "token-send" && next !== "token-send" && next !== "send-approval") {
-        setPendingSendFormError(null);
-      }
-      const sendFlow = current === "token-send" || current === "send-pick" || current === "send-approval";
-      const stayInSend = next === "token-send" || next === "send-pick" || next === "send-approval";
-      if (sendFlow && !stayInSend) clearSendDraft();
-      if (next === "token-send" && current !== "token-send") {
-        setPendingSendFormError(null);
-      }
-    }
-
-    if (accountId !== undefined) {
-      setFocusAccountId(accountId);
-      bagRef.current.focusAccountId = accountId;
-    }
-    bagRef.current.currentView = next;
-    setCurrentView(next);
-    setMenuOpen(false);
-    setNavSeq((n) => n + 1);
-    setTitleOverride(null);
-  }, [clearError]);
-
-  const clearCloseEmptyDraft = useCallback(() => {
-    setCloseEmptyPlan(null);
-    setCloseEmptyResult(null);
-    setCloseEmptyStaleError(null);
-    setCloseEmptySending(false);
-  }, []);
-
-  const resetCloseEmptyFlow = useCallback(() => {
-    clearCloseEmptyDraft();
-    setCloseEmptySelected(new Set());
-    setCloseEmptyEntries([]);
-  }, [clearCloseEmptyDraft]);
-
-  const handleBack = useCallback(() => {
-    if (backOverrideRef.current?.()) return;
-    const view = bagRef.current.currentView;
-    if (view === "close-empty-sending") return;
-    if (view === "rpc-guide") return;
-    if (view === "settings-rpc" && (mirror.wallet?.accounts.length ?? 0) === 0) {
-      navigateTo("add-account");
-      return;
-    }
-    if (view === "close-empty-pick") {
-      resetCloseEmptyFlow();
-    }
-    if (view === "close-empty-confirm") {
-      clearCloseEmptyDraft();
-    }
-    if (view === "token-detail") {
-      setDetailTokenId(null);
-      navigateTo("home-token");
-      return;
-    }
-    navigateTo(BACK_PARENT[view] ?? "home-token");
-  }, [mirror.wallet, navigateTo]);
-
-  const setBackOverride = useCallback((fn: (() => boolean) | null) => {
-    backOverrideRef.current = fn;
-  }, []);
+  const {
+    closeEmptyEntries,
+    setCloseEmptyEntries,
+    closeEmptySelected,
+    setCloseEmptySelected,
+    closeEmptyPlan,
+    setCloseEmptyPlan,
+    closeEmptyResult,
+    setCloseEmptyResult,
+    closeEmptyStaleError,
+    setCloseEmptyStaleError,
+    closeEmptySending,
+    setCloseEmptySending,
+    clearCloseEmptyDraft,
+    resetCloseEmptyFlow,
+  } = closeEmpty;
 
   const consumePendingSendFormError = useCallback(() => {
     setPendingSendFormError(null);

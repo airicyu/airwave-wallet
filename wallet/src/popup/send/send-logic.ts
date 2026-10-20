@@ -3,11 +3,11 @@
  * Does not sign or broadcast transactions inside the popup process.
  */
 import { parsePublicKeyBase58 } from "../../shared/accounts";
-import { sendExtensionRequest } from "../../shared/ext-api";
-import { apiErrorMessage, type UiLocale } from "../../shared/ui-i18n";
-import { amountUiToRaw, formatRawToAmountUi, solReserveLamports } from "../../shared/wallet-send-amount";
+import { sendExtensionRequest } from "../../shared/protocol";
+import { apiErrorMessage, type UiLocale } from "../../shared/i18n";
+import { amountUiToRaw, formatRawToAmountUi, solReserveLamports } from "../../shared/send";
 import { NATIVE_SOL_ID, type HomeTokenRow } from "../home/home-tokens";
-import { homeTokenRowForSendBalance } from "../../shared/wallet-send-eligibility";
+import { homeTokenRowForSendBalance } from "../../shared/send";
 import type { State } from "../types";
 
 function sendBalanceRow(state: State, rows: HomeTokenRow[], tokenId: string): HomeTokenRow | undefined {

@@ -2,7 +2,7 @@
  * Builds INVALID_LABEL extension responses for account command label validation failures.
  * Does not create or modify accounts.
  */
-import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/commands";
+import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/protocol";
 import { respond } from "../../../messaging";
 
 export function invalidLabel(req: ExtensionRequest, empty: boolean): ExtensionResponse {

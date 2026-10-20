@@ -1,5 +1,5 @@
-import { sendExtensionRequest } from "../../shared/ext-api";
-import { SHELL_LAST_NORMAL_WINDOW_MSG } from "../../shared/shell-constants";
+import { sendExtensionRequest } from "../../shared/protocol";
+import { SHELL_LAST_NORMAL_WINDOW_MSG } from "../../shared/shell";
 
 let lastNormalWindowId: number | null = null;
 

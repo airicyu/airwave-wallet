@@ -1,8 +1,8 @@
-import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
+import type { ExtensionRequest, ExtensionResponse } from "../../shared/protocol";
 import { getHomeTokenOwners, isCombinedAccount } from "../../shared/accounts";
 import { respond } from "../messaging";
 import { getActiveAccountMeta } from "../session";
-import { jsonRpcMissing } from "../../shared/storage-keys";
+import { jsonRpcMissing } from "../../shared/protocol";
 import { readSettings } from "../storage";
 import { getHomeTokensForOwners } from "./home-tokens-service";
 

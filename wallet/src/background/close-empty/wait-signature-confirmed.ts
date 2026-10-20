@@ -1,6 +1,6 @@
 import type { Signature } from "@solana/keys";
 import type { Commitment } from "@solana/rpc-types";
-import { solanaRpcForUrl } from "../../shared/solana-rpc";
+import { solanaRpcForUrl } from "../../shared/rpc";
 
 const POLL_MS = 1500;
 const DEFAULT_TIMEOUT_MS = 60_000;

@@ -2,8 +2,8 @@
  * Shared TypeScript types for popup wallet mirror state, connection summaries, and navigable view names.
  * Contains no runtime logic or UI rendering.
  */
-import type { AccountMeta, AddressCard, PublicSettings } from "../shared/storage-keys";
-import type { MessageKey } from "../shared/ui-messages";
+import type { AccountMeta, AddressCard, PublicSettings } from "../shared/protocol";
+import type { MessageKey } from "../shared/i18n";
 
 export type ConnectionSummary = {
   origin: string;

@@ -4,7 +4,7 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { ConnectionsMap } from "../../shared/storage-keys.ts";
+import type { ConnectionsMap } from "../../shared/protocol/index.ts";
 import { classifyTabUrl, dropTabFromOrigin, forgetTab, pruneTabId } from "./connection-tabs.ts";
 
 function map(): ConnectionsMap {

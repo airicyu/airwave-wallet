@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { keepIdleSurfacePort } from "../shared/idle-surface-port";
+import { keepIdleSurfacePort } from "../shared/shell";
 import { App } from "./App";
 import "../popout/style.css";
 import "../approval/tx-ai.css";

@@ -1,0 +1,241 @@
+.delta-row {
+  display: grid;
+  grid-template-columns: 26px 28px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 0.88rem;
+  border-bottom: 1px solid var(--stroke-soft);
+  overflow: visible;
+}
+
+.delta-row:last-child {
+  border-bottom: none;
+}
+
+.delta-trust {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.delta-trust--verified {
+  background: color-mix(in srgb, var(--ok) 18%, var(--bg-elevated));
+  color: var(--ok);
+}
+
+.delta-trust--empty {
+  background: transparent;
+}
+
+.delta-trust-score {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  min-width: 13px;
+  height: 11px;
+  padding: 0 3px;
+  border-radius: 4px;
+  font-size: 8px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  line-height: 11px;
+  text-align: center;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--ok) 16%, var(--bg));
+  color: var(--ok);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ok) 35%, var(--stroke));
+}
+
+.delta-token-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--fill);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.delta-token-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.delta-token-letter {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.delta-token-label {
+  min-width: 0;
+}
+
+.delta-token-primary {
+  font-weight: 600;
+  font-size: 0.92rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.delta-token-mint-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 1px;
+  min-width: 0;
+  font-size: 0.78rem;
+  line-height: 1;
+}
+
+.delta-token-mint {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: inherit;
+  line-height: 1;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.icon-btn.delta-mint-copy {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.82em;
+  height: 1em;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--text-dim);
+  line-height: 0;
+}
+
+.icon-btn.delta-mint-copy:hover,
+.icon-btn.delta-mint-copy:focus-visible,
+.icon-btn.delta-mint-copy:active {
+  border: none;
+  background: none;
+  box-shadow: none;
+  color: var(--text);
+}
+
+.icon-btn.delta-mint-copy svg {
+  display: block;
+  width: 0.82em;
+  height: 0.82em;
+  stroke-width: 1.75;
+}
+
+.delta-amount {
+  font-weight: 600;
+  font-size: 0.84rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.delta-amount.plus {
+  color: #4ecb8d;
+}
+
+.delta-amount.minus {
+  color: var(--danger);
+}
+
+.tx-details {
+  margin-bottom: 12px;
+}
+
+.tx-details summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.ix-row {
+  font-size: 0.8rem;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--stroke-soft);
+}
+
+.ix-row:last-child {
+  border-bottom: none;
+}
+
+.ix-prog {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ix-name {
+  margin: 2px 0 6px;
+  font-size: 0.78rem;
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ix-kv {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 2px 8px;
+  align-items: baseline;
+}
+
+.ix-k {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.ix-v {
+  min-width: 0;
+  font-size: 0.7rem;
+  font-family: var(--mono);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ix-accounts {
+  margin: 4px 0 0;
+  padding-left: 1.1rem;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.ix-accounts .unresolved {
+  font-family: inherit;
+}
+
+.ix-data {
+  margin: 4px 0 0;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  line-height: 1.4;
+  word-break: break-all;
+  color: var(--text-dim);
+}

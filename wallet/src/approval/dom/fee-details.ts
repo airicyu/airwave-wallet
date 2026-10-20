@@ -3,9 +3,9 @@
  * Does not call simulate or mount the delta card shell.
  */
 import { instructionsFromTxBytes } from "../../background/simulate/phase2-deltas";
-import { createRowExpandChevron } from "../../shared/row-expand-chevron";
-import type { SimulatePendingTxResult, SimulateTxInstruction } from "../../shared/simulate-pending-tx-types";
-import { ixKindLabel, ixRoleLabel } from "../../shared/ui-i18n";
+import { createRowExpandChevron } from "../../shared/marks";
+import type { SimulatePendingTxResult, SimulateTxInstruction } from "../../shared/tx";
+import { ixKindLabel, ixRoleLabel } from "../../shared/i18n";
 import { bytesFromHexCompact, formatSolFromLamports } from "../format";
 import { sess } from "../shell/session";
 import {

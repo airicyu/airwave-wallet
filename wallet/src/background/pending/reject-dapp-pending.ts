@@ -2,8 +2,8 @@
  * Rejects in-flight dApp pendings when an approval surface closes without a user decision.
  * Does not handle walletSend or signAndSendTransaction window-close finish paths.
  */
-import type { SignMessagePayload } from "../../shared/commands";
-import { messageLooksLikeTransactionMessage } from "../../shared/sign-message-tx";
+import type { SignMessagePayload } from "../../shared/protocol";
+import { messageLooksLikeTransactionMessage } from "../../shared/tx";
 import { sendBridgeResult } from "../messaging";
 import { getPending, pendingRequests, takePending } from "./pending";
 

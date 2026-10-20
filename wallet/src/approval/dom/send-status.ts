@@ -3,7 +3,7 @@
  * Does not resolve pending or run simulation.
  */
 import { disposeSignTxBody, stopAutoSim } from "../sign-tx-body";
-import { SEND_STATUS_AURORA_SVG } from "../../shared/send-status-mark";
+import { SEND_STATUS_AURORA_SVG } from "../../shared/marks";
 import { shortSignature } from "../format";
 import { sess } from "../shell/session";
 import { hideAll, isSendStatusLocked, setSendStatusChrome, setSignButtons } from "../shell/dom";

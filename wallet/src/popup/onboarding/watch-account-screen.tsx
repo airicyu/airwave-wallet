@@ -4,10 +4,10 @@
  */
 import type { JSX } from "react";
 import { useCallback, useState } from "react";
-import { ACCOUNT_LABEL_MAX } from "../../shared/account-label";
+import { ACCOUNT_LABEL_MAX } from "../../shared/accounts";
 import { parsePublicKeyBase58 } from "../../shared/accounts";
-import { sendExtensionRequest } from "../../shared/ext-api";
-import { apiErrorMessage } from "../../shared/ui-i18n";
+import { sendExtensionRequest } from "../../shared/protocol";
+import { apiErrorMessage } from "../../shared/i18n";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
 import { useRegisterDock } from "../state/dock";

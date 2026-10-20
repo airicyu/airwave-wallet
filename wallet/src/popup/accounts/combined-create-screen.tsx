@@ -5,10 +5,10 @@
 import type { JSX } from "react";
 import { useCallback, useState } from "react";
 import { isSigningOrWatch, parsePublicKeyBase58 } from "../../shared/accounts";
-import { ACCOUNT_LABEL_MAX } from "../../shared/account-label";
-import { sendExtensionRequest } from "../../shared/ext-api";
+import { ACCOUNT_LABEL_MAX } from "../../shared/accounts";
+import { sendExtensionRequest } from "../../shared/protocol";
 import { IconPlus } from "../components/StrokeIcon";
-import { apiErrorMessage } from "../../shared/ui-i18n";
+import { apiErrorMessage } from "../../shared/i18n";
 import { shortAddr } from "../lib/format";
 import { viewAfterAccountCreated } from "../lib/rpc-guide";
 import { usePopupContext } from "../state/PopupContext";

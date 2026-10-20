@@ -2,7 +2,7 @@
  * Service worker entry: validates senders, hydrates session, routes commands to dapp/UI/wallet handlers, cleans up pendings on window close.
  * Does not embed individual feature handler implementations.
  */
-import type { ExtensionRequest, ExtensionResponse } from "../shared/commands";
+import type { ExtensionRequest, ExtensionResponse } from "../shared/protocol";
 import { handleDappCommand, handleUiCommand, handleWalletCommand } from "./handlers";
 import { alignConnectionsToActiveAccount, installConnectionTabWatch, respond } from "./messaging";
 import {
@@ -20,7 +20,7 @@ import { ensureLocalMigrated } from "./storage";
 import { installTxAiAssess, maybeStartTxAi } from "./tx-ai/assess";
 import { handleTxAiBridge, isTxAiOffscreenSender } from "./tx-ai/bridge";
 import { setPendingAddedHook } from "./pending";
-import { TX_AI_BRIDGE_KIND, type TxAiBridgeMessage } from "../shared/tx-ai-protocol";
+import { TX_AI_BRIDGE_KIND, type TxAiBridgeMessage } from "../shared/tx-ai";
 
 // Rolldown shares this entry with extension pages. Listeners belong only to the service worker.
 const workerScope = (globalThis as { ServiceWorkerGlobalScope?: new () => object }).ServiceWorkerGlobalScope;

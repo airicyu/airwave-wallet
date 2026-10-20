@@ -22,10 +22,10 @@ import {
   TOKEN_2022_PROGRAM_ADDRESS,
 } from "@solana-program/token-2022";
 import type { Instruction } from "@solana/instructions";
-import type { ClosableEntry } from "../../shared/close-empty-types";
-import { packCloseEmptyAccounts, type MeasureCloseTxGroupBytes } from "../../shared/close-empty-pack";
-import { encodeWireTransaction } from "../../shared/tx-wire";
-import type { TokenProgramKind } from "../../shared/home-tokens";
+import type { ClosableEntry } from "../../shared/close-empty";
+import { packCloseEmptyAccounts, type MeasureCloseTxGroupBytes } from "../../shared/close-empty";
+import { encodeWireTransaction } from "../../shared/tx";
+import type { TokenProgramKind } from "../../shared/home";
 
 export type BuiltCloseTx = {
   ownerAccountId: string;

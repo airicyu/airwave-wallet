@@ -2,9 +2,9 @@
  * Starts one queued sandbox assess per pending signature and grades the report.
  * Does not render approval UI or persist the report.
  */
-import type { PendingRecord } from "../../shared/commands";
-import { buildAssessPrompt } from "../../shared/tx-ai-prompt";
-import { TX_AI_BRIDGE_KIND, type TxAiBridgeMessage } from "../../shared/tx-ai-protocol";
+import type { PendingRecord } from "../../shared/protocol";
+import { buildAssessPrompt } from "../../shared/tx-ai";
+import { TX_AI_BRIDGE_KIND, type TxAiBridgeMessage } from "../../shared/tx-ai";
 import {
   effectiveDecisionsModelChain,
   effectiveReportModelChain,
@@ -17,7 +17,7 @@ import {
 import { getPending } from "../pending/pending";
 import { getWorkingTx } from "../pending/sign-tx-pending-state";
 import { readSettings } from "../storage";
-import { stripWireSignatures } from "../../shared/tx-wire";
+import { stripWireSignatures } from "../../shared/tx";
 import { formatTxAiPreflightForPrompt, pubkeysFromTxAiDecode, runTxAiPreflight } from "./preflight";
 import { gradeReport } from "./openrouter";
 import {

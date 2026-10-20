@@ -3,14 +3,14 @@
  * Does not schedule timeouts or store pendings in chrome.storage.
  */
 import nacl from "tweetnacl";
-import type { SignMessagePayload, SignTransactionPayload } from "../../shared/commands";
-import { messageLooksLikeTransactionMessage } from "../../shared/sign-message-tx";
+import type { SignMessagePayload, SignTransactionPayload } from "../../shared/protocol";
+import { messageLooksLikeTransactionMessage } from "../../shared/tx";
 import { getActivePublicKey, readActiveAccountId, readSettings } from "../storage";
 import { takePending } from "./pending";
 import { getWorkingTx } from "./sign-tx-pending-state";
 import { sendBridgeResult, rememberConnectedTab, tabOriginStill } from "../messaging";
 import { loadedAccountForAccountId, signingErrorForAccountId } from "../session";
-import { partiallySignWireTransaction } from "../../shared/tx-wire";
+import { partiallySignWireTransaction } from "../../shared/tx";
 import * as session from "../session";
 
 export async function finishConnect(

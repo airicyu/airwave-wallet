@@ -3,14 +3,14 @@
  * Does not assemble or sign transactions.
  */
 import bs58 from "bs58";
-import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/commands";
-import { parseOptionalAccountLabel } from "../../../../shared/account-label";
-import { decryptVault, encryptVault } from "../../../../shared/crypto-vault";
+import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/protocol";
+import { parseOptionalAccountLabel } from "../../../../shared/accounts";
+import { decryptVault, encryptVault } from "../../../../shared/vault";
 import {
   generateRandomLoadedAccount,
   loadedAccountFromSecretBytes,
-} from "../../../../shared/keypair-bytes";
-import { SESSION_UNLOCKED, type AccountMeta } from "../../../../shared/storage-keys";
+} from "../../../../shared/vault";
+import { SESSION_UNLOCKED, type AccountMeta } from "../../../../shared/protocol";
 import { respond } from "../../../messaging";
 import {
   newAccountId,

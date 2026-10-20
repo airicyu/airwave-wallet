@@ -6,7 +6,8 @@ This directory is the version contract for **airwave-wallet**. An agent with no 
 |------|---------|
 | [GUIDELINES.md](./GUIDELINES.md) | How to write a self-sufficient roadmap; paths, architecture bans, privacy |
 | [../DOMAIN.md](../DOMAIN.md) | Domain terms: stored account, signing, watch, combined, address, main address |
-| [../design-principles.md](../design-principles.md) | Popup UI rules (when to write, icon buttons, long strings). Used when an INDEX is silent |
+| [../code-design-principles.md](../code-design-principles.md) | Source layout: file splits, responsibility headers, folder boundaries. Used when an INDEX is silent |
+| [../ui-design-principles.md](../ui-design-principles.md) | Popup UI rules (when to write, icon buttons, long strings). Used when an INDEX is silent |
 | [../design-demos/](../design-demos/) | Informal HTML concept demos. On conflict, that version's INDEX wins |
 | [agent-workflow.md](./agent-workflow.md) | Who reviews, when to write HANDOFF, what to test between Tracks |
 | [unversioned.md](./unversioned.md) | Code changes after the latest version shipped and before the next version is opened. Docs, policy, and terms are not listed. Status in the table below is the source of truth |
@@ -64,6 +65,7 @@ This directory is the version contract for **airwave-wallet**. An agent with no 
 | [0.47.1](./0.47.1/INDEX.md) | shipped | dApp sign without `chain` uses the wallet's selected cluster |
 | [0.48.0](./0.48.0/INDEX.md) | shipped | Idle auto-lock, wallet lock settings UI, API key edit actions, Network picker |
 | [0.49.0](./0.49.0/INDEX.md) | shipped | Popup CSS and screen splits. React approval shell. Green confirm and red discard on secret and RPC edit rows |
+| [0.50.0](./0.50.0/INDEX.md) | shipped | Domain folders under `shared/`. Five source files split under 400 lines. CSS gathered into `styles/` |
 
 **Version numbers:** a **patch** on `x.y.z` (for example **0.3.1**) is only a bugfix for that minor. It does not schedule a new feature. A new feature is the next **minor** (0.3.0 → 0.4.0 → 0.5.0).
 

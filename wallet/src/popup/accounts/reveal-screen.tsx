@@ -5,10 +5,10 @@
 import type { JSX } from "react";
 import { useState } from "react";
 import { isSigningOrWatch } from "../../shared/accounts";
-import { sendExtensionRequest } from "../../shared/ext-api";
+import { sendExtensionRequest } from "../../shared/protocol";
 import { IconCopy, IconEye } from "../components/StrokeIcon";
 import { WalletPasswordInput } from "../components/WalletPasswordInput";
-import { apiErrorMessage } from "../../shared/ui-i18n";
+import { apiErrorMessage } from "../../shared/i18n";
 import { shortAddr } from "../lib/format";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";

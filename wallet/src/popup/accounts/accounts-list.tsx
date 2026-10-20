@@ -4,14 +4,14 @@
  */
 import type { JSX, PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { accountVisualKind } from "../../shared/account-kind-visual";
+import { accountVisualKind } from "../../shared/marks";
 import { getExposedPublicKey, isSigningOrWatch } from "../../shared/accounts";
-import { sendExtensionRequest } from "../../shared/ext-api";
-import type { AccountMeta } from "../../shared/storage-keys";
+import { sendExtensionRequest } from "../../shared/protocol";
+import type { AccountMeta } from "../../shared/protocol";
 import { AccountKindMark } from "../components/AccountKindMark";
 import { CopyIconButton } from "../components/CopyPkButton";
 import { IconKebab, IconPlus, IconRename, IconSwitch } from "../components/StrokeIcon";
-import { apiErrorMessage } from "../../shared/ui-i18n";
+import { apiErrorMessage } from "../../shared/i18n";
 import { shortAddr } from "../lib/format";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";

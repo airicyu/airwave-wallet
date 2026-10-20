@@ -6,9 +6,9 @@ import type { JSX } from "react";
 import { useState } from "react";
 import { BrandMark } from "../popup/components/BrandMark";
 import { WalletPasswordInput } from "../popup/components/WalletPasswordInput";
-import { sendExtensionRequest } from "../shared/ext-api";
-import type { UiLocale } from "../shared/storage-keys";
-import { apiErrorMessage, t } from "../shared/ui-i18n";
+import { sendExtensionRequest } from "../shared/protocol";
+import type { UiLocale } from "../shared/protocol";
+import { apiErrorMessage, t } from "../shared/i18n";
 
 export function UnlockForm({
   locale,

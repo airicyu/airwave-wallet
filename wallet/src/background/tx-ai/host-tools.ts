@@ -2,7 +2,7 @@
  * Executes the fixed transaction-AI tool allowlist against the assess snapshot.
  * Does not accept sandbox flags as the grade input and does not call Decisions.
  */
-import { decodeWireTransaction } from "../../shared/tx-wire";
+import { decodeWireTransaction } from "../../shared/tx";
 import { simulateTransactionRpc } from "../simulate/simulate-rpc";
 import { SimDeadline } from "../simulate/sim-deadline";
 import { hostToolVerdict, mentionsBannedRpc, type TxAiFlag } from "../../shared/tx-ai";

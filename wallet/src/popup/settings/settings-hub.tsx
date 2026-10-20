@@ -1,7 +1,7 @@
 import type { JSX } from "react";
-import type { PublicSettings } from "../../shared/storage-keys";
-import type { UiLocale } from "../../shared/storage-keys";
-import { LOCALE_ENDONYM, t } from "../../shared/ui-i18n";
+import type { PublicSettings } from "../../shared/protocol";
+import type { UiLocale } from "../../shared/protocol";
+import { LOCALE_ENDONYM, t } from "../../shared/i18n";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
 

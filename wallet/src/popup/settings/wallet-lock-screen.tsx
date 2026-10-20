@@ -4,7 +4,7 @@
  */
 import type { JSX } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { PublicSettings } from "../../shared/storage-keys";
+import type { PublicSettings } from "../../shared/protocol";
 import { IconChevronDown } from "../components/StrokeIcon";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";

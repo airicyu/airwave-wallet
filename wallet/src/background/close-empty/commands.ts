@@ -1,8 +1,8 @@
 /**
  * Thin command wrappers for list, plan, and commit close-empty wallet operations.
  */
-import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
-import { jsonRpcMissing } from "../../shared/storage-keys";
+import type { ExtensionRequest, ExtensionResponse } from "../../shared/protocol";
+import { jsonRpcMissing } from "../../shared/protocol";
 import { respond } from "../messaging";
 import { readSettings } from "../storage";
 import { commitCloseEmpty } from "./commit-close-empty";

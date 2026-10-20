@@ -1,4 +1,4 @@
-import { encryptVaultWithKey } from "../../shared/crypto-vault";
+import { encryptVaultWithKey } from "../../shared/vault";
 import { readVaultBlob, writeVaultBlob } from "../storage";
 import * as session from "./session";
 import { runVaultWrite } from "./vault-write-queue";

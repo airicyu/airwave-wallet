@@ -3,7 +3,7 @@
  * Does not write chrome.storage directly without typed wallet extension commands.
  */
 import { usePopupContext } from "../state/PopupContext";
-import { sendExtensionRequest } from "../../shared/ext-api";
+import { sendExtensionRequest } from "../../shared/protocol";
 import {
   customRpcForCluster,
   PUBLIC_RPC_BY_CLUSTER,
@@ -12,9 +12,9 @@ import {
   type PublicSettings,
   type Settings,
   type UiLocale,
-} from "../../shared/storage-keys";
-import { apiErrorMessage, DEFAULT_UI_LOCALE, messageForErrorCode, t } from "../../shared/ui-i18n";
-import type { MessageKey } from "../../shared/ui-messages";
+} from "../../shared/protocol";
+import { apiErrorMessage, DEFAULT_UI_LOCALE, messageForErrorCode, t } from "../../shared/i18n";
+import type { MessageKey } from "../../shared/i18n";
 import type { State } from "../types";
 
 export const MASKED_SECRET_DISPLAY = "••••••";

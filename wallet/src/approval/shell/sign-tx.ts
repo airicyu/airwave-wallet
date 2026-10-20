@@ -2,8 +2,8 @@
  * Sign-transaction body: simulation RPC, delta paint, and fee-slot refresh.
  * Does not resolve pending or paint wallet-send status cards.
  */
-import { sendExtensionRequest } from "../../shared/ext-api";
-import type { SimulatePendingTxResult } from "../../shared/simulate-pending-tx-types";
+import { sendExtensionRequest } from "../../shared/protocol";
+import type { SimulatePendingTxResult } from "../../shared/tx";
 import {
   disposeSignTxBody,
   getSignTxBodyRefs,

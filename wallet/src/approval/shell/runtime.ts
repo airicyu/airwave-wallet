@@ -2,8 +2,8 @@
  * Binds and disposes the approval shell session against React-owned DOM refs.
  * Does not render markup; delegates to flow, events, and sign-tx modules.
  */
-import { STORAGE, type Settings } from "../../shared/storage-keys";
-import { parseUiLocale } from "../../shared/ui-i18n";
+import { STORAGE, type Settings } from "../../shared/protocol";
+import { parseUiLocale } from "../../shared/i18n";
 import { stopTxAiWatch } from "../tx-ai-widget";
 import type { ApprovalShellConfig, ApprovalShellDomRefs } from "./types";
 import {

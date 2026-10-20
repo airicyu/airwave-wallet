@@ -7,11 +7,11 @@ import {
   exportVaultKeyRaw,
   importVaultKeyRaw,
   type VaultSecrets,
-} from "../../shared/crypto-vault";
-import type { LoadedAccountKeys } from "../../shared/keypair-bytes";
-import { loadedAccountFromStoredSecret } from "../../shared/keypair-bytes";
+} from "../../shared/vault";
+import type { LoadedAccountKeys } from "../../shared/vault";
+import { loadedAccountFromStoredSecret } from "../../shared/vault";
 import { isSigningOrWatch } from "../../shared/accounts";
-import { accountKind, SESSION_UNLOCKED } from "../../shared/storage-keys";
+import { accountKind, SESSION_UNLOCKED } from "../../shared/protocol";
 import { readAccounts, readVaultBlob } from "../storage";
 
 export class AccountKeyMismatchError extends Error {

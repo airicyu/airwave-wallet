@@ -3,7 +3,7 @@
  * Does not compute phase-2 balance deltas or decode instruction lists.
  */
 import type { Transaction } from "@solana/kit";
-import { encodeWireTransaction } from "../../shared/tx-wire";
+import { encodeWireTransaction } from "../../shared/tx";
 import { SimDeadline } from "./sim-deadline";
 import { bytesToBase64 } from "./tx-base64";
 

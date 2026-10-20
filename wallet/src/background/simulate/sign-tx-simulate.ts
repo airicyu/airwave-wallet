@@ -26,10 +26,10 @@ import {
   hasWorkingTx,
   tryCommitWorkingTx,
 } from "../pending";
-import type { SimulatePendingTxResult } from "../../shared/simulate-pending-tx-types";
-import type { Cluster } from "../../shared/storage-keys";
-import { messageBytesToUint8Array } from "../../shared/compiled-message";
-import { decodeWireTransaction } from "../../shared/tx-wire";
+import type { SimulatePendingTxResult } from "../../shared/tx";
+import type { Cluster } from "../../shared/protocol";
+import { messageBytesToUint8Array } from "../../shared/tx";
+import { decodeWireTransaction } from "../../shared/tx";
 
 const CU_WRITE_FAIL_CODE = "CU_WRITE_FAILED";
 

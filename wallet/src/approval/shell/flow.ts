@@ -2,9 +2,9 @@
  * Approval shell pending load, sign view render, and resolve/approve flow.
  * Does not wire DOM listeners or bind React refs.
  */
-import { sendExtensionRequest } from "../../shared/ext-api";
-import type { PendingRecord } from "../../shared/commands";
-import { accountVisualKind, paintAccountKindMark } from "../../shared/account-kind-visual";
+import { sendExtensionRequest } from "../../shared/protocol";
+import type { PendingRecord } from "../../shared/protocol";
+import { accountVisualKind, paintAccountKindMark } from "../../shared/marks";
 import { attachTxAiToSignShell } from "../tx-ai-widget";
 import { bytesFromSignMessage, bytesFromSignTransaction, displayAccountName, displayOrigin, hexCompact } from "../format";
 import { renderSignMessageBody } from "../dom/sign-message";
@@ -129,7 +129,7 @@ async function renderSignShell(
   }
 
   const state = stateRes.result as {
-    accounts: import("../../shared/storage-keys").AccountMeta[];
+    accounts: import("../../shared/protocol").AccountMeta[];
     unlocked: boolean;
   };
 

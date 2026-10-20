@@ -2,7 +2,7 @@
  * Multi-step tool loop copied for the sandbox bundle.
  * Does not fetch, read chrome APIs, or hold an API key. The host performs those calls.
  */
-import type { TxAiChatMessage } from "../shared/tx-ai-protocol";
+import type { TxAiChatMessage } from "../shared/tx-ai";
 import { TX_AI_MAX_STEPS } from "../shared/tx-ai";
 
 export type ToolSchema = {

@@ -3,7 +3,7 @@
  * Does not use chrome APIs, fetch, or the OpenRouter key.
  */
 import { runSandboxLoop } from "../agent-harness/loop";
-import { TX_AI_BRIDGE_KIND, type TxAiBridgeMessage, type TxAiChatMessage } from "../shared/tx-ai-protocol";
+import { TX_AI_BRIDGE_KIND, type TxAiBridgeMessage, type TxAiChatMessage } from "../shared/tx-ai";
 import { TX_AI_LLM_BRIDGE_MS } from "../shared/tx-ai";
 
 const pending = new Map<string, (message: TxAiBridgeMessage) => void>();

@@ -1,6 +1,6 @@
 import { useCallback } from "react";
-import { t, type UiLocale } from "../../shared/ui-i18n";
-import type { MessageKey } from "../../shared/ui-messages";
+import { t, type UiLocale } from "../../shared/i18n";
+import type { MessageKey } from "../../shared/i18n";
 import { usePopupContext } from "./PopupContext";
 
 export function useT(): {

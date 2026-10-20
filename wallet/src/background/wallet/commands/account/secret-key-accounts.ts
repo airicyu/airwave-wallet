@@ -3,15 +3,15 @@
  * Does not handle mnemonic derivation or read-only watch accounts.
  */
 import bs58 from "bs58";
-import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/commands";
-import { parseOptionalAccountLabel } from "../../../../shared/account-label";
-import { decryptVault } from "../../../../shared/crypto-vault";
+import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/protocol";
+import { parseOptionalAccountLabel } from "../../../../shared/accounts";
+import { decryptVault } from "../../../../shared/vault";
 import {
   generateRandomLoadedAccount,
   loadedAccountFromSecretBytes,
   type LoadedAccountKeys,
-} from "../../../../shared/keypair-bytes";
-import { accountKind, type AccountMeta } from "../../../../shared/storage-keys";
+} from "../../../../shared/vault";
+import { accountKind, type AccountMeta } from "../../../../shared/protocol";
 import { respond } from "../../../messaging";
 import {
   newAccountId,

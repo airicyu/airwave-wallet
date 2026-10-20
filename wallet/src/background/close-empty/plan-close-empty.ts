@@ -3,18 +3,18 @@
  * Does not sign, broadcast, or rescan the closable list from cache alone.
  */
 import { estimateResourceLimitsFactory } from "@solana/kit";
-import { randomUUID } from "../../shared/uuid";
-import type { ClosableEntry, CloseEmptyPlanResult } from "../../shared/close-empty-types";
-import { computeCloseEmptyUnitLimit } from "../../shared/close-empty-compute-units";
+import { randomUUID } from "./uuid";
+import type { ClosableEntry, CloseEmptyPlanResult } from "../../shared/close-empty";
+import { computeCloseEmptyUnitLimit } from "../../shared/close-empty";
 import {
   lamportsDecimalString,
   priorityFeeLamportsFromCu,
   signatureFeeLamports,
   sumLamportStrings,
-} from "../../shared/close-empty-fees";
-import { getClosableOwnerTargets } from "../../shared/close-empty-owners";
-import { packCloseEmptyAccounts } from "../../shared/close-empty-pack";
-import { solanaRpcForUrl } from "../../shared/solana-rpc";
+} from "../../shared/close-empty";
+import { getClosableOwnerTargets } from "../../shared/close-empty";
+import { packCloseEmptyAccounts } from "../../shared/close-empty";
+import { solanaRpcForUrl } from "../../shared/rpc";
 import * as session from "../session";
 import { readAccounts, readSettings } from "../storage";
 import { getActiveAccountMeta } from "../session";

@@ -4,8 +4,8 @@
  */
 import type { JSX } from "react";
 import { useState } from "react";
-import { sendExtensionRequest } from "../../shared/ext-api";
-import { messageForErrorCode } from "../../shared/ui-i18n";
+import { sendExtensionRequest } from "../../shared/protocol";
+import { messageForErrorCode } from "../../shared/i18n";
 import { BrandMark } from "../components/BrandMark";
 import { WalletPasswordInput } from "../components/WalletPasswordInput";
 import { usePopupContext } from "../state/PopupContext";

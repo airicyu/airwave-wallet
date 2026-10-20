@@ -4,9 +4,9 @@
  */
 import type { JSX } from "react";
 import { useCallback, useState } from "react";
-import { ACCOUNT_LABEL_MAX } from "../../shared/account-label";
-import { sendExtensionRequest } from "../../shared/ext-api";
-import { apiErrorMessage } from "../../shared/ui-i18n";
+import { ACCOUNT_LABEL_MAX } from "../../shared/accounts";
+import { sendExtensionRequest } from "../../shared/protocol";
+import { apiErrorMessage } from "../../shared/i18n";
 import { SensitiveTextArea } from "../components/WalletPasswordInput";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";

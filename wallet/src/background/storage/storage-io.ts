@@ -16,7 +16,7 @@ import {
   type AddressCard,
   type Settings,
   type UiLocale,
-} from "../../shared/storage-keys";
+} from "../../shared/protocol";
 import { normalizeDefaultCuPrice } from "../simulate";
 import {
   isLegalOpenRouterModelId,
@@ -27,7 +27,7 @@ import {
   normalizeReportModel,
   type TxAiModelMode,
 } from "../../shared/tx-ai";
-import type { VaultBlob } from "../../shared/crypto-vault";
+import type { VaultBlob } from "../../shared/vault";
 
 export async function readSettings(): Promise<Settings> {
   const r = await chrome.storage.local.get(STORAGE.settings);

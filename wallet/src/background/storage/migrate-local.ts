@@ -2,7 +2,7 @@
  * Runs ordered chrome.storage.local schema steps on service-worker startup.
  * Does not re-encrypt the vault blob or migrate chrome.storage.session.
  */
-import { CURRENT_SCHEMA_GENERATION, STORAGE } from "../../shared/storage-keys";
+import { CURRENT_SCHEMA_GENERATION, STORAGE } from "../../shared/protocol";
 
 let migrateGate: Promise<void> | null = null;
 

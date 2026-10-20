@@ -1,4 +1,4 @@
-import { isMainnetRpcReady } from "../../shared/storage-keys";
+import { isMainnetRpcReady } from "../../shared/protocol";
 import type { State, View } from "../types";
 
 export function shouldShowRpcGuide(state: State): boolean {

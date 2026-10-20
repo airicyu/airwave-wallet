@@ -2,7 +2,7 @@
  * Offscreen document: embeds the sandbox iframe and forwards JSON both ways.
  * Does not execute tools, hold the OpenRouter key, or call Decisions.
  */
-import { TX_AI_BRIDGE_KIND, type TxAiBridgeMessage } from "../shared/tx-ai-protocol";
+import { TX_AI_BRIDGE_KIND, type TxAiBridgeMessage } from "../shared/tx-ai";
 
 const iframe = document.getElementById("sandbox") as HTMLIFrameElement;
 const queued: TxAiBridgeMessage[] = [];

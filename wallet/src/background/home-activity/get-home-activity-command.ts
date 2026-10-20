@@ -1,9 +1,9 @@
-import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
+import type { ExtensionRequest, ExtensionResponse } from "../../shared/protocol";
 import { getExposedPublicKey } from "../../shared/accounts";
 import { respond } from "../messaging";
 import { getActiveAccountMeta } from "../session";
-import { jsonRpcMissing } from "../../shared/storage-keys";
-import { resolveHeliusApiTarget } from "../../shared/helius-api-target";
+import { jsonRpcMissing } from "../../shared/protocol";
+import { resolveHeliusApiTarget } from "../../shared/rpc";
 import { readSettings } from "../storage";
 import { getHomeActivity } from "./home-activity-service";
 

@@ -3,14 +3,14 @@
  * Does not enrich display metadata or build unsigned close transactions.
  */
 import { address } from "@solana/kit";
-import type { ClosableEntry } from "../../shared/close-empty-types";
-import type { ClosableOwnerTarget } from "../../shared/close-empty-owners";
-import { WRAPPED_SOL_MINT, shortMint, type HomeTokenRow } from "../../shared/home-tokens";
+import type { ClosableEntry } from "../../shared/close-empty";
+import type { ClosableOwnerTarget } from "../../shared/close-empty";
+import { WRAPPED_SOL_MINT, shortMint, type HomeTokenRow } from "../../shared/home";
 import {
   fetchParsedTokenAccountsForOwner,
   type ParsedOwnerTokenAccount,
-} from "../../shared/parsed-token-accounts";
-import { solanaRpcForUrl } from "../../shared/solana-rpc";
+} from "../../shared/home";
+import { solanaRpcForUrl } from "../../shared/rpc";
 
 function isClosableParsed(row: ParsedOwnerTokenAccount, scanOwner: string): boolean {
   if (row.amount !== "0") return false;

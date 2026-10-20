@@ -2,15 +2,15 @@
  * Mutates members and main address on an existing combined account.
  * Does not create new combined accounts.
  */
-import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/commands";
-import { ACCOUNT_LABEL_MAX } from "../../../../shared/account-label";
+import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/protocol";
+import { ACCOUNT_LABEL_MAX } from "../../../../shared/accounts";
 import {
   findCombinedById,
   isCombinedAccountId,
   isSigningOrWatch,
   parsePublicKeyBase58,
 } from "../../../../shared/accounts";
-import type { AccountMeta } from "../../../../shared/storage-keys";
+import type { AccountMeta } from "../../../../shared/protocol";
 import { notifyAccountChangedForConnectionAccount } from "../../../messaging";
 import { respond } from "../../../messaging";
 import {

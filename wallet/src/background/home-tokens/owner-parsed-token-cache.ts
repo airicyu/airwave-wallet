@@ -1,4 +1,4 @@
-import type { ParsedOwnerTokenAccount } from "../../shared/parsed-token-accounts";
+import type { ParsedOwnerTokenAccount } from "../../shared/home";
 
 const TTL_MS = 45_000;
 

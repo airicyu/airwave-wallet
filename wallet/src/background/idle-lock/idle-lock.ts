@@ -7,7 +7,7 @@ import {
   isPopoutApprovalUrl,
   isWalletShellWindowUrl,
   isWalletSidePanelUrl,
-} from "../../shared/shell-constants";
+} from "../../shared/shell";
 import * as session from "../session";
 import { readSettings } from "../storage";
 

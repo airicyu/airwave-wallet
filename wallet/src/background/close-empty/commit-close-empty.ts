@@ -18,16 +18,16 @@ import {
 import { createSolanaRpcSubscriptions } from "@solana/rpc-subscriptions";
 import { rpcTransactionPlanExecutor } from "@solana/kit-plugin-rpc";
 import type { KeyPairSigner } from "@solana/signers";
-import type { ClosableEntry, CloseEmptyCommitResult } from "../../shared/close-empty-types";
+import type { ClosableEntry, CloseEmptyCommitResult } from "../../shared/close-empty";
 import {
   lamportsDecimalString,
   priorityFeeLamportsFromCu,
   signatureFeeLamports,
-} from "../../shared/close-empty-fees";
-import { rpcUrlToWebSocket } from "../../shared/rpc-ws-url";
-import { solanaRpcForUrl } from "../../shared/solana-rpc";
-import { partiallySignWireTransaction, decodeWireTransaction } from "../../shared/tx-wire";
-import type { Settings } from "../../shared/storage-keys";
+} from "../../shared/close-empty";
+import { rpcUrlToWebSocket } from "../../shared/rpc";
+import { solanaRpcForUrl } from "../../shared/rpc";
+import { partiallySignWireTransaction, decodeWireTransaction } from "../../shared/tx";
+import type { Settings } from "../../shared/protocol";
 import * as session from "../session";
 import { readSettings } from "../storage";
 import {

@@ -2,10 +2,10 @@
  * Mutable approval-shell session: DOM refs, pending/sim state, and late-bound action hooks.
  * Does not load pending or wire event listeners.
  */
-import { DEFAULT_UI_LOCALE, type UiLocale } from "../../shared/ui-i18n";
-import type { MessageKey } from "../../shared/ui-messages";
-import type { PendingRecord } from "../../shared/commands";
-import type { SimulatePendingTxResult } from "../../shared/simulate-pending-tx-types";
+import { DEFAULT_UI_LOCALE, type UiLocale } from "../../shared/i18n";
+import type { MessageKey } from "../../shared/i18n";
+import type { PendingRecord } from "../../shared/protocol";
+import type { SimulatePendingTxResult } from "../../shared/tx";
 import type { ApprovalShellConfig, ApprovalShellDomRefs } from "./types";
 
 export type SendStatusPhase = "idle" | "pending" | "confirmed" | "failed";

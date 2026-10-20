@@ -3,9 +3,9 @@
  * Does not trust sandbox output and does not call OpenRouter.
  */
 import { getCompiledTransactionMessageDecoder, type CompiledTransactionMessage } from "@solana/kit";
-import { compiledAddressTableLookups, messageBytesToUint8Array, normalizedCompiledInstructions } from "../../shared/compiled-message";
+import { compiledAddressTableLookups, messageBytesToUint8Array, normalizedCompiledInstructions } from "../../shared/tx";
 import type { TxAiFlag } from "../../shared/tx-ai";
-import { decodeWireTransaction as decodeWire } from "../../shared/tx-wire";
+import { decodeWireTransaction as decodeWire } from "../../shared/tx";
 
 const SYSTEM = "11111111111111111111111111111111";
 const TOKEN = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";

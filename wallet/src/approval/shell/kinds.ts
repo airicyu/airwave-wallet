@@ -1,5 +1,5 @@
-import type { PendingRecord } from "../../shared/commands";
-import type { AccountMeta } from "../../shared/storage-keys";
+import type { PendingRecord } from "../../shared/protocol";
+import type { AccountMeta } from "../../shared/protocol";
 
 export function isSignTxKind(kind: PendingRecord["kind"]): boolean {
   return kind === "signTransaction" || kind === "walletSend" || kind === "signAndSendTransaction";

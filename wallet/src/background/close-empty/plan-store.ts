@@ -1,6 +1,6 @@
-import type { CloseEmptyFeeBreakdown } from "../../shared/close-empty-types";
+import type { CloseEmptyFeeBreakdown } from "../../shared/close-empty";
 
-import type { TokenProgramKind } from "../../shared/home-tokens";
+import type { TokenProgramKind } from "../../shared/home";
 
 export type StoredClosePlanTx = {
   ownerAccountId: string;

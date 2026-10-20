@@ -2,13 +2,13 @@
  * Account record commands: active switch, rename, delete, reorder, and read-only add.
  * Does not generate keys or import secrets.
  */
-import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/commands";
+import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/protocol";
 import { getExposedPublicKey, parsePublicKeyBase58 } from "../../../../shared/accounts";
 import {
   parseOptionalAccountLabel,
   parseRequiredAccountLabel,
-} from "../../../../shared/account-label";
-import { accountKind, type AccountMeta } from "../../../../shared/storage-keys";
+} from "../../../../shared/accounts";
+import { accountKind, type AccountMeta } from "../../../../shared/protocol";
 import {
   disconnectOriginsForAccount,
   notifyAccountChanged,

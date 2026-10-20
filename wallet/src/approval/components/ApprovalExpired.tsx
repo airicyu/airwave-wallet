@@ -1,5 +1,5 @@
 import type { JSX, Ref } from "react";
-import type { MessageKey } from "../../shared/ui-messages";
+import type { MessageKey } from "../../shared/i18n";
 
 export type ApprovalExpiredRefs = {
   sectionRef: Ref<HTMLElement>;

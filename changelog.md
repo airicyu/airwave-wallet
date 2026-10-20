@@ -4,6 +4,10 @@
 
 (none)
 
+## 0.50.0 — 2026-10-21
+
+`wallet/src/shared` is grouped into domain folders (`i18n`, `protocol`, `accounts`, `vault`, `rpc`, `tx`, `send`, `close-empty`, `tx-ai`, `home`, `shell`, `marks`). Callers import each folder's `index.ts`. Key material is `shared/vault`, separate from account records. `uuid` now sits beside close-empty planning, and lamport formatting sits beside the close-empty popup. Exported names, commands, and storage keys are unchanged. `PopupMarkup`, the home-token service, the sign-transaction body, popup app state, and combined-account manage are split so each file stays under 400 lines. The message catalog stays one file, with a prefix comment at each section. Popup and popout CSS now live under `styles/`; each `style.css` is the import list. Class names are unchanged. `approval/tx-ai.css` stays with the tx-ai widget. The popout sign window uses the same scroll shell as the popup (`approval-sign-scroll` scrolls; the dock stays put). The transaction-fee rule stays one block in the send-status sheet.
+
 ## 0.49.0 — 2026-10-20
 
 Popup screen CSS moves into feature sheets imported from `popup/style.css`. Onboarding, settings, and accounts screens each live in their own file; the old `*Screens.tsx` barrels only re-export. The approval shell is React (`ApprovalShell` plus `shell/`, `dom/`, and `components/` under `wallet/src/approval/`); `ApprovalHost`, `SignFlowPage`, and the popout still use the same commands and class names as 0.48.0. In the side panel, stacked site flows bind the shared runtime only on the top layer; `signAndSendTransaction` confirmed still auto-dismisses after about one second; reject on a later `signTransaction` no longer leaves a blank sign view. On Helius, Jupiter, and OpenRouter secret rows and on the custom RPC editor, the confirm control uses `--ok` and the discard control uses `--danger`.

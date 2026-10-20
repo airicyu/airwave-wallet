@@ -1,4 +1,4 @@
-import type { SimulatePendingTxResult } from "../../shared/simulate-pending-tx-types";
+import type { SimulatePendingTxResult } from "../../shared/tx";
 import { sess } from "./session";
 
 export const CU_LIMIT_MIN = 1;

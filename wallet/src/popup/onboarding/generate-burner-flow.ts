@@ -2,7 +2,7 @@
  * Builds an in-memory burner keypair for the add-account preview.
  * Does not persist the secret or call the service worker.
  */
-import { generateRandomLoadedAccount, storedSecretFromBytes } from "../../shared/keypair-bytes";
+import { generateRandomLoadedAccount, storedSecretFromBytes } from "../../shared/vault";
 
 export type BurnerDraft = {
   secretKeyBase58: string | null;

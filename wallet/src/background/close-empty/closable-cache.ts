@@ -1,4 +1,4 @@
-import type { ClosableEntry } from "../../shared/close-empty-types";
+import type { ClosableEntry } from "../../shared/close-empty";
 
 const TTL_MS = 60_000;
 

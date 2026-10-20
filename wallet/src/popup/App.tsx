@@ -1,7 +1,7 @@
 import type { JSX } from "react";
 import { useEffect } from "react";
-import { parseUiLocale, t } from "../shared/ui-i18n";
-import { applyWindowChrome } from "../shared/window-chrome";
+import { parseUiLocale, t } from "../shared/i18n";
+import { applyWindowChrome } from "../shared/shell";
 import { PopupMarkup } from "./PopupMarkup";
 import { PopupProvider } from "./state/PopupContext";
 import { DockProvider } from "./state/dock";

@@ -6,9 +6,9 @@ import type {
   AirwaveBridgeAccountChanged,
   AirwaveBridgeDisconnected,
   AirwaveBridgeResult,
-} from "../shared/bridge";
-import type { AirwaveContentIn, AirwaveInjectOut } from "../shared/bridge";
-import type { ExtensionRequest, ExtensionResponse } from "../shared/commands";
+} from "../shared/protocol";
+import type { AirwaveContentIn, AirwaveInjectOut } from "../shared/protocol";
+import type { ExtensionRequest, ExtensionResponse } from "../shared/protocol";
 
 const pageOrigin = location.origin;
 

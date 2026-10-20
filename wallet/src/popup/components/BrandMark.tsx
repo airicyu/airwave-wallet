@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import { brandIconUrl } from "../../shared/brand-icon";
+import { brandIconUrl } from "../../shared/marks";
 
 export function BrandMark({ size = "lg" }: { size?: "lg" | "sm" }): JSX.Element {
   const px = size === "sm" ? 40 : 64;

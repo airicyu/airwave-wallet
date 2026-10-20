@@ -2,14 +2,14 @@
  * Merges mint symbols and icons into closable token-account entries using home-token and Jupiter metadata.
  * Does not discover closable accounts on-chain or commit close transactions.
  */
-import type { ClosableEntry } from "../../shared/close-empty-types";
+import type { ClosableEntry } from "../../shared/close-empty";
 import {
   WRAPPED_SOL_MINT,
   iconLetterForSymbol,
   shortMint,
   type HomeTokenRow,
-} from "../../shared/home-tokens";
-import type { Settings } from "../../shared/storage-keys";
+} from "../../shared/home";
+import type { Settings } from "../../shared/protocol";
 import {
   lookupJupiterMintMetadata,
   type MintDisplayMeta,

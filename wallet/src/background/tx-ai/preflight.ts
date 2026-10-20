@@ -2,7 +2,7 @@
  * Runs decode, token-account reads, and one approval-style simulate before the sandbox loop.
  * Does not call OpenRouter or paint approval UI.
  */
-import { decodeWireTransaction } from "../../shared/tx-wire";
+import { decodeWireTransaction } from "../../shared/tx";
 import { simulateTransactionRpc } from "../simulate/simulate-rpc";
 import { SimDeadline } from "../simulate/sim-deadline";
 import type { TxAiDecode } from "./local-flags";

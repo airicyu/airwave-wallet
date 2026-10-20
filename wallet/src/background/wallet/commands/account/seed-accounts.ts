@@ -2,8 +2,8 @@
  * Mnemonic seed account generate, preview, and import wallet commands.
  * Does not import raw secret-key strings or manage read-only accounts.
  */
-import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/commands";
-import { parseOptionalAccountLabel } from "../../../../shared/account-label";
+import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/protocol";
+import { parseOptionalAccountLabel } from "../../../../shared/accounts";
 import {
   createEnglishMnemonic12,
   keypairFromMnemonic,
@@ -11,9 +11,9 @@ import {
   pathTemplate,
   SEED_PREVIEW_COUNT,
   type SeedPathKind,
-} from "../../../../shared/seed-derive";
-import type { LoadedAccountKeys } from "../../../../shared/keypair-bytes";
-import type { AccountMeta } from "../../../../shared/storage-keys";
+} from "../../../../shared/vault";
+import type { LoadedAccountKeys } from "../../../../shared/vault";
+import type { AccountMeta } from "../../../../shared/protocol";
 import { respond } from "../../../messaging";
 import {
   newAccountId,

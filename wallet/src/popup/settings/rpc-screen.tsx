@@ -4,7 +4,7 @@
  */
 import type { JSX } from "react";
 import { useState } from "react";
-import type { PublicSettings } from "../../shared/storage-keys";
+import type { PublicSettings } from "../../shared/protocol";
 import { IconCheck, IconPlus, IconTrash, IconX } from "../components/StrokeIcon";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";

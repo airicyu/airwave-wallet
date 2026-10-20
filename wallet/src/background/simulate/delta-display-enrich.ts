@@ -11,11 +11,11 @@ import {
   NATIVE_SOL_ICON_URL,
   shortMint,
   WRAPPED_SOL_MINT,
-} from "../../shared/home-tokens";
-import { formatOrganicScoreLabel } from "../../shared/organic-score-label";
-import { sanitizeSymbol } from "../../shared/sanitize-symbol";
-import type { SimulatePendingTxResult, SimulateTxDelta } from "../../shared/simulate-pending-tx-types";
-import type { Cluster } from "../../shared/storage-keys";
+} from "../../shared/home";
+import { formatOrganicScoreLabel } from "../../shared/home";
+import { sanitizeSymbol } from "../../shared/home";
+import type { SimulatePendingTxResult, SimulateTxDelta } from "../../shared/tx";
+import type { Cluster } from "../../shared/protocol";
 
 const JUPITER_ENRICH_TIMEOUT_MS = 2000;
 

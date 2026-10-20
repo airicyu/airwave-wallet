@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import { accountVisualKind } from "../../shared/account-kind-visual";
+import { accountVisualKind } from "../../shared/marks";
 import { getExposedPublicKey } from "../../shared/accounts";
 import { displayAccountName } from "../lib/format";
 import { useT } from "../state/useT";

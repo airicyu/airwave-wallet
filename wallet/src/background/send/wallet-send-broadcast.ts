@@ -1,4 +1,4 @@
-import type { WalletSendProgressNotice, WalletSendSettledNotice } from "../../shared/commands";
+import type { WalletSendProgressNotice, WalletSendSettledNotice } from "../../shared/protocol";
 import { sendBridgeResult } from "../messaging";
 import type { TimeoutHandlers } from "../pending";
 

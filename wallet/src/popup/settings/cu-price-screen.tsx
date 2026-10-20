@@ -4,7 +4,7 @@
  */
 import type { JSX } from "react";
 import { useCallback, useRef, useState } from "react";
-import type { PublicSettings } from "../../shared/storage-keys";
+import type { PublicSettings } from "../../shared/protocol";
 import { useT } from "../state/useT";
 import { parseDefaultCuPriceInput, patchSettingsPartial, useSettingsIo } from "./settings-logic";
 

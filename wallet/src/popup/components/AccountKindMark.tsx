@@ -3,8 +3,8 @@
  * Does not replace Manage-page text badges or member-row icons.
  */
 import type { JSX } from "react";
-import type { AccountVisualKind } from "../../shared/account-kind-visual";
-import { ACCOUNT_KIND_COLOR } from "../../shared/account-kind-visual";
+import type { AccountVisualKind } from "../../shared/marks";
+import { ACCOUNT_KIND_COLOR } from "../../shared/marks";
 import { IconEye, IconKey, IconLayers } from "./StrokeIcon";
 
 export function AccountKindMark({

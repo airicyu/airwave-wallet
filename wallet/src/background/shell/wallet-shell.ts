@@ -2,15 +2,15 @@
  * Wallet shell: toolbar popup vs side panel, and last normal browser window id for sidePanel.open.
  * Does not open approval popouts or chrome.windows.create wallet shells.
  */
-import type { ExtensionRequest, ExtensionResponse } from "../../shared/commands";
+import type { ExtensionRequest, ExtensionResponse } from "../../shared/protocol";
 import {
   isWalletSidePanelUrl,
   SHELL_LAST_NORMAL_WINDOW_MSG,
   SIDEPANEL_PAGE_PATH,
   SIDEBAR_SURFACE_PORT,
   WALLET_PAGE_PATH,
-} from "../../shared/shell-constants";
-import type { ShellMode } from "../../shared/storage-keys";
+} from "../../shared/shell";
+import type { ShellMode } from "../../shared/protocol";
 import {
   findOldestSidebarSignTxPendingId,
   findSidebarDappApprovalRequestId,

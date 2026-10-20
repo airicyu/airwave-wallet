@@ -2,7 +2,7 @@
  * Builds a local 12-word seed draft and its Phantom index-0 public key.
  * Does not write the vault or copy the mnemonic.
  */
-import { createEnglishMnemonic12, keypairFromMnemonic } from "../../shared/seed-derive";
+import { createEnglishMnemonic12, keypairFromMnemonic } from "../../shared/vault";
 
 export type GenerateSeedDraft = {
   words: string[] | null;

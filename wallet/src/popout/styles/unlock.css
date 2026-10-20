@@ -1,0 +1,103 @@
+.unlock-screen {
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 28px 20px 36px;
+  background:
+    radial-gradient(ellipse 80% 55% at 12% 82%, color-mix(in srgb, #9945ff 11%, transparent), transparent 72%),
+    radial-gradient(ellipse 70% 48% at 92% 14%, color-mix(in srgb, #14f195 8%, transparent), transparent 70%),
+    radial-gradient(ellipse 55% 40% at 72% 68%, color-mix(in srgb, #5b8cff 7%, transparent), transparent 68%),
+    var(--bg);
+}
+
+.brand-mark {
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 18px;
+  border-radius: 18px;
+}
+
+.unlock-screen h1 {
+  text-align: center;
+  font-size: 1.28rem;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.unlock-screen > p,
+.unlock-screen .unlock-lead {
+  text-align: center;
+  margin: 0 0 22px;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}
+
+.unlock-screen > p.inline-error {
+  text-align: left;
+  margin: 0;
+}
+
+.unlock-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.unlock-screen input {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  background: var(--fill);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+.unlock-screen input:focus,
+.unlock-screen input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.unlock-screen .primary-btn {
+  margin-top: 2px;
+  flex: none;
+  width: 100%;
+  align-self: stretch;
+}
+
+.expired-screen {
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.expired-screen h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.expired-screen p {
+  margin: 0 0 20px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.expired-screen .primary-btn {
+  flex: none;
+  width: 100%;
+}
+
+input.wallet-pwd-masked {
+  -webkit-text-security: disc;
+}

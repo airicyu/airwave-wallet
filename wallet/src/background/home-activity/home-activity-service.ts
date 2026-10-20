@@ -9,10 +9,10 @@ import {
   rowFromSignature,
   rowsFromEnhanced,
   type HomeActivityRow,
-} from "../../shared/home-activity";
-import { jsonRpcMissing, type Settings } from "../../shared/storage-keys";
-import { solanaRpcForUrl } from "../../shared/solana-rpc";
-import { resolveHeliusApiTarget, type HeliusApiTarget } from "../../shared/helius-api-target";
+} from "../../shared/home";
+import { jsonRpcMissing, type Settings } from "../../shared/protocol";
+import { solanaRpcForUrl } from "../../shared/rpc";
+import { resolveHeliusApiTarget, type HeliusApiTarget } from "../../shared/rpc";
 import {
   lookupJupiterMintMetadata,
   peekCachedMintDisplay,

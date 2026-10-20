@@ -9,8 +9,8 @@ import {
   type CompiledTransactionMessageWithLifetime,
   fetchAddressesForLookupTables,
 } from "@solana/kit";
-import { compiledAddressTableLookups } from "../../shared/compiled-message";
-import { solanaRpcForUrl } from "../../shared/solana-rpc";
+import { compiledAddressTableLookups } from "../../shared/tx";
+import { solanaRpcForUrl } from "../../shared/rpc";
 import { SimDeadline } from "./sim-deadline";
 
 type RpcLoadedAddresses = {

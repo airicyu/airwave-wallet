@@ -12,13 +12,13 @@ import type {
   SimulatePendingTxResult,
   SimulateTxDelta,
   SimulateTxInstruction,
-} from "../../shared/simulate-pending-tx-types";
+} from "../../shared/tx";
 import {
   messageBytesToUint8Array,
   normalizedCompiledInstructions,
-} from "../../shared/compiled-message";
-import { decodeWireTransaction } from "../../shared/tx-wire";
-import type { Cluster } from "../../shared/storage-keys";
+} from "../../shared/tx";
+import { decodeWireTransaction } from "../../shared/tx";
+import type { Cluster } from "../../shared/protocol";
 import { decodeCompiledIx } from "./decode-compiled-ix";
 import { buildInspectorUrl } from "./inspector-url";
 import {

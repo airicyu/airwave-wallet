@@ -1,4 +1,4 @@
-import { DAPP_APPROVAL_IN_SHELL_MSG } from "../../shared/dapp-approval-notice";
+import { DAPP_APPROVAL_IN_SHELL_MSG } from "../../shared/protocol";
 
 /** Notify the live side panel to push the website Page. Does not call sidePanel.open. */
 export async function notifySidebarDappApproval(requestId: string): Promise<boolean> {

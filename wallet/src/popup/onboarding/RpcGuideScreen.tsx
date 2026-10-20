@@ -1,6 +1,6 @@
 import type { JSX } from "react";
 import { useCallback } from "react";
-import { sendExtensionRequest } from "../../shared/ext-api";
+import { sendExtensionRequest } from "../../shared/protocol";
 import { FirstRunBrand } from "../components/FirstRunBrand";
 import { usePopupContext } from "../state/PopupContext";
 import { useRegisterDock } from "../state/dock";

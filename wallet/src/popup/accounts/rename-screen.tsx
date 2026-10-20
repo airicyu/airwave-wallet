@@ -1,9 +1,9 @@
 import type { JSX } from "react";
 import { useState } from "react";
 import { getExposedPublicKey } from "../../shared/accounts";
-import { ACCOUNT_LABEL_MAX } from "../../shared/account-label";
-import { sendExtensionRequest } from "../../shared/ext-api";
-import { apiErrorMessage } from "../../shared/ui-i18n";
+import { ACCOUNT_LABEL_MAX } from "../../shared/accounts";
+import { sendExtensionRequest } from "../../shared/protocol";
+import { apiErrorMessage } from "../../shared/i18n";
 import { shortAddr } from "../lib/format";
 import { usePopupContext } from "../state/PopupContext";
 import { useRegisterDock } from "../state/dock";

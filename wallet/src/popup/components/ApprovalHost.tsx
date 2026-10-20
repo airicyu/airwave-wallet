@@ -1,9 +1,9 @@
 import type { JSX } from "react";
 import { memo } from "react";
 import { ApprovalShell } from "../../approval/ApprovalShell";
-import { sendExtensionRequest } from "../../shared/ext-api";
-import type { UiHost } from "../../shared/commands";
-import { walletShellSurfaceFromHref } from "../../shared/shell-constants";
+import { sendExtensionRequest } from "../../shared/protocol";
+import type { UiHost } from "../../shared/protocol";
+import { walletShellSurfaceFromHref } from "../../shared/shell";
 import { usePopupContext } from "../state/PopupContext";
 
 function inShellHostFromPage(): UiHost {

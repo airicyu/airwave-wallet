@@ -5,7 +5,7 @@
 import type { JSX } from "react";
 import { memo, useRef } from "react";
 import { ApprovalShell } from "../approval/ApprovalShell";
-import { walletShellSurfaceFromHref } from "../shared/shell-constants";
+import { walletShellSurfaceFromHref } from "../shared/shell";
 
 export const SignFlowPage = memo(function SignFlowPage({
   requestId,

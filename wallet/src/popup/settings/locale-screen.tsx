@@ -1,6 +1,6 @@
 import type { JSX } from "react";
-import type { PublicSettings, UiLocale } from "../../shared/storage-keys";
-import { LOCALE_ENDONYM, UI_LOCALES } from "../../shared/ui-i18n";
+import type { PublicSettings, UiLocale } from "../../shared/protocol";
+import { LOCALE_ENDONYM, UI_LOCALES } from "../../shared/i18n";
 import { useT } from "../state/useT";
 import { patchSettingsPartial, useSettingsIo } from "./settings-logic";
 

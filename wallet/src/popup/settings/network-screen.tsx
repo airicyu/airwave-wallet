@@ -1,5 +1,5 @@
 import type { JSX } from "react";
-import type { PublicSettings } from "../../shared/storage-keys";
+import type { PublicSettings } from "../../shared/protocol";
 import { useT } from "../state/useT";
 import { patchSettingsPartial, useSettingsIo } from "./settings-logic";
 

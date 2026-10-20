@@ -1,0 +1,160 @@
+.fee-line {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.muted-center {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  margin: 8px 0;
+}
+
+.send-status-mode > .top-bar,
+.send-status-mode .site-row,
+.send-status-mode .bar-wallet-group,
+.send-status-mode .page-title {
+  display: none !important;
+}
+
+.approval-sign-shell.send-status-mode {
+  background: var(--bg);
+}
+
+.send-status-mode .screen-body,
+.send-status-mode .approval-sign-scroll {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 28px 20px;
+}
+
+.send-status-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.send-status-mark {
+  width: 112px;
+  height: 112px;
+  margin: 0 0 18px;
+  display: grid;
+  place-items: center;
+  color: var(--ok);
+}
+
+.send-aurora {
+  width: 112px;
+  height: 112px;
+  overflow: visible;
+}
+
+.send-aurora-green {
+  stroke: #14f195;
+}
+
+.send-aurora-mid {
+  stroke: #5b8cff;
+}
+
+.send-aurora-purple {
+  stroke: #9945ff;
+}
+
+.send-status-check {
+  display: grid;
+  place-items: center;
+  animation: send-status-pop 0.38s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.send-status-title {
+  margin: 0 0 6px;
+  font-size: 1.28rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.send-status-lead {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  max-width: 20rem;
+}
+
+.send-status-sig {
+  margin: 10px 0 0;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.send-status-card.is-failed .send-status-mark {
+  color: var(--danger);
+}
+
+.send-status-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 16rem;
+  margin: 28px 0 0;
+}
+
+.send-status-actions .primary-btn,
+.send-status-actions .ghost-btn {
+  width: 100%;
+}
+
+.send-fail-details {
+  width: 100%;
+  max-width: 20rem;
+  margin: 16px 0 0;
+  text-align: left;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-sm);
+  background: var(--fill);
+  padding: 8px 12px;
+}
+
+.send-fail-details summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.send-fail-stage {
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.send-fail-details pre {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  max-height: 160px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+}
+
+@keyframes send-status-pop {
+  from {
+    transform: scale(0.55);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

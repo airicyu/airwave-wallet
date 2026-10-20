@@ -8,8 +8,8 @@ import type {
   ExtensionResponse,
   ResolvePendingPayload,
   SignTransactionPayload,
-} from "../../shared/commands";
-import { jsonRpcMissing } from "../../shared/storage-keys";
+} from "../../shared/protocol";
+import { jsonRpcMissing } from "../../shared/protocol";
 import { getExposedPublicKey } from "../../shared/accounts";
 import { finishConnect, finishSignMessage, finishSignTransaction } from "../pending";
 import { getPending, unbindPopoutByRequest } from "../pending";

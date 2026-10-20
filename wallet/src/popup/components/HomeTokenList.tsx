@@ -5,21 +5,21 @@
 import type { JSX } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isCombinedAccount } from "../../shared/accounts";
-import { sendExtensionRequest } from "../../shared/ext-api";
+import { sendExtensionRequest } from "../../shared/protocol";
 import {
   friendlyErrorMessage,
   shouldUseRpcTransientToast,
-} from "../../shared/friendly-error-message";
-import { jsonRpcMissing } from "../../shared/storage-keys";
-import { canWalletSendFromActiveAccount, homeTokenRowForSendBalance } from "../../shared/wallet-send-eligibility";
+} from "../../shared/i18n";
+import { jsonRpcMissing } from "../../shared/protocol";
+import { canWalletSendFromActiveAccount, homeTokenRowForSendBalance } from "../../shared/send";
 import { MainnetRpcStop } from "./MainnetRpcStop";
-import { formatOrganicScoreLabel } from "../../shared/organic-score-label";
+import { formatOrganicScoreLabel } from "../../shared/home";
 import { NATIVE_SOL_ID, shortMint, sortCombinedTokenMembers, type HomeTokenRow } from "../home/home-tokens";
 import { CopyIconButton } from "./CopyPkButton";
 import { IconChevronDown } from "./StrokeIcon";
 import { shortAddr } from "../lib/format";
 import { usePopupContext } from "../state/PopupContext";
-import { t as translate } from "../../shared/ui-i18n";
+import { t as translate } from "../../shared/i18n";
 import { useT } from "../state/useT";
 import type { State, View } from "../types";
 

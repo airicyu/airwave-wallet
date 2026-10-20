@@ -10,9 +10,9 @@ import {
   isOrbTxUrl,
   kindLabel,
   type HomeActivityRow,
-} from "../../shared/home-activity";
-import { jsonRpcMissing } from "../../shared/storage-keys";
-import { sendExtensionRequest } from "../../shared/ext-api";
+} from "../../shared/home";
+import { jsonRpcMissing } from "../../shared/protocol";
+import { sendExtensionRequest } from "../../shared/protocol";
 import { MainnetRpcStop } from "./MainnetRpcStop";
 import type { State, View } from "../types";
 import { useT } from "../state/useT";
@@ -260,7 +260,7 @@ function ActivityDetail({
 }: {
   lead: HomeActivityRow["lead"];
   detail: string;
-  t: (key: import("../../shared/ui-messages").MessageKey, vars?: Record<string, string>) => string;
+  t: (key: import("../../shared/i18n").MessageKey, vars?: Record<string, string>) => string;
 }): JSX.Element {
   if (lead === "fail") {
     return (

@@ -6,13 +6,13 @@ import { createRoot } from "react-dom/client";
 import { ApprovalShell } from "../approval/ApprovalShell";
 import "../approval/tx-ai.css";
 import { ConnectPage } from "../flow/ConnectPage";
-import { brandIconUrl } from "../shared/brand-icon";
-import type { PendingRecord } from "../shared/commands";
-import { sendExtensionRequest } from "../shared/ext-api";
-import { DEFAULT_UI_LOCALE, parseUiLocale, t } from "../shared/ui-i18n";
-import { applyWindowChrome } from "../shared/window-chrome";
-import { keepIdleSurfacePort } from "../shared/idle-surface-port";
-import { STORAGE } from "../shared/storage-keys";
+import { brandIconUrl } from "../shared/marks";
+import type { PendingRecord } from "../shared/protocol";
+import { sendExtensionRequest } from "../shared/protocol";
+import { DEFAULT_UI_LOCALE, parseUiLocale, t } from "../shared/i18n";
+import { applyWindowChrome } from "../shared/shell";
+import { keepIdleSurfacePort } from "../shared/shell";
+import { STORAGE } from "../shared/protocol";
 
 keepIdleSurfacePort();
 

@@ -1,4 +1,4 @@
-import type { PendingKind } from "../shared/commands";
+import type { PendingKind } from "../shared/protocol";
 import type { FlowPageId } from "./types";
 
 export function flowPageIdFromKind(kind: PendingKind): FlowPageId | null {

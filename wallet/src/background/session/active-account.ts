@@ -1,4 +1,4 @@
-import type { AccountMeta } from "../../shared/storage-keys";
+import type { AccountMeta } from "../../shared/protocol";
 import { readAccounts, readActiveAccountId } from "../storage";
 
 export async function getActiveAccountMeta(): Promise<AccountMeta | null> {

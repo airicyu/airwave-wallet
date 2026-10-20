@@ -16,9 +16,9 @@ import {
   compiledAddressTableLookups,
   messageBytesToUint8Array,
   normalizedCompiledInstructions,
-} from "../../shared/compiled-message";
-import { solanaRpcForUrl } from "../../shared/solana-rpc";
-import { decodeWireTransaction, encodeWireTransaction } from "../../shared/tx-wire";
+} from "../../shared/tx";
+import { solanaRpcForUrl } from "../../shared/rpc";
+import { decodeWireTransaction, encodeWireTransaction } from "../../shared/tx";
 
 export const CU_LIMIT_MIN = 1;
 export const CU_LIMIT_MAX = 1_400_000;

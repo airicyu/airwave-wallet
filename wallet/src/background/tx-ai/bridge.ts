@@ -3,7 +3,7 @@
  * Does not trust the sandbox's flags or level text when grading.
  */
 import { SANDBOX_TOOL_SCHEMAS } from "../../agent-harness/loop";
-import { TX_AI_BRIDGE_KIND, type TxAiBridgeMessage, type TxAiChatMessage } from "../../shared/tx-ai-protocol";
+import { TX_AI_BRIDGE_KIND, type TxAiBridgeMessage, type TxAiChatMessage } from "../../shared/tx-ai";
 import { readSettings } from "../storage";
 import { resolveTxAiLoop, rememberDecodePubkeys } from "./assess";
 import { pubkeysFromTxAiDecode } from "./preflight";

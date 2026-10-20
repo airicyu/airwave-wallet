@@ -4,7 +4,7 @@
  */
 import type { JSX } from "react";
 import { useEffect, useRef, useState } from "react";
-import type { PublicSettings, Settings } from "../../shared/storage-keys";
+import type { PublicSettings, Settings } from "../../shared/protocol";
 import {
   DEFAULT_DECISIONS_MODEL_CHAIN,
   DEFAULT_REPORT_MODEL_CHAIN,

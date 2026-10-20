@@ -2,13 +2,13 @@
  * Creates a new combined (aggregated) account from member public keys.
  * Does not add or remove members on existing combined accounts.
  */
-import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/commands";
+import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/protocol";
 import {
   normalizeSubPubkeysInput,
   parsePublicKeyBase58,
 } from "../../../../shared/accounts";
-import { parseOptionalAccountLabel } from "../../../../shared/account-label";
-import type { CombinedAccountMeta } from "../../../../shared/storage-keys";
+import { parseOptionalAccountLabel } from "../../../../shared/accounts";
+import type { CombinedAccountMeta } from "../../../../shared/protocol";
 import { respond } from "../../../messaging";
 import { newAccountId } from "../../../session";
 import {

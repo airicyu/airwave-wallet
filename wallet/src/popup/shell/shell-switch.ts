@@ -2,8 +2,8 @@
  * Home shell toggle: toolbar action popup vs Chrome side panel.
  * Does not open dApp approval popouts or call chrome.windows.create for the wallet shell.
  */
-import { walletShellSurfaceFromHref } from "../../shared/shell-constants";
-import { sendExtensionRequest } from "../../shared/ext-api";
+import { walletShellSurfaceFromHref } from "../../shared/shell";
+import { sendExtensionRequest } from "../../shared/protocol";
 import { getLastNormalWindowId } from "./shell-bridge";
 
 export function isSidePanelSurface(): boolean {

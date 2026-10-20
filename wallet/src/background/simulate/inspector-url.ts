@@ -2,7 +2,7 @@
  * Builds Solana Explorer transaction inspector URLs from compiled message bytes.
  * Does not simulate transactions or decode instructions.
  */
-import type { Cluster } from "../../shared/storage-keys";
+import type { Cluster } from "../../shared/protocol";
 import { bytesToBase64 } from "./tx-base64";
 
 export function buildInspectorUrl(messageBytes: Uint8Array, cluster: Cluster): string {

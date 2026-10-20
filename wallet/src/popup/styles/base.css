@@ -1,0 +1,295 @@
+:root {
+  --bg: #0f1419;
+  --bg-elevated: #161c24;
+  --fill: #1e2630;
+  --stroke: #2a3542;
+  --stroke-soft: #222a34;
+  --text: #e8eef4;
+  --text-muted: #9aa7b4;
+  --text-dim: #6b7785;
+  --accent: #3d9cf0;
+  --accent-dim: #2a6ea8;
+  --danger: #c75050;
+  --ok: #4ecb8d;
+  --warn: #e8b84a;
+  --warn-bg: #3a2e14;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+  --popup-w: 422px; /* 384 × 1.1 */
+  --popup-h: 600px; /* Chrome extension popup max height */
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body,
+#root,
+#app {
+  width: var(--popup-w);
+  height: var(--popup-h);
+  max-height: 600px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+html.wallet-shell-surface,
+html.wallet-shell-surface body,
+html.wallet-shell-surface #root,
+html.wallet-shell-surface #app {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+body {
+  font-family: "Segoe UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.45;
+}
+
+#root,
+#app {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.flow-screen {
+  padding: 20px 16px;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.flow-screen h1 {
+  font-size: 1.1rem;
+  margin: 0 0 12px;
+}
+
+.unlock-screen,
+.rpc-guide {
+  background:
+    radial-gradient(ellipse 80% 55% at 12% 82%, color-mix(in srgb, #9945ff 11%, transparent), transparent 72%),
+    radial-gradient(ellipse 70% 48% at 92% 14%, color-mix(in srgb, #14f195 8%, transparent), transparent 70%),
+    radial-gradient(ellipse 55% 40% at 72% 68%, color-mix(in srgb, #5b8cff 7%, transparent), transparent 68%),
+    var(--bg);
+}
+
+.brand-mark {
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 18px;
+  border-radius: 18px;
+}
+
+.brand-mark-sm {
+  width: 40px;
+  height: 40px;
+  margin: 2px auto 16px;
+  border-radius: 12px;
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.shell-stack {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  isolation: isolate;
+}
+
+.shell-layer,
+.flow-layer {
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.shell-layer.is-paused,
+.flow-layer.is-paused {
+  pointer-events: none;
+}
+
+.flow-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.flow-page-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 20px 16px;
+}
+
+.flow-page .approval-root {
+  flex: 1;
+  min-height: 0;
+}
+
+.top-bar {
+  flex-shrink: 0;
+  z-index: 30;
+  border-bottom: 1px solid var(--stroke-soft);
+  background: var(--bg-elevated);
+  min-height: 52px;
+}
+
+.bar-home,
+.bar-subpage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  min-height: 52px;
+}
+
+.bar-spacer {
+  flex: 1;
+}
+
+.bar-end {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bar-wallet-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.bar-wallet {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 1 auto;
+  max-width: 100%;
+  padding: 4px 6px 4px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: var(--bg);
+  min-width: 0;
+  color: inherit;
+  font: inherit;
+}
+
+.bar-wallet-hit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.cluster-strip {
+  flex-shrink: 0;
+  padding: 5px 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--warn);
+  background: var(--warn-bg);
+  border-bottom: 1px solid var(--stroke-soft);
+  pointer-events: none;
+}
+
+.bar-wallet-text {
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+  display: flex;
+  align-items: center;
+}
+
+.bar-wallet-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.bar-wallet-addr {
+  display: none;
+}
+
+.bar-home .avatar,
+.bar-wallet .avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 0.7rem;
+}
+
+.bar-subpage-title {
+  font-weight: 600;
+  font-size: 0.92rem;
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.avatar.kind-mark,
+.kind-mark.avatar {
+  background: var(--fill);
+}
+
+.kind-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}

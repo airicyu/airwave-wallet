@@ -2,7 +2,7 @@
  * Formatting helpers for the approval UI (lamports, truncated keys, hex dumps, pending payload bytes).
  * Does not approve, reject, or mutate pending requests.
  */
-import type { PendingRecord, SignMessagePayload, SignTransactionPayload } from "../shared/commands";
+import type { PendingRecord, SignMessagePayload, SignTransactionPayload } from "../shared/protocol";
 
 export function formatSolFromLamports(lamports: number): string {
   const sol = lamports / 1e9;
@@ -14,7 +14,7 @@ export function shortPk(pk: string): string {
   return `${pk.slice(0, 4)}…${pk.slice(-4)}`;
 }
 
-export { avatarPrefix, displayAccountName } from "../shared/account-display";
+export { avatarPrefix, displayAccountName } from "../shared/accounts";
 
 export function avatarLetter(label: string): string {
   const t = label.trim();

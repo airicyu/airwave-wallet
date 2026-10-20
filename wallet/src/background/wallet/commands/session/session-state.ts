@@ -2,10 +2,10 @@
  * Reads wallet snapshot state and locks the in-memory session.
  * Does not decrypt the vault or create a new vault.
  */
-import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/commands";
+import type { ExtensionRequest, ExtensionResponse } from "../../../../shared/protocol";
 import { respond } from "../../../messaging";
 import * as session from "../../../session";
-import { toPublicSettings } from "../../../../shared/storage-keys";
+import { toPublicSettings } from "../../../../shared/protocol";
 import {
   readAccounts,
   readActiveAccountId,

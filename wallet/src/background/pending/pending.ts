@@ -2,7 +2,7 @@
  * In-memory pending request registry and popout window bindings for approval flows.
  * Refuses to replace an id that is already pending. Does not persist pending state or finish bridge responses.
  */
-import type { PendingRecord } from "../../shared/commands";
+import type { PendingRecord } from "../../shared/protocol";
 import { discardTxAi } from "../tx-ai/runtime";
 import { clearSignTxState } from "./sign-tx-pending-state";
 

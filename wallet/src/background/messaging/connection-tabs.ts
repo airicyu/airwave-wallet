@@ -2,7 +2,7 @@
  * Classifies a tab URL and copies connection rows without that tab id.
  * Does not read Chrome tabs or write storage.
  */
-import type { ConnectionsMap } from "../../shared/storage-keys";
+import type { ConnectionsMap } from "../../shared/protocol";
 
 export type TabUrlClass =
   | { kind: "unknown" }

@@ -2,7 +2,7 @@
  * Expired-pending UI and expiry timer for the approval shell.
  * Does not resolve pending or load pending records.
  */
-import { PENDING_TIMEOUT_MS } from "../../shared/commands";
+import { PENDING_TIMEOUT_MS } from "../../shared/protocol";
 import { stopAutoSim } from "../sign-tx-body";
 import { sess } from "./session";
 import { hideAll, isSendStatusLocked } from "./dom";

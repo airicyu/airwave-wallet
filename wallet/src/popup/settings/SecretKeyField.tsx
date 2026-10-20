@@ -6,7 +6,7 @@ import type { JSX } from "react";
 import { useEffect, useRef, useState } from "react";
 import { hardenApiKeyInput } from "../lib/password-input";
 import { IconCheck, IconEye, IconRename, IconX } from "../components/StrokeIcon";
-import { sendExtensionRequest } from "../../shared/ext-api";
+import { sendExtensionRequest } from "../../shared/protocol";
 import { useT } from "../state/useT";
 import { MASKED_SECRET_DISPLAY } from "./settings-logic";
 

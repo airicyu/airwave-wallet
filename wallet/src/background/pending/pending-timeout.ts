@@ -2,15 +2,15 @@
  * Schedules and fires in-memory pending timeouts, rejecting dapp or wallet-send flows when approval stalls.
  * Does not perform cryptographic signing or build transactions.
  */
-import type { PendingRecord } from "../../shared/commands";
-import { PENDING_TIMEOUT_MS } from "../../shared/commands";
+import type { PendingRecord } from "../../shared/protocol";
+import { PENDING_TIMEOUT_MS } from "../../shared/protocol";
 import { getPending, takePending, unbindPopoutByRequest } from "./pending";
 import { clearWalletSendState, getWalletSendState } from "../send";
 
 export type TimeoutHandlers = {
   sendBridgeResult: (
     tabId: number,
-    msg: import("../../shared/bridge").AirwaveBridgeResult,
+    msg: import("../../shared/protocol").AirwaveBridgeResult,
     frameId?: number,
   ) => Promise<void>;
   walletSendSettled: (requestId: string, ok: boolean, errorMessage?: string) => void;

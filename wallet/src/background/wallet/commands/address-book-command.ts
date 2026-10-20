@@ -3,8 +3,8 @@
  * Does not touch the vault, accounts, or schema generation.
  */
 import { isAddress } from "@solana/kit";
-import type { ExtensionRequest, ExtensionResponse } from "../../../shared/commands";
-import type { AddressCard } from "../../../shared/storage-keys";
+import type { ExtensionRequest, ExtensionResponse } from "../../../shared/protocol";
+import type { AddressCard } from "../../../shared/protocol";
 import { respond } from "../../messaging";
 import { readAddressBook, writeAddressBook } from "../../storage";
 

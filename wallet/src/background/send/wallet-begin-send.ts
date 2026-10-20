@@ -26,16 +26,16 @@ import {
 } from "@solana-program/token-2022";
 import type { Instruction } from "@solana/instructions";
 import { parsePublicKeyBase58 } from "../../shared/accounts";
-import type { LoadedAccountKeys } from "../../shared/keypair-bytes";
+import type { LoadedAccountKeys } from "../../shared/vault";
 import {
   NATIVE_SOL_ID,
   type HomeTokenRow,
   type TokenProgramKind,
-} from "../../shared/home-tokens";
-import { parseAmountUiToRaw, solReserveLamports } from "../../shared/wallet-send-amount";
-import type { Settings } from "../../shared/storage-keys";
-import { solanaRpcForUrl } from "../../shared/solana-rpc";
-import { encodeWireTransaction } from "../../shared/tx-wire";
+} from "../../shared/home";
+import { parseAmountUiToRaw, solReserveLamports } from "../../shared/send";
+import type { Settings } from "../../shared/protocol";
+import { solanaRpcForUrl } from "../../shared/rpc";
+import { encodeWireTransaction } from "../../shared/tx";
 import { getWalletSendState } from "./wallet-send-state";
 
 export type BeginSendPayload = {

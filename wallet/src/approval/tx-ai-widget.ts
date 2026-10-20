@@ -2,11 +2,11 @@
  * In-flow AI row card on the sign shell (under title, above simulation).
  * Does not start assess or rerun on simulation refresh.
  */
-import { sendExtensionRequest } from "../shared/ext-api";
-import { mountTxAiMarkdown } from "../shared/tx-ai-markdown";
+import { sendExtensionRequest } from "../shared/protocol";
+import { mountTxAiMarkdown } from "../shared/tx-ai";
 import type { TxAiAssessState, TxAiLevel } from "../shared/tx-ai";
-import { t, type UiLocale } from "../shared/ui-i18n";
-import type { MessageKey } from "../shared/ui-messages";
+import { t, type UiLocale } from "../shared/i18n";
+import type { MessageKey } from "../shared/i18n";
 
 let watchId = "";
 let slotEl: HTMLElement | null = null;

@@ -3,8 +3,8 @@
  * Does not sign messages or transactions.
  */
 import { getExposedPublicKey, isSigningOrWatch, resolvePubkey, signingWatchPubkeyExists } from "../../shared/accounts";
-import type { LoadedAccountKeys } from "../../shared/keypair-bytes";
-import { accountKind, type AccountMeta } from "../../shared/storage-keys";
+import type { LoadedAccountKeys } from "../../shared/vault";
+import { accountKind, type AccountMeta } from "../../shared/protocol";
 import { getActiveAccountMeta } from "./active-account";
 import { readAccounts } from "../storage";
 import * as session from "./session";

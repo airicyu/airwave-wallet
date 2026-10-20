@@ -2,11 +2,11 @@
  * Approval shell locale load and static chrome labels on bound DOM refs.
  * Does not run simulation or resolve pending requests.
  */
-import { STORAGE, type Settings } from "../../shared/storage-keys";
-import { DEFAULT_UI_LOCALE, messageForErrorCode, parseUiLocale, t, type UiLocale } from "../../shared/ui-i18n";
-import type { MessageKey } from "../../shared/ui-messages";
-import { isInWalletShellHost } from "../../shared/commands";
-import { applyWindowChrome } from "../../shared/window-chrome";
+import { STORAGE, type Settings } from "../../shared/protocol";
+import { DEFAULT_UI_LOCALE, messageForErrorCode, parseUiLocale, t, type UiLocale } from "../../shared/i18n";
+import type { MessageKey } from "../../shared/i18n";
+import { isInWalletShellHost } from "../../shared/protocol";
+import { applyWindowChrome } from "../../shared/shell";
 import { sess } from "./session";
 
 export function tr(key: MessageKey, vars?: Record<string, string>): string {

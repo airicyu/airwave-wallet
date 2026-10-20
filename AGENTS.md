@@ -29,12 +29,13 @@ Do **not** edit a parent `docs/agent-roadmap/` if one exists.
 
 | Situation | Read |
 |-----------|------|
-| Implementing a scheduled version | That version's `dev-docs/roadmap/X.Y.Z/INDEX.md` and its links. Follow [`dev-docs/roadmap/GUIDELINES.md`](dev-docs/roadmap/GUIDELINES.md) and [`dev-docs/roadmap/agent-workflow.md`](dev-docs/roadmap/agent-workflow.md). Screen behavior also follows [`dev-docs/design-principles.md`](dev-docs/design-principles.md) unless that INDEX says otherwise |
+| Implementing a scheduled version | That version's `dev-docs/roadmap/X.Y.Z/INDEX.md` and its links. Follow [`dev-docs/roadmap/GUIDELINES.md`](dev-docs/roadmap/GUIDELINES.md) and [`dev-docs/roadmap/agent-workflow.md`](dev-docs/roadmap/agent-workflow.md). Source shape follows [`dev-docs/code-design-principles.md`](dev-docs/code-design-principles.md). Screen behavior follows [`dev-docs/ui-design-principles.md`](dev-docs/ui-design-principles.md) unless that INDEX says otherwise |
 | User names a version or `/version-delivery` | [`.agents/skills/version-delivery/SKILL.md`](.agents/skills/version-delivery/SKILL.md) |
-| Consistent popup behavior | [`dev-docs/design-principles.md`](dev-docs/design-principles.md) |
+| How to split files and group folders | [`dev-docs/code-design-principles.md`](dev-docs/code-design-principles.md) |
+| Consistent popup behavior | [`dev-docs/ui-design-principles.md`](dev-docs/ui-design-principles.md) |
 | Account, address, combined wording | [`dev-docs/DOMAIN.md`](dev-docs/DOMAIN.md). If that version's INDEX overrides a term in plain sentences, the INDEX wins and DOMAIN is updated to match |
 
-**Priority:** a version INDEX decision > GUIDELINES architecture bans > [`dev-docs/design-principles.md`](dev-docs/design-principles.md) (screens only).
+**Priority:** a version INDEX decision > GUIDELINES architecture bans > [`dev-docs/code-design-principles.md`](dev-docs/code-design-principles.md) (source layout) > [`dev-docs/ui-design-principles.md`](dev-docs/ui-design-principles.md) (screens only).
 
 ---
 
@@ -78,7 +79,7 @@ Steps 2 and 3 are direction only until an INDEX schedules them. Do not start the
 
 Version status lives in the table in [`dev-docs/roadmap/README.md`](dev-docs/roadmap/README.md). Each INDEX status matches that row. The shipped version number is the root [`version.md`](version.md), and it equals the latest `shipped` row in that table.
 
-When a version is opened (a new INDEX, or `/version-delivery` on a version that is not yet `in progress`), remind the user in the same turn, before implementation, of `wallet/src` files that miss the source-file rules below. Count total lines, including blanks. List three groups: a `.ts`, `.tsx`, or `.css` file over 400 lines; a command file directly under `background/wallet/` (not already inside that command's folder) at 150 lines or more; a `.ts` file of 50 lines or more with no English responsibility header. Name the path and the line count. This reminder does not block the version and does not start a split unless the user puts that split in the INDEX.
+When a version is opened (a new INDEX, or `/version-delivery` on a version that is not yet `in progress`), remind the user in the same turn, before implementation, of `wallet/src` files that miss the source-file rules in [`dev-docs/code-design-principles.md`](dev-docs/code-design-principles.md). Count total lines, including blanks. List three groups: a `.ts`, `.tsx`, or `.css` file over 400 lines; a command file directly under `background/wallet/` (not already inside that command's folder) at 150 lines or more; a `.ts` file of 50 lines or more with no English responsibility header. Name the path and the line count. This reminder does not block the version and does not start a split unless the user puts that split in the INDEX.
 
 A version proceeds by stating the work, writing it into that version's proposal (INDEX), then changing code. While that happens the version is `in progress`. Only after the user explicitly says ship: mark that README row `shipped`, match the INDEX, and check that [`changelog.md`](changelog.md) has a paragraph for that version. Do not mark shipped, and do not open the next version number, unless the user says ship.
 
@@ -87,23 +88,6 @@ If the previous version is not `shipped`, do not open a new version. This is a s
 When the latest version is `shipped` and the next version is not opened, new **code** work is unversioned. Record it in [`dev-docs/roadmap/unversioned.md`](dev-docs/roadmap/unversioned.md) and add one sentence under `Next` at the top of the changelog. Both places list the same changes. The user later chooses: fold them into the version just shipped, open the next version for them, or leave them unversioned after shipping. Do not guess before they choose. Docs, privacy policy, and terms are not tracked on the roadmap.
 
 More changes while a version is in progress go into that version's INDEX and under that version's changelog heading. Do not open the next version.
-
----
-
-## Source-file responsibility comments
-
-For `.ts` files under `wallet/src`:
-
-- **Under 50 lines** (total lines, including blanks): a file header is optional.
-- **50 lines or more:** the top of the file must have an English block comment of what the file is responsible for, at most **100 words**.
-- If you edit a file that is already 50 lines or more and has no header (including an import-only edit), add the header in the same change.
-- Usually one or two sentences: what this file does, and the neighboring step it does not do.
-- If the comment needs a second different responsibility, split the file. Do not lengthen the comment.
-- Do not paper over a second responsibility with `related logic`, `etc.`, or `and so on`.
-- `index.ts` says it re-exports this folder's public surface (it may name subfolders).
-- A pure data table only says which table it is.
-- If one change touches a `.ts`, `.tsx`, or `.css` file over 400 lines, review whether to split it.
-- Command files under `background/wallet/`: under 150 lines stay one file. At 150 lines or more, move the group into that command's folder and keep functions that change together in the same module. The 150-line rule does not recurse. A module inside the folder may exceed 150 lines if the comment is still one responsibility and the file stays under 400 lines. Do not split one responsibility into one file per command. A file may contain only one `handle*` when that is the whole responsibility.
 
 ---
 
@@ -117,7 +101,8 @@ For `.ts` files under `wallet/src`:
 | [dev-docs/README.md](dev-docs/README.md) | Engineering doc map |
 | [dev-docs/setup.md](dev-docs/setup.md) | Local build |
 | [docs/README.md](docs/README.md) | User doc map |
-| [dev-docs/design-principles.md](dev-docs/design-principles.md) | Popup and approval screens |
+| [dev-docs/code-design-principles.md](dev-docs/code-design-principles.md) | How to split files and group folders |
+| [dev-docs/ui-design-principles.md](dev-docs/ui-design-principles.md) | Popup and approval screens |
 | [dev-docs/design-demos/](dev-docs/design-demos/) | HTML concept demos |
 | [dev-docs/roadmap/README.md](dev-docs/roadmap/README.md) | Roadmap entry |
 | [dev-docs/DOMAIN.md](dev-docs/DOMAIN.md) | Domain terms (accounts, addresses, combined) |

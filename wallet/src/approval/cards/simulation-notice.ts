@@ -2,11 +2,11 @@
  * Builds approval popout notice cards for pending-transaction simulation outcomes (RPC/unparseable/fail/success).
  * Does not run simulation or call Solana RPC itself.
  */
-import type { SimulatePendingTxResult } from "../../shared/simulate-pending-tx-types";
-import { messageForErrorCode, t, type UiLocale } from "../../shared/ui-i18n";
+import type { SimulatePendingTxResult } from "../../shared/tx";
+import { messageForErrorCode, t, type UiLocale } from "../../shared/i18n";
 
 function simReasonText(locale: UiLocale, reason: string | undefined, fallback: string): string {
-  if (!reason) return t(locale, fallback as import("../../shared/ui-messages").MessageKey);
+  if (!reason) return t(locale, fallback as import("../../shared/i18n").MessageKey);
   const mapped = messageForErrorCode(locale, reason);
   return mapped !== reason ? mapped : reason;
 }

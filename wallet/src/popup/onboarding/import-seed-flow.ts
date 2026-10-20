@@ -2,8 +2,8 @@
  * Popup import-seed wizard state and actions (mnemonic entry, path preview, account pick via extension requests).
  * Does not derive keys locally without calling background wallet handlers.
  */
-import { sendExtensionRequest } from "../../shared/ext-api";
-import type { SeedPathKind } from "../../shared/seed-derive";
+import { sendExtensionRequest } from "../../shared/protocol";
+import type { SeedPathKind } from "../../shared/vault";
 
 export type ImportSeedDraft = {
   words: string[];

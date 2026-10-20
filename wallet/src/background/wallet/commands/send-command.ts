@@ -2,9 +2,9 @@
  * Starts an in-wallet send by building an unsigned transaction and registering popup pending state.
  * Does not sign, broadcast, or handle dApp-originated sign requests.
  */
-import type { BeginSendPayload, ExtensionRequest, ExtensionResponse } from "../../../shared/commands";
+import type { BeginSendPayload, ExtensionRequest, ExtensionResponse } from "../../../shared/protocol";
 import { getExposedPublicKey, resolvePubkey } from "../../../shared/accounts";
-import { jsonRpcMissing } from "../../../shared/storage-keys";
+import { jsonRpcMissing } from "../../../shared/protocol";
 import { getHomeTokensForOwners } from "../../home-tokens";
 import { respond } from "../../messaging";
 import { addPending, pendingInsertError, schedulePendingTimeout } from "../../pending";
@@ -21,7 +21,7 @@ import {
 import * as session from "../../session";
 import { readAccounts, readSettings } from "../../storage";
 
-import { walletShellSurfaceFromHref } from "../../../shared/shell-constants";
+import { walletShellSurfaceFromHref } from "../../../shared/shell";
 
 function uiHostFromSender(sender: chrome.runtime.MessageSender): "window" | "sidebar" {
   const url = sender.url ?? sender.tab?.url ?? "";

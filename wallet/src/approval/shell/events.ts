@@ -2,9 +2,9 @@
  * DOM and chrome.runtime listeners for one approval-shell mount.
  * Does not load pending on its own.
  */
-import { SESSION_UNLOCKED } from "../../shared/storage-keys";
-import { sendExtensionRequest } from "../../shared/ext-api";
-import { copyPublicKeyWithFeedback } from "../../shared/copy-pk-feedback";
+import { SESSION_UNLOCKED } from "../../shared/protocol";
+import { sendExtensionRequest } from "../../shared/protocol";
+import { copyPublicKeyWithFeedback } from "../../shared/marks";
 import { sess } from "./session";
 import { closeHost, hardenWalletPasswordInput } from "./dom";
 import { isBroadcastAfterApproveKind, isSignTxKind } from "./kinds";

@@ -1,5 +1,5 @@
-import type { LoadedAccountKeys } from "../../shared/keypair-bytes";
-import { storedSecretFromBytes } from "../../shared/keypair-bytes";
+import type { LoadedAccountKeys } from "../../shared/vault";
+import { storedSecretFromBytes } from "../../shared/vault";
 
 export function newAccountId(): string {
   return crypto.randomUUID();

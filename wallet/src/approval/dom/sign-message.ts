@@ -2,7 +2,7 @@
  * Sign-message approval body: UTF-8 text or hex payload cards.
  * Does not resolve pending or handle sign-transaction simulation.
  */
-import type { PendingRecord } from "../../shared/commands";
+import type { PendingRecord } from "../../shared/protocol";
 import { hexCompact, hexGrouped, isDisplayableUtf8 } from "../format";
 import { sess } from "../shell/session";
 import { copyText, setSignButtons } from "../shell/dom";

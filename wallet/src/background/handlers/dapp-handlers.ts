@@ -11,8 +11,8 @@ import type {
   SignAndSendTransactionPayload,
   SignMessagePayload,
   SignTransactionPayload,
-} from "../../shared/commands";
-import { messageLooksLikeTransactionMessage } from "../../shared/sign-message-tx";
+} from "../../shared/protocol";
+import { messageLooksLikeTransactionMessage } from "../../shared/tx";
 import { getActivePublicKey, readActiveAccountId, readConnections, readSettings } from "../storage";
 import { addPending, pendingInsertError, setPendingUiHost } from "../pending";
 import { schedulePendingTimeout } from "../pending";

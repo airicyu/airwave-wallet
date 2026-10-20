@@ -4,7 +4,7 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { PendingRecord } from "../../shared/commands.ts";
+import type { PendingRecord } from "../../shared/protocol/index.ts";
 import { addPending, removePending } from "./pending.ts";
 import {
   findOldestSidebarSignTxPendingId,

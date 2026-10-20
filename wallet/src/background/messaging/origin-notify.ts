@@ -6,8 +6,8 @@ import type {
   AirwaveBridgeAccountChanged,
   AirwaveBridgeDisconnected,
   AirwaveBridgeResult,
-} from "../../shared/bridge";
-import type { ConnectionsMap } from "../../shared/storage-keys";
+} from "../../shared/protocol";
+import type { ConnectionsMap } from "../../shared/protocol";
 import { getActivePublicKey, readActiveAccountId, readConnections, readSettings, writeConnections } from "../storage";
 import {
   classifyTabUrl,

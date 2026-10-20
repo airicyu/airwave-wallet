@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { App } from "../popup/App";
-import { keepIdleSurfacePort } from "../shared/idle-surface-port";
-import { SIDEBAR_SURFACE_PORT } from "../shared/shell-constants";
+import { keepIdleSurfacePort } from "../shared/shell";
+import { SIDEBAR_SURFACE_PORT } from "../shared/shell";
 import "../popout/style.css";
 import "../approval/tx-ai.css";
 import "../popup/style.css";

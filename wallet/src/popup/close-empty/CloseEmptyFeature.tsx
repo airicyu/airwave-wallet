@@ -2,20 +2,20 @@ import type { JSX } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRegisterDock } from "../state/dock";
 import { isCombinedAccount } from "../../shared/accounts";
-import { getClosableOwnerTargets } from "../../shared/close-empty-owners";
-import { sendExtensionRequest } from "../../shared/ext-api";
-import { SEND_STATUS_AURORA_SVG } from "../../shared/send-status-mark";
+import { getClosableOwnerTargets } from "../../shared/close-empty";
+import { sendExtensionRequest } from "../../shared/protocol";
+import { SEND_STATUS_AURORA_SVG } from "../../shared/marks";
 import { IconRecycle } from "../components/StrokeIcon";
-import type { ClosableEntry, CloseEmptyCommitResult, CloseEmptyPlanResult } from "../../shared/close-empty-types";
-import { iconLetterForSymbol } from "../../shared/home-tokens";
+import type { ClosableEntry, CloseEmptyCommitResult, CloseEmptyPlanResult } from "../../shared/close-empty";
+import { iconLetterForSymbol } from "../../shared/home";
 import {
   countCloseEmptyTransactions,
   estimateCloseEmptyTxBytes,
-} from "../../shared/close-empty-pack";
-import { formatSolFromLamportsString } from "../../shared/format-lamports";
-import { accountKind } from "../../shared/storage-keys";
+} from "../../shared/close-empty";
+import { formatSolFromLamportsString } from "./format-lamports";
+import { accountKind } from "../../shared/protocol";
 import { shortAddr } from "../lib/format";
-import { apiErrorMessage } from "../../shared/ui-i18n";
+import { apiErrorMessage } from "../../shared/i18n";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
 import type { State, View } from "../types";

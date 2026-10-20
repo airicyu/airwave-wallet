@@ -1,7 +1,7 @@
 import type { JSX } from "react";
-import { sendExtensionRequest } from "../../shared/ext-api";
+import { sendExtensionRequest } from "../../shared/protocol";
 import { IconX } from "../components/StrokeIcon";
-import { apiErrorMessage } from "../../shared/ui-i18n";
+import { apiErrorMessage } from "../../shared/i18n";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
 import type { State } from "../types";

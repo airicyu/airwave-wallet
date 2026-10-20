@@ -4,9 +4,9 @@
  */
 import type { JSX } from "react";
 import { useCallback, useState } from "react";
-import { sendExtensionRequest } from "../../shared/ext-api";
-import { apiErrorMessage, localeFromChromeUi, LOCALE_ENDONYM, t, UI_LOCALES } from "../../shared/ui-i18n";
-import type { UiLocale } from "../../shared/storage-keys";
+import { sendExtensionRequest } from "../../shared/protocol";
+import { apiErrorMessage, localeFromChromeUi, LOCALE_ENDONYM, t, UI_LOCALES } from "../../shared/i18n";
+import type { UiLocale } from "../../shared/protocol";
 import { FirstRunBrand } from "../components/FirstRunBrand";
 import { usePopupContext } from "../state/PopupContext";
 import { SetupScreen } from "./OnboardingScreens";

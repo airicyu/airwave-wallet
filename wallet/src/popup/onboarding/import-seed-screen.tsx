@@ -4,9 +4,9 @@
  */
 import type { Dispatch, SetStateAction, JSX } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { sendExtensionRequest } from "../../shared/ext-api";
-import type { SeedPathKind } from "../../shared/seed-derive";
-import { apiErrorMessage, displayStoredError } from "../../shared/ui-i18n";
+import { sendExtensionRequest } from "../../shared/protocol";
+import type { SeedPathKind } from "../../shared/vault";
+import { apiErrorMessage, displayStoredError } from "../../shared/i18n";
 import { SensitiveTextInput } from "../components/WalletPasswordInput";
 import { shortAddr } from "../lib/format";
 import { usePopupContext } from "../state/PopupContext";

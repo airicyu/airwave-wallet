@@ -9,9 +9,9 @@ import type { ApprovalShellCallbacks, ApprovalShellConfig, ApprovalShellDomRefs 
 import { ApprovalExpired } from "./components/ApprovalExpired";
 import { ApprovalSign } from "./components/ApprovalSign";
 import { ApprovalUnlock } from "./components/ApprovalUnlock";
-import { STORAGE, type Settings } from "../shared/storage-keys";
-import { DEFAULT_UI_LOCALE, parseUiLocale, t } from "../shared/ui-i18n";
-import type { UiHost } from "../shared/commands";
+import { STORAGE, type Settings } from "../shared/protocol";
+import { DEFAULT_UI_LOCALE, parseUiLocale, t } from "../shared/i18n";
+import type { UiHost } from "../shared/protocol";
 
 export type ApprovalShellProps = {
   requestId: string;

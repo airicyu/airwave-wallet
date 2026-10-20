@@ -2,9 +2,9 @@
  * Scans closable empty token accounts and stores the latest list in memory.
  * Does not build transactions or broadcast closes.
  */
-import type { ClosableEntry } from "../../shared/close-empty-types";
-import { getClosableOwnerTargets } from "../../shared/close-empty-owners";
-import type { ParsedOwnerTokenAccount } from "../../shared/parsed-token-accounts";
+import type { ClosableEntry } from "../../shared/close-empty";
+import { getClosableOwnerTargets } from "../../shared/close-empty";
+import type { ParsedOwnerTokenAccount } from "../../shared/home";
 import { isCombinedAccount } from "../../shared/accounts";
 import { getHomeTokenOwners } from "../../shared/accounts";
 import * as session from "../session";
