@@ -79,6 +79,8 @@ Steps 2 and 3 are direction only until an INDEX schedules them. Do not start the
 
 Version status lives in the table in [`dev-docs/roadmap/README.md`](dev-docs/roadmap/README.md). Each INDEX status matches that row. The shipped version number is the root [`version.md`](version.md), and it equals the latest `shipped` row in that table.
 
+When a version ships, `version.md`, `wallet/package.json`, `wallet/manifest.config.ts`, and the root README version sentence all equal that version. Do not leave a hardcoded older version in the manifest.
+
 When a version is opened (a new INDEX, or `/version-delivery` on a version that is not yet `in progress`), remind the user in the same turn, before implementation, of `wallet/src` files that miss the source-file rules in [`dev-docs/code-design-principles.md`](dev-docs/code-design-principles.md). Count total lines, including blanks. List three groups: a `.ts`, `.tsx`, or `.css` file over 400 lines; a command file directly under `background/wallet/` (not already inside that command's folder) at 150 lines or more; a `.ts` file of 50 lines or more with no English responsibility header. Name the path and the line count. This reminder does not block the version and does not start a split unless the user puts that split in the INDEX.
 
 A version proceeds by stating the work, writing it into that version's proposal (INDEX), then changing code. While that happens the version is `in progress`. Only after the user explicitly says ship: mark that README row `shipped`, match the INDEX, and check that [`changelog.md`](changelog.md) has a paragraph for that version. Do not mark shipped, and do not open the next version number, unless the user says ship.

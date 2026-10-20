@@ -8,4 +8,4 @@ After the user assigns the batch, move the items into that version's INDEX and c
 
 ## Current
 
-(none)
+- `wallet/manifest.config.ts` `version` is `0.50.0`, matching the shipped version. It had stayed at `0.49.0` after the 0.50.0 ship.

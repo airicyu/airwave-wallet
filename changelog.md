@@ -2,7 +2,7 @@
 
 ## Next
 
-(none)
+`wallet/manifest.config.ts` reports version 0.50.0. It had stayed at 0.49.0 after that version shipped.
 
 ## 0.50.0 — 2026-10-21
 

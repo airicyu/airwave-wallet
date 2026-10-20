@@ -179,7 +179,7 @@ Findings 分級與出貨門檻同 agent-workflow：HIGH 必須關；MEDIUM 預�
 - [ ] 同意的 MEDIUM 已修或標非阻擋
 - [ ] INDEX **驗收**全勾（或 implementation-review 逐條通過）
 - [ ] 該版約定的測試或手驗已通過，且 UI 流程已在擴充裡走完（或報告寫明無法走完的原因）
-- [ ] 倉庫根 `changelog.md` 已記本版，且 `Next` 沒有仍屬本版的句子；若已有 `package.json`，`version` 與 `X.Y.Z` 一致；根 `README.md` 的版本句與 `version.md` 相同，且 `version.md` 等於 README 表裡最新一個 `shipped`
+- [ ] 倉庫根 `changelog.md` 已記本版，且 `Next` 沒有仍屬本版的句子；若已有 `package.json`，`version` 與 `X.Y.Z` 一致；`wallet/manifest.config.ts` 的 `version` 與 `X.Y.Z` 一致；根 `README.md` 的版本句與 `version.md` 相同，且 `version.md` 等於 README 表裡最新一個 `shipped`
 - [ ] [`dev-docs/roadmap/README.md`](../../../dev-docs/roadmap/README.md) 該列改 `shipped`。這張表是狀態來源；INDEX 狀態與它相同
 - [ ] 本版新增或改動的訊息／storage／custody／能力表路徑已寫進 INDEX
 - [ ] 該構想已出貨則從 `dev-docs/roadmap/backlog/` **刪列＋刪獨立檔**
