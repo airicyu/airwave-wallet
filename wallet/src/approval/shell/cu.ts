@@ -1,3 +1,7 @@
+/**
+ * Local compute-unit draft checks for the approval shell.
+ * Does not send a transaction or rewrite the unsigned message.
+ */
 import type { SimulatePendingTxResult } from "../../shared/tx";
 import { sess } from "./session";
 

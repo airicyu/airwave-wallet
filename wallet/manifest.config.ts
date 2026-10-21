@@ -3,7 +3,7 @@ import { defineManifest } from "@crxjs/vite-plugin";
 export default defineManifest({
   manifest_version: 3,
   name: "Airwave Wallet",
-  version: "0.50.0",
+  version: "0.51.0",
   description: "Non-custodial Solana wallet. Keys stay on this device.",
   action: {
     default_popup: "src/popup/index.html",

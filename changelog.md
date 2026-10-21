@@ -2,7 +2,9 @@
 
 ## Next
 
-`wallet/manifest.config.ts` reports version 0.50.0. It had stayed at 0.49.0 after that version shipped.
+## 0.51.0 — 2026-10-21
+
+Create combined uses the same main-wallet card and member sheet as manage. Members are added from the plus button (paste one or many addresses, or pick a local account). The circle sets the draft main wallet, the grip reorders, and trash can remove the last member. The optional name field stays. Create still sends `wallet.createCombinedAccount` and does not write member names. The draft clears when leaving the create flow. `wallet/src/approval/shell/cu.ts` and `wallet/src/shared/tx/simulate-pending-tx-types.ts` gain an English responsibility header only.
 
 ## 0.50.0 — 2026-10-21
 

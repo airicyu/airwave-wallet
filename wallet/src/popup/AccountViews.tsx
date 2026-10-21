@@ -5,6 +5,9 @@
 import type { JSX } from "react";
 import {
   AccountsList,
+  CombinedCreateAddChoice,
+  CombinedCreateLocalScreen,
+  CombinedCreatePasteScreen,
   CombinedCreateScreen,
   ManageScreen,
   RenameScreen,
@@ -85,6 +88,24 @@ export function AccountViews(): JSX.Element {
           {currentView === "add-combined" ? (
             <section id="screen-add-combined" className="screen">
               <CombinedCreateScreen key={screenEnterKey("add-combined", navSeq)} wallet={wallet} />
+            </section>
+          ) : null}
+
+          {currentView === "add-combined-add" ? (
+            <section className="screen">
+              <CombinedCreateAddChoice />
+            </section>
+          ) : null}
+
+          {currentView === "add-combined-paste" ? (
+            <section className="screen">
+              <CombinedCreatePasteScreen key={screenEnterKey("add-combined-paste", navSeq)} />
+            </section>
+          ) : null}
+
+          {currentView === "add-combined-local" ? (
+            <section className="screen">
+              <CombinedCreateLocalScreen wallet={wallet} />
             </section>
           ) : null}
 

@@ -66,6 +66,7 @@ This directory is the version contract for **airwave-wallet**. An agent with no 
 | [0.48.0](./0.48.0/INDEX.md) | shipped | Idle auto-lock, wallet lock settings UI, API key edit actions, Network picker |
 | [0.49.0](./0.49.0/INDEX.md) | shipped | Popup CSS and screen splits. React approval shell. Green confirm and red discard on secret and RPC edit rows |
 | [0.50.0](./0.50.0/INDEX.md) | shipped | Domain folders under `shared/`. Five source files split under 400 lines. CSS gathered into `styles/` |
+| [0.51.0](./0.51.0/INDEX.md) | shipped | Create combined uses the manage page layout |
 
 **Version numbers:** a **patch** on `x.y.z` (for example **0.3.1**) is only a bugfix for that minor. It does not schedule a new feature. A new feature is the next **minor** (0.3.0 → 0.4.0 → 0.5.0).
 

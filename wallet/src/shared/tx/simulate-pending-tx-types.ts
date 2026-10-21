@@ -1,3 +1,7 @@
+/**
+ * Types for a pending-transaction simulation result shown on approval.
+ * Does not call RPC or apply compute-unit edits.
+ */
 export type SimulateTxDeltaDisplay = {
   trust: "verified" | "unverified";
   labelPrimary: string;

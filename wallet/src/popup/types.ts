@@ -44,6 +44,9 @@ export type View =
   | "add-import-seed"
   | "add-watch"
   | "add-combined"
+  | "add-combined-add"
+  | "add-combined-paste"
+  | "add-combined-local"
   | "account-rename"
   | "account-manage"
   | "account-switch"
@@ -78,6 +81,9 @@ export const SUBPAGE_TITLE_KEYS: Record<Exclude<View, "home-token" | "home-activ
   "add-import-seed": "nav.addImportSeed",
   "add-watch": "nav.addWatch",
   "add-combined": "nav.addCombined",
+  "add-combined-add": "common.add",
+  "add-combined-paste": "common.address",
+  "add-combined-local": "common.localAccounts",
   "account-rename": "common.name",
   "account-manage": "nav.accountManage",
   "account-switch": "accounts.changeCurrentWallet",
@@ -111,12 +117,6 @@ export const SUBPAGE_TITLE_KEYS: Record<Exclude<View, "home-token" | "home-activ
   "close-empty-confirm": "nav.closeEmptyConfirm",
   "close-empty-sending": "nav.closeEmptySending",
   "close-empty-result": "nav.closeEmptyResult",
-};
-
-export type CombinedCreateState = {
-  draftChips: string[];
-  pickedPks: Set<string>;
-  currentMain: string;
 };
 
 export type SecretDetect = { kind: "empty" | "bytes" | "base58"; ok: boolean };

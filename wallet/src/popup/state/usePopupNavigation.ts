@@ -5,6 +5,7 @@
 import { useCallback, useRef, useState, type MutableRefObject } from "react";
 import { abortWalletSendOnPopupUnload } from "../components/ApprovalHost";
 import { BACK_PARENT } from "../runtime";
+import { noteCombinedCreateNavigation } from "../accounts/combined-logic";
 import { clearSendDraft } from "../send/send-draft";
 import type { View } from "../types";
 
@@ -50,6 +51,7 @@ export function usePopupNavigation(deps: {
       const sendFlow = current === "token-send" || current === "send-pick" || current === "send-approval";
       const stayInSend = next === "token-send" || next === "send-pick" || next === "send-approval";
       if (sendFlow && !stayInSend) clearSendDraft();
+      noteCombinedCreateNavigation(current, next);
       if (next === "token-send" && current !== "token-send") {
         d.setPendingSendFormError(null);
       }
