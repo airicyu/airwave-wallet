@@ -2,7 +2,7 @@
  * chrome.storage key constants and Settings/AccountMeta types with RPC and settings normalization helpers.
  * Does not read or write storage records (see background storage-io).
  */
-import { resolveHeliusApiTarget } from "../rpc";
+import { DEFAULT_JUPITER_API_URL, DEFAULT_OPENROUTER_API_URL, resolveHeliusApiTarget } from "../rpc";
 import { DEFAULT_DECISIONS_MODEL, DEFAULT_REPORT_MODEL, type TxAiModelMode } from "../tx-ai";
 export const STORAGE = {
   settings: "airwave.settings.v1",
@@ -47,9 +47,13 @@ export type Settings = {
   rpcUrl: string;
   rpcByCluster: Record<Cluster, ClusterRpcConfig>;
   heliusApiUrl: string;
+  /** Jupiter tokens API origin. Empty uses DEFAULT_JUPITER_API_URL at call time. */
+  jupiterApiUrl: string;
   jupiterApiKey: string;
   /** OpenRouter key for transaction AI. Omitted from public settings. */
   openRouterApiKey: string;
+  /** OpenRouter base URL. Empty uses DEFAULT_OPENROUTER_API_URL at call time. Paths are appended by the caller. */
+  openRouterApiUrl: string;
   /** Legacy 0.39 single model; migrate-only, not runtime truth. */
   openRouterModel: string;
   /** Legacy 0.39 single model; migrate-only, not runtime truth. */
@@ -69,6 +73,8 @@ export type Settings = {
   idleAutoLockEnabled: boolean;
   /** Whole minutes for idle lock when enabled; default 10. */
   idleAutoLockMinutes: number;
+  /** When off, Jupiter and OpenRouter calls ignore stored debug bases. */
+  debugModeEnabled: boolean;
 };
 
 export type AccountKind = "signing" | "readOnly";
@@ -112,8 +118,10 @@ export const DEFAULT_SETTINGS: Settings = {
     mainnet: { urls: [], active: "" },
   },
   heliusApiUrl: "",
+  jupiterApiUrl: DEFAULT_JUPITER_API_URL,
   jupiterApiKey: "",
   openRouterApiKey: "",
+  openRouterApiUrl: DEFAULT_OPENROUTER_API_URL,
   openRouterModel: DEFAULT_REPORT_MODEL,
   openRouterDecisionsModel: DEFAULT_DECISIONS_MODEL,
   openRouterReportModelMode: "default",
@@ -127,6 +135,7 @@ export const DEFAULT_SETTINGS: Settings = {
   rpcGuideDismissed: false,
   idleAutoLockEnabled: true,
   idleAutoLockMinutes: 10,
+  debugModeEnabled: false,
 };
 
 export const PUBLIC_RPC_BY_CLUSTER: Record<Cluster, string> = {

@@ -22,8 +22,8 @@ const JUPITER_ENRICH_TIMEOUT_MS = 2000;
 const mintDisplayCache = new Map<string, MintDisplayMeta>();
 let cachedJupiterKey = "";
 
-function resetCacheIfKeyChanged(jupiterApiKey: string): void {
-  const key = jupiterApiKey.trim();
+function resetCacheIfKeyChanged(jupiterApiKey: string, jupiterApiUrl: string): void {
+  const key = `${jupiterApiKey.trim()}\u001f${jupiterApiUrl.trim()}`;
   if (key === cachedJupiterKey) return;
   cachedJupiterKey = key;
   mintDisplayCache.clear();
@@ -76,11 +76,12 @@ function splFromHit(mint: string, hit: MintDisplayMeta): SimulateTxDelta["displa
 async function fetchMintMeta(
   mints: string[],
   jupiterApiKey: string,
+  jupiterApiUrl: string,
 ): Promise<Map<string, MintDisplayMeta>> {
   const missing = mints.filter((m) => !mintDisplayCache.has(m));
   if (missing.length === 0) return mintDisplayCache;
 
-  const work = lookupJupiterMintMetadata(missing, jupiterApiKey);
+  const work = lookupJupiterMintMetadata(missing, jupiterApiKey, jupiterApiUrl);
   const raced = await Promise.race([
     work,
     new Promise<Map<string, MintDisplayMeta>>((resolve) => {
@@ -111,11 +112,12 @@ export async function enrichSimulateDeltas(
   result: SimulatePendingTxResult,
   cluster: Cluster,
   jupiterApiKey: string,
+  jupiterApiUrl: string,
 ): Promise<SimulatePendingTxResult> {
   if (result.outcome !== "ok" || !result.deltas || result.deltas.length === 0) {
     return result;
   }
-  resetCacheIfKeyChanged(jupiterApiKey);
+  resetCacheIfKeyChanged(jupiterApiKey, jupiterApiUrl);
 
   let metaByMint = new Map<string, MintDisplayMeta>();
   if (cluster === "mainnet") {
@@ -123,7 +125,7 @@ export async function enrichSimulateDeltas(
       .filter((d) => d.kind === "spl" && d.mint)
       .map((d) => d.mint as string);
     if (mints.length > 0) {
-      metaByMint = await fetchMintMeta(mints, jupiterApiKey);
+      metaByMint = await fetchMintMeta(mints, jupiterApiKey, jupiterApiUrl);
     }
   }
 

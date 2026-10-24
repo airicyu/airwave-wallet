@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Airwave — add-account chooser (concept)</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --bg-elevated: #161c24;
+    --fill: #1e2630;
+    --stroke: #2a3542;
+    --stroke-soft: #222a34;
+    --text: #e8eef4;
+    --text-muted: #9aa7b4;
+    --accent: #3d9cf0;
+    --radius: 12px;
+    --popup-w: 384px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: #07090c; color: var(--text);
+    font: 15px/1.45 "Segoe UI", "Microsoft JhengHei UI", "PingFang TC", "Noto Sans TC", sans-serif;
+  }
+  .page { max-width: 980px; margin: 0 auto; padding: 28px 20px 56px; }
+  h1 { font-size: 1.2rem; font-weight: 600; margin: 0 0 8px; }
+  .lede { margin: 0 0 20px; color: var(--text-muted); font-size: 0.92rem; max-width: 62ch; }
+  .layout { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+  .popup {
+    width: var(--popup-w); height: 560px; background: var(--bg);
+    border: 1px solid var(--stroke); border-radius: 16px; overflow: hidden;
+    display: flex; flex-direction: column; flex-shrink: 0;
+  }
+  .pad { padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .sub-top { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+  .sub-top .title { flex: 1; font-size: 16px; font-weight: 650; text-align: center; }
+  .icon-btn-ghost {
+    width: 44px; height: 44px; border: none; background: transparent; color: var(--accent);
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .chooser-list { display: flex; flex-direction: column; gap: 8px; }
+  .chooser-row {
+    display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--stroke);
+    border-radius: var(--radius); background: var(--bg-elevated); text-align: left; color: var(--text);
+    font: inherit; cursor: default; width: 100%;
+  }
+  .chooser-row .ico {
+    width: 36px; height: 36px; border-radius: 10px; background: var(--fill);
+    border: 1px solid var(--stroke); display: inline-flex; align-items: center;
+    justify-content: center; flex-shrink: 0; color: var(--text-muted);
+  }
+  .chooser-row .t { font-weight: 650; font-size: 14px; }
+  .chooser-row .s { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  aside { flex: 1; min-width: 260px; color: var(--text-muted); font-size: 0.9rem; }
+  aside h2 { margin: 0 0 8px; font-size: 0.95rem; color: var(--text); font-weight: 650; }
+  aside ul { margin: 0; padding-left: 1.15rem; }
+  aside li + li { margin-top: 6px; }
+  code { font-family: ui-monospace, Consolas, monospace; font-size: 0.85em; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <h1>Add-account chooser</h1>
+    <p class="lede">Informal concept for the extension popup and sidebar. Five rows: stroke icon, title, one-line subtitle. Navigation stays the same as today. Not a contract.</p>
+    <div class="layout">
+      <div class="popup" aria-label="新增帳戶">
+        <div class="pad">
+          <div class="sub-top">
+            <button class="icon-btn-ghost" type="button" aria-label="返回"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <div class="title">新增帳戶</div>
+            <span style="width:44px"></span>
+          </div>
+          <div class="chooser-list">
+            <button type="button" class="chooser-row"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22c4-4 6-7.5 6-11a6 6 0 1 0-12 0c0 3.5 2 7 6 11z"/><circle cx="12" cy="11" r="2.5"/></svg></span><span><div class="t">建立助記詞錢包</div><div class="s">產生新的 12 詞助記詞</div></span></button>
+            <button type="button" class="chooser-row"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3c2 4-2 5-1 9 3-1 6-4 6-8 4 4 4 9 1 12a7 7 0 1 1-12.5-1C8 11 10 8 12 3z"/></svg></span><span><div class="t">建立拋棄式錢包</div><div class="s">本機暫用，不長期保管</div></span></button>
+            <button type="button" class="chooser-row"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span><span><div class="t">匯入錢包</div><div class="s">助記詞或密鑰</div></span></button>
+            <button type="button" class="chooser-row"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span><span><div class="t">建立觀察帳戶</div><div class="s">只讀地址，無法簽名</div></span></button>
+            <button type="button" class="chooser-row"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="8" width="12" height="10" rx="2"/><rect x="8" y="5" width="12" height="10" rx="2"/></svg></span><span><div class="t">建立聚合錢包帳戶</div><div class="s">合併多帳戶資產視圖</div></span></button>
+          </div>
+        </div>
+      </div>
+      <aside>
+        <h2>Rows</h2>
+        <ul>
+          <li>建立助記詞錢包 — 產生新的 12 詞助記詞（pin）</li>
+          <li>建立拋棄式錢包 — 本機暫用，不長期保管（flame）</li>
+          <li>匯入錢包 — 助記詞或密鑰（download）</li>
+          <li>建立觀察帳戶 — 只讀地址，無法簽名（eye）</li>
+          <li>建立聚合錢包帳戶 — 合併多帳戶資產視圖（stacked cards）</li>
+        </ul>
+        <p>Frame is the extension popup width (<code>384px</code>), not a phone shell. Subtitles are the Traditional Chinese copy for this concept.</p>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

@@ -36,7 +36,7 @@
 | ID | 標題 | 狀態 | 說明 |
 |----|------|------|------|
 | L1 | `dev-docs/roadmap/README.md` 與 INDEX 狀態用語不一致 | **關閉** | README 已改 `in progress`。 |
-| L2 | 契約目錄與部分文件為 untracked | **開啟** | `dev-docs/roadmap/0.9.0/`（含本檔）、`wallet/src/shared/sign-message-tx.ts`、`dev-docs/design-demos/sign-message-ux.html` 等；審查以 INDEX 正文為準。 |
+| L2 | 契約目錄與部分文件為 untracked | **開啟** | `dev-docs/roadmap/0.9.0/`（含本檔）、`wallet/src/shared/sign-message-tx.ts`、`dev-docs/design-demos/0.9.0/sign-message-ux.html` 等；審查以 INDEX 正文為準。 |
 | L3 | 無針對交易 message 判定或 popout 分支的自動化測試 | **開啟** | INDEX Track 僅要求 typecheck／build；非契約硬需求。 |
 | L4 | pending 逾時一律 `TIMEOUT` | **開啟** | HOW 載明交易 message 逾時亦用 `TIMEOUT`（非交易碼）；與關窗／拒絕路徑不同。靜態符合 HOW。 |
 
@@ -137,4 +137,4 @@
 
 **已修改：** `wallet/src/background/index.ts`、`wallet/src/shared/commands.ts`、`wallet/src/popout/*`、`wallet/src/popup/*`、`test-web/*`、`dev-docs/design-principles.md`、`dev-docs/roadmap/README.md`、`dev-docs/roadmap/backlog/*` 等。
 
-**未追蹤（與 0.9.0 相關）：** `dev-docs/roadmap/0.9.0/`、`wallet/src/shared/sign-message-tx.ts`、`dev-docs/design-demos/sign-message-ux.html` 等。
+**未追蹤（與 0.9.0 相關）：** `dev-docs/roadmap/0.9.0/`、`wallet/src/shared/sign-message-tx.ts`、`dev-docs/design-demos/0.9.0/sign-message-ux.html` 等。

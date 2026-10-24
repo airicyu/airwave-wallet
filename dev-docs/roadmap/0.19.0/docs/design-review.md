@@ -6,7 +6,7 @@
 - 對照基準：[`../INDEX.md`](../INDEX.md) 已定案＋驗收（狀態 `planned`）；[`ix-decode-how.md`](./ix-decode-how.md)、[`reasoning.md`](./reasoning.md)、[`../HANDOFF.md`](../HANDOFF.md)
 - 上游：[`../../0.18.0/INDEX.md`](../../0.18.0/INDEX.md)（本版不改 Home Activity）；明細／CU：[`../../0.11.0/INDEX.md`](../../0.11.0/INDEX.md)；差額：[`../../0.10.0/docs/sign-transaction-how.md`](../../0.10.0/docs/sign-transaction-how.md)；共用殼：[`../../0.17.0/INDEX.md`](../../0.17.0/INDEX.md)
 - 構想（非本版契約）：[`../../backlog/sign-transaction-ix-decode.md`](../../backlog/sign-transaction-ix-decode.md)（靜態層已排進本版；Anchor IDL 仍未排）
-- 畫面：[`../../../design-demos/sign-transaction-ix-decode-ux.html`](../../../design-demos/sign-transaction-ix-decode-ux.html)（INDEX 點名；欄位／URL 以 INDEX 為準）
+- 畫面：[`../../../design-demos/0.19.0/sign-transaction-ix-decode-ux.html`](../../../design-demos/0.19.0/sign-transaction-ix-decode-ux.html)（INDEX 點名；欄位／URL 以 INDEX 為準）
 - 架構禁區：[`../../GUIDELINES.md`](../../GUIDELINES.md)
 - 現行程式抽樣：`wallet/src/shared/simulate-pending-tx-types.ts`、`wallet/src/background/simulate/simulate-pending-tx.ts`、`wallet/src/approval/shell.ts`、`wallet/src/popout/style.css`、`wallet/src/popup/style.css`（現碼未實作本版 ≠ 設計 HIGH）
 - **總評：** 無未關閉 HIGH。H1、M1–M7 已寫進現 INDEX／HOW（HANDOFF 對 M7 僅複述 `dataHex`，見 L9）。應修 MEDIUM：**無**。待拍板為空。審查門檻**通過**。提案可行。本檔不是已定案。

@@ -5,6 +5,7 @@
 import { SANDBOX_TOOL_SCHEMAS } from "../../agent-harness/loop";
 import { TX_AI_BRIDGE_KIND, type TxAiBridgeMessage, type TxAiChatMessage } from "../../shared/tx-ai";
 import { readSettings } from "../storage";
+import { openRouterApiUrlForCall } from "../../shared/rpc";
 import { resolveTxAiLoop, rememberDecodePubkeys } from "./assess";
 import { pubkeysFromTxAiDecode } from "./preflight";
 import type { TxAiDecode } from "./local-flags";
@@ -124,6 +125,7 @@ export async function handleTxAiBridge(message: TxAiBridgeMessage): Promise<TxAi
     const settings = await readSettings();
     const { modelUsed, result: assistant } = await openRouterChatWithChain({
       apiKey: settings.openRouterApiKey,
+      apiUrl: openRouterApiUrlForCall(settings),
       chain: session.reportModelChain,
       lockedModel: session.reportModelUsed,
       messages,

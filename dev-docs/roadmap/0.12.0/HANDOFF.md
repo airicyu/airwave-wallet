@@ -7,7 +7,7 @@
 3. [docs/send-token-how.md](./docs/send-token-how.md)
 4. [docs/reasoning.md](./docs/reasoning.md)
 5. 上游 [0.11.0](../0.11.0/INDEX.md)、[0.10.0](../0.10.0/INDEX.md)
-6. 概念稿非正式：`dev-docs/design-demos/send-token-ux.html`
+6. 概念稿非正式：`dev-docs/design-demos/0.12.0/send-token-ux.html`
 
 ## 產品摘要
 

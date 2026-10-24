@@ -8,7 +8,7 @@
 2. [docs/how.md](./docs/how.md)
 3. [docs/reasoning.md](./docs/reasoning.md)
 4. [docs/design-review.md](./docs/design-review.md)（若已有）
-5. 概念稿 [`token-trust-score-ux.html`](../../design-demos/token-trust-score-ux.html)
+5. 概念稿 [`token-trust-score-ux.html`](../../design-demos/0.38.0/token-trust-score-ux.html)
 6. 上游 [0.33.0](../0.33.0/INDEX.md) HOW
 
 ## 產品摘要

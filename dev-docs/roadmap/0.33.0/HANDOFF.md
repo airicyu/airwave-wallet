@@ -9,7 +9,7 @@
 3. [docs/reasoning.md](./docs/reasoning.md)
 4. [docs/design-review.md](./docs/design-review.md)（審查迴圈產物）
 5. 上游：[0.32.0](../0.32.0/INDEX.md) 預期變動卡生命週期
-6. 方向稿：[`dev-docs/design-demos/sign-tx-token-trust-ux.html`](../../design-demos/sign-tx-token-trust-ux.html)
+6. 方向稿：[`dev-docs/design-demos/0.33.0/sign-tx-token-trust-ux.html`](../../design-demos/0.33.0/sign-tx-token-trust-ux.html)
 
 ## 產品摘要
 

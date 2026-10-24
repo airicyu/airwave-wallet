@@ -4,7 +4,7 @@
 - **上游版本：** 行為接 [0.22.0](../0.22.0/INDEX.md) 出貨契約＋其後 **0.22.1** 修補（Orb URL 無 `/history`）。實作時以當時 `wallet/` 為準；**不**推翻 0.22 畫面語意。
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
 - **構想來源：** 出貨後已自清 backlog（多語言、方案 B 字體）
-- **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)（本版出貨時須改第 1、3、6、8 節，見已定案）；概念稿 [`dev-docs/design-demos/i18n-type-ux.html`](../design-demos/i18n-type-ux.html)（非正式；衝突以本 INDEX／HOW 為準）
+- **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)（本版出貨時須改第 1、3、6、8 節，見已定案）；概念稿 [`dev-docs/design-demos/0.23.0/i18n-type-ux.html`](../design-demos/0.23.0/i18n-type-ux.html)（非正式；衝突以本 INDEX／HOW 為準）
 - **秘密欄位：** 無新密碼欄；vault blob 不改 schema。`locale` 明文寫在既有 `airwave.settings.v1`
 
 ## 產品句
@@ -138,4 +138,4 @@
 | `wallet/src/background/send/wallet-finish-send.ts` | 進度改 code |
 | `wallet/src/background/close-empty/close-empty-service.ts` | 對 UI 的 `message` 改 code |
 | `wallet/src/popout/` | 缺 `requestId` 等啟動句走 catalog |
-| `dev-docs/design-demos/i18n-type-ux.html` | 非正式概念稿 |
+| `dev-docs/design-demos/0.23.0/i18n-type-ux.html` | 非正式概念稿 |

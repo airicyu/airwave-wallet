@@ -81,7 +81,7 @@ Hub 見 INDEX「Hub 摘要」：`default` → 文案鍵 `settings.txAiAnalysis.d
 
 ## 5. Settings UI
 
-概念稿：[`tx-ai-model-chain-ux.html`](../../../design-demos/tx-ai-model-chain-ux.html)。
+概念稿：[`tx-ai-model-chain-ux.html`](../../../design-demos/0.44.0/tx-ai-model-chain-ux.html)。
 
 - **預設**：分段選預設；下方 `DEFAULT_*_CHAIN` 每行 **disabled**；立即 `patchSettings` → `default`（**保留** `*Chain` 供再切自訂）
 - **自訂**：5 行可編輯；失焦不寫；**離開交易 AI 分析子頁**（返回 hub）時提交：normalize 後 ≥1 合法 id → `custom`+chain，否則短句、不寫

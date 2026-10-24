@@ -2,7 +2,7 @@
 
 繼承 [0.2.0 accounts-home-how](../../0.2.0/docs/accounts-home-how.md) 的帳戶 commands、RPC 查詢、delete／read-only 規則。本檔寫 **UI 畫面**、**列表顯示覆寫**、**Reveal 增量**。
 
-視覺對齊 [`dev-docs/design-demos/wallet-030-ui-concepts.html`](../../../design-demos/wallet-030-ui-concepts.html) 方案 A；衝突時以 **INDEX + 本檔** 為準。
+視覺對齊 [`dev-docs/design-demos/0.3.0/wallet-030-ui-concepts.html`](../../../design-demos/0.3.0/wallet-030-ui-concepts.html) 方案 A；衝突時以 **INDEX + 本檔** 為準。
 
 ## 畫面（popup 內，非多 HTML）
 

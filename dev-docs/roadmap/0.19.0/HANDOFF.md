@@ -6,7 +6,7 @@
 2. [INDEX.md](./INDEX.md)
 3. [docs/ix-decode-how.md](./docs/ix-decode-how.md)
 4. [docs/reasoning.md](./docs/reasoning.md)
-5. 概念稿 [sign-transaction-ix-decode-ux.html](../design-demos/sign-transaction-ix-decode-ux.html)（畫面；URL／變體以 INDEX 為準）
+5. 概念稿 [sign-transaction-ix-decode-ux.html](../design-demos/0.19.0/sign-transaction-ix-decode-ux.html)（畫面；URL／變體以 INDEX 為準）
 
 ## 產品摘要
 
@@ -23,7 +23,7 @@
 ## Paste-ready starter prompt
 
 ```text
-只認檔案，不認 chat history。先讀 AGENTS.md、dev-docs/roadmap/GUIDELINES.md、dev-docs/design-principles.md、dev-docs/roadmap/0.19.0/HANDOFF.md、INDEX.md、docs/ix-decode-how.md、docs/reasoning.md、dev-docs/design-demos/sign-transaction-ix-decode-ux.html。跟 Track 1→2→3。禁非目標（見 INDEX）。INDEX 已定案不要再問；沉默才提問；沉默時仍遵守 GUIDELINES 架構禁區。靜態解讀只在 SW；UI 只信 simulate 回的 instructions 與 inspectorUrl。workingTx ?? 原始。System Transfer／CB 2 與 3／Token 與 Token-2022 的 Transfer 與 TransferChecked／ATA 0 與 1／Memo UTF-8；精確長度才 decoded；hex 路徑禁止 name／desc；已解省略 dataHex 與 accounts。fail／rpc 只要能 serialize message 仍附 inspectorUrl。CU dirty 仍開上次 URL。數字用 BigInt 或無號整數再 toString。Inspector：message.serialize base64、cluster devnet 或 mainnet-beta、禁止 customUrl。chrome.tabs.create 且 URL 必須是 https://explorer.solana.com/tx/inspector。預期變動列 34px 有底有框；Explorer accent。unparseable 不畫 Explorer。不加套件。不要改 ../solibra-wallet。不要 commit。
+只認檔案，不認 chat history。先讀 AGENTS.md、dev-docs/roadmap/GUIDELINES.md、dev-docs/design-principles.md、dev-docs/roadmap/0.19.0/HANDOFF.md、INDEX.md、docs/ix-decode-how.md、docs/reasoning.md、dev-docs/design-demos/0.19.0/sign-transaction-ix-decode-ux.html。跟 Track 1→2→3。禁非目標（見 INDEX）。INDEX 已定案不要再問；沉默才提問；沉默時仍遵守 GUIDELINES 架構禁區。靜態解讀只在 SW；UI 只信 simulate 回的 instructions 與 inspectorUrl。workingTx ?? 原始。System Transfer／CB 2 與 3／Token 與 Token-2022 的 Transfer 與 TransferChecked／ATA 0 與 1／Memo UTF-8；精確長度才 decoded；hex 路徑禁止 name／desc；已解省略 dataHex 與 accounts。fail／rpc 只要能 serialize message 仍附 inspectorUrl。CU dirty 仍開上次 URL。數字用 BigInt 或無號整數再 toString。Inspector：message.serialize base64、cluster devnet 或 mainnet-beta、禁止 customUrl。chrome.tabs.create 且 URL 必須是 https://explorer.solana.com/tx/inspector。預期變動列 34px 有底有框；Explorer accent。unparseable 不畫 Explorer。不加套件。不要改 ../solibra-wallet。不要 commit。
 ```
 
 ## 完成檢查

@@ -4,7 +4,7 @@
 - **上游版本：** [0.43.0](../0.43.0/INDEX.md)
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
 - **構想來源：** 原 [`backlog/tx-ai-model-fallback.md`](../backlog/tx-ai-model-fallback.md)（排程後刪 backlog 列）
-- **畫面：** [`dev-docs/design-principles.md`](../../design-principles.md)。概念稿 [`tx-ai-model-chain-ux.html`](../../design-demos/tx-ai-model-chain-ux.html)（預設／自訂；衝突以本 INDEX 為準）。舊稿 [`tx-ai-model-picker-ux.html`](../../design-demos/tx-ai-model-picker-ux.html) 為 0.39，非本版
+- **畫面：** [`dev-docs/design-principles.md`](../../design-principles.md)。概念稿 [`tx-ai-model-chain-ux.html`](../../design-demos/0.44.0/tx-ai-model-chain-ux.html)（預設／自訂；衝突以本 INDEX 為準）。舊稿 [`tx-ai-model-picker-ux.html`](../../design-demos/0.39.0/tx-ai-model-picker-ux.html) 為 0.39，非本版
 - **閱讀順序：** 本檔 → [docs/how.md](./docs/how.md) → [docs/reasoning.md](./docs/reasoning.md) → [HANDOFF.md](./HANDOFF.md)
 - **實作順序：** **先**設計審查閘門（見 [HANDOFF.md](./HANDOFF.md)）→ **再**改 `wallet/`。`test-web/sign-risk*` 可與提案並行調整，規則以本 INDEX 為準，POC 非契約
 
@@ -44,7 +44,7 @@
 | storage | `*Mode` + 僅 `custom` 時的 `*Chain`。migrate 見 HOW；禁止把 `DEFAULT_*_CHAIN` 寫入 storage |
 | OpenRouter 層 | `wallet/src/background/tx-ai/openrouter.ts`：`openRouterChat`／`requestDecisionsLevel` 共用 `callWithModelChain`；`bridge.ts` 每輪 `llm.chat` 用 session 鏈與 `reportModelUsed` |
 | test-web POC | sign-risk：**A／B 並行**、**停止分析**、sessionStorage 記 RPC／key；**無**模型鏈備援（備援僅錢包） |
-| Settings 畫面 | 報告／定級各 **預設｜自訂** 分段。選預設：下方列出 `DEFAULT_*_CHAIN` 每一項，**disabled**（值每輪自常數，不寫 storage）。選自訂：5 行可編輯。概念稿已同意：[`tx-ai-model-chain-ux.html`](../../design-demos/tx-ai-model-chain-ux.html) |
+| Settings 畫面 | 報告／定級各 **預設｜自訂** 分段。選預設：下方列出 `DEFAULT_*_CHAIN` 每一項，**disabled**（值每輪自常數，不寫 storage）。選自訂：5 行可編輯。概念稿已同意：[`tx-ai-model-chain-ux.html`](../../design-demos/0.44.0/tx-ai-model-chain-ux.html) |
 
 ## 非目標
 

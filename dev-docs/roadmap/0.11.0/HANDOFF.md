@@ -7,7 +7,7 @@
 3. [docs/sign-tx-budget-how.md](./docs/sign-tx-budget-how.md)
 4. [docs/reasoning.md](./docs/reasoning.md)
 5. 上游 [0.10.0](../0.10.0/INDEX.md) 差額 HOW、[0.8.0](../0.8.0/INDEX.md) Settings 樞紐
-6. 概念稿非正式：`dev-docs/design-demos/sign-transaction-cu-budget-ux.html`
+6. 概念稿非正式：`dev-docs/design-demos/0.11.0/sign-transaction-cu-budget-ux.html`
 
 ## 產品摘要
 

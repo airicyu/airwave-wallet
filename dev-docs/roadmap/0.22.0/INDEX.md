@@ -4,7 +4,7 @@
 - **上游版本：** 行為接 [0.21.0](../0.21.0/INDEX.md) 出貨契約＋其後 0.21.1 修補（`changelog.md`／`version.md`；**無**獨立 `dev-docs/roadmap/0.21.1/`）。簽署 CU 規則上游 [0.11.0](../0.11.0/INDEX.md)。其後 **0.22.1**（無獨立 roadmap 目錄）：Orb URL 去掉 `/history`
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
 - **構想來源：** 出貨後已自清 backlog（cluster 徽章、複製回饋、刷新冷卻、Kit 估 CU）；收回租金確認中對齊 [design-principles 送出狀態](../design-principles.md)
-- **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)；概念稿 [`dev-docs/design-demos/022-ui-polish-ux.html`](../design-demos/022-ui-polish-ux.html)（非正式；衝突以本 INDEX／HOW 為準）
+- **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)；概念稿 [`dev-docs/design-demos/0.22.0/022-ui-polish-ux.html`](../design-demos/0.22.0/022-ui-polish-ux.html)（非正式；衝突以本 INDEX／HOW 為準）
 - **秘密欄位：** 無新密碼欄；vault blob 不改 schema
 
 ## 產品句

@@ -372,3 +372,50 @@ h1.first-run-name,
   color: var(--text-muted);
   white-space: nowrap;
 }
+
+.chooser-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chooser-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  width: 100%;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.chooser-ico {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--fill);
+  border: 1px solid var(--stroke);
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.chooser-title {
+  display: block;
+  font-weight: 650;
+  font-size: 14px;
+}
+
+.chooser-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-muted);
+}

@@ -78,7 +78,7 @@ Mainnet 必須有一條使用者自己的 JSON-RPC；沒有就不打官方公用
 
 ### Track 3 — Home 停住與首次引導
 
-- **做：** 概念稿 `dev-docs/design-demos/mainnet-rpc-guide.html` 後再改 popup。尚無金庫先選語言再設密碼；密碼成功後 RPC 引導；Home 停住；`rpcGuideDismissed`。
+- **做：** 概念稿 `dev-docs/design-demos/0.29.0/mainnet-rpc-guide.html` 後再改 popup。尚無金庫先選語言再設密碼；密碼成功後 RPC 引導；Home 停住；`rpcGuideDismissed`。
 - **不做：** toast 當主路徑；輪播。
 - **驗收：** 見下方手驗。
 

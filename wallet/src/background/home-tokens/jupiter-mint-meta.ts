@@ -9,11 +9,14 @@ import {
   WRAPPED_SOL_MINT,
   type HomeTokenRow,
 } from "../../shared/home";
+import { effectiveJupiterApiUrl } from "../../shared/rpc";
 
 const JUPITER_BATCH_SIZE = 100;
 const JUPITER_DELAY_NO_KEY_MS = 2000;
 const JUPITER_DELAY_WITH_KEY_MS = 1000;
-const JUPITER_BASE = "https://api.jup.ag";
+function jupiterSearchUrl(base: string, query: string): string {
+  return `${effectiveJupiterApiUrl(base)}/tokens/v2/search?query=${encodeURIComponent(query)}`;
+}
 
 export function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -121,6 +124,7 @@ function parseJupiterSearchArray(json: unknown): Map<string, JupiterTokenHit> {
 export async function applyJupiterTokensV2(
   rows: HomeTokenRow[],
   jupiterApiKey: string,
+  jupiterApiUrl: string,
   signal: AbortSignal,
 ): Promise<{ rows: HomeTokenRow[]; error?: string }> {
   const mints: string[] = [];
@@ -142,7 +146,7 @@ export async function applyJupiterTokensV2(
   for (let i = 0; i < mints.length; i += JUPITER_BATCH_SIZE) {
     if (i > 0) await sleep(batchDelay, signal);
     const batch = mints.slice(i, i + JUPITER_BATCH_SIZE);
-    const url = `${JUPITER_BASE}/tokens/v2/search?query=${encodeURIComponent(batch.join(","))}`;
+    const url = jupiterSearchUrl(jupiterApiUrl, batch.join(","));
     const res = await fetchWith429Retry(url, { method: "GET", headers }, signal);
     if (res.status === 401 || res.status === 403) {
       return { rows, error: "JUPITER_REFRESH_FAILED" };
@@ -203,6 +207,7 @@ export type MintDisplayMeta = {
 export async function lookupJupiterMintMetadata(
   mints: string[],
   jupiterApiKey: string,
+  jupiterApiUrl: string,
 ): Promise<Map<string, MintDisplayMeta>> {
   const out = new Map<string, MintDisplayMeta>();
   if (mints.length === 0) return out;
@@ -216,7 +221,7 @@ export async function lookupJupiterMintMetadata(
   for (let i = 0; i < mints.length; i += JUPITER_BATCH_SIZE) {
     if (i > 0) await sleep(batchDelay, signal);
     const batch = mints.slice(i, i + JUPITER_BATCH_SIZE);
-    const url = `${JUPITER_BASE}/tokens/v2/search?query=${encodeURIComponent(batch.join(","))}`;
+    const url = jupiterSearchUrl(jupiterApiUrl, batch.join(","));
     try {
       const res = await fetchWith429Retry(url, { method: "GET", headers }, signal);
       if (!res.ok) break;

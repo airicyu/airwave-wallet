@@ -3,7 +3,7 @@
 - **狀態：** `shipped`
 - **上游版本：** [0.5.0](../0.5.0/INDEX.md)
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
-- **概念稿：** [`dev-docs/design-demos/add-account-ux.html`](../design-demos/add-account-ux.html)、[`dev-docs/design-demos/generate-wallet-ux.html`](../design-demos/generate-wallet-ux.html)（非正式契約；衝突以本 INDEX／HOW 為準）
+- **概念稿：** [`dev-docs/design-demos/0.6.0/add-account-ux.html`](../design-demos/0.6.0/add-account-ux.html)、[`dev-docs/design-demos/0.6.0/generate-wallet-ux.html`](../design-demos/0.6.0/generate-wallet-ux.html)（非正式契約；衝突以本 INDEX／HOW 為準）
 - **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)
 
 ## 產品句
@@ -17,7 +17,7 @@
 3. [docs/reasoning.md](./docs/reasoning.md)
 4. 上游：[0.1.0 storage-custody-how](../0.1.0/docs/storage-custody-how.md)（vault／session）、[0.2.0 accounts-home-how](../0.2.0/docs/accounts-home-how.md)（`importAccount` 寫 signing）
 5. [HANDOFF.md](./HANDOFF.md)
-6. 視覺：[add-account-ux.html](../design-demos/add-account-ux.html)、[generate-wallet-ux.html](../design-demos/generate-wallet-ux.html)
+6. 視覺：[add-account-ux.html](../design-demos/0.6.0/add-account-ux.html)、[generate-wallet-ux.html](../design-demos/0.6.0/generate-wallet-ux.html)
 
 ## 已定案
 

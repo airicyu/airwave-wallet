@@ -3,7 +3,7 @@
 - **狀態：** `shipped`
 - **上游版本：** [0.45.0](../0.45.0/INDEX.md)。秘密列形狀沿用 [0.8.0](../0.8.0/INDEX.md) 的 Helius／Jupiter 與 [0.30.0](../0.30.0/INDEX.md) 的 OpenRouter；本版只改這三列的操作，不改存放
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
-- **構想來源：** 規劃對話（2026-10-16）與概念稿 [`dev-docs/design-demos/api-keys-edit-ux.html`](../../design-demos/api-keys-edit-ux.html)。沒有獨立 backlog 檔
+- **構想來源：** 規劃對話（2026-10-16）與概念稿 [`dev-docs/design-demos/0.46.0/api-keys-edit-ux.html`](../../design-demos/0.46.0/api-keys-edit-ux.html)。沒有獨立 backlog 檔
 - **畫面：** 推翻 [`dev-docs/design-principles.md`](../../design-principles.md) 第 8 節「API keys」裡「空值用確認圖示提交、清除圖示立刻寫空、失焦或確認才寫入」這三句，僅對本版三列。其餘 Settings 原則不變。出貨時把該節改成與本 INDEX 一致
 - **秘密欄位：** 不新增欄位。文件、概念稿、審查報告禁止寫真實 key 或含使用者 token 的 gateway URL
 
@@ -17,7 +17,7 @@ Settings 的 Helius API URL、Jupiter API key、OpenRouter API key 平時是遮�
 2. [docs/how.md](./docs/how.md)
 3. [docs/reasoning.md](./docs/reasoning.md)
 4. [HANDOFF.md](./HANDOFF.md)
-5. 概念稿：[`dev-docs/design-demos/api-keys-edit-ux.html`](../../design-demos/api-keys-edit-ux.html)（衝突時以本 INDEX 為準）
+5. 概念稿：[`dev-docs/design-demos/0.46.0/api-keys-edit-ux.html`](../../design-demos/0.46.0/api-keys-edit-ux.html)（衝突時以本 INDEX 為準）
 
 ## 已定案
 
@@ -74,7 +74,7 @@ Settings 的 Helius API URL、Jupiter API key、OpenRouter API key 平時是遮�
 | `wallet/src/shared/ui-messages.ts` | `common.discard` |
 | `wallet/src/popup/components/StrokeIcon.tsx` | `IconRename`、`IconCheck`、捨棄用既有 `IconX` |
 | `dev-docs/design-principles.md` | 第 8 節 API keys，出貨時改寫 |
-| `dev-docs/design-demos/api-keys-edit-ux.html` | 概念稿 |
+| `dev-docs/design-demos/0.46.0/api-keys-edit-ux.html` | 概念稿 |
 
 ## 開工前仍須拍板
 

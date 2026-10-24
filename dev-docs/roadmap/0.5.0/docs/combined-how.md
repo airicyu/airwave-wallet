@@ -99,7 +99,7 @@ active 為 combined 時，對 **`mainPubkey`**（不是 combined `id`）依序�
   - **可選**：從本機既有 signing／watch 勾選加入（列：左 checkbox、中名稱、右短地址 前 4…後 4）。勾選不是必填。
   - 目前錢包＝合併去重後 **第一個有效地址**。Create 頁不另選 main。
   - 有效公鑰數為 0 → 不可送出。成功回 `accounts`。
-  - 視覺意圖見 [`dev-docs/design-demos/combined-create-050.html`](../../../design-demos/combined-create-050.html)（非正式契約；衝突以本節為準）。
+  - 視覺意圖見 [`dev-docs/design-demos/0.5.0/combined-create-050.html`](../../../design-demos/0.5.0/combined-create-050.html)（非正式契約；衝突以本節為準）。
   - 不必先把地址建成 signing／watch。之後加成員／改目前錢包走 **Manage**。
 - **Accounts** 列表：combined 列顯示 label＋可辨識為聚合的標記；點主區 `setActiveAccount`。可進 rename／manage。
 - **Manage（combined）**：列出成員短地址；標出目前錢包；可切目前錢包（`setCombinedMain`）；可加／移除成員（最後一個移除失敗須顯示錯誤）；加成員＝可貼公鑰 **加上** 本機 signing／watch 勾選列（左 checkbox、中名稱、右短地址）。已在 `subPubkeys` 的列仍顯示且為勾選；再勾未加入者立刻 `addCombinedSub`；取消勾選立刻 `removeCombinedSub`（最後一個成員該列 disable，點了仍 `LAST_SUB_ACCOUNT`）。**無** Reveal 列。Remove 刪的是 **combined 本體**。

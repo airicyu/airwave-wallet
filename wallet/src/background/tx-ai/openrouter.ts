@@ -9,9 +9,15 @@ import {
   type TxAiFlag,
   type TxAiLevel,
 } from "../../shared/tx-ai";
+import { effectiveOpenRouterApiUrl } from "../../shared/rpc";
 
-const CHAT_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DECISIONS_URL = "https://openrouter.ai/api/alpha/decisions";
+function chatUrl(base: string): string {
+  return `${effectiveOpenRouterApiUrl(base)}/api/v1/chat/completions`;
+}
+
+function decisionsUrl(base: string): string {
+  return `${effectiveOpenRouterApiUrl(base)}/api/alpha/decisions`;
+}
 
 const LEVEL_CRITERIA: Record<TxAiLevel, string> = {
   low: "Ordinary transfer or common DEX swap. No authority handoff, unlimited approve, owner mismatch, or external close.",
@@ -90,12 +96,13 @@ function parseChatMessage(json: {
 
 async function openRouterChatOnce(args: {
   apiKey: string;
+  apiUrl: string;
   model: string;
   messages: unknown;
   tools: unknown;
   signal: AbortSignal;
 }): Promise<ChatResult> {
-  const response = await fetch(CHAT_URL, {
+  const response = await fetch(chatUrl(args.apiUrl), {
     method: "POST",
     headers: {
       Authorization: `Bearer ${args.apiKey}`,
@@ -120,6 +127,7 @@ async function openRouterChatOnce(args: {
 
 export async function openRouterChat(args: {
   apiKey: string;
+  apiUrl: string;
   model: string;
   messages: unknown;
   tools: unknown;
@@ -133,6 +141,7 @@ export async function openRouterChat(args: {
 
 export async function openRouterChatWithChain(args: {
   apiKey: string;
+  apiUrl: string;
   chain: readonly string[];
   lockedModel?: string;
   messages: unknown;
@@ -141,7 +150,14 @@ export async function openRouterChatWithChain(args: {
 }): Promise<{ modelUsed: string; result: ChatResult }> {
   const chain = buildLockedChain(args.chain, args.lockedModel);
   return callWithModelChain(chain, (model) =>
-    openRouterChatOnce({ apiKey: args.apiKey, model, messages: args.messages, tools: args.tools, signal: args.signal }),
+    openRouterChatOnce({
+      apiKey: args.apiKey,
+      apiUrl: args.apiUrl,
+      model,
+      messages: args.messages,
+      tools: args.tools,
+      signal: args.signal,
+    }),
   );
 }
 
@@ -155,6 +171,7 @@ function buildLockedChain(chain: readonly string[], lockedModel?: string): strin
 
 export async function gradeReport(args: {
   apiKey: string;
+  apiUrl: string;
   chain: readonly string[];
   reportText: string;
   flags: TxAiFlag[];
@@ -177,6 +194,7 @@ export async function gradeReport(args: {
 async function requestDecisionsLevelOnce(
   args: {
     apiKey: string;
+    apiUrl: string;
     reportText: string;
     flags: TxAiFlag[];
     kind: string;
@@ -185,7 +203,7 @@ async function requestDecisionsLevelOnce(
   },
   model: string,
 ): Promise<TxAiLevel> {
-  const response = await fetch(DECISIONS_URL, {
+  const response = await fetch(decisionsUrl(args.apiUrl), {
     method: "POST",
     headers: {
       Authorization: `Bearer ${args.apiKey}`,

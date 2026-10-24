@@ -39,7 +39,7 @@ UI：pointer 在 `.account-card-main`（排除內部 button）。該區 `user-se
 
 ## Track 2 — Combined 持倉展開
 
-視覺：[combined-token-expand-ux.html](../../../design-demos/combined-token-expand-ux.html)。資料仍 0.5.0 `members`。
+視覺：[combined-token-expand-ux.html](../../../design-demos/0.26.0/combined-token-expand-ux.html)。資料仍 0.5.0 `members`。
 
 | 元素 | 規則 |
 |------|------|

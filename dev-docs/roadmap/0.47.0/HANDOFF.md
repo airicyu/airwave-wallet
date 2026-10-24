@@ -3,7 +3,7 @@
 ## 讀檔順序
 
 1. `dev-docs/roadmap/0.47.0/INDEX.md`
-2. `dev-docs/design-demos/wallet-account-ui.html`（三格概念稿；與 INDEX 衝突時以 INDEX 為準）
+2. `dev-docs/design-demos/0.47.0/wallet-account-ui.html`（三格概念稿；與 INDEX 衝突時以 INDEX 為準）
 3. `dev-docs/DOMAIN.md` 的主錢包、成員地址
 
 ## 產品摘要
@@ -28,7 +28,7 @@
 
 ```text
 實作 Airwave Wallet 0.47.0。工作目錄是 airwave-wallet 倉庫根。
-先讀 dev-docs/roadmap/0.47.0/INDEX.md 與 HANDOFF.md，以及概念稿 dev-docs/design-demos/wallet-account-ui.html。
+先讀 dev-docs/roadmap/0.47.0/INDEX.md 與 HANDOFF.md，以及概念稿 dev-docs/design-demos/0.47.0/wallet-account-ui.html。
 只做 Track 1。不要發明 INDEX 沒有的語意。不要 commit。
 做完跑 cd wallet && npm run typecheck。手驗若當下載不了未封裝擴充，在回覆寫明哪幾條沒走完。
 ```

@@ -17,6 +17,7 @@ import {
 import { getPending } from "../pending/pending";
 import { getWorkingTx } from "../pending/sign-tx-pending-state";
 import { readSettings } from "../storage";
+import { openRouterApiUrlForCall } from "../../shared/rpc";
 import { stripWireSignatures } from "../../shared/tx";
 import { formatTxAiPreflightForPrompt, pubkeysFromTxAiDecode, runTxAiPreflight } from "./preflight";
 import { gradeReport } from "./openrouter";
@@ -189,6 +190,7 @@ async function runSession(session: TxAiSession): Promise<void> {
     }
     const graded = await gradeReport({
       apiKey: settings.openRouterApiKey,
+      apiUrl: openRouterApiUrlForCall(settings),
       chain: effectiveDecisionsModelChain(settings),
       reportText,
       flags: enriched.flags,

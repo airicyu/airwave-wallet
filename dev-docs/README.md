@@ -10,7 +10,7 @@ Only a file named `dev-docs/roadmap/X.Y.Z/INDEX.md` is that version’s contract
 | [roadmap/](./roadmap/README.md) | Version contracts (INDEX / Track / acceptance) |
 | [code-design-principles.md](./code-design-principles.md) | How to split files and group folders. INDEX wins when it is explicit |
 | [ui-design-principles.md](./ui-design-principles.md) | Popup / approval UI rules. INDEX wins when it is explicit |
-| [design-demos/](./design-demos/) | Informal HTML concepts. INDEX wins on conflict |
+| [design-demos/](./design-demos/) | Informal HTML concepts, one folder per version. INDEX wins on conflict |
 | [DOMAIN.md](./DOMAIN.md) | Cross-version account / address terms. A version INDEX may override and must write back here |
 | [research/](./research/) | Engineering notes, not a contract |
 

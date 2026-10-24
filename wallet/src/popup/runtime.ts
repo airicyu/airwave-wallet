@@ -35,6 +35,7 @@ export const BACK_PARENT: Partial<Record<View, View>> = {
   "settings-keys": "settings",
   "settings-cu-price": "settings",
   "settings-wallet-lock": "settings",
+  "settings-debug": "settings",
   "settings-password": "settings-wallet-lock",
   "about-disclaimer": "about",
   "about-terms": "about",

@@ -73,7 +73,7 @@
 - `popout/main.ts` 仍「缺少 requestId」。
 - 持久設定仍是 `chrome.storage.local` 鏡像路徑。未見 pending 進持久 Zustand、全 tab 廣播結果、硬編碼密碼、inject 持有長期私鑰。本版非目標未要求改 vault／pending。
 
-backlog 與 `dev-docs/design-demos/i18n-type-ux.html` 非正式。上游 0.22.0 畫面語意本版只收字串、不推翻。待拍板仍空。
+backlog 與 `dev-docs/design-demos/0.23.0/i18n-type-ux.html` 非正式。上游 0.22.0 畫面語意本版只收字串、不推翻。待拍板仍空。
 
 ## 修復追蹤表
 

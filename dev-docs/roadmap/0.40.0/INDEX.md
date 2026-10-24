@@ -3,7 +3,7 @@
 - **狀態：** `shipped`
 - **上游版本：** [0.39.0](../0.39.0/INDEX.md)
 - **Changelog：** [`changelog.md`](../../../changelog.md)（0.40.0）
-- **概念稿：** [`connect-consent-ux.html`](../../design-demos/connect-consent-ux.html)（使用者已同意提案；衝突以本 INDEX 為準）
+- **概念稿：** [`connect-consent-ux.html`](../../design-demos/0.40.0/connect-consent-ux.html)（使用者已同意提案；衝突以本 INDEX 為準）
 - **畫面：** [`dev-docs/design-principles.md`](../../design-principles.md)
 
 ## 產品句
@@ -67,7 +67,7 @@
 | `wallet/src/shared/ui-messages.ts` | 文案 |
 | `wallet/src/popup/lib/format.ts` | `shortAddr`、`avatarLetter` |
 | `wallet/src/shared/accounts.ts` | `getExposedPublicKey` |
-| `dev-docs/design-demos/connect-consent-ux.html` | 視覺參考 |
+| `dev-docs/design-demos/0.40.0/connect-consent-ux.html` | 視覺參考 |
 
 ## 測試
 

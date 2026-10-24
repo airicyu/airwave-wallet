@@ -6,6 +6,7 @@ import type { ExtensionRequest, ExtensionResponse } from "../../../shared/protoc
 import { notifyAccountChanged } from "../../messaging";
 import { respond } from "../../messaging";
 import { isAllowedCustomRpc, isPublicClusterRpc, toPublicSettings } from "../../../shared/protocol";
+import { isVendorApiUrlDraft } from "../../../shared/rpc";
 import { syncIdleLockAlarm } from "../../idle-lock/idle-lock";
 import {
   getActivePublicKey,
@@ -48,6 +49,17 @@ export async function handlePatchSettings(req: ExtensionRequest): Promise<Extens
       requestId: req.requestId,
       ok: true,
       result: { settings: toPublicSettings(settings) },
+    });
+  }
+  if (
+    (typeof patch.jupiterApiUrl === "string" && !isVendorApiUrlDraft(patch.jupiterApiUrl)) ||
+    (typeof patch.openRouterApiUrl === "string" && !isVendorApiUrlDraft(patch.openRouterApiUrl))
+  ) {
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: { code: "INVALID_PAYLOAD", message: "Invalid API URL" },
     });
   }
   if (incomingCustomRpcRejected(patch)) {

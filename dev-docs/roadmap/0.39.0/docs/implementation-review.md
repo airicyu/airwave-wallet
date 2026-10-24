@@ -91,7 +91,7 @@ node --test reject-dapp-pending.test.mjs
 | ID | 標題 | 狀態 | 依據 |
 |----|------|------|------|
 | M1 | INDEX 側欄關閉與設定畫面驗收未手驗 | **仍開**（出貨阻擋；非 typecheck／build 門檻） | 驗收：側欄 `signTransaction`／`signAndSendTransaction` 關 Chrome 側欄、`connect` 不拒絕、Settings 三選＋「其他」勾存、舊 Kimi／GLM 開為「其他」。本環境未載入未封裝擴充。靜態讀碼不算通過。 |
-| M2 | 0.39.0 roadmap 與部分新檔尚未 commit | **仍開**（出貨時 `git add`） | `git status`：`?? dev-docs/roadmap/0.39.0/`、`?? wallet/src/background/pending/reject-dapp-pending.test.ts`、`?? dev-docs/design-demos/tx-ai-model-picker-ux.html` 等。 |
+| M2 | 0.39.0 roadmap 與部分新檔尚未 commit | **仍開**（出貨時 `git add`） | `git status`：`?? dev-docs/roadmap/0.39.0/`、`?? wallet/src/background/pending/reject-dapp-pending.test.ts`、`?? dev-docs/design-demos/0.39.0/tx-ai-model-picker-ux.html` 等。 |
 | M3 | `test-web/sign-risk` 改動超出 INDEX 非目標 | **仍開** | INDEX 非目標：「改 `test-web/sign-risk.html`」。working tree 仍改 `sign-risk.html`、`sign-risk-*.ts`（含新 `sign-risk-preflight.ts`）。與 0.39 契約無關，易混淆回歸範圍；應 revert 或另版排程。 |
 | M4 | `tx-ai.test.ts` 與 INDEX normalize 衝突導致單測失敗 | **關閉**（第 2 輪確認） | 實作修正斷言：`not-a-model` 為合法自訂；非法用 `bad id` → apodex。HOW §2.7 已對齊。第 2 輪：6 pass。 |
 

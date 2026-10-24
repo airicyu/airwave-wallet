@@ -5,7 +5,7 @@
 - 角色：設計審查（不改 INDEX／HOW／reasoning／HANDOFF／程式；不以本檔當已定案）
 - 對照基準：[`../INDEX.md`](../INDEX.md) 已定案＋驗收；[`how.md`](./how.md)、[`reasoning.md`](./reasoning.md)、[`../HANDOFF.md`](../HANDOFF.md)
 - 架構禁區：[`../../GUIDELINES.md`](../../GUIDELINES.md)
-- 概念稿：[`../../../design-demos/tx-ai-model-chain-ux.html`](../../../design-demos/tx-ai-model-chain-ux.html)（衝突以 INDEX 為準）
+- 概念稿：[`../../../design-demos/0.44.0/tx-ai-model-chain-ux.html`](../../../design-demos/0.44.0/tx-ai-model-chain-ux.html)（衝突以 INDEX 為準）
 - 現行程式抽樣（第 2 輪）：同上＋`wallet/src/popup/settings/settings-logic.ts`（hub 摘要現況）、`wallet/src/background/tx-ai/assess.ts`（discard／session 生命週期）
 - **總評（第 2 輪）：** 初審 HIGH／MEDIUM 已關（含 M8 規劃收斂）；契約可支撐 Track 實作。**設計審查門檻通過**；未關 HIGH：**無**。
 

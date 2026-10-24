@@ -9,7 +9,7 @@
 3. [docs/reasoning.md](./docs/reasoning.md)
 4. [docs/design-review.md](./docs/design-review.md)
 5. 被推翻句：[0.10.0](../0.10.0/INDEX.md) 模擬參數與卡外「預計失敗」；[0.11.0](../0.11.0/INDEX.md) 費用只讀模擬回包；[0.30.0](../0.30.0/INDEX.md) 懸浮 pill 與站點靠左
-6. 方向稿：[`dev-docs/design-demos/tx-ai-row-card-ux.html`](../design-demos/tx-ai-row-card-ux.html)（衝突時以 INDEX 與 HOW 為準）
+6. 方向稿：[`dev-docs/design-demos/0.32.0/tx-ai-row-card-ux.html`](../design-demos/0.32.0/tx-ai-row-card-ux.html)（衝突時以 INDEX 與 HOW 為準）
 
 ## 產品摘要
 

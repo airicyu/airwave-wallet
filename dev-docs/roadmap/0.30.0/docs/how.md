@@ -29,7 +29,7 @@ Decisions 定級模型允許集合（設定 UI 只列這些）：
 
 Secrets：`wallet.readIntegrationSecrets` 回傳**增加** `openRouterApiKey`；sender 限制與既有 `wallet.*` 相同＝**僅擴充頁**可呼。
 
-**OpenRouter API key 設定列 UX：** 與 Settings「API keys」裡 **Helius API URL／Jupiter API key** 同一套路（見 [`dev-docs/design-principles.md`](../../../design-principles.md) §8、[`settings-hub-ux.html`](../../../design-demos/settings-hub-ux.html)）：`type="text"`（禁止 `password`）；有值顯示 `••••••`；Reveal 才全文（單行 ellipsis、勿要錢包密碼）；編輯／清除圖示；空列可貼上＋列內確認圖示提交；失焦或確認才寫入；禁止整頁 Save；不要寫「已設定」、不要露後 4。概念稿：[`tx-ai-analysis-ux.html`](../../../design-demos/tx-ai-analysis-ux.html)。
+**OpenRouter API key 設定列 UX：** 與 Settings「API keys」裡 **Helius API URL／Jupiter API key** 同一套路（見 [`dev-docs/design-principles.md`](../../../design-principles.md) §8、[`settings-hub-ux.html`](../../../design-demos/0.8.0/settings-hub-ux.html)）：`type="text"`（禁止 `password`）；有值顯示 `••••••`；Reveal 才全文（單行 ellipsis、勿要錢包密碼）；編輯／清除圖示；空列可貼上＋列內確認圖示提交；失焦或確認才寫入；禁止整頁 Save；不要寫「已設定」、不要露後 4。概念稿：[`tx-ai-analysis-ux.html`](../../../design-demos/0.30.0/tx-ai-analysis-ux.html)。
 
 ## Assess 生命週期
 

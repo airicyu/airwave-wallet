@@ -1,6 +1,6 @@
 # UI design principles
 
-Popup and approval UI. An INDEX overrides this file when it says so. Informal demos live in [design-demos/](design-demos/). How source files are split and grouped lives in [code-design-principles.md](./code-design-principles.md).
+Popup and approval UI. An INDEX overrides this file when it says so. Informal demos live in [design-demos/](design-demos/), one folder per version. How source files are split and grouped lives in [code-design-principles.md](./code-design-principles.md).
 
 ## 1. Icon buttons
 

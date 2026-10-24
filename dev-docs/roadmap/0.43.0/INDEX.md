@@ -4,7 +4,7 @@
 - **上游版本：** [0.42.0](../0.42.0/INDEX.md)（聚合送出已出貨）。送出本體：[0.12.0](../0.12.0/INDEX.md)
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
 - **構想來源：** 原 `backlog/address-book.md`（出貨後已刪）
-- **畫面：** [`design-demos/address-book-ux.html`](../../design-demos/address-book-ux.html)（非正式；衝突時以本 INDEX 為準）。原則見 [`dev-docs/design-principles.md`](../../design-principles.md)
+- **畫面：** [`design-demos/0.43.0/address-book-ux.html`](../../design-demos/0.43.0/address-book-ux.html)（非正式；衝突時以本 INDEX 為準）。原則見 [`dev-docs/design-principles.md`](../../design-principles.md)
 - **閱讀順序：** 本檔 → [docs/address-cards-how.md](./docs/address-cards-how.md) → [docs/reasoning.md](./docs/reasoning.md)
 
 ## 產品句

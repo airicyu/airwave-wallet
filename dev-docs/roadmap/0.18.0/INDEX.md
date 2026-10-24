@@ -3,7 +3,7 @@
 - **狀態：** `shipped`
 - **上游版本：** [0.17.0](../0.17.0/INDEX.md)。本版只加 Home Activity 查詢與列表。不改簽核、送出、底欄殼
 - **Changelog：** [`changelog.md`](../../../changelog.md)
-- **構想來源：** 原 `backlog/home-activity.md`（出貨後已刪）。畫面以使用者同意的 [`dev-docs/design-demos/home-activity-ux.html`](../design-demos/home-activity-ux.html) 為準；**金額符號、文案以本檔已定案為準**，不以概念稿示範列（例如 JUP）為準
+- **構想來源：** 原 `backlog/home-activity.md`（出貨後已刪）。畫面以使用者同意的 [`dev-docs/design-demos/0.18.0/home-activity-ux.html`](../design-demos/0.18.0/home-activity-ux.html) 為準；**金額符號、文案以本檔已定案為準**，不以概念稿示範列（例如 JUP）為準
 - **畫面：** 概念稿五態（有資料、載入中、尚無交易、活動暫時無法載入、devnet 粗列）。不重畫主題
 
 ## 產品句
@@ -15,7 +15,7 @@ Home 的 Activity 分頁列出 **目前帳戶對外地址**在 **目前 cluster*
 1. 本檔
 2. [docs/home-activity-how.md](./docs/home-activity-how.md)
 3. [docs/reasoning.md](./docs/reasoning.md)
-4. 概念稿 [`dev-docs/design-demos/home-activity-ux.html`](../design-demos/home-activity-ux.html)
+4. 概念稿 [`dev-docs/design-demos/0.18.0/home-activity-ux.html`](../design-demos/0.18.0/home-activity-ux.html)
 5. [HANDOFF.md](./HANDOFF.md)
 
 ## 已定案
@@ -78,7 +78,7 @@ Home 的 Activity 分頁列出 **目前帳戶對外地址**在 **目前 cluster*
 
 | 路徑 | 用途 |
 |------|------|
-| `dev-docs/design-demos/home-activity-ux.html` | 同意的畫面 |
+| `dev-docs/design-demos/0.18.0/home-activity-ux.html` | 同意的畫面 |
 | `wallet/src/shared/home-activity.ts` | 種類、明細、Solscan URL |
 | `wallet/src/background/home-activity/` | SW 查詢 |
 | `wallet/src/popup/components/HomeActivityList.tsx` | 列表 |

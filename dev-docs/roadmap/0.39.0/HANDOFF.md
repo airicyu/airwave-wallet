@@ -8,7 +8,7 @@
 2. [docs/how.md](./docs/how.md)
 3. [docs/reasoning.md](./docs/reasoning.md)
 4. [docs/design-review.md](./docs/design-review.md)
-5. 概念稿 [`tx-ai-model-picker-ux.html`](../../design-demos/tx-ai-model-picker-ux.html)
+5. 概念稿 [`tx-ai-model-picker-ux.html`](../../design-demos/0.39.0/tx-ai-model-picker-ux.html)
 
 ## 產品摘要
 

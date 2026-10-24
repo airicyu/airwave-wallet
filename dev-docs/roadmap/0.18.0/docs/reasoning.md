@@ -17,7 +17,7 @@ Home 從 0.3.0 就有 Activity 分頁，但只顯示空狀態。使用者要看�
 
 ## 選定
 
-- 概念稿 [`home-activity-ux.html`](../../../design-demos/home-activity-ux.html)：一列一筆、圖示開新分頁、三個安靜態。
+- 概念稿 [`home-activity-ux.html`](../../../design-demos/0.18.0/home-activity-ux.html)：一列一筆、圖示開新分頁、三個安靜態。
 - Solscan。devnet 用 `?cluster=devnet`。
 - mainnet＋Helius key 才分類互換／送出／收到；其餘一律「交易」加成功或失敗。
 - 20 筆、不翻頁、不進 storage。

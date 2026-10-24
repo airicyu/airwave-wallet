@@ -4,7 +4,7 @@
 - **上游版本：** [0.10.0](../0.10.0/INDEX.md)（pending／custody／差額模擬／鎖定開窗不變；本版改 **未簽**交易可寫入 CU，以及交易費呈現）
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
 - **構想來源：** 原 backlog「簽署交易自訂 Compute Budget」（出貨後已刪檔）；契約以本 INDEX 為準
-- **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)；概念稿 [`dev-docs/design-demos/sign-transaction-cu-budget-ux.html`](../design-demos/sign-transaction-cu-budget-ux.html)（非正式；衝突以本 INDEX／HOW 為準）
+- **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)；概念稿 [`dev-docs/design-demos/0.11.0/sign-transaction-cu-budget-ux.html`](../design-demos/0.11.0/sign-transaction-cu-budget-ux.html)（非正式；衝突以本 INDEX／HOW 為準）
 - **秘密欄位：** 類 B 沿用 0.9.0；本版新欄不是密碼
 
 ## 產品句
@@ -116,4 +116,4 @@
 | `wallet/src/background/index.ts` | `ui.simulatePendingTx`、`finishSignTransaction` 用已寫入 bytes |
 | `wallet/src/shared/commands.ts` | simulate payload 加 cu 欄 |
 | `wallet/src/popout/index.html`／`main.ts`／`style.css` | 交易費卡 |
-| `dev-docs/design-demos/sign-transaction-cu-budget-ux.html` | 非正式視覺 |
+| `dev-docs/design-demos/0.11.0/sign-transaction-cu-budget-ux.html` | 非正式視覺 |

@@ -4,7 +4,7 @@
 - **上游版本：** [0.9.0](../0.9.0/INDEX.md)（pending／custody／Wallet Standard 方法表不變；本版改 `signTransaction` **如何進 pending／如何呈現／如何模擬**）
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
 - **構想來源：** 出貨前為 backlog 簽署交易頁／simulation；已刪獨立檔，契約只留本目錄。
-- **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)；概念稿 [`dev-docs/design-demos/sign-transaction-ux.html`](../design-demos/sign-transaction-ux.html)（非正式；衝突以本 INDEX／HOW 為準）
+- **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)；概念稿 [`dev-docs/design-demos/0.10.0/sign-transaction-ux.html`](../design-demos/0.10.0/sign-transaction-ux.html)（非正式；衝突以本 INDEX／HOW 為準）
 - **秘密欄位：** [`dev-docs/research/secret-field-autofill.md`](../../research/secret-field-autofill.md) 類 B
 
 ## 產品句
@@ -110,4 +110,4 @@ dApp 的 `solana:signTransaction` 打開獨立審批 popout：主舞台是未簽
 | `wallet/src/popout/style.css` | 預期變動／notice／明細；解鎖鈕 `flex: none` |
 | `wallet/src/inject/wallet.ts` | 能力表不新增方法 |
 | `test-web/src/main.ts` | 簽交易測試入口 |
-| `dev-docs/design-demos/sign-transaction-ux.html` | 非正式視覺 |
+| `dev-docs/design-demos/0.10.0/sign-transaction-ux.html` | 非正式視覺 |

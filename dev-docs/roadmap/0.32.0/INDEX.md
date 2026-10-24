@@ -3,7 +3,7 @@
 - **狀態：** `shipped`
 - **上游版本：** [0.31.0](../0.31.0/INDEX.md)。審批模擬沿用 [0.10.0](../0.10.0/INDEX.md)、[0.11.0](../0.11.0/INDEX.md)，但推翻該版 `replaceRecentBlockhash: true`。簽署 AI 的 runtime、tool、Decisions 沿用 [0.30.0](../0.30.0/INDEX.md)；**推翻**該版「右上懸浮 pill」與「站點靠左」
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
-- **構想來源：** 2026-10-11 手測。審批停太久後送出被拒，`err` 為 `BlockhashNotFound`，畫面上的模擬仍成功。畫面概念稿：[`dev-docs/design-demos/tx-ai-row-card-ux.html`](../design-demos/tx-ai-row-card-ux.html)（使用者已看過並同意這個方向）
+- **構想來源：** 2026-10-11 手測。審批停太久後送出被拒，`err` 為 `BlockhashNotFound`，畫面上的模擬仍成功。畫面概念稿：[`dev-docs/design-demos/0.32.0/tx-ai-row-card-ux.html`](../design-demos/0.32.0/tx-ai-row-card-ux.html)（使用者已看過並同意這個方向）
 - **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)。本版畫面句以本 INDEX 為準
 - **秘密欄位：** 無
 
@@ -122,4 +122,4 @@
 | `wallet/src/approval/tx-ai-widget.ts` | 現況是右上懸浮 pill。本版改成標題下的單列卡 |
 | `wallet/src/background/tx-ai/host-tools.ts` | AI `simulate` 仍要換 blockhash |
 | `wallet/src/popout/index.html`、`wallet/src/popup/components/ApprovalHost.tsx` | 簽署殼的帳戶 widget 與站點列 |
-| `dev-docs/design-demos/tx-ai-row-card-ux.html` | 已同意的方向稿，不是契約 |
+| `dev-docs/design-demos/0.32.0/tx-ai-row-card-ux.html` | 已同意的方向稿，不是契約 |

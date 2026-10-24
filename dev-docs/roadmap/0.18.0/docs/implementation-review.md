@@ -7,7 +7,7 @@
 - HOW／WHY／HANDOFF：[`home-activity-how.md`](./home-activity-how.md)、[`reasoning.md`](./reasoning.md)、[`../HANDOFF.md`](../HANDOFF.md)
 - 上游：[`../../0.17.0/INDEX.md`](../../0.17.0/INDEX.md)（本版不改簽核／送出／底欄殼）
 - 架構禁區：[`../../GUIDELINES.md`](../../GUIDELINES.md)
-- 對照範圍：**未提交** working tree（`git status`／`git diff`；含 `dev-docs/roadmap/0.18.0/`、`dev-docs/design-demos/home-activity-ux.html`、Home Activity 程式與相關 roadmap 索引更新）
+- 對照範圍：**未提交** working tree（`git status`／`git diff`；含 `dev-docs/roadmap/0.18.0/`、`dev-docs/design-demos/0.18.0/home-activity-ux.html`、Home Activity 程式與相關 roadmap 索引更新）
 - 現行程式抽樣（磁碟）：`wallet/src/shared/home-activity.ts`、`wallet/src/background/home-activity/`、`wallet/src/background/handlers/wallet-dispatch.ts`、`wallet/src/popup/components/HomeActivityList.tsx`、`wallet/src/popup/PopupMarkup.tsx`、`wallet/src/popup/style.css`、`wallet/src/shared/commands.ts`、`wallet/src/content/index.ts`
 - **總評：** 無未關閉 HIGH。靜態對照 INDEX／HOW 主路徑成立；`typecheck`／`build` 通過。出貨時使用者同意 `shipped`（2026-10-07）；瀏覽器手驗以使用者同意收斂（原 M1）。
 

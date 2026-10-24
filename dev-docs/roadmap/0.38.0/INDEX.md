@@ -4,7 +4,7 @@
 - **上游版本：** [0.37.0](../0.37.0/INDEX.md)；畫面語意接 [0.33.0](../0.33.0/INDEX.md) 預期變動信任欄、[0.4.0](../0.4.0/INDEX.md)／[0.12.0](../0.12.0/INDEX.md) Home 持倉
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
 - **構想來源：** [backlog/token-trust-icon-score.md](../backlog/token-trust-icon-score.md)
-- **畫面：** [`dev-docs/design-principles.md`](../../design-principles.md)。概念稿 [`dev-docs/design-demos/token-trust-score-ux.html`](../../design-demos/token-trust-score-ux.html)（使用者已同意本版方向；衝突以本 INDEX 與 HOW 為準）
+- **畫面：** [`dev-docs/design-principles.md`](../../design-principles.md)。概念稿 [`dev-docs/design-demos/0.38.0/token-trust-score-ux.html`](../../design-demos/0.38.0/token-trust-score-ux.html)（使用者已同意本版方向；衝突以本 INDEX 與 HOW 為準）
 - **秘密欄位：** 無（沿用 Settings `jupiterApiKey`）
 
 ## 產品句
@@ -17,7 +17,7 @@ Home 持倉列與簽署「預期變動」差額列同一閱讀順序：最左一
 2. [docs/how.md](./docs/how.md)
 3. [docs/reasoning.md](./docs/reasoning.md)
 4. [HANDOFF.md](./HANDOFF.md)（設計閘門通過後）
-5. 概念稿 [`token-trust-score-ux.html`](../../design-demos/token-trust-score-ux.html)
+5. 概念稿 [`token-trust-score-ux.html`](../../design-demos/0.38.0/token-trust-score-ux.html)
 6. 上游：[0.33.0](../0.33.0/INDEX.md)、[0.4.0](../0.4.0/INDEX.md)
 
 ## 已定案

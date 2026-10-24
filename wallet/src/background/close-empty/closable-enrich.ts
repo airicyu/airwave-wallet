@@ -10,6 +10,7 @@ import {
   type HomeTokenRow,
 } from "../../shared/home";
 import type { Settings } from "../../shared/protocol";
+import { jupiterApiUrlForCall } from "../../shared/rpc";
 import {
   lookupJupiterMintMetadata,
   type MintDisplayMeta,
@@ -86,7 +87,7 @@ export async function enrichClosableEntries(
 
   const remote = new Map<string, MintDisplayMeta>();
   if (settings.cluster === "mainnet") {
-    const jup = await lookupJupiterMintMetadata([...mintsRemote], settings.jupiterApiKey);
+    const jup = await lookupJupiterMintMetadata([...mintsRemote], settings.jupiterApiKey, jupiterApiUrlForCall(settings));
     for (const [mint, meta] of jup) {
       remote.set(mint, {
         symbol: meta.symbol,

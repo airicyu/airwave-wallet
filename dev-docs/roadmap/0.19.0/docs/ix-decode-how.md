@@ -89,7 +89,7 @@ UI：`decoded === true` 畫 `program`＋`name`＋`fields`，不畫 hex、不畫 
 - 重試：放在 `.sim-tools` 內，有底有框 34px；title「重新查詢」。不要改全域 `.icon-btn` 或頂欄複製。
 - Explorer：僅當有合法 `inspectorUrl`。accent 描邊。title「在 Explorer 模擬」。CU dirty 仍顯示、仍可點上次 URL。
 
-概念稿路徑：`dev-docs/design-demos/sign-transaction-ix-decode-ux.html`。衝突以 INDEX／本 HOW 為準。
+概念稿路徑：`dev-docs/design-demos/0.19.0/sign-transaction-ix-decode-ux.html`。衝突以 INDEX／本 HOW 為準。
 
 交易明細預設仍收合。展開才見解讀。費用付款人縮寫可留在明細底部。
 

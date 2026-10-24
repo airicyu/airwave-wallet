@@ -6,7 +6,7 @@
 - 對照基準：[`../INDEX.md`](../INDEX.md) 已定案＋驗收；上游 [0.12.0](../0.12.0/INDEX.md) 送出契約
 - 架構禁區：[`../../GUIDELINES.md`](../../GUIDELINES.md)
 - 領域用語：[`../../../DOMAIN.md`](../../../DOMAIN.md)（目前錢包、`mainPubkey`）
-- 現行程式抽樣：`wallet/src/popup/components/HomeTokenList.tsx`（`TokenDetailView`／`canSend`）、`wallet/src/background/wallet/commands/send-command.ts`、`wallet/src/background/session/sign-gates.ts`、`wallet/src/shared/accounts.ts`（`resolvePubkey`、`getExposedPublicKey`）；概念稿 [`send-token-combined-ux.html`](../../../design-demos/send-token-combined-ux.html)（DRAFT，非正式）
+- 現行程式抽樣：`wallet/src/popup/components/HomeTokenList.tsx`（`TokenDetailView`／`canSend`）、`wallet/src/background/wallet/commands/send-command.ts`、`wallet/src/background/session/sign-gates.ts`、`wallet/src/shared/accounts.ts`（`resolvePubkey`、`getExposedPublicKey`）；概念稿 [`send-token-combined-ux.html`](../../../design-demos/0.42.0/send-token-combined-ux.html)（DRAFT，非正式）
 - **總評（第 1 輪）：** 產品定案與 0.12.0 復用邊界清楚，無架構禁區衝突，**提案可行**；但 INDEX  alone 對 SW／`signAccountId`／詳情餘額欄位與 0.12.0 HOW 的聚合覆寫仍不足，且缺 HOW／HANDOFF 與完整 Track，**設計閘門尚未通過**（須關閉下列 MEDIUM 後再開實作）。
 
 ---

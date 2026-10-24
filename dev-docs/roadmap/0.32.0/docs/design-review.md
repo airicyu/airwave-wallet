@@ -84,7 +84,7 @@
 | `wallet/src/approval/shell.ts` | `renderSignTransactionBody` 以 `signBody.innerHTML = ""` 重畫 notice、預期變動、交易費、明細。本版要求週期刷新只改預期變動內容區 |
 | `wallet/src/approval/tx-ai-widget.ts` | 右上懸浮 pill。本版改成標題下單列；已定案禁止模擬刷新重掛 |
 | `wallet/src/popout/index.html`、`wallet/src/popup/components/ApprovalHost.tsx` | 同一簽署殼。尚無 widget 下分隔線、尚無站點複製鈕。popup／popout／側欄共用殼，直向順序改一處即可。`signMessage` 走同一殼且沒有 AI，與 HOW 一致 |
-| `dev-docs/design-demos/tx-ai-row-card-ux.html` | 方向稿。INDEX 已寫衝突時以 INDEX 與 HOW 為準 |
+| `dev-docs/design-demos/0.32.0/tx-ai-row-card-ux.html` | 方向稿。INDEX 已寫衝突時以 INDEX 與 HOW 為準 |
 | `dev-docs/design-principles.md` 站點靠左 | 本版 INDEX 寫畫面句以 INDEX 為準，並明文推翻 0.30 站點靠左。不另記 HIGH |
 | backlog durable nonce 提醒 | 本版非目標。不因為沒做提醒而判不可行 |
 

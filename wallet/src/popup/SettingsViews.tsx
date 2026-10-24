@@ -21,6 +21,7 @@ import {
   WalletLockSettingsScreen,
 } from "./settings/SettingsScreens";
 import { TxAiSettingsScreen } from "./settings/TxAiSettingsScreen";
+import { DebugSettingsScreen } from "./settings/DebugSettingsScreen";
 import { usePopupContext } from "./state/PopupContext";
 
 export function SettingsViews(): JSX.Element {
@@ -74,6 +75,12 @@ export function SettingsViews(): JSX.Element {
           {currentView === "settings-wallet-lock" ? (
             <section id="screen-settings-wallet-lock" className="screen">
               <WalletLockSettingsScreen settings={wallet.settings} />
+            </section>
+          ) : null}
+
+          {currentView === "settings-debug" ? (
+            <section id="screen-settings-debug" className="screen">
+              <DebugSettingsScreen settings={wallet.settings} />
             </section>
           ) : null}
 

@@ -8,7 +8,7 @@
 4. [INDEX.md](./INDEX.md) 與其所連 [docs/seed-import-how.md](./docs/seed-import-how.md)、[docs/reasoning.md](./docs/reasoning.md)
 5. 上游摘要：INDEX 已連的 0.1.0 custody、0.2.0 `importAccount`
 6. 畫面：[`dev-docs/design-principles.md`](../design-principles.md)（INDEX 沉默時）
-7. 概念稿 `dev-docs/design-demos/add-account-ux.html` **非正式契約**；與 INDEX／HOW 衝突時以 INDEX／HOW 為準（自訂 path 必須含字面 `{n}`，不得改用僅 `n'` 佔位）
+7. 概念稿 `dev-docs/design-demos/0.6.0/add-account-ux.html` **非正式契約**；與 INDEX／HOW 衝突時以 INDEX／HOW 為準（自訂 path 必須含字面 `{n}`，不得改用僅 `n'` 佔位）
 
 ## 產品摘要
 

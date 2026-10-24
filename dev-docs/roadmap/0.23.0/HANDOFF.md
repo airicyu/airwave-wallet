@@ -6,7 +6,7 @@
 2. [INDEX.md](./INDEX.md)
 3. [docs/how.md](./docs/how.md)
 4. [docs/reasoning.md](./docs/reasoning.md)
-5. 概念稿（非正式）：[`dev-docs/design-demos/i18n-type-ux.html`](../design-demos/i18n-type-ux.html)
+5. 概念稿（非正式）：[`dev-docs/design-demos/0.23.0/i18n-type-ux.html`](../design-demos/0.23.0/i18n-type-ux.html)
 6. 上游：[0.22.0](../0.22.0/INDEX.md)、[0.8.0](../0.8.0/INDEX.md)
 
 ## 產品摘要

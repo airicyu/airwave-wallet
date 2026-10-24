@@ -3,7 +3,7 @@
 - **狀態：** `shipped`
 - **上游版本：** [0.20.0](../0.20.0/INDEX.md)（Solana 客戶端已是 `@solana/kit`；本版才做清空）。持倉濾掉餘額 0 見 [0.7.0](../0.7.0/INDEX.md)。單一可簽送出走 [0.12.0](../0.12.0/INDEX.md)／[0.13.0](../0.13.0/INDEX.md) 的 `walletSend`，**本版不改那條**
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
-- **構想來源：** 原 backlog 構想（出貨已刪檔）；見 [docs/reasoning.md](./docs/reasoning.md)。畫面概念稿 [`dev-docs/design-demos/close-empty-token-accounts-ux.html`](../design-demos/close-empty-token-accounts-ux.html)（非正式；衝突以本 INDEX／HOW 為準）
+- **構想來源：** 原 backlog 構想（出貨已刪檔）；見 [docs/reasoning.md](./docs/reasoning.md)。畫面概念稿 [`dev-docs/design-demos/0.21.0/close-empty-token-accounts-ux.html`](../design-demos/0.21.0/close-empty-token-accounts-ux.html)（非正式；衝突以本 INDEX／HOW 為準）
 - **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)
 - **秘密欄位：** 無新密碼欄；vault blob 不改 schema
 

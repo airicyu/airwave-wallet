@@ -11,7 +11,7 @@ import {
   type HomeActivityRow,
 } from "../../shared/home";
 import { jsonRpcMissing, type Settings } from "../../shared/protocol";
-import { solanaRpcForUrl } from "../../shared/rpc";
+import { jupiterApiUrlForCall, solanaRpcForUrl } from "../../shared/rpc";
 import { resolveHeliusApiTarget, type HeliusApiTarget } from "../../shared/rpc";
 import {
   lookupJupiterMintMetadata,
@@ -49,7 +49,7 @@ async function attachIcons(rows: HomeActivityRow[], settings: Settings): Promise
   }
   if (missing.length > 0 && settings.cluster === "mainnet") {
     try {
-      const jup = await lookupJupiterMintMetadata(missing, settings.jupiterApiKey);
+      const jup = await lookupJupiterMintMetadata(missing, settings.jupiterApiKey, jupiterApiUrlForCall(settings));
       for (const [mint, meta] of jup) {
         const url = meta.iconUrl;
         if (url && url.startsWith("https:") && !icons.has(mint)) icons.set(mint, url);

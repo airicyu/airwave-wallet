@@ -6,7 +6,7 @@
 2. [INDEX.md](./INDEX.md)
 3. [docs/how.md](./docs/how.md)
 4. [docs/reasoning.md](./docs/reasoning.md)
-5. 概念稿（非正式）：[`dev-docs/design-demos/022-ui-polish-ux.html`](../design-demos/022-ui-polish-ux.html)
+5. 概念稿（非正式）：[`dev-docs/design-demos/0.22.0/022-ui-polish-ux.html`](../design-demos/0.22.0/022-ui-polish-ux.html)
 6. 上游：[0.21.0](../0.21.0/INDEX.md)、[0.18.0](../0.18.0/INDEX.md)（Activity）、[0.11.0](../0.11.0/INDEX.md)（CU 公式）
 
 ## 產品摘要

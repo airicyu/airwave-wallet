@@ -142,6 +142,7 @@ async function runPhase2WithFees(
   cuPrice: number | null,
   cuEditable: boolean,
   jupiterApiKey: string,
+  jupiterApiUrl: string,
   cuWriteError?: string,
 ): Promise<SimulatePendingTxResult> {
   try {
@@ -161,7 +162,7 @@ async function runPhase2WithFees(
   }
   const base = await runPhase2Simulation(ctx, txBytes, signer, cluster);
   const withFees = attachFees(base, txBytes, cuLimit, cuPrice, cuEditable, cuWriteError);
-  return enrichSimulateDeltas(withFees, cluster, jupiterApiKey);
+  return enrichSimulateDeltas(withFees, cluster, jupiterApiKey, jupiterApiUrl);
 }
 
 export async function simulateSignTransaction(
@@ -172,6 +173,7 @@ export async function simulateSignTransaction(
   cluster: Cluster,
   defaultCuPrice: number,
   jupiterApiKey: string,
+  jupiterApiUrl: string,
   payload: SimulateSignTxPayload,
 ): Promise<SimulateSignTxOutcome> {
   const seq = acceptSimulateRequest(requestId);
@@ -205,6 +207,7 @@ export async function simulateSignTransaction(
       parsedOriginal.price,
       false,
       jupiterApiKey,
+      jupiterApiUrl,
     );
     return { ok: true, result, seq };
   }
@@ -231,6 +234,7 @@ export async function simulateSignTransaction(
         null,
         true,
         jupiterApiKey,
+      jupiterApiUrl,
         CU_WRITE_FAIL_CODE,
       );
       return { ok: true, result, seq };
@@ -250,6 +254,7 @@ export async function simulateSignTransaction(
       price,
       true,
       jupiterApiKey,
+      jupiterApiUrl,
       cuErr,
     );
     return { ok: true, result, seq };
@@ -269,6 +274,7 @@ export async function simulateSignTransaction(
         null,
         true,
         jupiterApiKey,
+      jupiterApiUrl,
       );
       return { ok: true, result, seq };
     }
@@ -282,6 +288,7 @@ export async function simulateSignTransaction(
       parsed.price,
       true,
       jupiterApiKey,
+      jupiterApiUrl,
     );
     return { ok: true, result, seq };
   }
@@ -304,6 +311,7 @@ export async function simulateSignTransaction(
       feePrice,
       true,
       jupiterApiKey,
+      jupiterApiUrl,
     );
     return { ok: true, result, seq };
   }
@@ -318,6 +326,7 @@ export async function simulateSignTransaction(
       feePrice,
       true,
       jupiterApiKey,
+      jupiterApiUrl,
       CU_WRITE_FAIL_CODE,
     );
     return { ok: true, result, seq };
@@ -357,6 +366,7 @@ export async function simulateSignTransaction(
     displayPrice,
     true,
     jupiterApiKey,
+    jupiterApiUrl,
     cuErr,
   );
   return { ok: true, result, seq };

@@ -78,6 +78,33 @@ export function IconEye({ size = 16 }: { size?: number }): JSX.Element {
   );
 }
 
+export function IconPin({ size = 16 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <path d="M12 22c4-4 6-7.5 6-11a6 6 0 1 0-12 0c0 3.5 2 7 6 11z" />
+      <circle cx="12" cy="11" r="2.5" />
+    </StrokeIcon>
+  );
+}
+
+export function IconFlame({ size = 16 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <path d="M12 3c2 4-2 5-1 9 3-1 6-4 6-8 4 4 4 9 1 12a7 7 0 1 1-12.5-1C8 11 10 8 12 3z" />
+    </StrokeIcon>
+  );
+}
+
+export function IconDownload({ size = 16 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </StrokeIcon>
+  );
+}
+
 export function IconKebab({ size = 18 }: { size?: number }): JSX.Element {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -210,7 +237,7 @@ export function IconRefresh({ size = 18 }: { size?: number }): JSX.Element {
   );
 }
 
-/** Reclaim rent on empty token accounts; matches docs/design-demos/close-empty-token-accounts-ux.html */
+/** Reclaim rent on empty token accounts; matches dev-docs/design-demos/0.21.0/close-empty-token-accounts-ux.html */
 export function IconRecycle({ size = 22 }: { size?: number }): JSX.Element {
   return (
     <svg

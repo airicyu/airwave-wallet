@@ -6,7 +6,7 @@
 - 對照基準：[`../INDEX.md`](../INDEX.md) 已定案＋驗收（狀態現為 `planned`）；[`home-activity-how.md`](./home-activity-how.md)、[`reasoning.md`](./reasoning.md)、[`../HANDOFF.md`](../HANDOFF.md)
 - 上游：[`../../0.17.0/INDEX.md`](../../0.17.0/INDEX.md)（本版不改簽核／送出／底欄殼）；殼語意另見 [`../../0.3.0/docs/popup-shell-how.md`](../../0.3.0/docs/popup-shell-how.md)（底欄只在 Home、返回不記住 Activity）
 - 構想（非本版契約）：[`../../backlog/home-activity.md`](../../backlog/home-activity.md)
-- 畫面：[`../../../design-demos/home-activity-ux.html`](../../../design-demos/home-activity-ux.html)（INDEX 點名；與已定案衝突時以 INDEX／HOW 為準）
+- 畫面：[`../../../design-demos/0.18.0/home-activity-ux.html`](../../../design-demos/0.18.0/home-activity-ux.html)（INDEX 點名；與已定案衝突時以 INDEX／HOW 為準）
 - 架構禁區：[`../../GUIDELINES.md`](../../GUIDELINES.md)
 - 現行程式抽樣：`wallet/src/shared/home-activity.ts`、`wallet/src/background/home-activity/`、`wallet/src/popup/components/HomeActivityList.tsx`、`wallet/src/shared/commands.ts`（現碼未實作本版 ≠ 設計 HIGH；僅標與提案互斥的現行行為）
 - **總評：** 無未關閉 HIGH。初審應修 MEDIUM M1–M6 均已寫進 INDEX／HOW／HANDOFF 並關閉；同意的 MEDIUM 無仍開項。提案仍可行：查詢只在 SW、不進 storage、不進 inject 白名單、金額顯示用 BigInt／UI number 只轉字串、不碰 pending／custody／Wallet Standard 宣告，與架構禁區可調和；待拍板為空。本輪無新增 HIGH／應修 MEDIUM。**設計門檻通過**——規劃可改 INDEX 狀態為 `in progress` 並依 HANDOFF 開工。不是整份不可行。本檔不是已定案。

@@ -1,6 +1,6 @@
 # 0.32.0 — 簽署頁怎麼排
 
-契約在 [INDEX](../INDEX.md)。概念稿 [`dev-docs/design-demos/tx-ai-row-card-ux.html`](../../../design-demos/tx-ai-row-card-ux.html) 只供對位置，句子衝突時以 INDEX 為準。
+契約在 [INDEX](../INDEX.md)。概念稿 [`dev-docs/design-demos/0.32.0/tx-ai-row-card-ux.html`](../../../design-demos/0.32.0/tx-ai-row-card-ux.html) 只供對位置，句子衝突時以 INDEX 為準。
 
 ## 直向順序
 

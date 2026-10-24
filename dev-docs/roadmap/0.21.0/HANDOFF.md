@@ -7,7 +7,7 @@
 3. [docs/close-empty-how.md](./docs/close-empty-how.md)
 4. [docs/reasoning.md](./docs/reasoning.md)
 5. 上游 [0.20.0](../0.20.0/INDEX.md)、[0.11.0](../0.11.0/INDEX.md)（優先費）、[0.5.0](../0.5.0/INDEX.md)（聚合）
-6. 概念稿（非正式）：[`dev-docs/design-demos/close-empty-token-accounts-ux.html`](../design-demos/close-empty-token-accounts-ux.html)
+6. 概念稿（非正式）：[`dev-docs/design-demos/0.21.0/close-empty-token-accounts-ux.html`](../design-demos/0.21.0/close-empty-token-accounts-ux.html)
 
 ## 產品摘要
 

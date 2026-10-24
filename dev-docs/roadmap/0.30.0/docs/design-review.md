@@ -3,7 +3,7 @@
 - 日期：2026-10-11（Asia/Hong_Kong）
 - 輪次：**第 2 輪複審**
 - 角色：設計審查（不改 INDEX／HOW／reasoning／HANDOFF／程式；不以本檔當已定案）
-- 對照基準：[`../INDEX.md`](../INDEX.md) 已定案＋驗收；[`how.md`](./how.md)、[`reasoning.md`](./reasoning.md)、[`../HANDOFF.md`](../HANDOFF.md)；上游 [`../../0.29.0/INDEX.md`](../../0.29.0/INDEX.md)、[`../../0.27.0/INDEX.md`](../../0.27.0/INDEX.md)（key 形狀）；構想檔出貨後已刪（原 `backlog/sign-tx-ai-security-eval.md`、`bubble-harness-runtime.md`、`bubble-harness-handoff.md`）；概念稿（視覺非架構）[`../../../design-demos/tx-ai-analysis-ux.html`](../../../design-demos/tx-ai-analysis-ux.html)
+- 對照基準：[`../INDEX.md`](../INDEX.md) 已定案＋驗收；[`how.md`](./how.md)、[`reasoning.md`](./reasoning.md)、[`../HANDOFF.md`](../HANDOFF.md)；上游 [`../../0.29.0/INDEX.md`](../../0.29.0/INDEX.md)、[`../../0.27.0/INDEX.md`](../../0.27.0/INDEX.md)（key 形狀）；構想檔出貨後已刪（原 `backlog/sign-tx-ai-security-eval.md`、`bubble-harness-runtime.md`、`bubble-harness-handoff.md`）；概念稿（視覺非架構）[`../../../design-demos/0.30.0/tx-ai-analysis-ux.html`](../../../design-demos/0.30.0/tx-ai-analysis-ux.html)
 - 架構禁區：[`../../GUIDELINES.md`](../../GUIDELINES.md)
 - 現行程式抽樣：`wallet/manifest.config.ts`、`wallet/src/shared/storage-keys.ts`、`wallet/src/approval/shell.ts`、`wallet/src/background/pending/*`、`wallet/src/background/index.ts`（擴充頁閘）
 - **總評：** 無未關閉 HIGH；同意的 MEDIUM（M1–M11）均已關閉。提案不可行＝否。**審查門檻通過**，可開工實作產品碼（閘門後規劃宜升格 INDEX「草案／rough」用語並補 HANDOFF 實作 paste-ready——L1／L2，非阻擋）。

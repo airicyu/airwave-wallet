@@ -17,7 +17,7 @@
 - [agent-workflow.md](../../agent-workflow.md) 設計審查角色
 - 上游 [0.46.0 INDEX](../../0.46.0/INDEX.md)：密鑰列，本版非目標，不併入契約
 - 領域用語 [DOMAIN.md](../../../DOMAIN.md)「主錢包」「成員地址」（已指向本版 `memberNames`）
-- 概念稿 [`dev-docs/design-demos/wallet-account-ui.html`](../../../design-demos/wallet-account-ui.html)：只作對照；與 INDEX 衝突時以 INDEX 為準
+- 概念稿 [`dev-docs/design-demos/0.47.0/wallet-account-ui.html`](../../../design-demos/0.47.0/wallet-account-ui.html)：只作對照；與 INDEX 衝突時以 INDEX 為準
 - 本版無 `docs/how.md`、`docs/reasoning.md`、`HANDOFF.md`
 - backlog（`sns-name`、`account-avatar`）是構想，不是本版契約
 

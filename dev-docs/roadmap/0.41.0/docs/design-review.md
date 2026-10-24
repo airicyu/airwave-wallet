@@ -5,7 +5,7 @@
 - 角色：設計審查（不改 INDEX／HOW／reasoning／HANDOFF／程式；不以本檔當已定案）
 - 對照基準：[`../INDEX.md`](../INDEX.md) 已定案＋驗收；[HOW](./how.md)、[reasoning](./reasoning.md)、[HANDOFF](../HANDOFF.md)
 - 架構禁區：[`../../GUIDELINES.md`](../../GUIDELINES.md)
-- 現行程式抽樣：`OnboardingScreens.tsx`、`generate-seed-flow.ts`、`secret-key-accounts.ts`、`keypair-bytes.ts`；概念稿 [`create-wallet-draft-ux.html`](../../../design-demos/create-wallet-draft-ux.html)
+- 現行程式抽樣：`OnboardingScreens.tsx`、`generate-seed-flow.ts`、`secret-key-accounts.ts`、`keypair-bytes.ts`；概念稿 [`create-wallet-draft-ux.html`](../../../design-demos/0.41.0/create-wallet-draft-ux.html)
 - **總評：** 無未關閉 HIGH。提案可行。設計審查門檻通過：第 1 輪同意的 M1–M3 已寫進 INDEX／HOW／驗收手驗句並關閉。本輪新開 M4（HANDOFF paste-ready 缺開工最低要素），標非阻擋，不擋開工。使用者 2026-10-14 書面同意概念稿，不因此開 HIGH。
 
 ## 2026-10-14 — 待審草稿（無 finding ID）

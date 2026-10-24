@@ -5,7 +5,7 @@
 - 角色：實作審查（不改程式、不加功能、不 commit）
 - 對照基準：[`../INDEX.md`](../INDEX.md) 已定案＋驗收；[`how.md`](./how.md)、[`reasoning.md`](./reasoning.md)、[`../HANDOFF.md`](../HANDOFF.md)
 - 架構禁區：[`../../GUIDELINES.md`](../../GUIDELINES.md)
-- 抽樣：`storage-keys.ts`（`effectiveRpcUrl`／`isMainnetRpcReady`／`rpcGuideDismissed`）、`storage-io.ts`、`solana-rpc.ts`、`rpc-ws-url.ts`、`simulate-rpc.ts`、`get-home-tokens-command.ts`、`get-home-activity-command.ts`、`home-activity-service.ts`、`send-command.ts`、`wallet-finish-send.ts`、`close-empty/commands.ts`、`ui-handlers.ts`、`dapp-handlers.ts`、`settings-command.ts`、`SettingsScreens.tsx`、`HomeTokenList.tsx`、`HomeActivityList.tsx`、`MainnetRpcStop.tsx`、`RpcGuideScreen.tsx`、`rpc-guide.ts`、`OnboardingScreens.tsx`、`AccountsScreens.tsx`、`PopupMarkup.tsx`、`helius-api-target.ts`、`ui-messages.ts`、`dev-docs/design-demos/mainnet-rpc-guide.html`
+- 抽樣：`storage-keys.ts`（`effectiveRpcUrl`／`isMainnetRpcReady`／`rpcGuideDismissed`）、`storage-io.ts`、`solana-rpc.ts`、`rpc-ws-url.ts`、`simulate-rpc.ts`、`get-home-tokens-command.ts`、`get-home-activity-command.ts`、`home-activity-service.ts`、`send-command.ts`、`wallet-finish-send.ts`、`close-empty/commands.ts`、`ui-handlers.ts`、`dapp-handlers.ts`、`settings-command.ts`、`SettingsScreens.tsx`、`HomeTokenList.tsx`、`HomeActivityList.tsx`、`MainnetRpcStop.tsx`、`RpcGuideScreen.tsx`、`rpc-guide.ts`、`OnboardingScreens.tsx`、`AccountsScreens.tsx`、`PopupMarkup.tsx`、`helius-api-target.ts`、`ui-messages.ts`、`dev-docs/design-demos/0.29.0/mainnet-rpc-guide.html`
 - **總評：** H1 已於出貨關閉（使用者同意 ship）。`typecheck`／`build` 通過。可出貨。
 
 ## Findings（本輪）
@@ -57,7 +57,7 @@ UI 用 `heliusConfigured`（字串非空）決定是否停住 Activity；SW 用 
 - 手驗：未執行、無日誌／DevTools 網路證據。
 - Track 1 靜態：HOW 對照表與 `isMainnetRpcReady`／`effectiveRpcUrl` 一致；官方字面經 `customRpcForCluster`／`isPublicClusterRpc` 當未設定。命令表：`getHomeTokens`、`getHomeActivity`（無 Helius）、`beginSend`、close-empty 三令、`ui.simulatePendingTx`、`runWalletSendAfterApprove` 空 `rpcUrl` 皆 `MAINNET_RPC_UNSET`。`dapp.signAndSendTransaction` 仍 `presentDappApproval`；核准後不廣播、結果 `sendBridgeResult` 僅發起 tab／frame。`dapp.signTransaction` 仍只簽。
 - Track 2 靜態：Mainnet `RpcClusterCard` `rows` 不含 `PUBLIC_RPC_BY_CLUSTER.mainnet`；刪列 `active: ""` 不回填官方 URL。網路列／RPC hub 未就緒用 `settings.rpc.mainnetUnset`。Devnet 保留內建列。
-- Track 3 靜態：概念稿 `dev-docs/design-demos/mainnet-rpc-guide.html` 存在。`rpcGuideDismissed` 預設 false、`normalizeSettings` 缺欄當 false、`schemaGeneration` 仍 1。catalog 三語非空。Home 停住不改 dismissed。
+- Track 3 靜態：概念稿 `dev-docs/design-demos/0.29.0/mainnet-rpc-guide.html` 存在。`rpcGuideDismissed` 預設 false、`normalizeSettings` 缺欄當 false、`schemaGeneration` 仍 1。catalog 三語非空。Home 停住不改 dismissed。
 - 非目標：Activity `before`／`hasMore`／enhanced 組 URL 仍 0.28.0 形狀；Helius 不當 JSON-RPC（`helius-api-target.ts` 註解＋`fetchEnhanced` REST）。未改 `../solibra-wallet`。
 - 架構禁區抽樣：pending 仍 SW；`rpcGuideDismissed` 走 `chrome.storage`＋`patchSettings`；未新宣告 Wallet Standard；未硬編碼密碼。
 - 工作樹另有非本版檔（例如 `test-web/sign-risk*`）；不納入 0.29.0 通過條件。

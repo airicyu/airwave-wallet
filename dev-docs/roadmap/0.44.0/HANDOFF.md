@@ -8,7 +8,7 @@
 2. [docs/how.md](./docs/how.md)
 3. [docs/reasoning.md](./docs/reasoning.md)
 4. [docs/design-review.md](./docs/design-review.md)
-5. 概念稿 [`tx-ai-model-chain-ux.html`](../../design-demos/tx-ai-model-chain-ux.html)（已同意）
+5. 概念稿 [`tx-ai-model-chain-ux.html`](../../design-demos/0.44.0/tx-ai-model-chain-ux.html)（已同意）
 6. 上游：[0.39.0](../0.39.0/INDEX.md)、[0.30.0](../0.30.0/INDEX.md)、[0.34.0](../0.34.0/INDEX.md)
 
 ## 產品摘要

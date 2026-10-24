@@ -10,6 +10,7 @@ import type {
   SignTransactionPayload,
 } from "../../shared/protocol";
 import { jsonRpcMissing } from "../../shared/protocol";
+import { jupiterApiUrlForCall } from "../../shared/rpc";
 import { getExposedPublicKey } from "../../shared/accounts";
 import { finishConnect, finishSignMessage, finishSignTransaction } from "../pending";
 import { getPending, unbindPopoutByRequest } from "../pending";
@@ -295,6 +296,7 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
       settings.cluster,
       settings.defaultCuPrice,
       settings.jupiterApiKey,
+      jupiterApiUrlForCall(settings),
       { cuLimit: payload.cuLimit, cuPrice: payload.cuPrice },
     );
     if (!sim.ok) {

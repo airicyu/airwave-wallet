@@ -357,6 +357,16 @@ const messages = {
     "zh-Hans": "钱包锁定设置",
     "en": "Wallet lock settings",
   },
+  "settings.hub.debug": {
+    "zh-Hant": "Debug mode 設定",
+    "zh-Hans": "Debug mode 设置",
+    "en": "Debug mode settings",
+  },
+  "settings.debug.enable": {
+    "zh-Hant": "Debug mode",
+    "zh-Hans": "Debug mode",
+    "en": "Debug mode",
+  },
   "settings.hub.walletLockPassword": {
     "zh-Hant": "錢包鎖定密碼",
     "zh-Hans": "钱包锁定密码",
@@ -402,6 +412,11 @@ const messages = {
     "zh-Hant": "AI 設定",
     "zh-Hans": "AI 设置",
     "en": "AI settings",
+  },
+  "nav.settingsDebug": {
+    "zh-Hant": "Debug mode 設定",
+    "zh-Hans": "Debug mode 设置",
+    "en": "Debug mode settings",
   },
   /* settings */
   "settings.txAiAnalysis.enable": {
@@ -664,9 +679,9 @@ const messages = {
     "en": "You must set your own Mainnet RPC before you can load balances or send.",
   },
   "rpcGuide.heliusLink": {
-    "zh-Hant": "向 Helius 免費申請 API key",
-    "zh-Hans": "向 Helius 免费申请 API key",
-    "en": "Get a free API key from Helius",
+    "zh-Hant": "向 Helius 申請 RPC endpoint",
+    "zh-Hans": "向 Helius 申请 RPC endpoint",
+    "en": "Request an RPC endpoint from Helius",
   },
   "rpcGuide.setRpc": {
     "zh-Hant": "設定 RPC",
@@ -1205,6 +1220,31 @@ const messages = {
     "zh-Hant": "建立聚合錢包帳戶",
     "zh-Hans": "建立聚合钱包账户",
     "en": "Create Combined",
+  },
+  "onboarding.chooser.seed": {
+    "zh-Hant": "產生新的 12 詞助記詞",
+    "zh-Hans": "产生新的 12 词助记词",
+    "en": "Create a new 12-word seed phrase",
+  },
+  "onboarding.chooser.burner": {
+    "zh-Hant": "本機暫用，不長期保管",
+    "zh-Hans": "本机暂用，不长期保管",
+    "en": "Temporary on this device",
+  },
+  "onboarding.chooser.import": {
+    "zh-Hant": "助記詞或密鑰",
+    "zh-Hans": "助记词或密钥",
+    "en": "Seed phrase or secret key",
+  },
+  "onboarding.chooser.watch": {
+    "zh-Hant": "只讀地址，無法簽名",
+    "zh-Hans": "只读地址，无法签名",
+    "en": "Read-only address, cannot sign",
+  },
+  "onboarding.chooser.combined": {
+    "zh-Hant": "合併多帳戶資產視圖",
+    "zh-Hans": "合并多账户资产视图",
+    "en": "One view of several accounts",
   },
   "onboarding.seedPhrase": {
     "zh-Hant": "助記詞",

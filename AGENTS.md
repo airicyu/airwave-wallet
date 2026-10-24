@@ -105,7 +105,7 @@ More changes while a version is in progress go into that version's INDEX and und
 | [docs/README.md](docs/README.md) | User doc map |
 | [dev-docs/code-design-principles.md](dev-docs/code-design-principles.md) | How to split files and group folders |
 | [dev-docs/ui-design-principles.md](dev-docs/ui-design-principles.md) | Popup and approval screens |
-| [dev-docs/design-demos/](dev-docs/design-demos/) | HTML concept demos |
+| [dev-docs/design-demos/](dev-docs/design-demos/) | HTML concept demos, one folder per version |
 | [dev-docs/roadmap/README.md](dev-docs/roadmap/README.md) | Roadmap entry |
 | [dev-docs/DOMAIN.md](dev-docs/DOMAIN.md) | Domain terms (accounts, addresses, combined) |
 | [dev-docs/roadmap/GUIDELINES.md](dev-docs/roadmap/GUIDELINES.md) | How to write a self-sufficient version contract |

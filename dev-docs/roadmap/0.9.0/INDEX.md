@@ -3,7 +3,7 @@
 - **狀態：** `shipped`
 - **上游版本：** [0.8.0](../0.8.0/INDEX.md)（custody、pending 生命週期、Wallet Standard 方法表不變；本版改 `signMessage` **如何進 pending／如何呈現**）
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
-- **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)；概念稿 [`dev-docs/design-demos/sign-message-ux.html`](../design-demos/sign-message-ux.html)（非正式；衝突以本 INDEX／HOW 為準）
+- **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)；概念稿 [`dev-docs/design-demos/0.9.0/sign-message-ux.html`](../design-demos/0.9.0/sign-message-ux.html)（非正式；衝突以本 INDEX／HOW 為準）
 - **秘密欄位：** [`dev-docs/research/secret-field-autofill.md`](../../research/secret-field-autofill.md) 類 B
 
 ## 產品句
@@ -119,4 +119,4 @@ dApp 的 `solana:signMessage` 打開獨立審批 popout：使用者看得到站�
 | `wallet/src/popup/style.css` | 解鎖屏＋全域文字欄 `:focus` |
 | `wallet/src/popup/main.ts` | 類 B harden（popout 應對齊） |
 | `test-web/src/main.ts` | 簽訊息測試入口 |
-| `dev-docs/design-demos/sign-message-ux.html` | 非正式視覺 |
+| `dev-docs/design-demos/0.9.0/sign-message-ux.html` | 非正式視覺 |

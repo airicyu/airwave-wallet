@@ -21,7 +21,7 @@ Mainnet 沒有自訂 JSON-RPC 就不打官方公用節點；Home 停住去設定
 ## Paste-ready starter prompt
 
 ```text
-只認檔案，不認 chat history。先讀 AGENTS.md、dev-docs/roadmap/GUIDELINES.md、dev-docs/roadmap/0.29.0/HANDOFF.md、INDEX.md、docs/how.md、docs/reasoning.md。狀態改 in progress 後依 Track 1→3。Track 3 先寫 dev-docs/design-demos/mainnet-rpc-guide.html。Mainnet 未就緒 effectiveRpcUrl 為空，禁止 solanaRpcForUrl 空字串與 fetch 官方節點。rpcGuideDismissed 主按鈕與略過都寫 true。signAndSend 仍開審批、核准後不廣播、MAINNET_RPC_UNSET 只回發起 tab。Helius API 不當 JSON-RPC。不要改 0.28.0 Activity 翻頁。不要 commit。
+只認檔案，不認 chat history。先讀 AGENTS.md、dev-docs/roadmap/GUIDELINES.md、dev-docs/roadmap/0.29.0/HANDOFF.md、INDEX.md、docs/how.md、docs/reasoning.md。狀態改 in progress 後依 Track 1→3。Track 3 先寫 dev-docs/design-demos/0.29.0/mainnet-rpc-guide.html。Mainnet 未就緒 effectiveRpcUrl 為空，禁止 solanaRpcForUrl 空字串與 fetch 官方節點。rpcGuideDismissed 主按鈕與略過都寫 true。signAndSend 仍開審批、核准後不廣播、MAINNET_RPC_UNSET 只回發起 tab。Helius API 不當 JSON-RPC。不要改 0.28.0 Activity 翻頁。不要 commit。
 ```
 
 ## 完成檢查

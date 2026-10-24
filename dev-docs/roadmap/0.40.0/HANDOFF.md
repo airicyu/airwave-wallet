@@ -7,7 +7,7 @@
 1. [INDEX.md](./INDEX.md)
 2. [docs/how.md](./docs/how.md)
 3. [docs/design-review.md](./docs/design-review.md)
-4. [`connect-consent-ux.html`](../../design-demos/connect-consent-ux.html)
+4. [`connect-consent-ux.html`](../../design-demos/0.40.0/connect-consent-ux.html)
 
 ## 產品摘要
 

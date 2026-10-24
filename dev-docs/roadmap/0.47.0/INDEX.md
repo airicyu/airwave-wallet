@@ -3,7 +3,7 @@
 - **狀態：** `shipped`
 - **上游版本：** [0.46.0](../0.46.0/INDEX.md)。聚合列仍是 [0.5.0](../0.5.0/INDEX.md) 的 `subPubkeys`／`mainPubkey`。地址簿儲存沿用 [0.43.0](../0.43.0/INDEX.md)。0.46.0 的密鑰列不在本版
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
-- **構想來源：** 規劃對話（2026-10-17）與概念稿 [`dev-docs/design-demos/wallet-account-ui.html`](../../design-demos/wallet-account-ui.html)
+- **構想來源：** 規劃對話（2026-10-17）與概念稿 [`dev-docs/design-demos/0.47.0/wallet-account-ui.html`](../../design-demos/0.47.0/wallet-account-ui.html)
 - **畫面：** 概念稿三格（帳戶列表、聚合管理、地址簿）。衝突時以本 INDEX 為準。用語見 [`dev-docs/DOMAIN.md`](../../DOMAIN.md) 的主錢包、成員地址
 
 ## 產品句
@@ -13,7 +13,7 @@
 ## 文件地圖
 
 1. 本檔
-2. 概念稿：[`dev-docs/design-demos/wallet-account-ui.html`](../../design-demos/wallet-account-ui.html)
+2. 概念稿：[`dev-docs/design-demos/0.47.0/wallet-account-ui.html`](../../design-demos/0.47.0/wallet-account-ui.html)
 
 ## 已定案
 
@@ -72,7 +72,7 @@
 | `wallet/src/popup/accounts/AccountsScreens.tsx` | 帳戶列表與 `CombinedManagePanel` |
 | `wallet/src/popup/address-cards/AddressCardsScreens.tsx` | 地址簿列與改名 |
 | `wallet/src/shared/ui-messages.ts` | 主錢包文案 |
-| `dev-docs/design-demos/wallet-account-ui.html` | 三頁概念稿 |
+| `dev-docs/design-demos/0.47.0/wallet-account-ui.html` | 三頁概念稿 |
 | `dev-docs/DOMAIN.md` | 主錢包、成員地址 |
 
 ## 開工前仍須拍板

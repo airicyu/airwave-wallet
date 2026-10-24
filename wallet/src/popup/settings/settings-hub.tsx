@@ -55,6 +55,14 @@ export function SettingsHub({ settings }: { settings: PublicSettings }): JSX.Ele
           <span className="hub-label">{t("settings.hub.walletLock")}</span>
         </button>
       </li>
+      <li>
+        <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-debug")}>
+          <span className="hub-label">{t("settings.hub.debug")}</span>
+          <span className="hub-summary" id="hub-summary-debug">
+            {settings.debugModeEnabled ? t("settings.txAiAnalysis.enable") : t("settings.txAiAnalysis.off")}
+          </span>
+        </button>
+      </li>
     </ul>
   );
 }

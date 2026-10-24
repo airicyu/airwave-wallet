@@ -34,7 +34,7 @@ export function rpcFingerprint(settings: PublicSettings): string {
 }
 
 export function settingsFingerprint(settings: PublicSettings): string {
-  return `${settings.cluster}|${rpcFingerprint(settings)}|${settings.heliusConfigured}|${settings.jupiterConfigured}|${settings.openRouterConfigured}|${settings.openRouterReportModelMode}|${settings.openRouterReportModelChain.join("\u001f")}|${settings.openRouterDecisionsModelMode}|${settings.openRouterDecisionsModelChain.join("\u001f")}|${settings.txAiAnalysisEnabled}|${settings.defaultCuPrice}`;
+  return `${settings.cluster}|${rpcFingerprint(settings)}|${settings.heliusConfigured}|${settings.jupiterConfigured}|${settings.openRouterConfigured}|${settings.openRouterReportModelMode}|${settings.openRouterReportModelChain.join("\u001f")}|${settings.openRouterDecisionsModelMode}|${settings.openRouterDecisionsModelChain.join("\u001f")}|${settings.txAiAnalysisEnabled}|${settings.defaultCuPrice}|${settings.debugModeEnabled}|${settings.jupiterApiUrl}|${settings.openRouterApiUrl}`;
 }
 
 export function cloneRpcByCluster(

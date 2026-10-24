@@ -2,6 +2,7 @@
  * Loads and caches home token balances for popup display, then asks Jupiter for mint metadata.
  * Does not sign transfers or manage vault encryption.
  */
+import { jupiterApiUrlForCall } from "../../shared/rpc";
 import { applyJupiterTokensV2, sleep } from "./jupiter-mint-meta";
 import { mergeMultiOwnerRows } from "./home-token-rows";
 export { lookupJupiterMintMetadata, type MintDisplayMeta } from "./jupiter-mint-meta";
@@ -101,7 +102,7 @@ function scheduleBackgroundRefresh(
 export function homeTokensCacheFingerprint(owners: string[], settings: Settings): string {
   const ownersJoin = owners.join("\u001f");
   const rpc = `${settings.rpcByCluster.devnet.active}:${settings.rpcByCluster.devnet.urls.join(",")}|${settings.rpcByCluster.mainnet.active}:${settings.rpcByCluster.mainnet.urls.join(",")}`;
-  return `${ownersJoin}|${settings.cluster}|${rpc}|${settings.rpcUrl}|${settings.jupiterApiKey}`;
+  return `${ownersJoin}|${settings.cluster}|${rpc}|${settings.rpcUrl}|${settings.jupiterApiKey}|${settings.debugModeEnabled}|${settings.jupiterApiUrl}`;
 }
 
 async function fetchSingleOwnerRowsWithParsed(
@@ -181,7 +182,7 @@ async function runRefresh(
 
     if (settings.cluster === "mainnet") {
       try {
-        const jup = await applyJupiterTokensV2(rows, settings.jupiterApiKey, signal);
+        const jup = await applyJupiterTokensV2(rows, settings.jupiterApiKey, jupiterApiUrlForCall(settings), signal);
         rows = sortHomeTokenRows(jup.rows);
         if (jup.error) {
           memoryCache = { fingerprint, rows, fetchedAt: Date.now() };

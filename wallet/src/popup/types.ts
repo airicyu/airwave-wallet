@@ -64,6 +64,7 @@ export type View =
   | "settings-tx-ai"
   | "settings-cu-price"
   | "settings-wallet-lock"
+  | "settings-debug"
   | "settings-password"
   | "about"
   | "about-disclaimer"
@@ -100,6 +101,7 @@ export const SUBPAGE_TITLE_KEYS: Record<Exclude<View, "home-token" | "home-activ
   "settings-tx-ai": "nav.settingsTxAi",
   "settings-cu-price": "nav.settingsCuPrice",
   "settings-wallet-lock": "nav.settingsWalletLock",
+  "settings-debug": "nav.settingsDebug",
   "settings-password": "nav.settingsWalletLockPassword",
   about: "nav.about",
   "about-disclaimer": "nav.aboutDisclaimer",

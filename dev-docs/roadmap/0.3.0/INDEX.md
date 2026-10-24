@@ -3,8 +3,8 @@
 - **狀態：** `shipped`
 - **上游版本：** [0.2.0](../0.2.0/INDEX.md)（`shipped`）
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
-- **Backlog：** 已出貨；原型見 [`dev-docs/design-demos/wallet-030-ui-concepts.html`](../design-demos/wallet-030-ui-concepts.html)
-- **視覺原型：** [`dev-docs/design-demos/wallet-030-ui-concepts.html`](../design-demos/wallet-030-ui-concepts.html)（方案 A；原型可含 mock USD／假私鑰，**產品碼禁止 mock 餘額與假密鑰當真**）
+- **Backlog：** 已出貨；原型見 [`dev-docs/design-demos/0.3.0/wallet-030-ui-concepts.html`](../design-demos/0.3.0/wallet-030-ui-concepts.html)
+- **視覺原型：** [`dev-docs/design-demos/0.3.0/wallet-030-ui-concepts.html`](../design-demos/0.3.0/wallet-030-ui-concepts.html)（方案 A；原型可含 mock USD／假私鑰，**產品碼禁止 mock 餘額與假密鑰當真**）
 - **後續：** [0.4.0](../0.4.0/INDEX.md) 資料源；[0.5.0](../0.5.0/INDEX.md) combined（本版**不做**）
 
 ## 產品句

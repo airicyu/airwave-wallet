@@ -4,7 +4,7 @@
 - **上游版本：** [0.32.0](../0.32.0/INDEX.md)。預期變動卡殼、每 3 秒只刷新內容區、交易費脫離模擬，均維持 0.32.0
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
 - **構想來源：** 2026-10-12 簽署審批手測（Jupiter swap 差額列只顯示 mint 縮寫）；使用者已定案「最左信任欄永遠佔位」與 anti-spoof 規則
-- **畫面：** [`dev-docs/design-principles.md`](../../design-principles.md)。概念稿 [`dev-docs/design-demos/sign-tx-token-trust-ux.html`](../../design-demos/sign-tx-token-trust-ux.html)（使用者已同意方向；衝突時以本 INDEX 與 HOW 為準）
+- **畫面：** [`dev-docs/design-principles.md`](../../design-principles.md)。概念稿 [`dev-docs/design-demos/0.33.0/sign-tx-token-trust-ux.html`](../../design-demos/0.33.0/sign-tx-token-trust-ux.html)（使用者已同意方向；衝突時以本 INDEX 與 HOW 為準）
 - **秘密欄位：** 無（仍用 Settings 既有 `jupiterApiKey`；`getState` 不回明文）
 
 ## 產品句
@@ -112,4 +112,4 @@
 | `wallet/src/approval/sign-tx-body.ts` | `paintDeltaInner`、`deltaDisplayFingerprint` |
 | `wallet/src/popup/style.css` | `.delta-row` 等 |
 | `wallet/src/shared/ui-messages.ts` | `token.verified`、新增 `token.notVerified` |
-| `dev-docs/design-demos/sign-tx-token-trust-ux.html` | 已同意方向稿 |
+| `dev-docs/design-demos/0.33.0/sign-tx-token-trust-ux.html` | 已同意方向稿 |

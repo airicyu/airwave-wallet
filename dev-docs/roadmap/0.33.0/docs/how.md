@@ -1,6 +1,6 @@
 # 0.33.0 — 預期變動列與 Jupiter enrichment
 
-契約在 [INDEX](../INDEX.md)。概念稿 [`dev-docs/design-demos/sign-tx-token-trust-ux.html`](../../../design-demos/sign-tx-token-trust-ux.html) 只供對位置。
+契約在 [INDEX](../INDEX.md)。概念稿 [`dev-docs/design-demos/0.33.0/sign-tx-token-trust-ux.html`](../../../design-demos/0.33.0/sign-tx-token-trust-ux.html) 只供對位置。
 
 ## `SimulateTxDelta` 形狀（SW → UI）
 

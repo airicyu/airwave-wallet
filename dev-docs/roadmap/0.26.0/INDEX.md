@@ -4,7 +4,7 @@
 - **上游版本：** 行為接 [0.6.0](../0.6.0/INDEX.md) 助記詞匯入；殼與目錄接 [0.25.0](../0.25.0/INDEX.md)（本版不改側欄）
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
 - **構想來源：** 匯入方案預覽失效；Combined 展開難點；[unlock-password-autofocus](../backlog/unlock-password-autofocus.md)、[account-kind-visual](../backlog/account-kind-visual.md)、[account-card-drag-order](../backlog/account-card-drag-order.md)、[storage-migration](../backlog/storage-migration.md)（排程前草稿；衝突以本檔為準）
-- **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)。視覺：[combined-token-expand-ux.html](../design-demos/combined-token-expand-ux.html)、[account-kind-visual-ux.html](../design-demos/account-kind-visual-ux.html)、[account-card-drag-ux.html](../design-demos/account-card-drag-ux.html)
+- **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)。視覺：[combined-token-expand-ux.html](../design-demos/0.26.0/combined-token-expand-ux.html)、[account-kind-visual-ux.html](../design-demos/0.26.0/account-kind-visual-ux.html)、[account-card-drag-ux.html](../design-demos/0.26.0/account-card-drag-ux.html)
 - **秘密欄位：** 無。助記詞生命週期仍只活在 popup 流程記憶體與該次 SW payload，禁止寫 storage／log
 
 ## 產品句
@@ -129,7 +129,7 @@
 | `wallet/src/background/wallet/commands/account/seed-accounts.ts` | SW preview／import（本版不改語意） |
 | `wallet/src/popup/components/HomeTokenList.tsx` | Combined 展開列 |
 | `wallet/src/popup/style.css` | 持倉卡／成員面板 |
-| `dev-docs/design-demos/combined-token-expand-ux.html` | 展開視覺概念稿 |
+| `dev-docs/design-demos/0.26.0/combined-token-expand-ux.html` | 展開視覺概念稿 |
 | `wallet/src/flow/UnlockForm.tsx`、`OnboardingScreens.tsx` `LockedScreen`、`approval/shell.ts` | 解鎖聚焦 |
 | `wallet/src/popup/components/WalletWidget.tsx` | 頂欄類型圖 |
 | `wallet/src/popup/accounts/AccountsScreens.tsx` | 列表圖示與拖曳 |

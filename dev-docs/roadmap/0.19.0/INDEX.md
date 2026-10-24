@@ -3,7 +3,7 @@
 - **狀態：** `shipped`
 - **上游版本：** [0.18.0](../0.18.0/INDEX.md)。本版只改簽署交易審批的**交易明細解讀**與預期變動列的 **Explorer Inspector 連結**。不改差額模擬公式、CU 寫入、批准／廣播、Home Activity
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
-- **構想來源：** [backlog/sign-transaction-ix-decode.md](../backlog/sign-transaction-ix-decode.md) 的**靜態層**。Anchor IDL **不**在本版（仍留 backlog）。畫面以使用者同意的 [`dev-docs/design-demos/sign-transaction-ix-decode-ux.html`](../design-demos/sign-transaction-ix-decode-ux.html) 為準（含強調過的重試／Explorer 鈕）；欄位名單與 URL 以本檔為準
+- **構想來源：** [backlog/sign-transaction-ix-decode.md](../backlog/sign-transaction-ix-decode.md) 的**靜態層**。Anchor IDL **不**在本版（仍留 backlog）。畫面以使用者同意的 [`dev-docs/design-demos/0.19.0/sign-transaction-ix-decode-ux.html`](../design-demos/0.19.0/sign-transaction-ix-decode-ux.html) 為準（含強調過的重試／Explorer 鈕）；欄位名單與 URL 以本檔為準
 - **畫面：** [`dev-docs/design-principles.md`](../design-principles.md)；本版預期變動列兩顆工具鈕依概念稿做成有底有框，不把頂欄複製鈕一併加重
 - **秘密欄位：** 無新密碼欄
 
@@ -16,7 +16,7 @@
 1. 本檔
 2. [docs/ix-decode-how.md](./docs/ix-decode-how.md)
 3. [docs/reasoning.md](./docs/reasoning.md)
-4. 概念稿 [`dev-docs/design-demos/sign-transaction-ix-decode-ux.html`](../design-demos/sign-transaction-ix-decode-ux.html)
+4. 概念稿 [`dev-docs/design-demos/0.19.0/sign-transaction-ix-decode-ux.html`](../design-demos/0.19.0/sign-transaction-ix-decode-ux.html)
 5. 上游：[0.11.0 INDEX／HOW](../0.11.0/INDEX.md)（明細 hex、CU）、[0.10.0 HOW](../0.10.0/docs/sign-transaction-how.md)（模擬差額）、[0.17.0 INDEX](../0.17.0/INDEX.md)（`signAndSendTransaction` 共用殼）
 6. [HANDOFF.md](./HANDOFF.md)
 
@@ -103,7 +103,7 @@
 
 | 路徑 | 用途 |
 |------|------|
-| `dev-docs/design-demos/sign-transaction-ix-decode-ux.html` | 同意的畫面 |
+| `dev-docs/design-demos/0.19.0/sign-transaction-ix-decode-ux.html` | 同意的畫面 |
 | `wallet/src/shared/simulate-pending-tx-types.ts` | `instructions`／`inspectorUrl` |
 | `wallet/src/background/simulate/simulate-pending-tx.ts` | `buildInstructions`、現有 desc |
 | `wallet/src/approval/shell.ts` | 預期變動列、交易明細 |

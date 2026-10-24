@@ -6,7 +6,7 @@
 2. [INDEX.md](./INDEX.md)
 3. [docs/home-activity-how.md](./docs/home-activity-how.md)
 4. [docs/reasoning.md](./docs/reasoning.md)
-5. 概念稿 [home-activity-ux.html](../design-demos/home-activity-ux.html)（畫面參考；符號／文案以 INDEX 已定案為準）
+5. 概念稿 [home-activity-ux.html](../design-demos/0.18.0/home-activity-ux.html)（畫面參考；符號／文案以 INDEX 已定案為準）
 
 ## 產品摘要
 
@@ -23,7 +23,7 @@ Activity 列出目前對外地址最近 20 筆交易。mainnet 有 Helius key �
 ## Paste-ready starter prompt
 
 ```text
-只認檔案，不認 chat history。先讀 AGENTS.md、dev-docs/roadmap/GUIDELINES.md、dev-docs/design-principles.md、dev-docs/roadmap/0.18.0/HANDOFF.md、INDEX.md、docs/home-activity-how.md、docs/reasoning.md、dev-docs/design-demos/home-activity-ux.html。跟 Track 1→2。禁非目標（見 INDEX）。INDEX 已定案不要再問；沉默才提問；沉默時仍遵守 GUIDELINES 架構禁區。Home Activity：getExposedPublicKey、最多 20 筆、不進 storage。mainnet 且 Helius key 才打 api.helius.xyz enhanced transactions（token-accounts=balanceChanged）；Helius 失敗回 unavailable，禁止退回簽名粗列；否則 getSignaturesForAddress。公鑰無法解析→unavailable。SWAP→互換，TRANSFER 單向→送出或收到，其餘→交易。畫面忽略過期回應。列尾 32px 圖示 chrome.tabs.create 開 Solscan，devnet 加 cluster=devnet。載入中／尚無交易／活動暫時無法載入。符號只認 SOL／USDC／USDT。不加套件。不要改 ../solibra-wallet。不要 commit。
+只認檔案，不認 chat history。先讀 AGENTS.md、dev-docs/roadmap/GUIDELINES.md、dev-docs/design-principles.md、dev-docs/roadmap/0.18.0/HANDOFF.md、INDEX.md、docs/home-activity-how.md、docs/reasoning.md、dev-docs/design-demos/0.18.0/home-activity-ux.html。跟 Track 1→2。禁非目標（見 INDEX）。INDEX 已定案不要再問；沉默才提問；沉默時仍遵守 GUIDELINES 架構禁區。Home Activity：getExposedPublicKey、最多 20 筆、不進 storage。mainnet 且 Helius key 才打 api.helius.xyz enhanced transactions（token-accounts=balanceChanged）；Helius 失敗回 unavailable，禁止退回簽名粗列；否則 getSignaturesForAddress。公鑰無法解析→unavailable。SWAP→互換，TRANSFER 單向→送出或收到，其餘→交易。畫面忽略過期回應。列尾 32px 圖示 chrome.tabs.create 開 Solscan，devnet 加 cluster=devnet。載入中／尚無交易／活動暫時無法載入。符號只認 SOL／USDC／USDT。不加套件。不要改 ../solibra-wallet。不要 commit。
 ```
 
 ## 完成檢查

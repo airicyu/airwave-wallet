@@ -4,7 +4,7 @@
 - **上游版本：** [0.7.0](../0.7.0/INDEX.md)（持倉／settings 欄位語意不變）
 - **Changelog：** 出貨時寫入 [`changelog.md`](../../../changelog.md)
 - **Backlog：** 變更錢包密碼；出貨後已自 `dev-docs/roadmap/backlog/` 刪列與檔
-- **畫面：** [`dev-docs/design-principles.md`](../design-principles.md) 第 8 節；概念稿 [`dev-docs/design-demos/settings-hub-ux.html`](../design-demos/settings-hub-ux.html)、[`dev-docs/design-demos/change-wallet-password-ux.html`](../design-demos/change-wallet-password-ux.html)（非正式契約；衝突以本 INDEX／HOW 為準）
+- **畫面：** [`dev-docs/design-principles.md`](../design-principles.md) 第 8 節；概念稿 [`dev-docs/design-demos/0.8.0/settings-hub-ux.html`](../design-demos/0.8.0/settings-hub-ux.html)、[`dev-docs/design-demos/0.8.0/change-wallet-password-ux.html`](../design-demos/0.8.0/change-wallet-password-ux.html)（非正式契約；衝突以本 INDEX／HOW 為準）
 - **秘密欄位：** [`dev-docs/research/secret-field-autofill.md`](../../research/secret-field-autofill.md) 類 B／C（作法摘要；本版已定案覆寫衝突處）
 
 ## 產品句

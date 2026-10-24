@@ -8,7 +8,7 @@
 2. [docs/popup-shell-how.md](./docs/popup-shell-how.md)
 3. [docs/reasoning.md](./docs/reasoning.md)
 4. 上游：[0.2.0 accounts-home-how](../0.2.0/docs/accounts-home-how.md)、[0.2.0 disconnect-how](../0.2.0/docs/disconnect-how.md)
-5. 原型（僅視覺）：`dev-docs/design-demos/wallet-030-ui-concepts.html` 方案 A
+5. 原型（僅視覺）：`dev-docs/design-demos/0.3.0/wallet-030-ui-concepts.html` 方案 A
 6. 有則讀 [docs/design-review.md](./docs/design-review.md)（不以審查檔當契約）
 
 ## 產品摘要

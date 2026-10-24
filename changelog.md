@@ -2,6 +2,10 @@
 
 ## Next
 
+## 0.52.0 — 2026-10-25
+
+The add-account screen lists the same five destinations as an icon, a title, and one subtitle. Popup and sidebar share that list. The import sub-chooser stays title plus chevron. The first-run RPC guide link says to request an RPC endpoint from Helius, without calling it a free API key. Settings ends with Debug mode settings, off by default. While it is on, that page shows Jupiter API URL and OpenRouter base URL; those overrides are ignored when debug is off, and empty values still use the built-in origins.
+
 ## 0.51.0 — 2026-10-21
 
 Create combined uses the same main-wallet card and member sheet as manage. Members are added from the plus button (paste one or many addresses, or pick a local account). The circle sets the draft main wallet, the grip reorders, and trash can remove the last member. The optional name field stays. Create still sends `wallet.createCombinedAccount` and does not write member names. The draft clears when leaving the create flow. `wallet/src/approval/shell/cu.ts` and `wallet/src/shared/tx/simulate-pending-tx-types.ts` gain an English responsibility header only.

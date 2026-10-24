@@ -10,7 +10,7 @@
 4. [docs/design-review.md](./docs/design-review.md)
 5. 上游 [0.27.0](../0.27.0/INDEX.md) key 形狀；[0.29.0](../0.29.0/INDEX.md) Mainnet RPC
 6. POC：`test-web/sign-risk-*.ts`（參考；tool 表以 HOW 為準）
-7. 視覺：Settings · AI [`tx-ai-analysis-ux.html`](../design-demos/tx-ai-analysis-ux.html)；審批帳戶／站點 [`approval-account-chrome-ux.html`](../design-demos/approval-account-chrome-ux.html)；AI 卡＋overlay [`tx-ai-chip-report-ux.html`](../design-demos/tx-ai-chip-report-ux.html)（已同意）
+7. 視覺：Settings · AI [`tx-ai-analysis-ux.html`](../design-demos/0.30.0/tx-ai-analysis-ux.html)；審批帳戶／站點 [`approval-account-chrome-ux.html`](../design-demos/0.30.0/approval-account-chrome-ux.html)；AI 卡＋overlay [`tx-ai-chip-report-ux.html`](../design-demos/0.30.0/tx-ai-chip-report-ux.html)（已同意）
 
 ## 產品摘要
 
@@ -39,7 +39,7 @@ Settings 開 AI＋OpenRouter → 三種 kind enqueue 後 SW 自動 assess 一次
 ```text
 讀 dev-docs/roadmap/0.30.0/INDEX.md、docs/how.md、HANDOFF.md、AGENTS.md、dev-docs/roadmap/GUIDELINES.md。
 實作 0.30.0 Track 1 — Settings／storage：openRouterApiKey、openRouterModel、openRouterDecisionsModel、txAiAnalysisEnabled、openRouterConfigured；toPublicSettings omit key；readIntegrationSecrets 加 key；設定 UI（秘密列 UX＝Helius／Jupiter；模型兩下拉；開關預設 off）；三語 catalog。
-對照 dev-docs/design-demos/tx-ai-analysis-ux.html Settings · AI。
+對照 dev-docs/design-demos/0.30.0/tx-ai-analysis-ux.html Settings · AI。
 不要做 Track 2–4；不要 commit 除非使用者要求。
 INDEX 狀態改 in progress。驗收：typecheck；getState 無明文 key。
 ```

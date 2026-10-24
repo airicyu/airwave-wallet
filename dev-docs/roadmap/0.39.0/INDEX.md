@@ -4,7 +4,7 @@
 - **上游版本：** [0.38.0](../0.38.0/INDEX.md)
 - **Changelog：** [`changelog.md`](../../../changelog.md)（0.39.0）
 - **構想來源：** 原 backlog「側欄關閉拒絕待簽」「AI 設定模型可選其他」（出貨已清）
-- **畫面：** [`dev-docs/design-principles.md`](../../design-principles.md)。AI 設定概念稿 [`tx-ai-model-picker-ux.html`](../../design-demos/tx-ai-model-picker-ux.html)（使用者已同意方向；衝突以本 INDEX／HOW 為準）
+- **畫面：** [`dev-docs/design-principles.md`](../../design-principles.md)。AI 設定概念稿 [`tx-ai-model-picker-ux.html`](../../design-demos/0.39.0/tx-ai-model-picker-ux.html)（使用者已同意方向；衝突以本 INDEX／HOW 為準）
 - **秘密欄位：** 無（沿用 Settings OpenRouter key）
 
 ## 產品句
@@ -17,7 +17,7 @@
 2. [docs/how.md](./docs/how.md)
 3. [docs/reasoning.md](./docs/reasoning.md)
 4. [HANDOFF.md](./HANDOFF.md)（設計閘門通過後補 paste-ready）
-5. 概念稿 [`tx-ai-model-picker-ux.html`](../../design-demos/tx-ai-model-picker-ux.html)
+5. 概念稿 [`tx-ai-model-picker-ux.html`](../../design-demos/0.39.0/tx-ai-model-picker-ux.html)
 6. 上游：[0.25.0](../0.25.0/INDEX.md)（側欄殼）、[0.30.0](../0.30.0/INDEX.md)／[0.34.0](../0.34.0/INDEX.md)（交易 AI）
 
 ## 已定案
@@ -114,4 +114,4 @@
 | `wallet/src/background/tx-ai/bridge.ts`、`openrouter.ts` | 送模型 id |
 | `wallet/src/shared/ui-messages.ts` | 三語 |
 | `wallet/src/popup/style.css` | select caret（若與 keys 同檔） |
-| `dev-docs/design-demos/tx-ai-model-picker-ux.html` | 概念對照 |
+| `dev-docs/design-demos/0.39.0/tx-ai-model-picker-ux.html` | 概念對照 |

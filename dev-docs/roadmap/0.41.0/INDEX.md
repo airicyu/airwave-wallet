@@ -4,7 +4,7 @@
 - **上游版本：** [0.40.0](../0.40.0/INDEX.md)
 - **Changelog：** [`changelog.md`](../../../changelog.md)（0.41.0，出貨時寫入）
 - **構想來源：** [create-mnemonic-wallet.md](../backlog/create-mnemonic-wallet.md)、[create-burner-wallet.md](../backlog/create-burner-wallet.md)
-- **概念稿：** [`create-wallet-draft-ux.html`](../../design-demos/create-wallet-draft-ux.html)（使用者已於 2026-10-14 同意；此後才改 `wallet/`）
+- **概念稿：** [`create-wallet-draft-ux.html`](../../design-demos/0.41.0/create-wallet-draft-ux.html)（使用者已於 2026-10-14 同意；此後才改 `wallet/`）
 - **畫面：** [`dev-docs/design-principles.md`](../../design-principles.md)
 
 ## 產品句
@@ -64,13 +64,13 @@ Add account 的 **助記詞錢包**與**拋棄式錢包**改為「先入庫前 p
 
 ## 開工前仍須拍板
 
-（無。使用者已於 2026-10-14 同意 [`create-wallet-draft-ux.html`](../../design-demos/create-wallet-draft-ux.html)。）
+（無。使用者已於 2026-10-14 同意 [`create-wallet-draft-ux.html`](../../design-demos/0.41.0/create-wallet-draft-ux.html)。）
 
 ## 實作軌道
 
 ### Track 1 — 概念稿對齊（設計閘門）
 
-**做：** 使用者審 [`create-wallet-draft-ux.html`](../../design-demos/create-wallet-draft-ux.html)；必要時修 demo／INDEX。
+**做：** 使用者審 [`create-wallet-draft-ux.html`](../../design-demos/0.41.0/create-wallet-draft-ux.html)；必要時修 demo／INDEX。
 
 **驗收：** 使用者書面同意 demo 方向。（2026-10-14 已同意。）
 

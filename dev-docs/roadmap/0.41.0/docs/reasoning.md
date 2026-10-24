@@ -22,4 +22,4 @@
 
 ## 設計閘門
 
-實作前以 [`create-wallet-draft-ux.html`](../../design-demos/create-wallet-draft-ux.html) 對齊版面；同意後才改產品 CSS。
+實作前以 [`create-wallet-draft-ux.html`](../../design-demos/0.41.0/create-wallet-draft-ux.html) 對齊版面；同意後才改產品 CSS。

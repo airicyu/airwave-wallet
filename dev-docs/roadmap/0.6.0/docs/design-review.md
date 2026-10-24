@@ -7,7 +7,7 @@
 - 上游（行為仍有效、非本版契約全文）：[`../../0.5.0/INDEX.md`](../../0.5.0/INDEX.md)；[`../../0.1.0/docs/storage-custody-how.md`](../../0.1.0/docs/storage-custody-how.md)、[`../../0.2.0/docs/accounts-home-how.md`](../../0.2.0/docs/accounts-home-how.md)
 - 相關 backlog：本版 INDEX **未**掛 backlog 列。`dev-docs/roadmap/backlog/` 現存項**僅構想**，不得當 0.6.0 契約。
 - 架構禁區：[`../../GUIDELINES.md`](../../GUIDELINES.md)
-- 畫面（INDEX 沉默才補）：[`../../../design-principles.md`](../../../design-principles.md)；概念稿 [`../../../design-demos/add-account-ux.html`](../../../design-demos/add-account-ux.html) **非正式契約**
+- 畫面（INDEX 沉默才補）：[`../../../design-principles.md`](../../../design-principles.md)；概念稿 [`../../../design-demos/0.6.0/add-account-ux.html`](../../../design-demos/0.6.0/add-account-ux.html) **非正式契約**
 - 現行程式抽樣：`wallet/src/shared/commands.ts`、`wallet/src/shared/seed-derive.ts`、`wallet/src/background/index.ts`、`wallet/src/popup/`（現碼已有切片 ≠ 設計通過；現碼未對齊 ≠ 設計 HIGH）
 - **總評：** 無未關閉 HIGH。M1–M8 已同意並寫進 INDEX／HOW（HANDOFF 不互斥）。僅 L2／L3 仍開且標非阻擋。**本輪設計門檻通過。** 主路徑可行，與 pending／custody／storage 禁區無互斥。本檔不是已定案。
 
