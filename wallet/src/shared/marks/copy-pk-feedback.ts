@@ -1,3 +1,6 @@
+/**
+ * This file copies a public key from a button and swaps that button to a check mark for a short time. The icon markup lives here so approval and popup buttons share one feedback.
+ */
 import { t, type UiLocale } from "../i18n";
 
 const COPY_OK_MS = 1600;

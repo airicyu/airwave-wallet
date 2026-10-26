@@ -1,3 +1,6 @@
+/**
+ * This file turns a connect origin into the host label and the single-letter mark shown on the connect screen. It does not render the page.
+ */
 export function connectHostLabel(origin: string): string {
   try {
     const host = new URL(origin).hostname;

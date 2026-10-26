@@ -18,21 +18,24 @@ A file does one thing a reader can name in a sentence. The neighboring step (the
 
 For `.ts` files under `wallet/src`:
 
-- **Under 50 lines** (total lines, including blanks): a file header is optional.
-- **50 lines or more:** the top of the file must have an English block comment of what the file is responsible for, at most **100 words**.
-- If you edit a file that is already 50 lines or more and has no header (including an import-only edit), add the header in the same change.
-- Usually one or two sentences: what this file does, and the neighboring step it does not do.
+- Every `.ts` file has an English block comment at the top of what the file is responsible for. Length does not make the header optional.
+- If you edit a file that has no header (including an import-only edit), add the header in the same change.
+
+Write **complete sentences** a person can read aloud. Length follows the file, not a sentence quota. A thin module is one or two sentences. A boundary file (a command, a service, a protocol adapter, the password box) may be a short paragraph: why the file exists, what it owns, and which neighboring step does the rest. Do not pad a thin file into a paragraph. Do not write a spec, a method catalog, or a changelog. At most **150 words**. If you need more, the file is doing two jobs: split it.
+
+Do not use headline fragments, colon lists, or "X vs Y" as the whole comment.
+
 - If the comment needs a second different responsibility, split the file. Do not lengthen the comment.
 - Do not paper over a second responsibility with `related logic`, `etc.`, or `and so on`.
-- `index.ts` says it re-exports this folder's public surface (it may name subfolders).
+- `index.ts` says, in the same prose, that it re-exports this folder's public surface (it may name subfolders).
 - A pure data table only says which table it is.
 
 ## 3. When to split
 
-Count total lines, including blanks.
+Count **code lines** only: physical lines that have code. **Blank lines do not count.** Comment lines do not count: a full-line `//` comment, and every line of a `/* */` block (including the file header). A line that mixes code and an end-of-line `//` comment still counts as one code line. The same count is the 150-line command rule and the 400-line split rule. The file header in section 2 is required at any length.
 
-- If one change touches a `.ts`, `.tsx`, or `.css` file over **400** lines, review whether to split it. New files from that split stay under 400 lines.
-- Command files under `background/wallet/`: under **150** lines stay one file. At 150 lines or more, move the group into that command's folder and keep functions that change together in the same module. The 150-line rule does not recurse. A module inside the folder may exceed 150 lines if the comment is still one responsibility and the file stays under 400 lines.
+- If one change touches a `.ts`, `.tsx`, or `.css` file over **400** code lines, review whether to split it. New files from that split stay under 400 code lines.
+- Command files under `background/wallet/`: under **150** code lines stay one file. At 150 code lines or more, move the group into that command's folder and keep functions that change together in the same module. The 150-line rule does not recurse. A module inside the folder may exceed 150 code lines if the comment is still one responsibility and the file stays under 400 code lines.
 - A split does not change behavior, exported names, CSS class names, commands, or storage keys unless the INDEX says so.
 - Do not split a large file in the same change that moves it to another folder. A path change and a responsibility change are different diffs.
 

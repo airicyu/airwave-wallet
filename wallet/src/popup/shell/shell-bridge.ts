@@ -1,3 +1,6 @@
+/**
+ * This file keeps the last normal browser window id in the popup. It loads the id from the service worker, refreshes it when the wallet window is focused, and accepts the push message when the id changes. It does not create or focus that window.
+ */
 import { sendExtensionRequest } from "../../shared/protocol";
 import { SHELL_LAST_NORMAL_WINDOW_MSG } from "../../shared/shell";
 

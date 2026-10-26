@@ -1,3 +1,6 @@
+/**
+ * This file posts wallet-send progress and settled notices to extension pages through runtime messages. It also supplies the pending-timeout handlers that report a settled send. It does not sign or submit the transaction.
+ */
 import type { WalletSendProgressNotice, WalletSendSettledNotice } from "../../shared/protocol";
 import { sendBridgeResult } from "../messaging";
 import type { TimeoutHandlers } from "../pending";

@@ -1,3 +1,6 @@
+/**
+ * This file lists the signing owners whose empty token accounts a close-empty scan should consider. For a combined account it walks the member keys and keeps signing members. It does not scan the chain.
+ */
 import {
   getExposedPublicKey,
   isCombinedAccount,

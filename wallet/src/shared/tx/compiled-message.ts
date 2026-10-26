@@ -1,3 +1,6 @@
+/**
+ * This file reads a compiled transaction message into a flat list of instructions, with program index, account indexes, and data. Versioned and legacy messages both come out in that shape. It does not decode from wire bytes.
+ */
 import type { CompiledTransactionMessage } from "@solana/kit";
 
 export type NormalizedCompiledIx = {

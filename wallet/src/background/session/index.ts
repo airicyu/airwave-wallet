@@ -1,3 +1,6 @@
+/**
+ * This file re-exports the public surface of the session folder: unlock state, vault persist, the vault write queue, sign gates, account ids, and the active account lookup.
+ */
 export * from "./session";
 export * from "./vault-persist";
 export * from "./vault-write-queue";

@@ -1,3 +1,6 @@
+/**
+ * This file holds the message types that cross the page, the content script, and the extension: inject requests, content replies, bridge results, account changes, and disconnect. It does not send them.
+ */
 export type AirwaveInjectOut = {
   source: "airwave-inject";
   requestId: string;

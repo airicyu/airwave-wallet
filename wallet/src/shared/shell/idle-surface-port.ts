@@ -1,3 +1,6 @@
+/**
+ * This file holds open the idle-lock port from a wallet shell document so the service worker knows a surface is still open. If the port drops while the page is visible, it connects again. It does not decide the lock timeout.
+ */
 import { IDLE_SURFACE_PORT } from "./shell-constants";
 
 let pageUnloading = false;

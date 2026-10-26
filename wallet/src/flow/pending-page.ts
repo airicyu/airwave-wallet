@@ -1,3 +1,6 @@
+/**
+ * This file maps a pending kind to the flow page that should show it. Connect, sign-message, and the two transaction sign kinds have pages. Other kinds do not.
+ */
 import type { PendingKind } from "../shared/protocol";
 import type { FlowPageId } from "./types";
 

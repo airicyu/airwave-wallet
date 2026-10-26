@@ -1,3 +1,6 @@
+/**
+ * This file turns a raw error into a short message for the UI. Rate-limit text maps to the rate-limit copy. A known error code uses the catalog. Other text is returned as given.
+ */
 import { messageForErrorCode, t, type UiLocale } from "./ui-i18n";
 import type { MessageKey } from "./ui-messages";
 

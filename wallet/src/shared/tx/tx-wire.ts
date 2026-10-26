@@ -1,3 +1,6 @@
+/**
+ * This file decodes and encodes a Solana transaction on the wire, strips signature slots for read-only checks, and applies a partial sign with a keypair signer. Callers pass the signer. This file does not load the vault.
+ */
 import {
   getTransactionDecoder,
   getTransactionEncoder,

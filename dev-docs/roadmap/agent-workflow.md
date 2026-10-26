@@ -38,7 +38,7 @@ draft  (INDEX, reasoning, how)
 
 `/version-delivery` runs the design review itself. It does not spawn a sub-agent for that gate.
 
-The source-file smell reminder is the list in the root `AGENTS.md` under "Cutting a version". Count total lines, including blanks, under `wallet/src`. Tell the user, in Traditional Chinese, each path and count for: a `.ts`, `.tsx`, or `.css` file over 400 lines; a command file directly under `background/wallet/` at 150 lines or more that is not already inside that command's folder; a `.ts` file of 50 lines or more with no English responsibility header.
+The source-file smell reminder is the list in the root `AGENTS.md` under "Cutting a version". Count code lines only under `wallet/src` (blanks and full-line comments do not count), as [`code-design-principles.md`](../code-design-principles.md) defines. Tell the user, in Traditional Chinese, each path and count for: a `.ts`, `.tsx`, or `.css` file over 400 code lines; a command file directly under `background/wallet/` at 150 code lines or more that is not already inside that command's folder; a `.ts` file with no English responsibility header.
 
 ---
 

@@ -1,3 +1,6 @@
+/**
+ * This file keeps per-request wallet-send state in the service worker: the last valid block height and the signature once broadcast has started. Finish and abort read it. It is not written to chrome.storage.
+ */
 export type WalletSendRuntimeState = {
   lastValidBlockHeight?: number;
   broadcastSig?: string;

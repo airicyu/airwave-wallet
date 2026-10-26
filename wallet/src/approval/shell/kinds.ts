@@ -1,3 +1,6 @@
+/**
+ * This file classifies a pending approval by kind. It decides which kinds are transaction signatures, which kinds broadcast after approve, and which account record belongs to the signer. The shell renders from that classification; this file does not draw the screen.
+ */
 import type { PendingRecord } from "../../shared/protocol";
 import type { AccountMeta } from "../../shared/protocol";
 

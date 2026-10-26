@@ -1,3 +1,6 @@
+/**
+ * This file checks an account label against the length limit. Optional labels may be omitted. A required label must be non-empty and within the limit. It does not store the label.
+ */
 export const ACCOUNT_LABEL_MAX = 15;
 
 export function parseOptionalAccountLabel(

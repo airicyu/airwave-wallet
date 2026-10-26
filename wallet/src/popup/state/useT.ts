@@ -1,3 +1,6 @@
+/**
+ * This file is the popup hook that translates a message key with the locale stored on the wallet settings. The catalog and the t function live in shared i18n.
+ */
 import { useCallback } from "react";
 import { t, type UiLocale } from "../../shared/i18n";
 import type { MessageKey } from "../../shared/i18n";

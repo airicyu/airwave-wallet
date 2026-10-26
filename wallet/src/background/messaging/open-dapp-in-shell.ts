@@ -1,3 +1,6 @@
+/**
+ * This file tells an already open side panel to show a dApp approval. It retries the runtime message a few times while the panel document starts listening. It does not call sidePanel.open.
+ */
 import { DAPP_APPROVAL_IN_SHELL_MSG } from "../../shared/protocol";
 
 /** Notify the live side panel to push the website Page. Does not call sidePanel.open. */

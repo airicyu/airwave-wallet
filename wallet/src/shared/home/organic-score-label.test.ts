@@ -1,3 +1,6 @@
+/**
+ * This file tests formatOrganicScoreLabel. Non-positive and non-finite scores are omitted, and a finite score is rounded and capped.
+ */
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { formatOrganicScoreLabel } from "./organic-score-label.ts";

@@ -1,3 +1,6 @@
+/**
+ * This file keeps a short-lived cache of closable token accounts for one active account, cluster, and RPC URL. The close-empty list reads it so a repeat open does not scan again within the minute. The scan itself lives in the closable scan module.
+ */
 import type { ClosableEntry } from "../../shared/close-empty";
 
 const TTL_MS = 60_000;

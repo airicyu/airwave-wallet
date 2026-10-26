@@ -1,3 +1,6 @@
+/**
+ * This file sends one typed extension request to the service worker and returns that call's response. The command names and payloads live in the command types.
+ */
 import type { ExtensionRequest, ExtensionResponse } from "./commands";
 
 export function sendExtensionRequest(

@@ -1,3 +1,6 @@
+/**
+ * This file tests resolveDappSignChain. It checks that a missing chain follows the selected cluster, a matching chain is kept, and a mismatched chain is rejected.
+ */
 import assert from "node:assert/strict";
 import test from "node:test";
 import { resolveDappSignChain } from "./dapp-sign-chain.ts";

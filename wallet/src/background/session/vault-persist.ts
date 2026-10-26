@@ -1,3 +1,6 @@
+/**
+ * This file encrypts the unlocked vault from the current session and writes the blob. It refuses to write when the session salt no longer matches the stored blob, and locks instead. The write queue serializes this with other vault writes.
+ */
 import { encryptVaultWithKey } from "../../shared/vault";
 import { readVaultBlob, writeVaultBlob } from "../storage";
 import * as session from "./session";

@@ -1,3 +1,6 @@
+/**
+ * This file handles the get-home-tokens command. It checks that an RPC URL is set, resolves the owners for the active account, and returns the token rows from the home-tokens service. Fetching balances and Jupiter metadata stays in that service.
+ */
 import type { ExtensionRequest, ExtensionResponse } from "../../shared/protocol";
 import { getHomeTokenOwners, isCombinedAccount } from "../../shared/accounts";
 import { respond } from "../messaging";

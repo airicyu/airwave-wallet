@@ -1,3 +1,6 @@
+/**
+ * This file holds the types for the approval shell: the host, the close and wallet-send callbacks, and the DOM refs the React root owns. The shell runtime wires those refs. This file does not look up nodes or render.
+ */
 import type { UiHost } from "../../shared/protocol";
 
 export type ApprovalShellCallbacks = {

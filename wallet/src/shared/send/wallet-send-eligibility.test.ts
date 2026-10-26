@@ -1,3 +1,6 @@
+/**
+ * This file tests which active accounts may start a wallet send, and which home row supplies the balance for that send.
+ */
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { HomeTokenRow } from "../home";

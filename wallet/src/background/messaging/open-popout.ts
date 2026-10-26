@@ -1,3 +1,6 @@
+/**
+ * This file opens the approval popout window for one pending request and binds that window id to the request. The pending module owns the bind. This file does not render the approval.
+ */
 import { bindPopoutWindow } from "../pending";
 
 export async function openPopout(requestId: string): Promise<void> {

@@ -1,3 +1,6 @@
+/**
+ * This file holds the shell page paths, the port names, and the message name the wallet shell and the service worker share. It also says whether a URL is the approval popout, which is not treated as a wallet window.
+ */
 export const WALLET_PAGE_PATH = "src/popup/index.html";
 export const SIDEPANEL_PAGE_PATH = "src/sidepanel/index.html";
 /** dApp approval only; not the wallet shell. Do not recover or focus this as a wallet window. */

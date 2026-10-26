@@ -1,3 +1,6 @@
+/**
+ * This file formats a public key and an avatar letter for popup lists, and says whether a view is one of the home tabs. Account display names come from the shared account helpers, which this file re-exports.
+ */
 import type { View } from "../types";
 
 export { avatarPrefix, displayAccountName } from "../../shared/accounts";

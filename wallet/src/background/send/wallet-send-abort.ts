@@ -1,3 +1,6 @@
+/**
+ * This file ends a wallet-send pending when the user leaves or rejects. It clears the timeout, the in-memory send state, and the popout bind. If a signature was already broadcast, it reports that the send may have landed. It does not broadcast.
+ */
 import { cancelPendingTimeout } from "../pending";
 import { clearWalletSendState, getWalletSendState } from "./wallet-send-state";
 import { getPending, takePending, unbindPopoutByRequest } from "../pending";

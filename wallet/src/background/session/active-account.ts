@@ -1,3 +1,6 @@
+/**
+ * This file reads the active account id from storage and returns that account record. Callers that need the current account use this instead of repeating the lookup.
+ */
 import type { AccountMeta } from "../../shared/protocol";
 import { readAccounts, readActiveAccountId } from "../storage";
 

@@ -1,3 +1,6 @@
+/**
+ * This file polls getSignatureStatuses until a close-empty signature reaches the requested commitment, or the wait times out. It is the HTTP fallback after the WebSocket confirmation path fails. It does not send the transaction.
+ */
 import type { Signature } from "@solana/keys";
 import type { Commitment } from "@solana/rpc-types";
 import { solanaRpcForUrl } from "../../shared/rpc";

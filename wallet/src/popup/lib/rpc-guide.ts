@@ -1,3 +1,6 @@
+/**
+ * This file decides when the first-account RPC guide should show, and which view to open after an account is created. It does not render the guide.
+ */
 import { isMainnetRpcReady } from "../../shared/protocol";
 import type { State, View } from "../types";
 

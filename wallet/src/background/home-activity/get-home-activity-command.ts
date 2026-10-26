@@ -1,3 +1,6 @@
+/**
+ * This file handles the get-home-activity command. It reads the active account and settings, then asks the activity service for one page. The service chooses Helius or the signature fallback. This file only shapes the extension response.
+ */
 import type { ExtensionRequest, ExtensionResponse } from "../../shared/protocol";
 import { getExposedPublicKey } from "../../shared/accounts";
 import { respond } from "../messaging";

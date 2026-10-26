@@ -1,3 +1,6 @@
+/**
+ * This file creates a random UUID for a close-empty plan id. It uses crypto.randomUUID when the runtime has it, and otherwise fills a version-4 layout from getRandomValues.
+ */
 export function randomUUID(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();

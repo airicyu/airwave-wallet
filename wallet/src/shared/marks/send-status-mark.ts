@@ -1,3 +1,6 @@
+/**
+ * This file holds the SVG markup for the send-status spinner. The confirming screen inserts it. This file does not choose the status text.
+ */
 export const SEND_STATUS_AURORA_SVG = `<svg class="send-aurora" viewBox="0 0 24 24" fill="none" aria-hidden="true">
   <circle class="send-aurora-purple" cx="12" cy="12" r="9.5" opacity="0.18" stroke-width="3" />
   <circle class="send-aurora-purple" cx="12" cy="12" r="9.5" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 150">

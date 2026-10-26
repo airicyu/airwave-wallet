@@ -1,3 +1,6 @@
+/**
+ * This file caches parsed token accounts for one owner and RPC fingerprint for a short time. The home token fetch reuses the list instead of calling getTokenAccountsByOwner again. It does not parse accounts or call RPC.
+ */
 import type { ParsedOwnerTokenAccount } from "../../shared/home";
 
 const TTL_MS = 45_000;

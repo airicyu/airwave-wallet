@@ -1,3 +1,6 @@
+/**
+ * This file declares the Vite module shapes the extension imports: a script as a URL, markdown as raw text, and a PNG as an inline string.
+ */
 /// <reference types="vite/client" />
 
 declare module "*?script&module" {

@@ -1,3 +1,6 @@
+/**
+ * This file stores one close-empty plan in the service worker memory, including the unsigned transactions and the fee snapshot the user already saw. Commit reads that plan. It does not build the transactions or talk to RPC.
+ */
 import type { CloseEmptyFeeBreakdown } from "../../shared/close-empty";
 
 import type { TokenProgramKind } from "../../shared/home";

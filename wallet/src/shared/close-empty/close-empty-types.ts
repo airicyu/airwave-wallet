@@ -1,3 +1,6 @@
+/**
+ * This file holds the close-empty data types shared by the service worker and the popup: one closable account, the fee breakdown, and the planned transactions. It does not build or send them.
+ */
 import type { TokenProgramKind } from "../home";
 
 export type ClosableEntry = {

@@ -63,7 +63,7 @@ disable-model-invocation: true
 
 讀 `INDEX.md` 與連結 docs，以及 `dev-docs/roadmap/GUIDELINES.md` 的架構禁區。對照 GUIDELINES 自足檢查。
 
-這一版若尚未 `in progress`（剛開版或第一次跑本技能）：同一輪、實作之前，用繁中書面語提醒使用者 `wallet/src` 裡不符合 [`dev-docs/code-design-principles.md`](../../../dev-docs/code-design-principles.md) 的檔案。總行數含空白。三類都要列，有路徑與行數：超過 400 行的 `.ts`／`.tsx`／`.css`；直接放在 `background/wallet/` 下、尚未進該命令資料夾、且達到 150 行的命令檔；50 行以上卻沒有英文責任標頭的 `.ts`。這份清單不擋開版，也不自行把拆檔寫進 INDEX。使用者沒說要修，就只提醒。
+這一版若尚未 `in progress`（剛開版或第一次跑本技能）：同一輪、實作之前，用繁中書面語提醒使用者 `wallet/src` 裡不符合 [`dev-docs/code-design-principles.md`](../../../dev-docs/code-design-principles.md) 的檔案。只算程式碼行（空白與整行註解不算），定義以該文件為準。三類都要列，有路徑與程式碼行數：超過 400 行的 `.ts`／`.tsx`／`.css`；直接放在 `background/wallet/` 下、尚未進該命令資料夾、且達到 150 行的命令檔；沒有英文責任標頭的 `.ts`（不論長短）。這份清單不擋開版，也不自行把拆檔寫進 INDEX。使用者沒說要修，就只提醒。
 
 若 **開工前仍須拍板** 非空（且不是已標成非目標）：**停止**。告訴使用者先拍板，勿開審查迴圈當拍板。
 
