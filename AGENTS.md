@@ -6,7 +6,7 @@ Feature ideas: [`dev-docs/roadmap/backlog/INDEX.md`](dev-docs/roadmap/backlog/IN
 
 **Replies to the user are Traditional Chinese written prose.** Proper names, paths, APIs, and file names stay in English.
 
-**Documents default to 繁體中文書面語** unless the user says otherwise, or a spec already requires another language. Shipped version docs at or before 0.47.0 stay as they were written. Domain entries keep their Chinese term names.
+**Documents default to 繁體中文書面語** unless the user says otherwise, or a spec already requires another language. Shipped version docs at or before 0.53.0 stay as they were written. Domain entries keep their Chinese term names.
 
 ---
 

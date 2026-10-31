@@ -43,12 +43,12 @@ If any answer depends on "we said so in chat," it is not written yet.
 
 ## 2. Language
 
-**Reply to the user in Traditional Chinese.** **Docs default to English**, unless the user or a spec says otherwise.
+**Reply to the user in Traditional Chinese.** **Docs default to 繁體中文書面語**, unless the user or a spec says otherwise.
 
-- `INDEX.md`, `reasoning.md`, `how.md`, `HANDOFF.md`, and other roadmap prose: **English**.
+- `INDEX.md`, `reasoning.md`, `how.md`, `HANDOFF.md`, and other roadmap prose: **繁體中文書面語**.
 - Identifiers, paths, commands, JSON keys, enums: **English**.
-- **Versions at or before 0.47.0** keep their original wording. Do not rewrite them for this rule.
-- Domain term **names** stay Chinese. See [DOMAIN.md](../DOMAIN.md).
+- **Versions at or before 0.53.0** keep their original wording. Do not rewrite them for this rule.
+- Domain term **names** stay 繁體中文書面語. See [DOMAIN.md](../DOMAIN.md).
 - UI strings live in the message catalog (`ui-messages` and locale files). Traditional Chinese, Simplified Chinese, and English are three catalogs. Do not hard-code a single language into the contract.
 
 ---
