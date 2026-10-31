@@ -33,7 +33,7 @@ The order is fixed:
 
 1. **Choose a language** (繁體中文 / 简体中文 / English).
 2. **Set a wallet password** (at least 8 characters). This only locks the local vault. It is not an on-chain password. If you forget it, you cannot decrypt existing accounts.
-3. **Mainnet RPC guide** (if Mainnet is not ready): Mainnet requires your own JSON-RPC. The wallet will not fall back to the public official endpoint. You can skip and use Devnet first; after skip, Home on Mainnet stays blocked until you set Settings → RPC.
+3. **Mainnet RPC guide** (if Mainnet is not ready): a new install starts on Mainnet. Mainnet requires your own JSON-RPC. The wallet will not fall back to the public official endpoint. You can skip the guide; Home on Mainnet stays blocked until you set Settings → RPC. Devnet is in the Network menu and uses the public endpoint.
 4. **Create or import an account**: generate a 12-word wallet, import a seed (standard or CLI / Ledger), or add a watch-only address. Signing needs a signing account and an unlocked session.
 
 The seed phrase is shown once. Write it down offline. Do not screenshot it into cloud storage.

@@ -15,6 +15,7 @@ import {
   isSendStatusLocked,
   setSendStatusChrome,
   setSignButtons,
+  setSignClusterStrip,
   walletSendRejectExit,
 } from "./dom";
 import { armExpiry, showGone } from "./gone";
@@ -32,6 +33,7 @@ import {
   runSimulation,
   startSignTxAutoSim,
 } from "./sign-tx";
+import { startBlockhashProbeOnce } from "./blockhash-probe";
 import {
   enterWalletSendConfirming,
   enterWalletSendConfirmedPage,
@@ -131,6 +133,7 @@ async function renderSignShell(
   const state = stateRes.result as {
     accounts: import("../../shared/protocol").AccountMeta[];
     unlocked: boolean;
+    settings: { cluster: "devnet" | "mainnet" };
   };
 
   if (!state.unlocked) {
@@ -157,6 +160,9 @@ async function renderSignShell(
   sess.signLabel.textContent = name;
   sess.signAddr.textContent = "";
 
+  sess.settingsCluster = state.settings.cluster;
+  setSignClusterStrip(mode === "signTransaction" && state.settings.cluster === "devnet");
+
   if (mode === "signMessage") {
     renderSignMessageBody(p, bytesFromSignMessage(p));
   } else {
@@ -175,6 +181,7 @@ async function renderSignShell(
     resetSignTxSession();
     renderSignTransactionBody(null, true);
     if (sess.requestId) attachTxAiToSignShell(sess.viewSign, sess.requestId, sess.shellLocale);
+    startBlockhashProbeOnce();
     startSignTxAutoSim();
     void runSimulation();
   }

@@ -2,13 +2,12 @@
  * Loads and caches home token balances for popup display, then asks Jupiter for mint metadata.
  * Does not sign transfers or manage vault encryption.
  */
-import { jupiterApiUrlForCall } from "../../shared/rpc";
-import { applyJupiterTokensV2, sleep } from "./jupiter-mint-meta";
+import { jupiterApiUrlForCall, sleepAbort, solanaRpcForUrl } from "../../shared/rpc";
+import { applyJupiterTokensV2 } from "./jupiter-mint-meta";
 import { mergeMultiOwnerRows } from "./home-token-rows";
 export { lookupJupiterMintMetadata, type MintDisplayMeta } from "./jupiter-mint-meta";
 import { address } from "@solana/kit";
 import type { Settings } from "../../shared/protocol";
-import { solanaRpcForUrl } from "../../shared/rpc";
 import {
   NATIVE_SOL_ID,
   WRAPPED_SOL_MINT,
@@ -145,7 +144,7 @@ async function runRefresh(
       for (let i = 0; i < pending.length; i++) {
         if (signal.aborted) throw new DOMException("Aborted", "AbortError");
         if (owners.length > 1 && (pass > 0 || i > 0)) {
-          await sleep(pass === 0 ? OWNER_PIPE_GAP_MS : OWNER_RETRY_PASS_GAP_MS, signal);
+          await sleepAbort(pass === 0 ? OWNER_PIPE_GAP_MS : OWNER_RETRY_PASS_GAP_MS, signal);
         }
         const owner = pending[i];
         try {

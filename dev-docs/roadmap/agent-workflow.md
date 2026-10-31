@@ -149,7 +149,7 @@ Tracks: A, B, …
 
 ## 7. Project addenda
 
-* **Source shape.** One responsibility, file-size cuts, and folder boundaries. See [code-design-principles.md](../code-design-principles.md).
+* **Source shape.** Security first, then smallest design, one responsibility, file-size cuts, and folder boundaries. See [code-design-principles.md](../code-design-principles.md).
 * **UI copy.** Errors and empty states are one short sentence. Buttons are verbs. See [ui-design-principles.md](../ui-design-principles.md).
 * **Component ownership.** The parent creates and destroys. A child does not outlive the request that spawned it. See [component-hierarchy.mdc](../../.cursor/rules/component-hierarchy.mdc).
 * **Manual test.** `test-web/` is the dApp. Do not assume an external site must change.

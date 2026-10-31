@@ -1,0 +1,56 @@
+.network-pick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.network-pick-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  background: var(--fill);
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+
+.network-pick-row:has(input:checked) {
+  border-color: var(--accent);
+  background: #1a2838;
+}
+
+.network-pick-row input[type="radio"] {
+  display: inline-block;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: var(--accent);
+}
+
+.network-pick-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.network-pick-title {
+  display: block;
+  font-weight: 600;
+}
+
+.network-pick-sum {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

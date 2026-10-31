@@ -53,7 +53,8 @@ export async function handlePatchSettings(req: ExtensionRequest): Promise<Extens
   }
   if (
     (typeof patch.jupiterApiUrl === "string" && !isVendorApiUrlDraft(patch.jupiterApiUrl)) ||
-    (typeof patch.openRouterApiUrl === "string" && !isVendorApiUrlDraft(patch.openRouterApiUrl))
+    (typeof patch.openRouterApiUrl === "string" && !isVendorApiUrlDraft(patch.openRouterApiUrl)) ||
+    (typeof patch.mainnetBlockhashRpcUrl === "string" && !isVendorApiUrlDraft(patch.mainnetBlockhashRpcUrl))
   ) {
     return respond({
       kind: "airwave-ext-res",

@@ -12,7 +12,8 @@ import {
   sess,
 } from "./session";
 import { resetSendStatusUiForNewReview } from "../dom/send-status";
-import { hideAll, isSendStatusLocked, setSignButtons } from "./dom";
+import { hideAll, isSendStatusLocked, setSignButtons, setSignClusterStrip } from "./dom";
+import { reapplyBlockhashProbeGating } from "./blockhash-probe";
 import { applyShellLocaleToStaticChrome, loadShellLocale, tr } from "./locale";
 import { unwireShellEvents, wireShellEvents } from "./events";
 import { loadPending, resolvePending } from "./flow";
@@ -84,7 +85,13 @@ export function bindApprovalShell(refs: ApprovalShellDomRefs, config: ApprovalSh
     const settings = changes[STORAGE.settings].newValue as Settings | undefined;
     sess.shellLocale = parseUiLocale(settings?.locale);
     applyShellLocaleToStaticChrome();
+    const cluster = settings?.cluster;
+    if (cluster === "devnet" || cluster === "mainnet") {
+      sess.settingsCluster = cluster;
+    }
     if (!sess.viewSign.hidden && sess.pending && isSignTxKind(sess.pending.kind) && !isSendStatusLocked()) {
+      setSignClusterStrip(cluster === "devnet");
+      reapplyBlockhashProbeGating();
       renderSignTransactionBody(sess.lastSim, sess.simulating);
     }
   };

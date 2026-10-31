@@ -2,12 +2,12 @@
  * Combined-account manage page: main-wallet card and member reorder sheet.
  * Does not add members or rename them (see combined-member-screens).
  */
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { JSX, PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useState } from "react";
+import type { JSX } from "react";
 import { setMemberRenamePk } from "./combined-member-screens";
-import { isSigningOrWatch, parsePublicKeyBase58 } from "../../shared/accounts";
+import { parsePublicKeyBase58 } from "../../shared/accounts";
 import { sendExtensionRequest } from "../../shared/protocol";
-import { accountKind, type CombinedAccountMeta, type SigningOrWatchMeta } from "../../shared/protocol";
+import { accountKind, type CombinedAccountMeta } from "../../shared/protocol";
 import { apiErrorMessage } from "../../shared/i18n";
 import { AccountKindMark } from "../components/AccountKindMark";
 import { CopyIconButton } from "../components/CopyPkButton";
@@ -16,15 +16,7 @@ import { shortAddr } from "../lib/format";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
 import type { State } from "../types";
-
-const DRAG_PX = 6;
-
-function localFor(wallet: State, pk: string): SigningOrWatchMeta | undefined {
-  return wallet.accounts.find(
-    (a): a is SigningOrWatchMeta =>
-      isSigningOrWatch(a) && (parsePublicKeyBase58(a.publicKeyBase58) ?? a.publicKeyBase58) === pk,
-  );
-}
+import { localCombinedMember, useMemberSheetDrag } from "./member-sheet-drag";
 
 export function CombinedManagePanel({
   acc,
@@ -38,12 +30,6 @@ export function CombinedManagePanel({
   const { clearError, showError, refresh, navigateTo } = usePopupContext();
   const { t, locale } = useT();
   const [order, setOrder] = useState(acc.subPubkeys);
-  const [dragging, setDragging] = useState<string | null>(null);
-  const [dropLine, setDropLine] = useState<{ pk: string; edge: "before" | "after" } | null>(null);
-  const dropLineRef = useRef(dropLine);
-  dropLineRef.current = dropLine;
-  const dragRef = useRef<{ pk: string; startY: number; live: boolean } | null>(null);
-  const skipClickRef = useRef(false);
 
   useEffect(() => {
     setOrder(acc.subPubkeys);
@@ -63,60 +49,10 @@ export function CombinedManagePanel({
     [acc.id, acc.subPubkeys, locale, refresh, showError],
   );
 
-  const onMove = useCallback((ev: PointerEvent) => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    if (!drag.live && Math.abs(ev.clientY - drag.startY) < DRAG_PX) return;
-    if (!drag.live) {
-      drag.live = true;
-      skipClickRef.current = true;
-      setDragging(drag.pk);
-      window.getSelection()?.removeAllRanges();
-    }
-    ev.preventDefault();
-    const rows = Array.from(document.querySelectorAll<HTMLElement>("#member-sheet .member-line"));
-    let line: { pk: string; edge: "before" | "after" } | null = null;
-    for (const row of rows) {
-      const pk = row.dataset.pk;
-      if (!pk) continue;
-      const r = row.getBoundingClientRect();
-      const mid = r.top + r.height / 2;
-      if (ev.clientY < r.bottom && ev.clientY >= r.top) {
-        line = { pk, edge: ev.clientY < mid ? "before" : "after" };
-        break;
-      }
-    }
-    setDropLine(line);
-  }, []);
-
-  const onUp = useCallback(() => {
-    window.removeEventListener("pointermove", onMove);
-    window.removeEventListener("pointerup", onUp);
-    const drag = dragRef.current;
-    dragRef.current = null;
-    setDragging(null);
-    const line = dropLineRef.current;
-    setDropLine(null);
-    if (!drag?.live || !line || line.pk === drag.pk) return;
-    setOrder((prev) => {
-      const next = prev.filter((pk) => pk !== drag.pk);
-      let idx = next.indexOf(line.pk);
-      if (idx < 0) return prev;
-      if (line.edge === "after") idx += 1;
-      next.splice(idx, 0, drag.pk);
-      void persist(next);
-      return next;
-    });
-  }, [onMove, persist]);
-
-  const startDrag = (pk: string, ev: ReactPointerEvent) => {
-    if (!(ev.target as HTMLElement).closest(".account-grip")) return;
-    ev.preventDefault();
-    window.getSelection()?.removeAllRanges();
-    dragRef.current = { pk, startY: ev.clientY, live: false };
-    window.addEventListener("pointermove", onMove, { passive: false });
-    window.addEventListener("pointerup", onUp);
-  };
+  const { dragging, dropLine, skipClickRef, startDrag } = useMemberSheetDrag("#member-sheet", order, (next) => {
+    setOrder(next);
+    void persist(next);
+  });
 
   const setMain = (pk: string) => {
     if (pk === (parsePublicKeyBase58(acc.mainPubkey) ?? acc.mainPubkey)) return;
@@ -132,7 +68,7 @@ export function CombinedManagePanel({
   };
 
   const main = parsePublicKeyBase58(acc.mainPubkey) ?? acc.mainPubkey;
-  const mainLocal = localFor(wallet, main);
+  const mainLocal = localCombinedMember(wallet, main);
   const mainName = mainLocal?.label ?? acc.memberNames?.[main] ?? "";
 
   return (
@@ -163,7 +99,7 @@ export function CombinedManagePanel({
           ) : null}
         </div>
         {order.map((pk) => {
-          const local = localFor(wallet, pk);
+          const local = localCombinedMember(wallet, pk);
           const name = local?.label ?? acc.memberNames?.[pk] ?? "";
           const signing = local != null && accountKind(local) === "signing";
           const edge = dropLine?.pk === pk ? dropLine.edge : null;

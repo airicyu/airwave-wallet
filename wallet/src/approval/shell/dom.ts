@@ -8,6 +8,13 @@ export function hideAll(): void {
   sess.viewUnlock.hidden = true;
   sess.viewGone.hidden = true;
   sess.viewSign.hidden = true;
+  setSignClusterStrip(false);
+}
+
+/** Devnet strip on sign-transaction review only; hidden for signMessage, send-status, and Mainnet. */
+export function setSignClusterStrip(visible: boolean): void {
+  if (!sess.clusterStrip) return;
+  sess.clusterStrip.hidden = !visible;
 }
 
 export function closeHost(): void {

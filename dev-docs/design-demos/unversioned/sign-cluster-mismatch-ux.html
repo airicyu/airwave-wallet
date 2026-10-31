@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 簽章畫面的 Devnet 細條與網路不符（概念稿）</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --danger: #c75050;
+        --ok: #4ecb8d;
+        --warn: #e8b84a;
+        --warn-bg: #3a2e14;
+        --popup-w: 384px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1080px; margin: 0 auto; padding: 28px 20px 56px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 28px; max-width: 46rem; font-size: 0.92rem; }
+      .stage { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+      .col { width: var(--popup-w); }
+      .cap { font-size: 0.75rem; color: var(--text-dim); margin: 0 0 8px; }
+      .phone {
+        width: var(--popup-w);
+        background: var(--bg);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        min-height: 560px;
+      }
+      .account {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 12px 12px 0;
+        padding: 4px 8px 4px 4px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+        width: max-content;
+        max-width: calc(100% - 24px);
+      }
+      .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #b87333;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 0.85rem;
+        font-weight: 650;
+        flex-shrink: 0;
+      }
+      .account-name { font-size: 0.82rem; font-weight: 600; }
+      .cluster-strip {
+        margin-top: 12px;
+        flex-shrink: 0;
+        padding: 5px 14px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: var(--warn);
+        background: var(--warn-bg);
+        border-bottom: 1px solid var(--stroke-soft);
+      }
+      .scroll { padding: 14px 12px 16px; flex: 1; }
+      .site {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin: 0 0 16px;
+      }
+      .site-card { text-align: center; min-width: 0; }
+      .site-label { display: block; font-size: 0.75rem; color: var(--text-dim); }
+      .site-v {
+        display: block;
+        max-width: 220px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.92rem;
+      }
+      .icon-btn {
+        width: 34px;
+        height: 34px;
+        border: 0;
+        background: transparent;
+        color: var(--text-muted);
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+      }
+      h2.page-title { margin: 0 0 12px; font-size: 1.05rem; font-weight: 600; text-align: center; }
+      .mismatch {
+        border: 1px solid color-mix(in srgb, var(--warn) 55%, var(--stroke));
+        background: var(--warn-bg);
+        border-radius: var(--radius);
+        padding: 12px 14px;
+        margin: 0 0 12px;
+      }
+      .mismatch-title {
+        margin: 0 0 4px;
+        font-size: 0.86rem;
+        font-weight: 500;
+        color: var(--warn);
+      }
+      .mismatch-body {
+        margin: 0;
+        font-size: 0.82rem;
+        font-weight: 400;
+        color: var(--text);
+      }
+      .card {
+        background: var(--bg-elevated);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        padding: 12px;
+      }
+      .card h3 {
+        margin: 0 0 10px;
+        font-size: 0.72rem;
+        font-weight: 650;
+      }
+      .delta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .sol {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #9945ff, #14f195);
+        flex-shrink: 0;
+      }
+      .delta-name { flex: 1; min-width: 0; font-size: 0.92rem; font-weight: 500; }
+      .delta-amt { font-size: 0.84rem; font-weight: 500; color: var(--danger); font-variant-numeric: tabular-nums; }
+      .cannot-title { margin: 0 0 4px; font-size: 0.86rem; font-weight: 500; }
+      .cannot-reason { margin: 0; font-size: 0.82rem; color: var(--text-muted); }
+      .dock {
+        display: flex;
+        gap: 10px;
+        padding: 12px;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+      }
+      .ghost, .primary {
+        padding: 11px 12px;
+        border-radius: var(--radius-sm);
+        font: inherit;
+        font-size: 0.88rem;
+        cursor: pointer;
+      }
+      .ghost {
+        flex: 0 0 38%;
+        border: 1px solid var(--stroke);
+        background: transparent;
+        color: var(--text);
+      }
+      .primary {
+        flex: 1;
+        border: 0;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 600;
+      }
+      .primary:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .notes { margin-top: 28px; max-width: 46rem; color: var(--text-muted); font-size: 0.88rem; }
+      .notes h2 { margin: 0 0 8px; font-size: 0.95rem; font-weight: 600; color: var(--text); }
+      .notes ul { margin: 0; padding-left: 1.2rem; }
+      .notes li + li { margin-top: 6px; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>簽章畫面：Devnet 細條，以及網路不符</h1>
+      <p class="lede">非正式概念稿。左圖是錢包在 Devnet、blockhash 也屬於 Devnet。右圖是錢包在 Devnet、blockhash 只在 Mainnet 仍有效。細條沿用主畫面的 <code>.cluster-strip</code>。</p>
+      <div class="stage">
+        <div class="col">
+          <p class="cap">Devnet，blockhash 相符</p>
+          <div class="phone">
+            <div class="account">
+              <span class="avatar" aria-hidden="true">日</span>
+              <span class="account-name">日常</span>
+            </div>
+            <div class="cluster-strip" role="status">Devnet</div>
+            <div class="scroll">
+              <div class="site">
+                <div class="site-card">
+                  <span class="site-label">網站</span>
+                  <span class="site-v">app.example</span>
+                </div>
+                <button class="icon-btn" type="button" title="複製網站" aria-label="複製網站">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
+              <h2 class="page-title">簽署交易</h2>
+              <section class="card">
+                <h3>預期變動</h3>
+                <div class="delta">
+                  <span class="sol" aria-hidden="true"></span>
+                  <span class="delta-name">SOL</span>
+                  <span class="delta-amt">−0.002 SOL</span>
+                </div>
+              </section>
+            </div>
+            <footer class="dock">
+              <button class="ghost" type="button">拒絕</button>
+              <button class="primary" type="button">批准</button>
+            </footer>
+          </div>
+        </div>
+        <div class="col">
+          <p class="cap">Devnet，blockhash 只在 Mainnet 有效</p>
+          <div class="phone">
+            <div class="account">
+              <span class="avatar" aria-hidden="true">日</span>
+              <span class="account-name">日常</span>
+            </div>
+            <div class="cluster-strip" role="status">Devnet</div>
+            <div class="scroll">
+              <div class="site">
+                <div class="site-card">
+                  <span class="site-label">網站</span>
+                  <span class="site-v">app.example</span>
+                </div>
+                <button class="icon-btn" type="button" title="複製網站" aria-label="複製網站">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
+              <h2 class="page-title">簽署交易</h2>
+              <section class="mismatch" role="status">
+                <p class="mismatch-title">網路不符</p>
+                <p class="mismatch-body">錢包目前是 Devnet，這筆交易的 blockhash 在 Mainnet 仍有效。</p>
+              </section>
+              <section class="card">
+                <h3>預期變動</h3>
+                <p class="cannot-title">無法模擬</p>
+                <p class="cannot-reason">Blockhash 不在這個網路的近期名單。</p>
+              </section>
+            </div>
+            <footer class="dock">
+              <button class="ghost" type="button">拒絕</button>
+              <button class="primary" type="button" disabled>批准</button>
+            </footer>
+          </div>
+        </div>
+      </div>
+      <div class="notes">
+        <h2>這張稿定了什麼</h2>
+        <ul>
+          <li>細條只在錢包目前是 Devnet 時出現，貼在帳戶列下方、內容捲動區之外，字就是 Devnet。Mainnet 不畫這條。</li>
+          <li>網路不符是內容區最上面的一張金色卡片，不取代預期變動。拒絕仍可按，批准停用。</li>
+          <li>錢包在 Mainnet、blockhash 只在 Devnet 有效時，沒有細條，卡片改寫「錢包目前是 Mainnet，這筆交易的 blockhash 在 Devnet 仍有效。」</li>
+          <li>兩邊都無效或兩邊都有效時，不出現這張卡片。過期仍只看模擬結果。</li>
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>

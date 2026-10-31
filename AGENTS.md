@@ -6,7 +6,7 @@ Feature ideas: [`dev-docs/roadmap/backlog/INDEX.md`](dev-docs/roadmap/backlog/IN
 
 **Replies to the user are Traditional Chinese written prose.** Proper names, paths, APIs, and file names stay in English.
 
-**Documents default to English** unless the user says otherwise, or a spec already requires another language. Shipped version docs at or before 0.47.0 stay as they were written. Domain entries keep their Chinese term names.
+**Documents default to 繁體中文書面語** unless the user says otherwise, or a spec already requires another language. Shipped version docs at or before 0.47.0 stay as they were written. Domain entries keep their Chinese term names.
 
 ---
 
@@ -35,7 +35,7 @@ Do **not** edit a parent `docs/agent-roadmap/` if one exists.
 | Consistent popup behavior | [`dev-docs/ui-design-principles.md`](dev-docs/ui-design-principles.md) |
 | Account, address, combined wording | [`dev-docs/DOMAIN.md`](dev-docs/DOMAIN.md). If that version's INDEX overrides a term in plain sentences, the INDEX wins and DOMAIN is updated to match |
 
-**Priority:** a version INDEX decision > GUIDELINES architecture bans > [`dev-docs/code-design-principles.md`](dev-docs/code-design-principles.md) (source layout) > [`dev-docs/ui-design-principles.md`](dev-docs/ui-design-principles.md) (screens only).
+**Priority:** a version INDEX decision > GUIDELINES architecture bans > [`dev-docs/code-design-principles.md`](dev-docs/code-design-principles.md) (security, then smallest design, then source layout) > [`dev-docs/ui-design-principles.md`](dev-docs/ui-design-principles.md) (screens only).
 
 ---
 
@@ -74,6 +74,7 @@ Steps 2 and 3 are direction only until an INDEX schedules them. Do not start the
 - Roadmap and review reports must **not** contain real mnemonics, private keys, passwords, or production secrets (see GUIDELINES privacy).
 - Implementation stays in this repo. Prefer `test-web/` for tests. Do not assume an external dApp must change.
 - Anything discussed in chat but not written into the roadmap or a contract file **does not exist** for the next agent. Decisions go into files.
+- Close a leak, a hostile injection, or a sign path another origin can reach before keeping the solution small. Smallest design applies only after that hole is closed. Those rules are sections 1 and 2 of [`dev-docs/code-design-principles.md`](dev-docs/code-design-principles.md).
 
 ### Cutting a version
 
@@ -103,7 +104,7 @@ More changes while a version is in progress go into that version's INDEX and und
 | [dev-docs/README.md](dev-docs/README.md) | Engineering doc map |
 | [dev-docs/setup.md](dev-docs/setup.md) | Local build |
 | [docs/README.md](docs/README.md) | User doc map |
-| [dev-docs/code-design-principles.md](dev-docs/code-design-principles.md) | How to split files and group folders |
+| [dev-docs/code-design-principles.md](dev-docs/code-design-principles.md) | Security first, then smallest design, file splits, and folder boundaries |
 | [dev-docs/ui-design-principles.md](dev-docs/ui-design-principles.md) | Popup and approval screens |
 | [dev-docs/design-demos/](dev-docs/design-demos/) | HTML concept demos, one folder per version |
 | [dev-docs/roadmap/README.md](dev-docs/roadmap/README.md) | Roadmap entry |

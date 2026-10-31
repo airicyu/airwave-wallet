@@ -2,6 +2,12 @@
 
 ## Next
 
+None.
+
+## 0.53.0 — 2026-10-31
+
+A new install with no stored cluster starts on Mainnet. A wallet that already saved Devnet stays on Devnet. Sign approvals on Devnet show the Home strip. Opening a transaction approval checks the blockhash on both clusters; a hash that is still valid only on the other cluster shows a mismatch card and leaves Approve disabled. On the RPC screen, a successful confirm closes the URL editor. Unused approval and home barrels are gone, combined member drag is one helper, settings CSS is split by screen, and connect-consent rules are one shared sheet. Behavior and class names are unchanged.
+
 ## 0.52.0 — 2026-10-25
 
 The add-account screen lists the same five destinations as an icon, a title, and one subtitle. Popup and sidebar share that list. The import sub-chooser stays title plus chevron. The first-run RPC guide link says to request an RPC endpoint from Helius, without calling it a free API key. Settings ends with Debug mode settings, off by default. While it is on, that page shows Jupiter API URL and OpenRouter base URL; those overrides are ignored when debug is off, and empty values still use the built-in origins.

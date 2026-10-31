@@ -26,6 +26,7 @@ import {
 } from "../send";
 import { keypairForAccountId, signingErrorForAccountId } from "../session";
 import { simulateSignTransaction } from "../simulate";
+import { probeSignBlockhashForPending } from "./probe-sign-blockhash";
 import * as session from "../session";
 
 export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionResponse> {
@@ -224,6 +225,27 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
       requestId: req.requestId,
       ok: true,
       result: { ok: true },
+    });
+  }
+
+  if (req.command === "ui.probeSignBlockhash") {
+    const { requestId } = (req.payload ?? {}) as { requestId: string };
+    const p = getPending(requestId);
+    const settings = await readSettings();
+    const outcome = await probeSignBlockhashForPending(p, settings);
+    if (outcome === "NOT_FOUND") {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "NOT_FOUND", message: "Pending not found" },
+      });
+    }
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: outcome,
     });
   }
 

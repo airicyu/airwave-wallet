@@ -18,7 +18,7 @@ import { shortAddr } from "../lib/format";
 import { apiErrorMessage } from "../../shared/i18n";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
-import type { State, View } from "../types";
+import type { State } from "../types";
 
 type ScanState =
   | { phase: "idle" }
@@ -363,26 +363,3 @@ export function CloseEmptyResultScreen({
     </div>
   );
 }
-
-export function useCloseEmptyEntriesLoader(wallet: State): {
-  entries: ClosableEntry[];
-  reload: () => Promise<void>;
-} {
-  const [entries, setEntries] = useState<ClosableEntry[]>([]);
-  const reload = useCallback(async () => {
-    const res = await sendExtensionRequest("wallet.listClosableTokenAccounts", { force: true });
-    if (res.ok) {
-      const body = res.result as { entries?: ClosableEntry[] };
-      setEntries(body.entries ?? []);
-    }
-  }, []);
-  useEffect(() => {
-    void reload();
-  }, [reload, wallet.activeAccountId]);
-  return { entries, reload };
-}
-
-export type CloseEmptyView = Extract<
-  View,
-  "close-empty-pick" | "close-empty-confirm" | "close-empty-sending" | "close-empty-result"
->;

@@ -3,9 +3,9 @@
  * Does not add members (see combined-create-add) or edit an existing combined account.
  */
 import { useCallback, useRef, useState } from "react";
-import type { JSX, PointerEvent as ReactPointerEvent } from "react";
-import { ACCOUNT_LABEL_MAX, isSigningOrWatch, parsePublicKeyBase58 } from "../../shared/accounts";
-import { accountKind, sendExtensionRequest, type SigningOrWatchMeta } from "../../shared/protocol";
+import type { JSX } from "react";
+import { ACCOUNT_LABEL_MAX } from "../../shared/accounts";
+import { accountKind, sendExtensionRequest } from "../../shared/protocol";
 import { apiErrorMessage } from "../../shared/i18n";
 import { AccountKindMark } from "../components/AccountKindMark";
 import { CopyIconButton } from "../components/CopyPkButton";
@@ -24,29 +24,20 @@ import {
   setCombinedMain,
   useCombinedDraft,
 } from "./combined-logic";
-
-const DRAG_PX = 6;
-
-function localFor(wallet: State, pk: string): SigningOrWatchMeta | undefined {
-  return wallet.accounts.find(
-    (a): a is SigningOrWatchMeta =>
-      isSigningOrWatch(a) && (parsePublicKeyBase58(a.publicKeyBase58) ?? a.publicKeyBase58) === pk,
-  );
-}
+import { localCombinedMember, useMemberSheetDrag } from "./member-sheet-drag";
 
 export function CombinedCreateScreen({ wallet }: { wallet: State }): JSX.Element {
   const { clearError, refresh, navigateTo } = usePopupContext();
   const { t, locale } = useT();
   const draft = useCombinedDraft();
   const [err, setErr] = useState("");
-  const [dragging, setDragging] = useState<string | null>(null);
-  const [dropLine, setDropLine] = useState<{ pk: string; edge: "before" | "after" } | null>(null);
-  const dropLineRef = useRef(dropLine);
-  dropLineRef.current = dropLine;
-  const dragRef = useRef<{ pk: string; startY: number; live: boolean } | null>(null);
-  const skipClickRef = useRef(false);
   const membersRef = useRef(draft.members);
   membersRef.current = draft.members;
+  const { dragging, dropLine, skipClickRef, startDrag } = useMemberSheetDrag(
+    "#create-member-sheet",
+    draft.members,
+    reorderCombinedMembers,
+  );
 
   const onPrimary = useCallback(async () => {
     clearError();
@@ -74,58 +65,7 @@ export function CombinedCreateScreen({ wallet }: { wallet: State }): JSX.Element
     onPrimary,
   });
 
-  const onMove = useCallback((ev: PointerEvent) => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    if (!drag.live && Math.abs(ev.clientY - drag.startY) < DRAG_PX) return;
-    if (!drag.live) {
-      drag.live = true;
-      skipClickRef.current = true;
-      setDragging(drag.pk);
-      window.getSelection()?.removeAllRanges();
-    }
-    ev.preventDefault();
-    const rows = Array.from(document.querySelectorAll<HTMLElement>("#create-member-sheet .member-line"));
-    let line: { pk: string; edge: "before" | "after" } | null = null;
-    for (const row of rows) {
-      const pk = row.dataset.pk;
-      if (!pk) continue;
-      const r = row.getBoundingClientRect();
-      if (ev.clientY < r.bottom && ev.clientY >= r.top) {
-        line = { pk, edge: ev.clientY < r.top + r.height / 2 ? "before" : "after" };
-        break;
-      }
-    }
-    setDropLine(line);
-  }, []);
-
-  const onUp = useCallback(() => {
-    window.removeEventListener("pointermove", onMove);
-    window.removeEventListener("pointerup", onUp);
-    const drag = dragRef.current;
-    dragRef.current = null;
-    setDragging(null);
-    const line = dropLineRef.current;
-    setDropLine(null);
-    if (!drag?.live || !line || line.pk === drag.pk) return;
-    const next = membersRef.current.filter((pk) => pk !== drag.pk);
-    let idx = next.indexOf(line.pk);
-    if (idx < 0) return;
-    if (line.edge === "after") idx += 1;
-    next.splice(idx, 0, drag.pk);
-    reorderCombinedMembers(next);
-  }, [onMove]);
-
-  const startDrag = (pk: string, ev: ReactPointerEvent) => {
-    if (!(ev.target as HTMLElement).closest(".account-grip")) return;
-    ev.preventDefault();
-    window.getSelection()?.removeAllRanges();
-    dragRef.current = { pk, startY: ev.clientY, live: false };
-    window.addEventListener("pointermove", onMove, { passive: false });
-    window.addEventListener("pointerup", onUp);
-  };
-
-  const mainLocal = localFor(wallet, draft.main);
+  const mainLocal = localCombinedMember(wallet, draft.main);
   const mainName = mainLocal?.label ?? "";
 
   return (
@@ -168,7 +108,7 @@ export function CombinedCreateScreen({ wallet }: { wallet: State }): JSX.Element
           </button>
         </div>
         {draft.members.map((pk) => {
-          const local = localFor(wallet, pk);
+          const local = localCombinedMember(wallet, pk);
           const name = local?.label ?? "";
           const signing = local != null && accountKind(local) === "signing";
           const edge = dropLine?.pk === pk ? dropLine.edge : null;

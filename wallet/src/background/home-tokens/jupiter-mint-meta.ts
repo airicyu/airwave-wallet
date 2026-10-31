@@ -9,31 +9,13 @@ import {
   WRAPPED_SOL_MINT,
   type HomeTokenRow,
 } from "../../shared/home";
-import { effectiveJupiterApiUrl } from "../../shared/rpc";
+import { effectiveJupiterApiUrl, sleepAbort } from "../../shared/rpc";
 
 const JUPITER_BATCH_SIZE = 100;
 const JUPITER_DELAY_NO_KEY_MS = 2000;
 const JUPITER_DELAY_WITH_KEY_MS = 1000;
 function jupiterSearchUrl(base: string, query: string): string {
   return `${effectiveJupiterApiUrl(base)}/tokens/v2/search?query=${encodeURIComponent(query)}`;
-}
-
-export function sleep(ms: number, signal?: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (signal?.aborted) {
-      reject(new DOMException("Aborted", "AbortError"));
-      return;
-    }
-    const t = setTimeout(resolve, ms);
-    signal?.addEventListener(
-      "abort",
-      () => {
-        clearTimeout(t);
-        reject(new DOMException("Aborted", "AbortError"));
-      },
-      { once: true },
-    );
-  });
 }
 
 function parseRetryAfterMs(res: Response): number | null {
@@ -59,7 +41,7 @@ async function fetchWith429Retry(
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
       if (attempt < maxAttempts - 1) {
-        await sleep(500 * 2 ** attempt, signal);
+        await sleepAbort(500 * 2 ** attempt, signal);
         continue;
       }
       throw lastError;
@@ -67,7 +49,7 @@ async function fetchWith429Retry(
     if (res.status !== 429) return res;
     if (attempt >= maxAttempts - 1) return res;
     const retryMs = parseRetryAfterMs(res) ?? 500 * 2 ** attempt;
-    await sleep(retryMs, signal);
+    await sleepAbort(retryMs, signal);
   }
   throw lastError ?? new Error("fetch failed");
 }
@@ -144,7 +126,7 @@ export async function applyJupiterTokensV2(
   if (key) headers["x-api-key"] = key;
 
   for (let i = 0; i < mints.length; i += JUPITER_BATCH_SIZE) {
-    if (i > 0) await sleep(batchDelay, signal);
+    if (i > 0) await sleepAbort(batchDelay, signal);
     const batch = mints.slice(i, i + JUPITER_BATCH_SIZE);
     const url = jupiterSearchUrl(jupiterApiUrl, batch.join(","));
     const res = await fetchWith429Retry(url, { method: "GET", headers }, signal);
@@ -219,7 +201,7 @@ export async function lookupJupiterMintMetadata(
   if (key) headers["x-api-key"] = key;
 
   for (let i = 0; i < mints.length; i += JUPITER_BATCH_SIZE) {
-    if (i > 0) await sleep(batchDelay, signal);
+    if (i > 0) await sleepAbort(batchDelay, signal);
     const batch = mints.slice(i, i + JUPITER_BATCH_SIZE);
     const url = jupiterSearchUrl(jupiterApiUrl, batch.join(","));
     try {

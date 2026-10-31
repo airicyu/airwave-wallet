@@ -45,6 +45,17 @@ export function openRouterApiUrlForCall(settings: { debugModeEnabled: boolean; o
   return effectiveOpenRouterApiUrl(settings.openRouterApiUrl);
 }
 
+/** Mainnet isBlockhashValid URL when no custom Mainnet RPC is ready (0.53.0 probe only). */
+export function mainnetBlockhashProbeUrl(settings: {
+  debugModeEnabled: boolean;
+  mainnetBlockhashRpcUrl: string;
+}): string {
+  if (!settings.debugModeEnabled) return "https://api.mainnet-beta.solana.com";
+  const t = settings.mainnetBlockhashRpcUrl.trim();
+  if (t && isVendorApiUrlDraft(t)) return effectiveJupiterApiUrl(t);
+  return "https://api.mainnet-beta.solana.com";
+}
+
 /** True when a settings patch may store this vendor base (empty keeps the runtime default). */
 export function isVendorApiUrlDraft(url: string): boolean {
   const t = url.trim();

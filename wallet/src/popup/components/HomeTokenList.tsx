@@ -13,8 +13,13 @@ import {
 import { jsonRpcMissing } from "../../shared/protocol";
 import { canWalletSendFromActiveAccount, homeTokenRowForSendBalance } from "../../shared/send";
 import { MainnetRpcStop } from "./MainnetRpcStop";
-import { formatOrganicScoreLabel } from "../../shared/home";
-import { NATIVE_SOL_ID, shortMint, sortCombinedTokenMembers, type HomeTokenRow } from "../home/home-tokens";
+import {
+  formatOrganicScoreLabel,
+  NATIVE_SOL_ID,
+  shortMint,
+  sortCombinedTokenMembers,
+  type HomeTokenRow,
+} from "../../shared/home";
 import { CopyIconButton } from "./CopyPkButton";
 import { IconChevronDown } from "./StrokeIcon";
 import { shortAddr } from "../lib/format";

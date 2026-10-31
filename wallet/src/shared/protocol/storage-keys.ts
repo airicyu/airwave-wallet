@@ -75,6 +75,8 @@ export type Settings = {
   idleAutoLockMinutes: number;
   /** When off, Jupiter and OpenRouter calls ignore stored debug bases. */
   debugModeEnabled: boolean;
+  /** Debug-only override for Mainnet isBlockhashValid probe; ignored when debug is off. */
+  mainnetBlockhashRpcUrl: string;
 };
 
 export type AccountKind = "signing" | "readOnly";
@@ -111,8 +113,8 @@ export type ConnectionRecord = {
 export type ConnectionsMap = Record<string, ConnectionRecord>;
 
 export const DEFAULT_SETTINGS: Settings = {
-  cluster: "devnet",
-  rpcUrl: "https://api.devnet.solana.com",
+  cluster: "mainnet",
+  rpcUrl: "",
   rpcByCluster: {
     devnet: { urls: [], active: "" },
     mainnet: { urls: [], active: "" },
@@ -136,6 +138,7 @@ export const DEFAULT_SETTINGS: Settings = {
   idleAutoLockEnabled: true,
   idleAutoLockMinutes: 10,
   debugModeEnabled: false,
+  mainnetBlockhashRpcUrl: "",
 };
 
 export const PUBLIC_RPC_BY_CLUSTER: Record<Cluster, string> = {

@@ -1,0 +1,66 @@
+.tx-ai-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  margin-bottom: 14px;
+}
+
+.tx-ai-toggle-row .name {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.tx-ai-switch {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 42px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  background: var(--fill);
+  position: relative;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  color: inherit;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.tx-ai-switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition:
+    left 0.15s ease,
+    background 0.15s ease;
+}
+
+.tx-ai-switch[aria-checked="true"] {
+  border-color: color-mix(in srgb, var(--ok) 45%, var(--stroke));
+  background: color-mix(in srgb, var(--ok) 18%, var(--fill));
+}
+
+.tx-ai-switch[aria-checked="true"]::after {
+  left: 20px;
+  background: var(--ok);
+}
+
+.tx-ai-switch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

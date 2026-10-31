@@ -18,7 +18,7 @@ import {
   type FlowEntry,
 } from "../../flow";
 import { walletShellSurfaceFromHref } from "../../shared/shell";
-import type { HomeTokenRow } from "../home/home-tokens";
+import type { HomeTokenRow } from "../../shared/home";
 import { abortWalletSendOnPopupUnload, syncWalletSendAbortId } from "../components/ApprovalHost";
 import { useCloseEmptyPopup } from "./useCloseEmptyPopup";
 import { usePopupNavigation } from "./usePopupNavigation";

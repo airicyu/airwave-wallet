@@ -21,6 +21,7 @@ import { renderFeeCard, renderTxDetails } from "../dom/fee-details";
 import { sess } from "./session";
 import { hasCuPair, localTotalFeeLamports, retrySimDisabled } from "./cu";
 import { isSendStatusLocked, setSignButtons } from "./dom";
+import { blockhashProbeBlocksApprove, resetBlockhashProbeSession, syncBlockhashMismatchCard } from "./blockhash-probe";
 import { isSignTxKind } from "./kinds";
 import { progressUserMessage, tr } from "./locale";
 import { showGone } from "./gone";
@@ -28,6 +29,10 @@ import { showGone } from "./gone";
 export function applyApproveFromSimulation(sim: SimulatePendingTxResult | null): void {
   if (sess.approveHoldTimer != null) return;
   if (sess.resolving) return;
+  if (blockhashProbeBlocksApprove()) {
+    setSignButtons({ approve: true });
+    return;
+  }
   if (sim?.outcome === "unparseable") {
     setSignButtons({ approve: true });
     return;
@@ -127,6 +132,7 @@ export function renderSignTransactionBody(sim: SimulatePendingTxResult | null, l
     }
   }
   paintDeltaOnly(sim, loading);
+  syncBlockhashMismatchCard();
   if (!sess.feeFrozenForSim || sess.cuApplyBusy) {
     refreshFeeTotal(sim, loading);
     if (!loading && hasCuPair()) sess.feeFrozenForSim = true;
@@ -188,6 +194,7 @@ export async function runSimulation(): Promise<void> {
 export function resetSignTxSession(): void {
   stopAutoSim();
   disposeSignTxBody();
+  resetBlockhashProbeSession();
   sess.signTxBodyReady = false;
   sess.feeFrozenForSim = false;
   sess.feeBreakdownReady = false;

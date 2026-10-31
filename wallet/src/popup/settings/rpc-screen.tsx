@@ -136,7 +136,6 @@ function RpcClusterCard({
                     draft={editDraft}
                     setDraft={setEditDraft}
                     onClose={() => setEditKey(null)}
-                    onSaved={(nextUrl) => setEditKey(rpcOptionKey(cluster, false, nextUrl))}
                     walletNeeded={wallet}
                     showError={showError}
                     io={io}
@@ -154,7 +153,6 @@ function RpcClusterCard({
               draft={editDraft}
               setDraft={setEditDraft}
               onClose={() => setEditKey(null)}
-              onSaved={(nextUrl) => setEditKey(rpcOptionKey(cluster, false, nextUrl))}
               walletNeeded={wallet}
               showError={showError}
               io={io}
@@ -188,7 +186,6 @@ function RpcEditor({
   draft,
   setDraft,
   onClose,
-  onSaved,
   walletNeeded,
   showError,
   io,
@@ -200,7 +197,6 @@ function RpcEditor({
   draft: string;
   setDraft: (d: string) => void;
   onClose: () => void;
-  onSaved: (nextUrl: string) => void;
   walletNeeded: ReturnType<typeof usePopupContext>["wallet"];
   showError: (msg: string) => void;
   io: SettingsIo;
@@ -220,7 +216,9 @@ function RpcEditor({
       showError(t(result.error));
       return;
     }
-    void patchRpcByCluster(result.next, io, locale).then(() => onSaved(result.nextUrl));
+    void patchRpcByCluster(result.next, io, locale).then((saved) => {
+      if (saved) onClose();
+    });
   };
   return (
     <div className="rpc-edit">

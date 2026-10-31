@@ -1714,6 +1714,21 @@ const messages = {
     "zh-Hans": "签署消息",
     "en": "Sign message",
   },
+  "sign.clusterMismatch.title": {
+    "zh-Hant": "網路不符",
+    "zh-Hans": "网络不符",
+    "en": "Network mismatch",
+  },
+  "sign.clusterMismatch.devnetWallet": {
+    "zh-Hant": "錢包目前是 Devnet，這筆交易的 blockhash 在 Mainnet 仍有效。",
+    "zh-Hans": "钱包目前是 Devnet，这笔交易的 blockhash 在 Mainnet 仍有效。",
+    "en": "This wallet is on Devnet. This transaction's blockhash is still valid on Mainnet.",
+  },
+  "sign.clusterMismatch.mainnetWallet": {
+    "zh-Hant": "錢包目前是 Mainnet，這筆交易的 blockhash 在 Devnet 仍有效。",
+    "zh-Hans": "钱包目前是 Mainnet，这笔交易的 blockhash 在 Devnet 仍有效。",
+    "en": "This wallet is on Mainnet. This transaction's blockhash is still valid on Devnet.",
+  },
   "approval.approved": {
     "zh-Hant": "已確認",
     "zh-Hans": "已确认",

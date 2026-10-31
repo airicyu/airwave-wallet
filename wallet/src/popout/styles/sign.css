@@ -22,6 +22,15 @@
   color: var(--text);
 }
 
+.cluster-mismatch-card {
+  border-color: var(--warn);
+  background: var(--warn-bg);
+}
+
+.cluster-mismatch-card .notice-title {
+  color: var(--warn);
+}
+
 .notice-reason {
   margin: 0;
   color: var(--text-muted);

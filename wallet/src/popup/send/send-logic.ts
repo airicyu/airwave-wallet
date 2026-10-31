@@ -6,7 +6,7 @@ import { parsePublicKeyBase58 } from "../../shared/accounts";
 import { sendExtensionRequest } from "../../shared/protocol";
 import { apiErrorMessage, type UiLocale } from "../../shared/i18n";
 import { amountUiToRaw, formatRawToAmountUi, solReserveLamports } from "../../shared/send";
-import { NATIVE_SOL_ID, type HomeTokenRow } from "../home/home-tokens";
+import { NATIVE_SOL_ID, type HomeTokenRow } from "../../shared/home";
 import { homeTokenRowForSendBalance } from "../../shared/send";
 import type { State } from "../types";
 

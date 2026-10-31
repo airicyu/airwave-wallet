@@ -6,6 +6,7 @@ import type { JSX } from "react";
 import { useState } from "react";
 import type { PublicSettings } from "../../shared/protocol";
 import { DEFAULT_JUPITER_API_URL, DEFAULT_OPENROUTER_API_URL } from "../../shared/rpc";
+import { PUBLIC_RPC_BY_CLUSTER } from "../../shared/protocol";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
 import { ApiUrlField } from "./ApiUrlField";
@@ -60,6 +61,19 @@ export function DebugSettingsScreen({ settings }: { settings: PublicSettings }):
             persist={(value) => {
               if (!wallet) return Promise.resolve(false);
               return patchSettingsPartial({ openRouterApiUrl: value.trim() }, io, locale);
+            }}
+          />
+          <ApiUrlField
+            id="mainnet-blockhash-rpc-url"
+            label="Mainnet blockhash RPC"
+            value={settings.mainnetBlockhashRpcUrl}
+            placeholder={PUBLIC_RPC_BY_CLUSTER.mainnet}
+            claimedId={claimedId}
+            onClaim={setClaimedId}
+            onRelease={release}
+            persist={(value) => {
+              if (!wallet) return Promise.resolve(false);
+              return patchSettingsPartial({ mainnetBlockhashRpcUrl: value.trim() }, io, locale);
             }}
           />
         </>

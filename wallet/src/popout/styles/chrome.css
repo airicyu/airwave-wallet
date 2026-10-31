@@ -240,6 +240,29 @@ details.raw-details summary {
   flex-direction: column;
 }
 
+.cluster-strip {
+  flex-shrink: 0;
+  padding: 5px 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--warn);
+  background: var(--warn-bg);
+  border-bottom: 1px solid var(--stroke-soft);
+  pointer-events: none;
+}
+
+.approval-sign-shell > .bar-wallet-group {
+  width: max-content;
+  max-width: 100%;
+  margin: 0 12px 10px;
+  padding-top: 12px;
+}
+
+.approval-sign-shell > .account-rule {
+  margin: 0 12px;
+}
+
 .approval-sign-shell {
   flex: 1;
   min-height: 0;

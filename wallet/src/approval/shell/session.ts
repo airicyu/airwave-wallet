@@ -6,6 +6,8 @@ import { DEFAULT_UI_LOCALE, type UiLocale } from "../../shared/i18n";
 import type { MessageKey } from "../../shared/i18n";
 import type { PendingRecord } from "../../shared/protocol";
 import type { SimulatePendingTxResult } from "../../shared/tx";
+import type { BlockhashProbeResult } from "../../shared/protocol";
+import type { Cluster } from "../../shared/protocol";
 import type { ApprovalShellConfig, ApprovalShellDomRefs } from "./types";
 
 export type SendStatusPhase = "idle" | "pending" | "confirmed" | "failed";
@@ -40,6 +42,7 @@ export type ShellSession = {
   signApprove: HTMLButtonElement;
   signDock: HTMLElement;
   btnCloseExpired: HTMLElement;
+  clusterStrip: HTMLElement;
 
   pending: PendingRecord | null;
   frozenPk: string;
@@ -70,6 +73,12 @@ export type ShellSession = {
   confirmedTimer: ReturnType<typeof setTimeout> | null;
   requestEnded: boolean;
   expiryTimer: number | null;
+
+  settingsCluster: Cluster;
+  blockhashProbeStarted: boolean;
+  blockhashProbePending: boolean;
+  blockhashProbeMismatch: boolean;
+  blockhashProbeResult: BlockhashProbeResult | null;
 
   onRunSimulation: (() => void) | null;
   onApplyApproveFromSimulation: ((sim: SimulatePendingTxResult | null) => void) | null;
@@ -111,6 +120,7 @@ export const sess: ShellSession = {
   signApprove: emptyDom() as HTMLButtonElement,
   signDock: emptyDom(),
   btnCloseExpired: emptyDom(),
+  clusterStrip: emptyDom(),
 
   pending: null,
   frozenPk: "",
@@ -142,6 +152,12 @@ export const sess: ShellSession = {
   requestEnded: false,
   expiryTimer: null,
 
+  settingsCluster: "devnet",
+  blockhashProbeStarted: false,
+  blockhashProbePending: false,
+  blockhashProbeMismatch: false,
+  blockhashProbeResult: null,
+
   onRunSimulation: null,
   onApplyApproveFromSimulation: null,
   onRestoreWalletSendReview: null,
@@ -171,6 +187,7 @@ export function assignShellDomRefs(refs: ApprovalShellDomRefs): void {
   sess.signDock = refs.signDock;
   sess.btnCloseExpired = refs.btnCloseExpired;
   sess.siteLabel = sess.viewSign.querySelector(".site-label") as HTMLElement;
+  sess.clusterStrip = sess.viewSign.querySelector(".cluster-strip") as HTMLElement;
 }
 
 export function resetShellSessionState(): void {

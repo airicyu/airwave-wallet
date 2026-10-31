@@ -11,6 +11,8 @@
   --accent-dim: #2a6ea8;
   --danger: #c75050;
   --ok: #4ecb8d;
+  --warn: #e8b84a;
+  --warn-bg: #3a2e14;
   --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
   --radius: 12px;
   --radius-sm: 8px;

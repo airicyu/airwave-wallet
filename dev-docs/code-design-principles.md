@@ -1,10 +1,29 @@
 # Code design principles
 
-How `wallet/src` is written, split, and grouped. An INDEX overrides this file when it says so. Screen layout and copy live in [ui-design-principles.md](./ui-design-principles.md). Standing architecture bans (pending, storage, custody, messages) live in [roadmap/GUIDELINES.md](./roadmap/GUIDELINES.md).
+How a change to `wallet/src` is designed, and how the source is written, split, and grouped. An INDEX overrides this file when it says so, by naming the rule it replaces. Screen layout and copy live in [ui-design-principles.md](./ui-design-principles.md). Standing architecture bans (pending, storage, custody, messages) live in [roadmap/GUIDELINES.md](./roadmap/GUIDELINES.md).
 
 How `shared/` is grouped is [roadmap/0.50.0/INDEX.md](./roadmap/0.50.0/INDEX.md). The reasoning for that cut is [roadmap/0.50.0/docs/reasoning.md](./roadmap/0.50.0/docs/reasoning.md). This file is the rule for new code.
 
-## 1. One responsibility
+## 1. Smallest design
+
+Smallest design applies only when section 2 is already satisfied. With no security hole, make the smallest change that meets this contract: one straight path a reader can maintain. A leak, an injection, or an unauthorized sign path is not a place to keep the diff small. That fix is required, and its size follows the hole.
+
+- Do not add a layer, mode, fallback, or framework the INDEX did not ask for, once section 2 is already satisfied.
+- Do not walk records one by one when one pass does the same work. Extra per-item handling that the contract does not require is harder to maintain and slower.
+- Do not build the next case early. Add it when a contract asks for it.
+- Do not shrink, defer, or skip a fix that section 2 requires. The architecture bans in GUIDELINES stay in force.
+
+## 2. Security
+
+This wallet holds keys. A hole that leaks a secret, lets another origin sign, or injects untrusted data into a privileged surface has serious consequences. Find that hole in the design and close it in this change. Section 1 does not limit that work.
+
+- Treat page content, extension messages, storage values, RPC and simulation results, and model output as untrusted.
+- Do not concatenate that input into HTML, a script, a URL, or a command string. Do not assign it to `innerHTML`, or pass it through `eval` or `Function`.
+- A message is not permission to sign, export keys, or change the vault. Keep the origin check and the approval path this repo already uses.
+- Do not log, display in full, or persist a mnemonic, a private key, or the unlock secret.
+- Close the hole before calling the design small. When a check this repo already has closes it, use that check. When it does not, add the check the hole needs.
+
+## 3. One responsibility
 
 A file does one thing a reader can name in a sentence. The neighboring step (the caller, the I/O, the next screen) is a different file.
 
@@ -14,7 +33,7 @@ A file does one thing a reader can name in a sentence. The neighboring step (the
 - A pure data table file only holds that table.
 - Tests sit next to the module they exercise.
 
-## 2. Source-file responsibility comments
+## 4. Source-file responsibility comments
 
 For `.ts` files under `wallet/src`:
 
@@ -30,9 +49,9 @@ Do not use headline fragments, colon lists, or "X vs Y" as the whole comment.
 - `index.ts` says, in the same prose, that it re-exports this folder's public surface (it may name subfolders).
 - A pure data table only says which table it is.
 
-## 3. When to split
+## 5. When to split
 
-Count **code lines** only: physical lines that have code. **Blank lines do not count.** Comment lines do not count: a full-line `//` comment, and every line of a `/* */` block (including the file header). A line that mixes code and an end-of-line `//` comment still counts as one code line. The same count is the 150-line command rule and the 400-line split rule. The file header in section 2 is required at any length.
+Count **code lines** only: physical lines that have code. **Blank lines do not count.** Comment lines do not count: a full-line `//` comment, and every line of a `/* */` block (including the file header). A line that mixes code and an end-of-line `//` comment still counts as one code line. The same count is the 150-line command rule and the 400-line split rule. The file header in section 4 is required at any length.
 
 - If one change touches a `.ts`, `.tsx`, or `.css` file over **400** code lines, review whether to split it. New files from that split stay under 400 code lines.
 - Command files under `background/wallet/`: under **150** code lines stay one file. At 150 code lines or more, move the group into that command's folder and keep functions that change together in the same module. The 150-line rule does not recurse. A module inside the folder may exceed 150 code lines if the comment is still one responsibility and the file stays under 400 code lines.
@@ -41,7 +60,7 @@ Count **code lines** only: physical lines that have code. **Blank lines do not c
 
 Opening a version reminds the user of files that miss these sizes or headers. The reminder does not itself schedule a split. The thresholds are in the version-delivery skill.
 
-## 4. Folder structure
+## 6. Folder structure
 
 A folder is a module boundary, not a label.
 
@@ -67,7 +86,7 @@ A folder is a module boundary, not a label.
 - Popup CSS lives in `popup/styles/`, imported in order from `popup/style.css`. Popout CSS lives in `popout/styles/`, imported from `popout/style.css`.
 - A CSS file sits next to a component only when those classes belong to that component alone. `approval/tx-ai.css` is that case. Shared controls stay in the catalog.
 
-## 5. What a change may mix
+## 7. What a change may mix
 
 A single change is one of these, not several:
 

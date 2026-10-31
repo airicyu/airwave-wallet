@@ -50,12 +50,19 @@ export function cloneRpcByCluster(
   };
 }
 
-export async function patchRpcByCluster(next: Record<Cluster, ClusterRpcConfig>, io: SettingsIo, locale: UiLocale): Promise<void> {
+export async function patchRpcByCluster(
+  next: Record<Cluster, ClusterRpcConfig>,
+  io: SettingsIo,
+  locale: UiLocale,
+): Promise<boolean> {
   const res = await sendExtensionRequest("storage.patchSettings", { rpcByCluster: next });
   if (!res.ok) {
     if (res.error?.code === "INVALID_RPC") io.showError(t(locale, "error.invalidRpcUrl"));
     else io.showError(apiErrorMessage(locale, res.error, "error.saveRpcFailed"));
-  } else await io.refresh();
+    return false;
+  }
+  await io.refresh();
+  return true;
 }
 
 export async function patchSettingsPartial(patch: Partial<Settings>, io: SettingsIo, locale: UiLocale): Promise<boolean> {

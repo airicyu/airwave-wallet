@@ -13,6 +13,7 @@ export type AirwaveCommand =
   | "ui.getPending"
   | "ui.resolvePending"
   | "ui.simulatePendingTx"
+  | "ui.probeSignBlockhash"
   | "ui.abortPending"
   | "wallet.unlock"
   | "wallet.lock"
@@ -150,6 +151,13 @@ export type WalletSendProgressNotice = {
   /** False when sendTransaction preflight rejected the tx (never landed). */
   landed?: boolean;
   signature?: string;
+};
+
+export type BlockhashProbeSide = "valid" | "invalid" | "unknown";
+
+export type BlockhashProbeResult = {
+  devnet: BlockhashProbeSide;
+  mainnet: BlockhashProbeSide;
 };
 
 export type ResolvePendingPayload = {

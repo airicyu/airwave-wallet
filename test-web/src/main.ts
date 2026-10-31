@@ -41,6 +41,7 @@ import { createKeyPairFromPrivateKeyBytes } from "@solana/keys";
 import { getTransferSolInstruction } from "@solana-program/system";
 
 const DEVNET_RPC = "https://api.devnet.solana.com";
+const MAINNET_PUBLIC_RPC = "https://api.mainnet-beta.solana.com";
 const LAMPORTS_PER_SOL = 1_000_000_000n;
 
 const logEl = document.getElementById("log")!;
@@ -59,6 +60,9 @@ const btnSignAndSendTxStdFail = document.getElementById(
   "sign-and-send-tx-std-fail",
 ) as HTMLButtonElement;
 const btnSignTxFail = document.getElementById("sign-tx-fail") as HTMLButtonElement;
+const btnSignTxClusterMismatch = document.getElementById(
+  "sign-tx-cluster-mismatch",
+) as HTMLButtonElement;
 const btnAirdrop = document.getElementById("airdrop") as HTMLButtonElement;
 
 function log(...args: unknown[]): void {
@@ -89,6 +93,7 @@ function enableSigning(addressStr: string | undefined): void {
   btnSignAndSendTxStd.disabled = !ok;
   btnSignAndSendTxStdFail.disabled = !ok;
   btnSignTxFail.disabled = !ok;
+  btnSignTxClusterMismatch.disabled = !ok;
   btnAirdrop.disabled = !ok;
   if (addressStr) setStatus(`已連線：${addressStr}`);
 }
@@ -139,6 +144,38 @@ async function buildSelfTransferTx(
   lamportsAmount: bigint,
 ): Promise<Uint8Array> {
   const latest = await rpc().getLatestBlockhash({ commitment: "confirmed" }).send();
+  const txMessage = pipe(
+    createTransactionMessage({ version: 0 }),
+    (m) => setTransactionMessageFeePayer(fromAddress, m),
+    (m) =>
+      setTransactionMessageLifetimeUsingBlockhash(
+        {
+          blockhash: latest.value.blockhash,
+          lastValidBlockHeight: latest.value.lastValidBlockHeight,
+        },
+        m,
+      ),
+    (m) =>
+      appendTransactionMessageInstruction(
+        getTransferSolInstruction({
+          source: createNoopSigner(fromAddress),
+          destination: fromAddress,
+          amount: lamportsAmount,
+        }),
+        m,
+      ),
+  );
+  const tx = compileTransaction(txMessage);
+  return new Uint8Array(getTransactionEncoder().encode(tx));
+}
+
+async function buildSelfTransferTxWithBlockhashRpc(
+  fromAddress: ReturnType<typeof address>,
+  lamportsAmount: bigint,
+  blockhashRpcUrl: string,
+): Promise<Uint8Array> {
+  const client = createSolanaRpc(blockhashRpcUrl);
+  const latest = await client.getLatestBlockhash({ commitment: "confirmed" }).send();
   const txMessage = pipe(
     createTransactionMessage({ version: 0 }),
     (m) => setTransactionMessageFeePayer(fromAddress, m),
@@ -374,6 +411,47 @@ btnSignTxFail.addEventListener("click", async () => {
     log("Signed fail-case tx base58:", bs58.encode(out.signedTransaction));
   } catch (e) {
     log("Sign fail-case tx error:", e instanceof Error ? e.message : e);
+  }
+});
+
+btnSignTxClusterMismatch.addEventListener("click", async () => {
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as
+      | StandardConnectFeature[typeof StandardConnect]
+      | undefined;
+    const signTx = wallet.features[SolanaSignTransaction] as
+      | SolanaSignTransactionFeature[typeof SolanaSignTransaction]
+      | undefined;
+    if (!connect || !signTx) return;
+
+    const { accounts } = await connect.connect({ silent: true });
+    const account = accounts[0];
+    if (!account) throw new Error("no account");
+
+    const walletChain = account.chains.find((c) => c.startsWith("solana:")) ?? "solana:devnet";
+    const blockhashRpc =
+      walletChain === "solana:mainnet" ? DEVNET_RPC : MAINNET_PUBLIC_RPC;
+    log(
+      "Cluster mismatch sample: omit chain; blockhash from",
+      blockhashRpc,
+      "(does not broadcast)",
+    );
+
+    const tx = await buildSelfTransferTxWithBlockhashRpc(
+      address(account.address),
+      0n,
+      blockhashRpc,
+    );
+
+    await signTx.signTransaction({
+      account,
+      transaction: tx,
+    });
+    log("Unexpected: cluster mismatch approval should stay disabled");
+  } catch (e) {
+    const err = e as Error & { code?: string };
+    log("Cluster mismatch sign error:", err.code ?? "", err.message ?? e);
   }
 });
 

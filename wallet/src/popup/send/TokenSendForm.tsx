@@ -4,7 +4,7 @@
  */
 import type { JSX } from "react";
 import { useCallback, useEffect, useState } from "react";
-import { NATIVE_SOL_ID } from "../home/home-tokens";
+import { NATIVE_SOL_ID } from "../../shared/home";
 import { messageForErrorCode } from "../../shared/i18n";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";

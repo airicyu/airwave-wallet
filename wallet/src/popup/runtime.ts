@@ -3,7 +3,7 @@
  * Does not own React wallet state or chrome.storage mirroring.
  */
 import { isHomeView } from "./lib/format";
-import type { HomeTokenRow } from "./home/home-tokens";
+import type { HomeTokenRow } from "../shared/home";
 import { t, type UiLocale } from "../shared/i18n";
 import { SUBPAGE_TITLE_KEYS, type View } from "./types";
 

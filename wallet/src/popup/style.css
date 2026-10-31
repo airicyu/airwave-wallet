@@ -1,7 +1,13 @@
-/* Popup CSS catalog. Shared rules live in this folder. approval/tx-ai.css stays with the tx-ai widget. */
+/* Popup CSS catalog. Shared rules live in this folder. approval/tx-ai.css and approval/connect-consent.css stay with the approval UI. */
 @import './styles/onboarding.css';
 @import './styles/accounts.css';
-@import './styles/settings.css';
+@import './styles/settings-rpc-guide.css';
+@import './styles/settings-idle-lock.css';
+@import './styles/settings-tx-ai.css';
+@import './styles/settings-hub.css';
+@import './styles/settings-network.css';
+@import './styles/settings-rpc.css';
+@import './styles/settings-tx-ai-chain.css';
 @import './styles/home.css';
 @import './styles/send.css';
 @import './styles/address-cards.css';

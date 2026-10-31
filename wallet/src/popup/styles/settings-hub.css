@@ -1,0 +1,37 @@
+.settings-hub-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-elevated);
+}
+
+.settings-hub-list li {
+  border-bottom: 1px solid var(--stroke-soft);
+}
+
+.settings-hub-list li:last-child {
+  border-bottom: 0;
+}
+
+.settings-hub-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.settings-hub-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}

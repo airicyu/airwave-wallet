@@ -1,0 +1,267 @@
+.rpc-cluster-card {
+  margin-bottom: 14px;
+}
+
+.rpc-cluster-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.rpc-cluster-head h3 {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.rpc-cluster-badge {
+  font-size: 0.68rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.keys-input-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.keys-input-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.keys-reveal-btn,
+.keys-confirm-btn,
+.keys-discard-btn,
+.keys-edit-btn {
+  flex-shrink: 0;
+}
+
+.keys-confirm-btn {
+  color: var(--ok);
+}
+
+.keys-discard-btn {
+  color: var(--danger);
+}
+
+.keys-confirm-btn:hover,
+.keys-confirm-btn:focus-visible {
+  color: var(--ok);
+}
+
+.keys-discard-btn:hover,
+.keys-discard-btn:focus-visible {
+  color: var(--danger);
+}
+
+.keys-confirm-btn.is-pressed,
+.keys-discard-btn.is-pressed {
+  transform: scale(0.86);
+}
+
+.keys-confirm-btn.is-pressed {
+  background: color-mix(in srgb, var(--ok) 18%, transparent);
+}
+
+.keys-discard-btn.is-pressed {
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+}
+
+.settings-now {
+  border: 1px solid var(--stroke);
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 10px;
+  margin-bottom: 14px;
+}
+
+.now-kicker {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+.now-rpc {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.now-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ecb8d;
+  flex-shrink: 0;
+}
+
+.now-rpc-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.now-rpc-text .lbl {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+
+.now-rpc-text .url {
+  display: block;
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settings-card {
+  border: 1px solid var(--stroke);
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.rpc-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--stroke-soft);
+}
+
+.rpc-tab {
+  border: 0;
+  background: transparent;
+  color: var(--text-dim);
+  padding: 8px 6px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+}
+
+.rpc-tab.on {
+  color: var(--text);
+}
+
+.rpc-tab.on::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 0;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+}
+
+.rpc-list {
+  padding: 6px 6px 4px;
+}
+
+.rpc-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 4px 4px 6px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+}
+
+.rpc-row.selected {
+  background: #15202c;
+}
+
+.rpc-row input[type="radio"] {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  flex: 0 0 14px;
+  accent-color: var(--accent);
+}
+
+.rpc-url-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  padding: 6px 2px;
+  font: inherit;
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+}
+
+.rpc-badge {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  padding: 1px 6px;
+}
+
+.rpc-edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px 8px 26px;
+}
+
+.rpc-edit input {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  margin: 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+}
+
+.rpc-add-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 4px 8px 10px;
+}
+
+.rpc-icon-btn {
+  width: 28px;
+  height: 28px;
+}
+
+.rpc-edit .rpc-icon-btn:not(.danger) {
+  color: var(--ok);
+}
+
+.rpc-edit .rpc-icon-btn:not(.danger):hover,
+.rpc-edit .rpc-icon-btn:not(.danger):focus-visible {
+  color: var(--ok);
+}
+
+.rpc-icon-btn.danger {
+  color: var(--danger);
+}
+
+.rpc-icon-btn.danger:hover,
+.rpc-icon-btn.danger:focus-visible {
+  color: var(--danger);
+}

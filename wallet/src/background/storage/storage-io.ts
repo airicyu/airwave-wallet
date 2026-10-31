@@ -165,7 +165,7 @@ function normalizeTxAiFields(raw: Partial<Settings> | undefined): {
 }
 
 export function normalizeSettings(raw: Partial<Settings> | undefined): Settings {
-  const cluster = raw?.cluster === "mainnet" ? "mainnet" : "devnet";
+  const cluster = raw?.cluster === "devnet" ? "devnet" : "mainnet";
   const rpcByCluster = normalizeRpcByCluster(raw, cluster);
   const txAi = normalizeTxAiFields(raw);
   return {
@@ -187,6 +187,8 @@ export function normalizeSettings(raw: Partial<Settings> | undefined): Settings 
     idleAutoLockEnabled: normalizeIdleAutoLockEnabled(raw?.idleAutoLockEnabled),
     idleAutoLockMinutes: normalizeIdleAutoLockMinutes(raw?.idleAutoLockMinutes),
     debugModeEnabled: raw?.debugModeEnabled === true,
+    mainnetBlockhashRpcUrl:
+      typeof raw?.mainnetBlockhashRpcUrl === "string" ? raw.mainnetBlockhashRpcUrl.trim() : "",
   };
 }
 

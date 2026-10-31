@@ -14,7 +14,8 @@
 .send-status-mode > .top-bar,
 .send-status-mode .site-row,
 .send-status-mode .bar-wallet-group,
-.send-status-mode .page-title {
+.send-status-mode .page-title,
+.send-status-mode .cluster-strip {
   display: none !important;
 }
 
