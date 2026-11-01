@@ -10,22 +10,41 @@ description: >-
 
 劇本在 [`test/e2e/scenarios/`](../../../test/e2e/scenarios/)。服務怎麼起、錢包要設成什麼，以 [`test/e2e/README.md`](../../../test/e2e/README.md) 為準。錄製檔在錢包倉庫外面，不要複製進這個倉庫。
 
-對使用者用繁體中文回報。不要把密碼、助記詞寫進劇本或回報。
+**主要執行主機**是 Grok Bot 雲端電腦（`/home/box`），不是 Windows。對使用者用繁體中文回報。不要把密碼、助記詞、API key 寫進劇本或回報。
+
+## 錄製目錄
+
+Mock 與 preflight 解析順序：
+
+1. `AIRWAVE_RECORDINGS`
+2. `/home/box/airwave-api-recordings`（目錄存在時；box 預設）
+3. 倉庫同層 `airwave-wallet-api-recording`
 
 ## 開跑前
 
-1. 這台機器上的擴充功能是本次要測的那個未封裝目錄（通常是 `wallet/dist`）。
-2. 啟動 `bun run e2e-mock`，確認 `http://127.0.0.1:8787/health` 回 `ok: true`。
-3. 每一則劇本單獨執行 `bun run e2e-validator`，等 RPC `http://127.0.0.1:8899` 可連。不要沿用上一則的帳本。
-4. 照 README 的「錢包設定」在 popup 設好。Mainnet 不要選自訂 RPC。
-5. 領取測試 SOL 用 `solana airdrop`，URL 為 `http://127.0.0.1:8899`。
+1. 執行 `bun run e2e-preflight`。硬失敗（`solana`／`solana-test-validator` 不在 PATH，或缺五份 mock fixture）就停，先修好再跑劇本。Mock 未起或 `wallet/dist` 缺檔是警告，可接著起服務或建置。
+2. 載入未封裝擴充：Chrome → 管理擴充功能 →「載入未封裝的項目」→ 選本倉庫的 `wallet/dist`（須含 `manifest.json`）。
+3. 打開錢包殼時**優先 Side panel**：先點工具列圖示開 popup，再在殼內切到側欄（sidebar）。**不要**直接開裸的 `popout`／`approval` URL。側欄開著時，連線與簽名核准會在側欄殼內；否則才會出現審批 popout 視窗。
+4. 啟動 `bun run e2e-mock`，確認 `http://127.0.0.1:8787/health` 回 `ok: true`。
+5. 每一則劇本單獨執行 `bun run e2e-validator`，等 RPC `http://127.0.0.1:8899` 可連。不要沿用上一則的帳本。
+6. 啟動 `bun run test-web`。
+7. 照 README 的「錢包設定」在 Side panel 設好。Mainnet 不要選自訂 RPC。
+8. 領取測試 SOL 用 `solana airdrop`，URL 為 `http://127.0.0.1:8899`。
+
+## 解鎖
+
+解鎖密碼只存在 bot 自己的 vault。需要解鎖時用 vault 填入，**不要**讀寫密碼到劇本、截圖說明、或回報文字。
 
 ## 操作
 
-- 只做該劇本寫的步驟。核准、拒絕、連線允許都在擴充功能另外打開的視窗裡，不在原本的網頁分頁。
+- 只做該劇本寫的步驟。核准、拒絕、連線允許都在擴充功能殼內（Side panel）或另外打開的審批視窗裡，不在原本的網頁分頁。
 - `test-web` 必須帶劇本寫的 `rpc` 與 `otherRpc`。Log 裡的 RPC 和劇本不一致就停止，不要繼續簽名。
 - 簽名探針會打 Devnet RPC 與 Mainnet blockhash RPC。前者是驗證器，後者是 mock。Mock 只對它自己的固定 blockhash 回有效。
 - 活動、Jupiter、OpenRouter 的回應來自錄製 fixture。不要改那些檔來湊過一則劇本；要換資料時改錄製目錄的 fixture，再重跑 mock。
+
+## Alpenglow 與確認
+
+本機 `solana-test-validator` 在 Alpenglow 後約 150ms 就會 finalize。錢包／劇本把「已確認」當成 finalized-only 即可，不必再等一段 confirmed 中間態。劇本 `01-devnet-sign-and-send` 仍核對 `test-web` **實際印出的** log：`Broadcast signature:` 與 `Confirmed:`（`test-web/src/main.ts` 在 `confirmed` 或 `finalized` 後都寫 `Confirmed:`，沒有改成 `Finalized:`）。
 
 ## 判定
 

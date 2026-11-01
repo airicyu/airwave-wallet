@@ -2,7 +2,7 @@
 
 ## Next
 
-e2e scenarios, a local mock for Helius, Jupiter, and OpenRouter, and a Devnet path that can target a local validator. Helius accepts a localhost HTTP origin so that mock can be selected in settings.
+e2e harness for the Grok Bot cloud box: recordings path resolution (`AIRWAVE_RECORDINGS` / `/home/box/airwave-api-recordings`), `e2e-preflight`, and Side-panel-first agent skill docs. Helius accepts a localhost HTTP origin so the mock can be selected in settings.
 
 ## 0.53.0 — 2026-10-31
 

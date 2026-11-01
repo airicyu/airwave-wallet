@@ -8,4 +8,4 @@ After the user assigns the batch, move the items into that version's INDEX and c
 
 ## Current
 
-- e2e harness under `test/e2e` (scenarios, mock server, `e2e-validator` script) and `.agents/skills/e2e-wallet`. Helius settings accept `http://127.0.0.1` and `http://localhost`. `test-web` reads `rpc` and `otherRpc` query params.
+- e2e harness under `test/e2e` (scenarios, mock server, `e2e-validator` / `e2e-preflight` scripts) and `.agents/skills/e2e-wallet`, aimed at the Grok Bot cloud box (`AIRWAVE_RECORDINGS` / `/home/box/airwave-api-recordings`). Helius settings accept `http://127.0.0.1` and `http://localhost`. `test-web` reads `rpc` and `otherRpc` query params.
