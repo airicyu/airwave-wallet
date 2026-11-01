@@ -2,7 +2,7 @@
 
 ## Next
 
-None.
+e2e scenarios, a local mock for Helius, Jupiter, and OpenRouter, and a Devnet path that can target a local validator. Helius accepts a localhost HTTP origin so that mock can be selected in settings.
 
 ## 0.53.0 — 2026-10-31
 

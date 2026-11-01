@@ -8,4 +8,4 @@ After the user assigns the batch, move the items into that version's INDEX and c
 
 ## Current
 
-None. The previous batch shipped in [0.53.0](./0.53.0/INDEX.md).
+- e2e harness under `test/e2e` (scenarios, mock server, `e2e-validator` script) and `.agents/skills/e2e-wallet`. Helius settings accept `http://127.0.0.1` and `http://localhost`. `test-web` reads `rpc` and `otherRpc` query params.

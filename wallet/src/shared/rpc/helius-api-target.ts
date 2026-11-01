@@ -1,5 +1,6 @@
 /**
  * Resolves Settings heliusApiUrl into an enhanced-tx REST origin and optional key.
+ * Accepts https origins and http://127.0.0.1 or http://localhost for a local mock.
  * Does not fetch Helius or treat this URL as JSON-RPC.
  */
 
@@ -25,11 +26,21 @@ function stripTrailingSlash(s: string): string {
   return s.replace(/\/+$/, "");
 }
 
+function isLocalHttp(url: string): boolean {
+  if (!url.startsWith("http://")) return false;
+  try {
+    const host = new URL(url).hostname;
+    return host === "127.0.0.1" || host === "localhost";
+  } catch {
+    return false;
+  }
+}
+
 export function resolveHeliusApiTarget(heliusApiUrl: string): HeliusApiTarget | null {
   const t = heliusApiUrl.trim();
   if (!t) return null;
 
-  if (t.startsWith("https://")) {
+  if (t.startsWith("https://") || isLocalHttp(t)) {
     let u: URL;
     try {
       u = new URL(t);

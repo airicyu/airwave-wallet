@@ -2,6 +2,8 @@
   "name": "airwave-wallet",
   "private": true,
   "scripts": {
+    "e2e-mock": "bun test/e2e/mock-server.mjs",
+    "e2e-validator": "solana-test-validator --reset --quiet --bind-address 127.0.0.1 --rpc-port 8899 --faucet-port 9900",
     "test-web": "bun run --cwd test-web start",
     "build": "bun run --cwd wallet build"
   }

@@ -40,8 +40,9 @@ import {
 import { createKeyPairFromPrivateKeyBytes } from "@solana/keys";
 import { getTransferSolInstruction } from "@solana-program/system";
 
-const DEVNET_RPC = "https://api.devnet.solana.com";
-const MAINNET_PUBLIC_RPC = "https://api.mainnet-beta.solana.com";
+const query = new URLSearchParams(location.search);
+const DEVNET_RPC = query.get("rpc")?.trim() || "https://api.devnet.solana.com";
+const MAINNET_PUBLIC_RPC = query.get("otherRpc")?.trim() || "https://api.mainnet-beta.solana.com";
 const LAMPORTS_PER_SOL = 1_000_000_000n;
 
 const logEl = document.getElementById("log")!;
@@ -68,6 +69,9 @@ const btnAirdrop = document.getElementById("airdrop") as HTMLButtonElement;
 function log(...args: unknown[]): void {
   logEl.textContent += `${args.map(String).join(" ")}\n`;
 }
+
+log("RPC", DEVNET_RPC);
+log("Other cluster RPC", MAINNET_PUBLIC_RPC);
 
 function setStatus(text: string): void {
   statusEl.textContent = text;
