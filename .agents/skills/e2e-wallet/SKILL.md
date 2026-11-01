@@ -8,20 +8,19 @@ description: >-
 
 # Airwave e2e
 
-劇本在 [`test/e2e/scenarios/`](../../../test/e2e/scenarios/)。服務怎麼起、錢包要設成什麼，以 [`test/e2e/README.md`](../../../test/e2e/README.md) 為準。錄製檔在錢包倉庫外面，不要複製進這個倉庫。
+劇本在 [`test/e2e/scenarios/`](../../../test/e2e/scenarios/)。服務怎麼起、錢包要設成什麼，以 [`test/e2e/README.md`](../../../test/e2e/README.md) 為準。
 
 對使用者用繁體中文回報。不要把密碼、助記詞、API key 寫進劇本或回報。
 
-## 錄製目錄
+## Mock 資料
 
-執行端設定錄製根目錄。Mock 與 preflight 解析順序：
+執行期 mock 讀本倉庫 [`test/e2e/fixtures/`](../../../test/e2e/fixtures/)（可編輯、已消毒）。消毒規則見該目錄 `README.md`。可選 `AIRWAVE_E2E_FIXTURES` 覆寫根目錄。
 
-1. `AIRWAVE_RECORDINGS`（若有設定）
-2. 倉庫同層 sibling `airwave-wallet-api-recording`
+倉庫外的 `airwave-wallet-api-recording`（若有）只是 capture 來源：e2e **不要**改它。要刷新 mock：從錄製 copy → sanitize → 替換 `test/e2e/fixtures/`。不要把未消毒錄製當 runtime store，也不要為了過劇本去改外部錄製樹。
 
 ## 開跑前
 
-1. 執行 `bun run e2e-preflight`。硬失敗（`solana`／`solana-test-validator` 不在 PATH，或缺五份 mock fixture）就停，先修好再跑劇本。Mock 未起或 `wallet/dist` 缺檔是警告，可接著起服務或建置。
+1. 執行 `bun run e2e-preflight`。硬失敗（`solana`／`solana-test-validator` 不在 PATH，或缺五份 in-repo fixture）就停，先修好再跑劇本。Mock 未起或 `wallet/dist` 缺檔是警告，可接著起服務或建置。
 2. 載入未封裝擴充：Chrome → 管理擴充功能 →「載入未封裝的項目」→ 選本倉庫的 `wallet/dist`（須含 `manifest.json`）。
 3. 打開錢包殼時**優先 Side panel**：先點工具列圖示開 popup，再在殼內切到側欄（sidebar）。**不要**直接開裸的 `popout`／`approval` URL。側欄開著時，連線與簽名核准會在側欄殼內；否則才會出現審批 popout 視窗。
 4. 啟動 `bun run e2e-mock`，確認 `http://127.0.0.1:8787/health` 回 `ok: true`。
@@ -39,7 +38,7 @@ description: >-
 - 只做該劇本寫的步驟。核准、拒絕、連線允許都在擴充功能殼內（Side panel）或另外打開的審批視窗裡，不在原本的網頁分頁。
 - `test-web` 必須帶劇本寫的 `rpc` 與 `otherRpc`。Log 裡的 RPC 和劇本不一致就停止，不要繼續簽名。
 - 簽名探針會打 Devnet RPC 與 Mainnet blockhash RPC。前者是驗證器，後者是 mock。Mock 只對它自己的固定 blockhash 回有效。
-- 活動、Jupiter、OpenRouter 的回應來自錄製 fixture。不要改那些檔來湊過一則劇本；要換資料時改錄製目錄的 fixture，再重跑 mock。
+- 活動、Jupiter、OpenRouter 的回應來自 `test/e2e/fixtures`。要換資料時 sanitize 後改那裡的檔，再重跑 mock；不要改外部錄製目錄來湊過劇本。
 
 ## Alpenglow 與確認
 

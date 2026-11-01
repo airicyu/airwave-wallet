@@ -1,7 +1,7 @@
 /**
  * Hard checks before an agent-driven e2e run: Solana CLI on PATH, and the five
- * mock fixture response.json files under the recordings root. Soft-warns when
- * the mock is down or wallet/dist is missing. Never prints secrets.
+ * in-repo mock fixtures under test/e2e/fixtures. Soft-warns when the mock is
+ * down or wallet/dist is missing. Never prints secrets.
  * Run: bun test/e2e/preflight.mjs  (or: bun run e2e-preflight)
  */
 import fs from "node:fs";
@@ -11,20 +11,17 @@ import { spawnSync } from "node:child_process";
 
 const e2eDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(e2eDir, "../..");
-const siblingRecordings = path.resolve(e2eDir, "../../../airwave-wallet-api-recording");
+const fixturesDir = path.resolve(
+  process.env.AIRWAVE_E2E_FIXTURES || path.join(e2eDir, "fixtures"),
+);
 
 const REQUIRED_FIXTURES = [
-  "fixtures/jupiter/jupiter-tokens-v2-search__mainnet/response.json",
-  "fixtures/helius/helius-v0-addresses-transactions__mainnet/response.json",
-  "fixtures/helius/helius-v0-addresses-transactions__page2__mainnet/response.json",
-  "fixtures/openrouter/openrouter-chat-completions__mainnet/response.json",
-  "fixtures/openrouter/openrouter-decisions__mainnet/response.json",
+  "jupiter/tokens-v2-search.json",
+  "helius/address-transactions-page1.json",
+  "helius/address-transactions-page2.json",
+  "openrouter/chat-completions.json",
+  "openrouter/decisions.json",
 ];
-
-function resolveRecordingsDir() {
-  if (process.env.AIRWAVE_RECORDINGS) return path.resolve(process.env.AIRWAVE_RECORDINGS);
-  return siblingRecordings;
-}
 
 function onPath(bin) {
   const r = spawnSync(bin, ["--version"], { encoding: "utf8" });
@@ -57,13 +54,12 @@ if (!onPath("solana-test-validator")) {
   print("ok: solana-test-validator on PATH");
 }
 
-const recordings = resolveRecordingsDir();
-print(`recordings root: ${recordings}`);
-if (!fs.existsSync(recordings) || !fs.statSync(recordings).isDirectory()) {
-  hardFails.push(`recordings directory missing: ${recordings}`);
+print(`fixtures root: ${fixturesDir}`);
+if (!fs.existsSync(fixturesDir) || !fs.statSync(fixturesDir).isDirectory()) {
+  hardFails.push(`fixtures directory missing: ${fixturesDir}`);
 } else {
   for (const rel of REQUIRED_FIXTURES) {
-    const full = path.join(recordings, rel);
+    const full = path.join(fixturesDir, rel);
     if (!fs.existsSync(full)) {
       hardFails.push(`fixture missing: ${rel}`);
     } else {

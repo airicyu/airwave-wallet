@@ -2,7 +2,7 @@
 
 ## Next
 
-e2e harness: recordings via `AIRWAVE_RECORDINGS` or the sibling `airwave-wallet-api-recording` folder, `e2e-preflight`, and Side-panel-first agent skill docs. Helius accepts a localhost HTTP origin so the mock can be selected in settings.
+e2e harness: in-repo sanitized mock fixtures under `test/e2e/fixtures`, `e2e-preflight`, and Side-panel-first agent skill docs. External recordings stay capture-only. Helius accepts a localhost HTTP origin so the mock can be selected in settings.
 
 ## 0.53.0 — 2026-10-31
 

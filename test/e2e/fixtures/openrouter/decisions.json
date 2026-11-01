@@ -1,0 +1,23 @@
+{
+  "model": "liquid/d1-20260930",
+  "answers": {
+    "level": {
+      "type": "choice",
+      "choice": "low",
+      "probabilities": {
+        "low": 0.9517678958545497,
+        "watch": 0.00040996689095385035,
+        "high": 0.000436407483760156,
+        "unknown": 0.04738572977073636
+      },
+      "confidence": 0.9356905278060662
+    }
+  },
+  "usage": {
+    "input_tokens": 564,
+    "output_tokens": 0,
+    "cost": 1.128e-05
+  },
+  "id": "gen-dec-1793442967-bFmBDcbfeJE8azhKdJ4g",
+  "provider": "Liquid"
+}

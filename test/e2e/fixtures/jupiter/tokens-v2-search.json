@@ -1,0 +1,127 @@
+[
+  {
+    "id": "So11111111111111111111111111111111111111112",
+    "name": "Wrapped SOL",
+    "symbol": "SOL",
+    "icon": "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+    "decimals": 9,
+    "circSupply": 589764135.1913525,
+    "totalSupply": 636395891.9350573,
+    "tokenProgram": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    "holderCount": 3820662,
+    "fdv": 64404777655.10268,
+    "mcap": 59685532979.25612,
+    "usdPrice": 101.2023780657513,
+    "priceBlockId": 461328212,
+    "liquidity": 920216896.8143483,
+    "stats5m": {
+      "priceChange": -0.15541808833736914,
+      "liquidityChange": -0.025028516232038493,
+      "volumeChange": 8.92338591213582,
+      "buyVolume": 5239810.959194795,
+      "sellVolume": 5599878.74830065,
+      "buyOrganicVolume": 41135.00095640383,
+      "sellOrganicVolume": 36404.92441220638,
+      "numBuys": 44524,
+      "numSells": 61103,
+      "numTraders": 31560,
+      "numOrganicBuyers": 409,
+      "numNetBuyers": 6991
+    },
+    "stats1h": {
+      "priceChange": -0.40920336750017944,
+      "liquidityChange": -0.092836424535346,
+      "volumeChange": -13.561284587687233,
+      "buyVolume": 52472236.6990892,
+      "sellVolume": 52995590.69217602,
+      "buyOrganicVolume": 510532.2710906611,
+      "sellOrganicVolume": 499741.633191385,
+      "numBuys": 540443,
+      "numSells": 726482,
+      "numTraders": 188777,
+      "numOrganicBuyers": 1007,
+      "numNetBuyers": 41654
+    },
+    "stats6h": {
+      "priceChange": 0.604793232125532,
+      "liquidityChange": 0.210174553898061,
+      "volumeChange": 6.401151278581634,
+      "buyVolume": 293817290.1858916,
+      "sellVolume": 293994982.4620862,
+      "buyOrganicVolume": 2916229.2591063273,
+      "sellOrganicVolume": 3047635.4353659945,
+      "numBuys": 2733619,
+      "numSells": 3873171,
+      "numTraders": 388828,
+      "numOrganicBuyers": 3109,
+      "numNetBuyers": 70950
+    },
+    "stats24h": {
+      "priceChange": 1.5414084213220889,
+      "liquidityChange": 0.7974925802521251,
+      "volumeChange": -9.664628553215712,
+      "buyVolume": 1128476144.4970398,
+      "sellVolume": 1128805631.1490908,
+      "buyOrganicVolume": 11894851.053096667,
+      "sellOrganicVolume": 10788706.731348556,
+      "numBuys": 11305486,
+      "numSells": 15933139,
+      "numTraders": 952343,
+      "numOrganicBuyers": 7432,
+      "numNetBuyers": 126649
+    },
+    "firstPool": {
+      "id": "58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2",
+      "createdAt": "2021-03-29T10:05:48Z"
+    },
+    "apy": {
+      "jupEarn": 3.9040811251424667
+    },
+    "audit": {
+      "mintAuthorityDisabled": true,
+      "freezeAuthorityDisabled": true,
+      "topHoldersPercentage": 0.5789457423464919,
+      "devMints": 1
+    },
+    "organicScore": 98.98283306514209,
+    "organicScoreLabel": "high",
+    "isVerified": true,
+    "tags": [
+      "community",
+      "moonshot-verified",
+      "strict",
+      "verified",
+      "major"
+    ],
+    "createdAt": "2024-06-05T08:55:25.527Z",
+    "updatedAt": "2026-10-25T16:39:19.731162399Z"
+  },
+  {
+    "id": "QyQLm6m4ncSeDhTGKEMzwzAJj9ksmSgovK6LwZdYsZC",
+    "name": "TUMBUK Coin",
+    "symbol": "TUMBUK",
+    "icon": "https://ipfs.io/ipfs/QmW3yrVCcSWeLgw5E3emY7yxEvUUs8CzEGQ1Yj8t4peB4A",
+    "decimals": 9,
+    "dev": "GKo5Bsy9aRmii3b1S7Q4hGZh1VsdCSSdDocaZ38p6pko",
+    "circSupply": 3635036793.8831406,
+    "totalSupply": 3635036793.8831406,
+    "tokenProgram": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    "holderCount": 133,
+    "firstPool": {
+      "id": "FPSKpwZcLpHvhroebGpmJZeVa5ycXeQ8PvKMmfmDHBrf",
+      "createdAt": "2024-07-10T23:01:27.339Z"
+    },
+    "audit": {
+      "mintAuthorityDisabled": true,
+      "freezeAuthorityDisabled": true,
+      "topHoldersPercentage": 75.20583525465912
+    },
+    "organicScore": 0,
+    "organicScoreLabel": "low",
+    "tags": [
+      "unknown"
+    ],
+    "createdAt": "2024-07-11T00:00:31.408Z",
+    "updatedAt": "0001-01-01T00:00:00Z"
+  }
+]

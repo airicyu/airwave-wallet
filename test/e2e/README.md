@@ -2,12 +2,13 @@
 
 可重複劇本在 `scenarios/`。執行者是能操作 Chrome 的 agent（或人工），步驟見 [`.agents/skills/e2e-wallet/SKILL.md`](../../.agents/skills/e2e-wallet/SKILL.md)。
 
-錄製與 fixture **不**放在這個倉庫。執行端自行設定錄製根目錄。Mock／preflight 解析順序：
+## Mock 資料
 
-1. 環境變數 `AIRWAVE_RECORDINGS`（若有設定）
-2. 倉庫同層 sibling 目錄 `airwave-wallet-api-recording`（相對 `test/e2e` 為 `../../../airwave-wallet-api-recording`）
+執行期 mock 讀 **本倉庫** [`fixtures/`](./fixtures/)（可編輯、已消毒的 response body）。說明與消毒規則見 [`fixtures/README.md`](./fixtures/README.md)。可用環境變數 `AIRWAVE_E2E_FIXTURES` 覆寫根目錄；預設不需要、也不應依賴 `AIRWAVE_RECORDINGS`。
 
-開跑前先執行 preflight（硬失敗：Solana CLI 或缺 fixture；mock 未起或 `wallet/dist` 缺檔只警告）：
+倉庫外的 `airwave-wallet-api-recording`（若有）只當 **capture 來源**：e2e 工作**不要**改它，也不要把未消毒的錄製直接當 runtime mock。要更新 mock 時：從錄製 copy → sanitize → 替換 `test/e2e/fixtures/` 裡的檔案。
+
+開跑前先執行 preflight（硬失敗：Solana CLI 或缺 in-repo fixture；mock 未起或 `wallet/dist` 缺檔只警告）：
 
 ```text
 bun run e2e-preflight

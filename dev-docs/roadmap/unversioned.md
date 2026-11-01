@@ -8,4 +8,4 @@ After the user assigns the batch, move the items into that version's INDEX and c
 
 ## Current
 
-- e2e harness under `test/e2e` (scenarios, mock server, `e2e-validator` / `e2e-preflight` scripts) and `.agents/skills/e2e-wallet`. Recordings resolve from `AIRWAVE_RECORDINGS` or the sibling `airwave-wallet-api-recording` folder. Helius settings accept `http://127.0.0.1` and `http://localhost`. `test-web` reads `rpc` and `otherRpc` query params.
+- e2e harness under `test/e2e` (scenarios, mock server, in-repo `fixtures/`, `e2e-validator` / `e2e-preflight` scripts) and `.agents/skills/e2e-wallet`. External recordings are capture-only; runtime mock data is sanitized under `test/e2e/fixtures`. Helius settings accept `http://127.0.0.1` and `http://localhost`. `test-web` reads `rpc` and `otherRpc` query params.
