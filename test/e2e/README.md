@@ -1,12 +1,11 @@
 # Airwave e2e
 
-可重複劇本在 `scenarios/`。**主要執行主機**是 Grok Bot 雲端電腦（`/home/box`），在雲端 Chrome 裡由 bot 操作；步驟見 [`.agents/skills/e2e-wallet/SKILL.md`](../../.agents/skills/e2e-wallet/SKILL.md)。本機 Windows 仍可用同層錄製目錄跑，但不是主要 runner。
+可重複劇本在 `scenarios/`。執行者是能操作 Chrome 的 agent（或人工），步驟見 [`.agents/skills/e2e-wallet/SKILL.md`](../../.agents/skills/e2e-wallet/SKILL.md)。
 
-錄製與 fixture **不**放在這個倉庫。Mock／preflight 解析錄製根目錄順序：
+錄製與 fixture **不**放在這個倉庫。執行端自行設定錄製根目錄。Mock／preflight 解析順序：
 
-1. 環境變數 `AIRWAVE_RECORDINGS`
-2. 若存在目錄 `/home/box/airwave-api-recordings`（Grok Bot box 預設）
-3. 倉庫同層 `airwave-wallet-api-recording`（相對 `test/e2e` 為 `../../../airwave-wallet-api-recording`；Windows sibling 路徑仍可用）
+1. 環境變數 `AIRWAVE_RECORDINGS`（若有設定）
+2. 倉庫同層 sibling 目錄 `airwave-wallet-api-recording`（相對 `test/e2e` 為 `../../../airwave-wallet-api-recording`）
 
 開跑前先執行 preflight（硬失敗：Solana CLI 或缺 fixture；mock 未起或 `wallet/dist` 缺檔只警告）：
 
@@ -31,7 +30,7 @@ bun run test-web
 
 Chrome 操作錢包殼時**優先用 Side panel**（先開工具列 popup，再切到側欄），不要直接開裸的 popout／approval URL。
 
-解鎖密碼**永不**寫進倉庫、劇本或回報。Bot 把密碼存在自己的 vault，解鎖時自行填入。
+解鎖密碼**永不**寫進倉庫、劇本或回報。密碼由執行端以 out-of-band 方式提供（例如操作者自己的 secrets／vault），解鎖時填入即可。
 
 ## 兩個本機服務
 

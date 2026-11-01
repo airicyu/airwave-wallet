@@ -2,7 +2,7 @@
 
 ## Next
 
-e2e harness for the Grok Bot cloud box: recordings path resolution (`AIRWAVE_RECORDINGS` / `/home/box/airwave-api-recordings`), `e2e-preflight`, and Side-panel-first agent skill docs. Helius accepts a localhost HTTP origin so the mock can be selected in settings.
+e2e harness: recordings via `AIRWAVE_RECORDINGS` or the sibling `airwave-wallet-api-recording` folder, `e2e-preflight`, and Side-panel-first agent skill docs. Helius accepts a localhost HTTP origin so the mock can be selected in settings.
 
 ## 0.53.0 — 2026-10-31
 

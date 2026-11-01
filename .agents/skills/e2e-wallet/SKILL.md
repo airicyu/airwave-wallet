@@ -10,15 +10,14 @@ description: >-
 
 劇本在 [`test/e2e/scenarios/`](../../../test/e2e/scenarios/)。服務怎麼起、錢包要設成什麼，以 [`test/e2e/README.md`](../../../test/e2e/README.md) 為準。錄製檔在錢包倉庫外面，不要複製進這個倉庫。
 
-**主要執行主機**是 Grok Bot 雲端電腦（`/home/box`），不是 Windows。對使用者用繁體中文回報。不要把密碼、助記詞、API key 寫進劇本或回報。
+對使用者用繁體中文回報。不要把密碼、助記詞、API key 寫進劇本或回報。
 
 ## 錄製目錄
 
-Mock 與 preflight 解析順序：
+執行端設定錄製根目錄。Mock 與 preflight 解析順序：
 
-1. `AIRWAVE_RECORDINGS`
-2. `/home/box/airwave-api-recordings`（目錄存在時；box 預設）
-3. 倉庫同層 `airwave-wallet-api-recording`
+1. `AIRWAVE_RECORDINGS`（若有設定）
+2. 倉庫同層 sibling `airwave-wallet-api-recording`
 
 ## 開跑前
 
@@ -33,7 +32,7 @@ Mock 與 preflight 解析順序：
 
 ## 解鎖
 
-解鎖密碼只存在 bot 自己的 vault。需要解鎖時用 vault 填入，**不要**讀寫密碼到劇本、截圖說明、或回報文字。
+解鎖密碼由執行端 out-of-band 提供（操作者自己的 secrets／vault）。需要解鎖時填入即可，**不要**讀寫密碼到劇本、截圖說明、或回報文字。
 
 ## 操作
 

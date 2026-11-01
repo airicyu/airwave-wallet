@@ -4,25 +4,13 @@
  * Fixture files stay in the recordings tree (AIRWAVE_RECORDINGS).
  * Run: bun test/e2e/mock-server.mjs
  */
-import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const BOX_RECORDINGS = "/home/box/airwave-api-recordings";
-const siblingRecordings = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../../../airwave-wallet-api-recording",
+const recordings = path.resolve(
+  process.env.AIRWAVE_RECORDINGS ||
+    path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../airwave-wallet-api-recording"),
 );
-
-function resolveRecordingsDir() {
-  if (process.env.AIRWAVE_RECORDINGS) return path.resolve(process.env.AIRWAVE_RECORDINGS);
-  if (fs.existsSync(BOX_RECORDINGS) && fs.statSync(BOX_RECORDINGS).isDirectory()) {
-    return BOX_RECORDINGS;
-  }
-  return siblingRecordings;
-}
-
-const recordings = resolveRecordingsDir();
 const port = Number(process.env.PORT || 8787);
 const MOCK_BLOCKHASH = "11111111111111111111111111111111111111111111";
 

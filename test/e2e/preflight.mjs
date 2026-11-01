@@ -9,7 +9,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
-const BOX_RECORDINGS = "/home/box/airwave-api-recordings";
 const e2eDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(e2eDir, "../..");
 const siblingRecordings = path.resolve(e2eDir, "../../../airwave-wallet-api-recording");
@@ -24,9 +23,6 @@ const REQUIRED_FIXTURES = [
 
 function resolveRecordingsDir() {
   if (process.env.AIRWAVE_RECORDINGS) return path.resolve(process.env.AIRWAVE_RECORDINGS);
-  if (fs.existsSync(BOX_RECORDINGS) && fs.statSync(BOX_RECORDINGS).isDirectory()) {
-    return BOX_RECORDINGS;
-  }
   return siblingRecordings;
 }
 
