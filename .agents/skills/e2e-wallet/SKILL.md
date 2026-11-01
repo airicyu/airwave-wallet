@@ -14,9 +14,15 @@ description: >-
 
 ## Mock 資料
 
-執行期 mock 讀本倉庫 [`test/e2e/fixtures/`](../../../test/e2e/fixtures/)（可編輯、已消毒）。消毒規則見該目錄 `README.md`。可選 `AIRWAVE_E2E_FIXTURES` 覆寫根目錄。
+**執行期 mock 在本倉庫** [`test/e2e/fixtures/`](../../../test/e2e/fixtures/)（可編輯、已消毒）。`mock-server.mjs` 預設讀該目錄；可選 `AIRWAVE_E2E_FIXTURES` 覆寫。消毒規則見該目錄 `README.md`。
 
-倉庫外的 `airwave-wallet-api-recording`（若有）只是 capture 來源：e2e **不要**改它。要刷新 mock：從錄製 copy → sanitize → 替換 `test/e2e/fixtures/`。不要把未消毒錄製當 runtime store，也不要為了過劇本去改外部錄製樹。
+- `jupiter/tokens-v2-search.json`
+- `helius/address-transactions-page1.json`
+- `helius/address-transactions-page2.json`
+- `openrouter/chat-completions.json`
+- `openrouter/decisions.json`
+
+倉庫外的 `airwave-wallet-api-recording`（若有）只是 capture 來源：e2e **不要**改它，也不當 runtime store。刷新：sanitize → 寫入 `test/e2e/fixtures/`。
 
 ## 開跑前
 

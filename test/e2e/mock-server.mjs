@@ -1,7 +1,8 @@
 /**
  * Local stand-in for Helius activity, Jupiter token search, OpenRouter
  * single-turn chat and decisions, and the idle cluster's isBlockhashValid.
- * Default mock bodies live in test/e2e/fixtures (optional AIRWAVE_E2E_FIXTURES).
+ * Runtime bodies: test/e2e/fixtures/*.json next to this file (override with
+ * AIRWAVE_E2E_FIXTURES only). Not the external recordings tree.
  * Run: bun test/e2e/mock-server.mjs
  */
 import path from "node:path";

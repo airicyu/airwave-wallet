@@ -4,11 +4,19 @@
 
 ## Mock 資料
 
-執行期 mock 讀 **本倉庫** [`fixtures/`](./fixtures/)（可編輯、已消毒的 response body）。說明與消毒規則見 [`fixtures/README.md`](./fixtures/README.md)。可用環境變數 `AIRWAVE_E2E_FIXTURES` 覆寫根目錄；預設不需要、也不應依賴 `AIRWAVE_RECORDINGS`。
+**執行期 mock 資料在本倉庫** [`test/e2e/fixtures/`](./fixtures/)（可編輯、已消毒的 response body）。`mock-server.mjs` 預設以該目錄為根（相對 mock 檔所在目錄的 `fixtures/`）。可選環境變數 `AIRWAVE_E2E_FIXTURES` 覆寫根目錄。消毒規則見 [`fixtures/README.md`](./fixtures/README.md)。
 
-倉庫外的 `airwave-wallet-api-recording`（若有）只當 **capture 來源**：e2e 工作**不要**改它，也不要把未消毒的錄製直接當 runtime mock。要更新 mock 時：從錄製 copy → sanitize → 替換 `test/e2e/fixtures/` 裡的檔案。
+檔案：
 
-開跑前先執行 preflight（硬失敗：Solana CLI 或缺 in-repo fixture；mock 未起或 `wallet/dist` 缺檔只警告）：
+- `jupiter/tokens-v2-search.json`
+- `helius/address-transactions-page1.json`
+- `helius/address-transactions-page2.json`
+- `openrouter/chat-completions.json`
+- `openrouter/decisions.json`
+
+倉庫外的 `airwave-wallet-api-recording`（若有）只是 **capture 來源**：e2e **不要**改它，也不把它當 runtime mock store。要刷新 mock：從錄製 copy → sanitize → 替換 `test/e2e/fixtures/`。
+
+開跑前先執行 preflight（硬失敗：Solana CLI 或缺上述五份 in-repo fixture；mock 未起或 `wallet/dist` 缺檔只警告）：
 
 ```text
 bun run e2e-preflight
