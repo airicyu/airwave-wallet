@@ -98,5 +98,305 @@
     ],
     "accountData": [],
     "transactionError": null
+  },
+  {
+    "description": "Synthetic e2e fixture transfer page1 #5",
+    "type": "TRANSFER",
+    "source": "SYSTEM_PROGRAM",
+    "fee": 5000,
+    "feePayer": "11111111111111111111111111111112",
+    "signature": "SYNTHP105AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "slot": 1105,
+    "timestamp": 1700000105,
+    "tokenTransfers": [],
+    "nativeTransfers": [
+      {
+        "fromUserAccount": "11111111111111111111111111111112",
+        "toUserAccount": "22222222222222222222222222222222",
+        "amount": 6000000
+      }
+    ],
+    "accountData": [],
+    "transactionError": null
+  },
+  {
+    "description": "Synthetic e2e fixture transfer page1 #6",
+    "type": "TRANSFER",
+    "source": "SYSTEM_PROGRAM",
+    "fee": 5000,
+    "feePayer": "11111111111111111111111111111112",
+    "signature": "SYNTHP106AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "slot": 1106,
+    "timestamp": 1700000106,
+    "tokenTransfers": [],
+    "nativeTransfers": [
+      {
+        "fromUserAccount": "11111111111111111111111111111112",
+        "toUserAccount": "22222222222222222222222222222222",
+        "amount": 7000000
+      }
+    ],
+    "accountData": [],
+    "transactionError": null
+  },
+  {
+    "description": "Synthetic e2e fixture transfer page1 #7",
+    "type": "TRANSFER",
+    "source": "SYSTEM_PROGRAM",
+    "fee": 5000,
+    "feePayer": "11111111111111111111111111111112",
+    "signature": "SYNTHP107AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "slot": 1107,
+    "timestamp": 1700000107,
+    "tokenTransfers": [],
+    "nativeTransfers": [
+      {
+        "fromUserAccount": "11111111111111111111111111111112",
+        "toUserAccount": "22222222222222222222222222222222",
+        "amount": 8000000
+      }
+    ],
+    "accountData": [],
+    "transactionError": null
+  },
+  {
+    "description": "Synthetic e2e fixture transfer page1 #8",
+    "type": "TRANSFER",
+    "source": "SYSTEM_PROGRAM",
+    "fee": 5000,
+    "feePayer": "11111111111111111111111111111112",
+    "signature": "SYNTHP108AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "slot": 1108,
+    "timestamp": 1700000108,
+    "tokenTransfers": [],
+    "nativeTransfers": [
+      {
+        "fromUserAccount": "11111111111111111111111111111112",
+        "toUserAccount": "22222222222222222222222222222222",
+        "amount": 9000000
+      }
+    ],
+    "accountData": [],
+    "transactionError": null
+  },
+  {
+    "description": "Synthetic e2e fixture transfer page1 #9",
+    "type": "TRANSFER",
+    "source": "SYSTEM_PROGRAM",
+    "fee": 5000,
+    "feePayer": "11111111111111111111111111111112",
+    "signature": "SYNTHP109AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "slot": 1109,
+    "timestamp": 1700000109,
+    "tokenTransfers": [],
+    "nativeTransfers": [
+      {
+        "fromUserAccount": "11111111111111111111111111111112",
+        "toUserAccount": "22222222222222222222222222222222",
+        "amount": 10000000
+      }
+    ],
+    "accountData": [],
+    "transactionError": null
+  },
+  {
+    "description": "Synthetic e2e fixture transfer page1 #10",
+    "type": "TRANSFER",
+    "source": "SYSTEM_PROGRAM",
+    "fee": 5000,
+    "feePayer": "11111111111111111111111111111112",
+    "signature": "SYNTHP110AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "slot": 1110,
+    "timestamp": 1700000110,
+    "tokenTransfers": [],
+    "nativeTransfers": [
+      {
+        "fromUserAccount": "11111111111111111111111111111112",
+        "toUserAccount": "22222222222222222222222222222222",
+        "amount": 11000000
+      }
+    ],
+    "accountData": [],
+    "transactionError": null
+  },
+  {
+    "description": "Synthetic e2e fixture transfer page1 #11",
+    "type": "TRANSFER",
+    "source": "SYSTEM_PROGRAM",
+    "fee": 5000,
+    "feePayer": "11111111111111111111111111111112",
+    "signature": "SYNTHP111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "slot": 1111,
+    "timestamp": 1700000111,
+    "tokenTransfers": [],
+    "nativeTransfers": [
+      {
+        "fromUserAccount": "11111111111111111111111111111112",
+        "toUserAccount": "22222222222222222222222222222222",
+        "amount": 12000000
+      }
+    ],
+    "accountData": [],
+    "transactionError": null
+  },
+  {
+    "description": "Synthetic e2e fixture transfer page1 #12",
+    "type": "TRANSFER",
+    "source": "SYSTEM_PROGRAM",
+    "fee": 5000,
+    "feePayer": "11111111111111111111111111111112",
+    "signature": "SYNTHP112AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "slot": 1112,
+    "timestamp": 1700000112,
+    "tokenTransfers": [],
+    "nativeTransfers": [
+      {
+        "fromUserAccount": "11111111111111111111111111111112",
+        "toUserAccount": "22222222222222222222222222222222",
+        "amount": 13000000
+      }
+    ],
+    "accountData": [],
+    "transactionError": null
+  },
+  {
+    "description": "Synthetic e2e fixture transfer page1 #13",
+    "type": "TRANSFER",
+    "source": "SYSTEM_PROGRAM",
+    "fee": 5000,
+    "feePayer": "11111111111111111111111111111112",
+    "signature": "SYNTHP113AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "slot": 1113,
+    "timestamp": 1700000113,
+    "tokenTransfers": [],
+    "nativeTransfers": [
+      {
+        "fromUserAccount": "11111111111111111111111111111112",
+        "toUserAccount": "22222222222222222222222222222222",
+        "amount": 14000000
+      }
+    ],
+    "accountData": [],
+    "transactionError": null
+  },
+  {
+    "description": "Synthetic e2e fixture transfer page1 #14",
+    "type": "TRANSFER",
+    "source": "SYSTEM_PROGRAM",
+    "fee": 5000,
+    "feePayer": "11111111111111111111111111111112",
+    "signature": "SYNTHP114AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "slot": 1114,
+    "timestamp": 1700000114,
+    "tokenTransfers": [],
+    "nativeTransfers": [
+      {
+        "fromUserAccount": "11111111111111111111111111111112",
+        "toUserAccount": "22222222222222222222222222222222",
+        "amount": 15000000
+      }
+    ],
+    "accountData": [],
+    "transactionError": null
+  },
+  {
+    "description": "Synthetic e2e fixture transfer page1 #15",
+    "type": "TRANSFER",
+    "source": "SYSTEM_PROGRAM",
+    "fee": 5000,
+    "feePayer": "11111111111111111111111111111112",
+    "signature": "SYNTHP115AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "slot": 1115,
+    "timestamp": 1700000115,
+    "tokenTransfers": [],
+    "nativeTransfers": [
+      {
+        "fromUserAccount": "11111111111111111111111111111112",
+        "toUserAccount": "22222222222222222222222222222222",
+        "amount": 16000000
+      }
+    ],
+    "accountData": [],
+    "transactionError": null
+  },
+  {
+    "description": "Synthetic e2e fixture transfer page1 #16",
+    "type": "TRANSFER",
+    "source": "SYSTEM_PROGRAM",
+    "fee": 5000,
+    "feePayer": "11111111111111111111111111111112",
+    "signature": "SYNTHP116AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "slot": 1116,
+    "timestamp": 1700000116,
+    "tokenTransfers": [],
+    "nativeTransfers": [
+      {
+        "fromUserAccount": "11111111111111111111111111111112",
+        "toUserAccount": "22222222222222222222222222222222",
+        "amount": 17000000
+      }
+    ],
+    "accountData": [],
+    "transactionError": null
+  },
+  {
+    "description": "Synthetic e2e fixture transfer page1 #17",
+    "type": "TRANSFER",
+    "source": "SYSTEM_PROGRAM",
+    "fee": 5000,
+    "feePayer": "11111111111111111111111111111112",
+    "signature": "SYNTHP117AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "slot": 1117,
+    "timestamp": 1700000117,
+    "tokenTransfers": [],
+    "nativeTransfers": [
+      {
+        "fromUserAccount": "11111111111111111111111111111112",
+        "toUserAccount": "22222222222222222222222222222222",
+        "amount": 18000000
+      }
+    ],
+    "accountData": [],
+    "transactionError": null
+  },
+  {
+    "description": "Synthetic e2e fixture transfer page1 #18",
+    "type": "TRANSFER",
+    "source": "SYSTEM_PROGRAM",
+    "fee": 5000,
+    "feePayer": "11111111111111111111111111111112",
+    "signature": "SYNTHP118AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "slot": 1118,
+    "timestamp": 1700000118,
+    "tokenTransfers": [],
+    "nativeTransfers": [
+      {
+        "fromUserAccount": "11111111111111111111111111111112",
+        "toUserAccount": "22222222222222222222222222222222",
+        "amount": 19000000
+      }
+    ],
+    "accountData": [],
+    "transactionError": null
+  },
+  {
+    "description": "Synthetic e2e fixture transfer page1 #19",
+    "type": "TRANSFER",
+    "source": "SYSTEM_PROGRAM",
+    "fee": 5000,
+    "feePayer": "11111111111111111111111111111112",
+    "signature": "SYNTHP119AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "slot": 1119,
+    "timestamp": 1700000119,
+    "tokenTransfers": [],
+    "nativeTransfers": [
+      {
+        "fromUserAccount": "11111111111111111111111111111112",
+        "toUserAccount": "22222222222222222222222222222222",
+        "amount": 20000000
+      }
+    ],
+    "accountData": [],
+    "transactionError": null
   }
 ]

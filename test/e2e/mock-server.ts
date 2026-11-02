@@ -13,7 +13,7 @@ const fixturesDir = path.resolve(
   process.env.AIRWAVE_E2E_FIXTURES || path.join(e2eDir, "fixtures"),
 );
 const port = Number(process.env.PORT || 8787);
-const MOCK_BLOCKHASH = "11111111111111111111111111111111111111111111";
+const MOCK_BLOCKHASH = "11111111111111111111111111111111";
 
 type RpcPayload = {
   id?: unknown;
@@ -32,7 +32,7 @@ async function loadBody(rel: string): Promise<unknown> {
 const cors = {
   "content-type": "application/json",
   "access-control-allow-origin": "*",
-  "access-control-allow-headers": "content-type, authorization",
+  "access-control-allow-headers": "content-type, authorization, solana-client",
   "access-control-allow-methods": "GET, POST, OPTIONS",
 };
 

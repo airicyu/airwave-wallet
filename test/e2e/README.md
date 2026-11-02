@@ -33,13 +33,13 @@ bun run e2e-validator
 bun run test-web
 ```
 
-Chrome 優先 Side panel（工具列 popup → 側欄）。不要直接開裸的 popout／approval URL。
+Chrome 用**真正 Side panel**：工具列 popup 到 Home 後按 `#btn-shell-to-sidebar`（`chrome.sidePanel.open`）。不要把 `chrome-extension://…/sidepanel` 當普通分頁開，也不要開裸 popout／approval URL。
 
 解鎖密碼永不寫進倉庫或劇本；由執行端 out-of-band 提供。
 
 ## Mock 固定 blockhash
 
-Mock 的 `getLatestBlockhash` 固定回 `11111111111111111111111111111111111111111111`。只有這個 blockhash 的 `isBlockhashValid` 為 `true`（給 cluster 不符劇本用）。
+Mock 的 `getLatestBlockhash` 固定回 `11111111111111111111111111111111`（合法長度；validator 上 `isBlockhashValid` 為 `false`，mock 上為 `true`，給 cluster 不符劇本用）。CORS 允許 `solana-client` header（test-web 會帶）。
 
 ## 錢包設定（每則劇本開始前）
 

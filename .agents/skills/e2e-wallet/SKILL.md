@@ -31,11 +31,15 @@ Runtime reads [`test/e2e/fixtures/`](../../../test/e2e/fixtures/) (optional over
 
 1. `bun run e2e-preflight` (hard-fail if `solana` / `solana-test-validator` is missing, or any of the five fixtures is missing).
 2. Load the unpacked extension from `wallet/dist`.
-3. Prefer the side panel (toolbar popup → side panel). Do not open a bare popout or approval URL.
+3. **Shell / Side panel (required for connect & sign)**
+   - **Never** open `chrome-extension://…/src/sidepanel/index.html` (or popout/approval) as a normal browser tab. That is not Chrome’s Side panel and breaks the shell.
+   - First-run / unlock may use the **toolbar action popup** until Home chrome is visible.
+   - Once Home is up: open the toolbar popup → click `#btn-shell-to-sidebar` (sidebar icon; `shell.toSidebar`) so Chrome opens the **real** Side panel via `chrome.sidePanel.open`. Do connect / allow / sign / approve **inside that Side panel**.
+   - If the sidebar button is missing, you are not on Home in the action popup yet — finish onboard/unlock first. Do not fall back to a tabbed extension page.
 4. `bun run e2e-mock`, then confirm `http://127.0.0.1:8787/health` is `ok: true`.
 5. For **every** scenario, `bun run e2e-validator` and wait until `:8899` accepts connections. Do not reuse the previous scenario's ledger.
-6. `bun run test-web`.
-7. Apply the wallet settings in the README. Do not set a custom RPC on Mainnet.
+6. `bun run test-web` (bind `127.0.0.1` if the default Vite listen is IPv6-only/`localhost`).
+7. Apply the wallet settings in the README (**agent sets these after vault exists** — cluster, Devnet RPC, Debug, Mainnet blockhash RPC / Jupiter / OpenRouter / Helius bases as needed). Do not set a custom RPC on Mainnet. Password/onboard is out-of-band (operator).
 8. When SOL is required: `solana airdrop <amount> <address> --url http://127.0.0.1:8899` (do not use the test-web default public Devnet airdrop).
 
 ## Unlock
