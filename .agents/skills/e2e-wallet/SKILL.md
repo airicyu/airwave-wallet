@@ -8,25 +8,46 @@ description: >-
 
 # Airwave e2e
 
-劇本在 [`test/e2e/scenarios/`](../../../test/e2e/scenarios/)。服務怎麼起、錢包要設成什麼，以 [`test/e2e/README.md`](../../../test/e2e/README.md) 為準。錄製檔在錢包倉庫外面，不要複製進這個倉庫。
+劇本在 [`test/e2e/scenarios/`](../../../test/e2e/scenarios/)。服務與設定以 [`test/e2e/README.md`](../../../test/e2e/README.md) 為準。
 
-對使用者用繁體中文回報。不要把密碼、助記詞寫進劇本或回報。
+對使用者用繁體中文回報。不要把密碼、助記詞、API key 寫進劇本或回報。
+
+## 架構（務必分開）
+
+- **`solana-test-validator`（`:8899`）**＝**Solana JSON-RPC**（餘額、airdrop、送交易、確認）。每則劇本 `bun run e2e-validator` 重置帳本，需要 SOL 時再 `solana airdrop … --url http://127.0.0.1:8899`。不要把這條 RPC mock 掉。
+- **mock（`:8787`）**＝**外掛 HTTP only**（Helius 活動、Jupiter token search、OpenRouter AI、另一叢集的 blockhash 探針）。回應是合成 fixture，見 [`test/e2e/fixtures/`](../../../test/e2e/fixtures/)。不要打真網。
+
+## Mock 資料（合成）
+
+執行期讀 [`test/e2e/fixtures/`](../../../test/e2e/fixtures/)（可選 `AIRWAVE_E2E_FIXTURES` 覆寫）。檔案是手寫／產生的假資料，不是生產錄音。規則見該目錄 `README.md`。
+
+- `jupiter/tokens-v2-search.json`
+- `helius/address-transactions-page1.json`
+- `helius/address-transactions-page2.json`
+- `openrouter/chat-completions.json`（須含 `What This Transaction Does`）
+- `openrouter/decisions.json`
 
 ## 開跑前
 
-1. 這台機器上的擴充功能是本次要測的那個未封裝目錄（通常是 `wallet/dist`）。
-2. 啟動 `bun run e2e-mock`，確認 `http://127.0.0.1:8787/health` 回 `ok: true`。
-3. 每一則劇本單獨執行 `bun run e2e-validator`，等 RPC `http://127.0.0.1:8899` 可連。不要沿用上一則的帳本。
-4. 照 README 的「錢包設定」在 popup 設好。Mainnet 不要選自訂 RPC。
-5. 領取測試 SOL 用 `solana airdrop`，URL 為 `http://127.0.0.1:8899`。
+1. `bun run e2e-preflight`（缺 `solana`／`solana-test-validator` 或缺五份 fixture → 硬失敗）。
+2. 載入未封裝擴充：`wallet/dist`。
+3. 優先 Side panel（工具列 popup → 側欄）；不要開裸 popout／approval URL。
+4. `bun run e2e-mock`，確認 `http://127.0.0.1:8787/health` 為 `ok: true`。
+5. **每一則** `bun run e2e-validator`，等 `:8899` 可連；不要沿用上一則帳本。
+6. `bun run test-web`。
+7. 依 README「錢包設定」設好；Mainnet 不要設自訂 RPC。
+8. 需要 SOL：`solana airdrop <額> <地址> --url http://127.0.0.1:8899`（不要用 test-web 預設公開 Devnet airdrop）。
 
-## 操作
+## 解鎖
 
-- 只做該劇本寫的步驟。核准、拒絕、連線允許都在擴充功能另外打開的視窗裡，不在原本的網頁分頁。
-- `test-web` 必須帶劇本寫的 `rpc` 與 `otherRpc`。Log 裡的 RPC 和劇本不一致就停止，不要繼續簽名。
-- 簽名探針會打 Devnet RPC 與 Mainnet blockhash RPC。前者是驗證器，後者是 mock。Mock 只對它自己的固定 blockhash 回有效。
-- 活動、Jupiter、OpenRouter 的回應來自錄製 fixture。不要改那些檔來湊過一則劇本；要換資料時改錄製目錄的 fixture，再重跑 mock。
+密碼由執行端 out-of-band 提供。不要寫進劇本或回報。
 
-## 判定
+## 操作與判定
 
-劇本的「期望」每一條都要核對。通過時列出劇本檔名。失敗時寫哪一步和畫面上看到的文字。不要把沒跑的劇本書成通過。
+只做該劇本步驟。`test-web` 的 `rpc`／`otherRpc` 必須與劇本一致，否則停止。通過時列出劇本檔名；失敗寫步驟與畫面文字。不要把沒跑的劇本書成通過。
+
+劇本 `01` 核對 test-web log 的 `Broadcast signature:` 與 `Confirmed:`（confirmed 或 finalized 後都印 `Confirmed:`）。
+
+## Alpenglow 與確認
+
+本機 `solana-test-validator` 在 Alpenglow 後約 150ms 就會 finalize。錢包／劇本把「已確認」當成 finalized-only 即可，不必再等一段 confirmed 中間態。

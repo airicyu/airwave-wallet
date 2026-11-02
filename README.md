@@ -51,7 +51,8 @@ Rules and architecture constraints for coding agents live in [AGENTS.md](AGENTS.
 ```text
 airwave-wallet/
 ├── wallet/          Chrome extension
-├── test-web/        Minimal dApp for connect / sign tests
+├── test/            e2e harness, mock, and test-web dApp
+│   └── test-web/    Minimal dApp for connect / sign tests
 ├── docs/            User guides, legal, showcase images
 ├── dev-docs/        Roadmap, design, domain, research, setup
 ├── AGENTS.md

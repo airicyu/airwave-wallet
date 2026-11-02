@@ -8,7 +8,7 @@ How agents review and how Tracks run. Read [`GUIDELINES.md`](GUIDELINES.md) for 
 
 | Role | Writes | Does not |
 |------|--------|----------|
-| **Implementer** | `wallet/`, `test-web/`, and this version's `HANDOFF.md` | Its own final review |
+| **Implementer** | `wallet/`, `test/test-web/`, and this version's `HANDOFF.md` | Its own final review |
 | **Design reviewer** | `docs/design-review.md` | Feature code |
 | **Implementation reviewer** | `docs/implementation-review.md` | Feature code while reviewing (a fix is a new Track afterward) |
 | **Human** | Says when it ships. Runs the hand-test in `INDEX.md` | — |
@@ -152,6 +152,6 @@ Tracks: A, B, …
 * **Source shape.** Security first, then smallest design, one responsibility, file-size cuts, and folder boundaries. See [code-design-principles.md](../code-design-principles.md).
 * **UI copy.** Errors and empty states are one short sentence. Buttons are verbs. See [ui-design-principles.md](../ui-design-principles.md).
 * **Component ownership.** The parent creates and destroys. A child does not outlive the request that spawned it. See [component-hierarchy.mdc](../../.cursor/rules/component-hierarchy.mdc).
-* **Manual test.** `test-web/` is the dApp. Do not assume an external site must change.
+* **Manual test.** `test/test-web/` is the dApp. Do not assume an external site must change.
 * **Dependencies.** A new npm package needs a sentence in `reasoning`.
 * **Version delivery.** The steps and the copy-paste prompts live in `.agents/skills/version-delivery/`.

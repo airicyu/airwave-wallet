@@ -55,7 +55,7 @@ If any answer depends on "we said so in chat," it is not written yet.
 
 ## 3. Paths
 
-* `wallet/` is the extension. `test-web/` is the manual dApp. `docs/` is user-facing. `dev-docs/` is for engineers.
+* `wallet/` is the extension. `test/test-web/` is the manual dApp. `docs/` is user-facing. `dev-docs/` is for engineers.
 * The roadmap directory is **`dev-docs/roadmap/`**.
 * Do not put contracts in `docs/` or `wallet/`.
 * Code references in `how.md` use repo-root paths, for example `wallet/src/background/handlers/wallet-dispatch.ts`.
@@ -134,7 +134,7 @@ Update [`README.md`](README.md) when a version is added or its status changes. [
 
 * `how.md` steps and example commands
 * `HANDOFF.md` and session notes
-* Test fixtures committed to the repo (`test-web/`, `wallet/`, JSON, env samples)
+* Test fixtures committed to the repo (`test/test-web/`, `test/e2e/`, `wallet/`, JSON, env samples)
 * Screenshots or logs pasted into a contract
 
 Examples use placeholders: `test-password`, `word1 word2 … word12`, `REPLACE_WITH_TEST_PUBKEY`.

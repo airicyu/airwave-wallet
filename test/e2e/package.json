@@ -1,0 +1,14 @@
+{
+  "name": "@airwave/e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "preflight": "bun preflight.ts",
+    "mock": "bun mock-server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "1.3.3",
+    "typescript": "5.9.3"
+  }
+}

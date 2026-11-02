@@ -1,0 +1,19 @@
+{
+  "model": "synthetic/e2e-fixture",
+  "answers": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "synthetic"
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 1,
+    "completion_tokens": 1,
+    "total_tokens": 2
+  },
+  "id": "synth-decisions-e2e",
+  "provider": "synthetic"
+}

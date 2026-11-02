@@ -41,7 +41,7 @@ What a site sees: connect, disconnect, `signMessage`, `signTransaction`, `signAn
 - Switching the active account notifies connected sites (`account change`).
 - Watch-only accounts cannot sign.
 
-Manual test dApp: [test-web](../test-web/README.md).
+Manual test dApp: [test-web](../test/test-web/README.md).
 
 ---
 

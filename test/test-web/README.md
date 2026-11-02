@@ -11,9 +11,12 @@
 ## 執行
 
 ```bash
+cd test/test-web
 npm install
 npm run dev
 ```
+
+From the repo root: `bun run test-web`.
 
 開啟 http://localhost:5173
 

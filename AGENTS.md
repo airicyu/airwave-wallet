@@ -15,7 +15,7 @@ Feature ideas: [`dev-docs/roadmap/backlog/INDEX.md`](dev-docs/roadmap/backlog/IN
 | Path | Role |
 |------|------|
 | [`wallet/`](wallet/) | Chrome extension (the wallet) |
-| [`test-web/`](test-web/) | Minimal Solana web3 dApp for connect and sign checks |
+| [`test/test-web/`](test/test-web/) | Minimal Solana web3 dApp for connect and sign checks |
 | [`docs/`](docs/README.md) | User docs (guide, features, legal) |
 | [`dev-docs/`](dev-docs/README.md) | Engineering docs: contracts, screen rules, demos, domain terms, local setup |
 | [`changelog.md`](changelog.md) / [`version.md`](version.md) | Ship log and current shipped version |
@@ -72,7 +72,7 @@ Steps 2 and 3 are direction only until an INDEX schedules them. Do not start the
 
 - **Do not commit unless the user asks.** **Do not push unless the user asks.** The user pushes by hand. Shipping and committing do not include a push.
 - Roadmap and review reports must **not** contain real mnemonics, private keys, passwords, or production secrets (see GUIDELINES privacy).
-- Implementation stays in this repo. Prefer `test-web/` for tests. Do not assume an external dApp must change.
+- Implementation stays in this repo. Prefer `test/test-web/` for tests. Do not assume an external dApp must change.
 - Anything discussed in chat but not written into the roadmap or a contract file **does not exist** for the next agent. Decisions go into files.
 - Close a leak, a hostile injection, or a sign path another origin can reach before keeping the solution small. Smallest design applies only after that hole is closed. Those rules are sections 1 and 2 of [`dev-docs/code-design-principles.md`](dev-docs/code-design-principles.md).
 

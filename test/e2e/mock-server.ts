@@ -1,23 +1,31 @@
 /**
  * Local stand-in for Helius activity, Jupiter token search, OpenRouter
  * single-turn chat and decisions, and the idle cluster's isBlockhashValid.
- * Fixture files stay in the recordings tree (AIRWAVE_RECORDINGS).
- * Run: bun test/e2e/mock-server.mjs
+ * Runtime bodies: synthetic JSON under test/e2e/fixtures (override with
+ * AIRWAVE_E2E_FIXTURES only). Does not mock Solana JSON-RPC for the active
+ * cluster — that is solana-test-validator.
+ * Run: bun test/e2e/mock-server.ts
  */
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
-const recordings = path.resolve(
-  process.env.AIRWAVE_RECORDINGS ||
-    path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../airwave-wallet-api-recording"),
+const e2eDir = import.meta.dir;
+const fixturesDir = path.resolve(
+  process.env.AIRWAVE_E2E_FIXTURES || path.join(e2eDir, "fixtures"),
 );
 const port = Number(process.env.PORT || 8787);
 const MOCK_BLOCKHASH = "11111111111111111111111111111111111111111111";
 
-async function loadBody(rel) {
-  const text = await Bun.file(path.join(recordings, rel)).text();
-  const parsed = JSON.parse(text);
-  if (parsed && typeof parsed === "object" && "body" in parsed) return parsed.body;
+type RpcPayload = {
+  id?: unknown;
+  method?: unknown;
+  params?: unknown[];
+};
+
+async function loadBody(rel: string): Promise<unknown> {
+  const parsed = await Bun.file(path.join(fixturesDir, rel)).json();
+  if (parsed && typeof parsed === "object" && "body" in parsed) {
+    return (parsed as { body: unknown }).body;
+  }
   return parsed;
 }
 
@@ -28,11 +36,11 @@ const cors = {
   "access-control-allow-methods": "GET, POST, OPTIONS",
 };
 
-function json(status, body) {
+function json(status: number, body: unknown) {
   return new Response(JSON.stringify(body), { status, headers: cors });
 }
 
-function rpcResult(id, result) {
+function rpcResult(id: unknown, result: unknown) {
   return { jsonrpc: "2.0", id: id ?? 1, result };
 }
 
@@ -44,29 +52,29 @@ Bun.serve({
     if (req.method === "OPTIONS") return json(204, {});
     try {
       if (req.method === "GET" && url.pathname === "/health") {
-        return json(200, { ok: true, recordings });
+        return json(200, { ok: true, fixtures: "test/e2e/fixtures" });
       }
       if (req.method === "GET" && url.pathname === "/tokens/v2/search") {
-        return json(200, await loadBody("fixtures/jupiter/jupiter-tokens-v2-search__mainnet/response.json"));
+        return json(200, await loadBody("jupiter/tokens-v2-search.json"));
       }
       if (req.method === "GET" && /^\/v0\/addresses\/([^/]+)\/transactions$/.test(url.pathname)) {
         const rel = url.searchParams.get("before")
-          ? "fixtures/helius/helius-v0-addresses-transactions__page2__mainnet/response.json"
-          : "fixtures/helius/helius-v0-addresses-transactions__mainnet/response.json";
+          ? "helius/address-transactions-page2.json"
+          : "helius/address-transactions-page1.json";
         return json(200, await loadBody(rel));
       }
       if (req.method === "POST" && url.pathname === "/api/v1/chat/completions") {
-        return json(200, await loadBody("fixtures/openrouter/openrouter-chat-completions__mainnet/response.json"));
+        return json(200, await loadBody("openrouter/chat-completions.json"));
       }
       if (req.method === "POST" && url.pathname === "/api/alpha/decisions") {
-        return json(200, await loadBody("fixtures/openrouter/openrouter-decisions__mainnet/response.json"));
+        return json(200, await loadBody("openrouter/decisions.json"));
       }
       if (req.method === "POST") {
-        const payload = await req.json().catch(() => null);
-        const method = payload && payload.method;
-        const id = payload && payload.id;
+        const payload = (await req.json().catch(() => null)) as RpcPayload | null;
+        const method = payload?.method;
+        const id = payload?.id;
         if (method === "isBlockhashValid") {
-          const blockhash = payload.params && payload.params[0];
+          const blockhash = payload?.params?.[0];
           return json(200, rpcResult(id, { value: blockhash === MOCK_BLOCKHASH }));
         }
         if (method === "getLatestBlockhash") {
@@ -79,11 +87,14 @@ Bun.serve({
       }
       return json(404, { error: "no mock", path: url.pathname });
     } catch (error) {
-      return json(500, { error: error instanceof Error ? error.message : "mock failed", recordings });
+      return json(500, {
+        error: error instanceof Error ? error.message : "mock failed",
+        fixtures: "test/e2e/fixtures",
+      });
     }
   },
 });
 
 console.log(`airwave e2e mock http://127.0.0.1:${port}`);
-console.log(`recordings ${recordings}`);
+console.log("fixtures test/e2e/fixtures (or AIRWAVE_E2E_FIXTURES)");
 console.log(`mock blockhash ${MOCK_BLOCKHASH}`);

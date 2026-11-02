@@ -1,0 +1,24 @@
+{
+  "id": "synth-chat-e2e",
+  "object": "chat.completion",
+  "created": 1,
+  "model": "synthetic/e2e-fixture",
+  "provider": "synthetic",
+  "system_fingerprint": null,
+  "service_tier": null,
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "## What This Transaction Does\n\n- **Type**: A synthetic native SOL transfer used only for e2e (not a real recording).\n- **Amount**: Placeholder values from the fixture.\n"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 10,
+    "completion_tokens": 20,
+    "total_tokens": 30
+  }
+}

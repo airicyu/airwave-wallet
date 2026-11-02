@@ -1,6 +1,6 @@
 # Developer setup
 
-Build the wallet extension locally and exercise Wallet Standard with `test-web`. End-user steps: [docs/user-guide.md](../docs/user-guide.md). Agent workflow and architecture constraints: [AGENTS.md](../AGENTS.md).
+Build the wallet extension locally and exercise Wallet Standard with `test/test-web`. End-user steps: [docs/user-guide.md](../docs/user-guide.md). Agent workflow and architecture constraints: [AGENTS.md](../AGENTS.md).
 
 Current version: [`version.md`](../version.md). When implementing a scheduled release, follow that version’s [`INDEX.md`](./roadmap/). Do not start from this file or chat memory alone.
 
@@ -39,10 +39,12 @@ Vite + CRXJS rebuilds the extension. Reload the unpacked extension in Chrome aft
 ## test-web
 
 ```bash
-cd test-web
+cd test/test-web
 npm install
 npm run dev
 ```
+
+From the repo root you can also run `bun run test-web`.
 
 Open the printed local URL. Connect with Airwave and exercise sign / send against the loaded extension.
 

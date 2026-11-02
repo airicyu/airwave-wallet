@@ -2,7 +2,7 @@
 
 ## Next
 
-e2e scenarios, a local mock for Helius, Jupiter, and OpenRouter, and a Devnet path that can target a local validator. Helius accepts a localhost HTTP origin so that mock can be selected in settings.
+e2e harness: in-repo sanitized mock fixtures under `test/e2e/fixtures`, Bun TypeScript `e2e-preflight` / `e2e-mock`, Side-panel-first agent skill docs, and `test/test-web` for the manual dApp. Helius accepts a localhost HTTP origin so the mock can be selected in settings.
 
 ## 0.53.0 — 2026-10-31
 

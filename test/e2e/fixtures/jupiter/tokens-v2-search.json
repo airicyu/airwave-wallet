@@ -1,0 +1,30 @@
+[
+  {
+    "id": "So11111111111111111111111111111111111111112",
+    "name": "Synthetic Wrapped SOL",
+    "symbol": "SOL",
+    "icon": "",
+    "decimals": 9,
+    "circSupply": 0,
+    "totalSupply": 0,
+    "tokenProgram": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    "holderCount": 0,
+    "fdv": 0,
+    "mcap": 0,
+    "usdPrice": 0
+  },
+  {
+    "id": "SynthToken11111111111111111111111111111111",
+    "name": "Synthetic E2E Token",
+    "symbol": "E2E",
+    "icon": "",
+    "decimals": 6,
+    "circSupply": 0,
+    "totalSupply": 0,
+    "tokenProgram": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    "holderCount": 0,
+    "fdv": 0,
+    "mcap": 0,
+    "usdPrice": 0
+  }
+]
