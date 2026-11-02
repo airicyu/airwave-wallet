@@ -10,186 +10,186 @@ description: >-
 disable-model-invocation: true
 ---
 
-# 版本交付（設計審查閘門 → Track 實作 → 出貨）
+# Version delivery (design-review gate → Track implementation → ship)
 
-本技能執行一份 **Airwave Wallet roadmap 版本**。規範來源：[`dev-docs/roadmap/agent-workflow.md`](../../../dev-docs/roadmap/agent-workflow.md)、[`dev-docs/roadmap/GUIDELINES.md`](../../../dev-docs/roadmap/GUIDELINES.md)、倉庫根 `AGENTS.md`。
+This skill runs one **Airwave Wallet roadmap version**. Sources: [`dev-docs/roadmap/agent-workflow.md`](../../../dev-docs/roadmap/agent-workflow.md), [`dev-docs/roadmap/GUIDELINES.md`](../../../dev-docs/roadmap/GUIDELINES.md), and the repo-root `AGENTS.md`.
 
-對使用者：**繁體中文書面語**。**Do not commit unless the user asks.**
+Reply to the user in **Traditional Chinese**. **Do not commit unless the user asks.** Docs this skill writes default to **English**.
 
-貼用 prompt 與報告骨架見同目錄：[prompts.md](prompts.md)、[review-template.md](review-template.md)。
+Paste-ready prompts and the report skeleton are in this directory: [prompts.md](prompts.md), [review-template.md](review-template.md).
 
-工作目錄是 **airwave-wallet 倉庫根**。不要改上層 `docs/agent-roadmap/`（若存在）。
+The working directory is the **airwave-wallet repo root**. Do not edit a parent `docs/agent-roadmap/` if one exists.
 
-## 觸發與版本
+## Trigger and version
 
-版本狀態以 [`dev-docs/roadmap/README.md`](../../../dev-docs/roadmap/README.md) 的表為準。切版細則在倉庫根 `AGENTS.md`。
+Version status is the table in [`dev-docs/roadmap/README.md`](../../../dev-docs/roadmap/README.md). Version-cutting rules are in the repo-root `AGENTS.md`.
 
-使用者給了版本（`0.1.0`）或目錄就做那一版。沒給時先看表，不要猜一個新號：
+If the user names a version (`0.1.0`) or a directory, do that version. If they do not, read the table. Do not invent a new number:
 
-- 最新一版是 `in progress`：追加進那一版的 INDEX 與 changelog 該版標題，不開下一版。
-- 最新一版已 `shipped`、下一版目錄還沒有：**程式**改動寫進 [`dev-docs/roadmap/unversioned.md`](../../../dev-docs/roadmap/unversioned.md)，並在根 `changelog.md` 最上方 `Next` 用一句話跟上。兩處同一批。不要自己開下一版。歸屬等使用者選：算進剛出貨的那一版、開下一版承接、或出貨後仍留未歸版。文件、隱私權政策、使用條款不記入 roadmap。
-- 上一版還不是 `shipped`，使用者卻點名新版本：先提醒軟規則，不硬擋。使用者仍要開，才建立下一版。
+- The latest version is `in progress`: add the work to that version's INDEX and under that version's changelog heading. Do not open the next version.
+- The latest version is `shipped` and the next version's directory does not exist: record **code** changes in [`dev-docs/roadmap/unversioned.md`](../../../dev-docs/roadmap/unversioned.md) and add one sentence under `Next` at the top of the root `changelog.md`. Both places list the same changes. Do not open the next version yourself. The user later chooses: fold them into the version just shipped, open the next version for them, or leave them unversioned after shipping. Docs, the privacy policy, and terms are not tracked on the roadmap.
+- The previous version is not `shipped` and the user still names a new version: remind them of the soft rule. Do not hard-block. Open the next version only if they still want it.
 
-工作目錄：`dev-docs/roadmap/<VER>/`。必讀：`INDEX.md`；有則讀 `docs/*`、`HANDOFF.md`。對照上一版 INDEX、相關 `backlog/*.md`（構想，**不得覆寫本版已定案**）。該版承接未歸版時，把 `unversioned.md` 的條目寫進 INDEX，並把 changelog `Next` 的句子移到該版標題下，兩處改回沒有待歸項。
+Work in `dev-docs/roadmap/<VER>/`. Required: `INDEX.md`. Also read `docs/*` and `HANDOFF.md` when they exist. Compare the previous version's INDEX and related `backlog/*.md` (ideas; **do not override this version's decisions**). When this version absorbs unversioned work, write those `unversioned.md` items into the INDEX and move the changelog `Next` sentences under this version's heading. Both places then have nothing left to assign.
 
-## 角色分工（強制）
+## Roles (required)
 
-| 角色 | 誰 | 可改什麼 | 禁止 |
-|------|----|----------|------|
-| **設計審查** | **每次新 spawn** 的 Task subagent（`generalPurpose`；**禁止** `resume`） | 只寫／更新 **同一份** `docs/design-review.md` | 改 INDEX／HOW／reasoning／HANDOFF／程式；把本檔當已定案；commit |
-| **規劃收斂** | **本 session**（呼叫本技能的 agent） | INDEX、HOW、reasoning、HANDOFF | 在閘門通過前寫產品碼；口頭「之後注意」卻不寫檔 |
-| **實作** | 閘門通過後 **本 session** | 本倉庫程式＋測試；INDEX 狀態 `in progress` | 發明 INDEX 未寫的語意；做非目標；改舊錢包倉庫 |
-| **實作審查** | 碼大致完成後 **新 spawn**（禁止 resume 實作脈絡） | 只寫／更新 **同一份** `docs/implementation-review.md` | 改程式、加功能、commit |
+| Role | Who | May change | Forbidden |
+|------|-----|------------|-----------|
+| **Design review** | A **fresh** Task subagent each time (`generalPurpose`; **no** `resume`) | Only write or update the **same** `docs/design-review.md` | INDEX / HOW / reasoning / HANDOFF / code; treating this file as the contract; commit |
+| **Planning convergence** | **This session** (the agent running this skill) | INDEX, HOW, reasoning, HANDOFF | Product code before the gate passes; verbal "watch out later" that is not written to a file |
+| **Implementation** | **This session** after the gate passes | Code and tests in this repo; INDEX status `in progress` | Inventing semantics the INDEX does not state; non-goals; editing an old wallet repo |
+| **Implementation review** | A **fresh** spawn after the code is roughly done (do not resume the implementation context) | Only write or update the **same** `docs/implementation-review.md` | Changing code, adding features, commit |
 
-同一長對話不得既當審查又自審。審查必須是 **無本場討論殘留** 的新 subagent。
+One long conversation must not both review and grade its own review. A review is a **new subagent with no residue from this chat**.
 
-## 總流程
+## Flow
 
 ```
-0  預檢 INDEX 自足
-1  迴圈：spawn 設計審查 → 本 agent 收斂提案
-    直到設計閘門通過，或判定提案不可行則停止
-2  補齊／更新 HANDOFF（含 paste-ready）
-3  依 Track 實作＋該 Track 驗收；全部結束跑該版約定的測試或手驗
-4  spawn 實作審查 → 修洞 → 必要時複審
-5  出貨文件；不 commit，除非使用者要求
+0  Preflight: INDEX is self-sufficient
+1  Loop: spawn design review → this agent converges the proposal
+   until the design gate passes, or stop if the proposal is not feasible
+2  Fill in or update HANDOFF (including paste-ready)
+3  Implement by Track and check that Track; when all Tracks finish, run this version's tests or manual checks
+4  Spawn implementation review → fix holes → re-review when needed
+5  Ship docs; do not commit unless the user asks
 ```
 
-小改：使用者明確說跳過設計審查時，可略過步驟 1；仍須自足 INDEX，並走 Track 驗收。**預設不跳過。**
+Small change: if the user explicitly says to skip design review, step 1 may be skipped. The INDEX must still be self-sufficient, and Track checks still run. **Do not skip by default.**
 
 ---
 
-## 0. 預檢
+## 0. Preflight
 
-讀 `INDEX.md` 與連結 docs，以及 `dev-docs/roadmap/GUIDELINES.md` 的架構禁區。對照 GUIDELINES 自足檢查。
+Read `INDEX.md`, its linked docs, and the architecture bans in `dev-docs/roadmap/GUIDELINES.md`. Run the GUIDELINES self-sufficiency check.
 
-這一版若尚未 `in progress`（剛開版或第一次跑本技能）：同一輪、實作之前，用繁中書面語提醒使用者 `wallet/src` 裡不符合 [`dev-docs/code-design-principles.md`](../../../dev-docs/code-design-principles.md) 的檔案。只算程式碼行（空白與整行註解不算），定義以該文件為準。三類都要列，有路徑與程式碼行數：超過 400 行的 `.ts`／`.tsx`／`.css`；直接放在 `background/wallet/` 下、尚未進該命令資料夾、且達到 150 行的命令檔；沒有英文責任標頭的 `.ts`（不論長短）。這份清單不擋開版，也不自行把拆檔寫進 INDEX。使用者沒說要修，就只提醒。
+If this version is not yet `in progress` (just opened, or the first run of this skill): in the same turn, before implementation, remind the user in Traditional Chinese of `wallet/src` files that miss the source-file rules in [`dev-docs/code-design-principles.md`](../../../dev-docs/code-design-principles.md). Count code lines only (blanks and full-line comments do not count), as that file defines. List all three groups, with path and code-line count: a `.ts`, `.tsx`, or `.css` file over 400 code lines; a command file directly under `background/wallet/` (not already inside that command's folder) at 150 code lines or more; a `.ts` file with no English responsibility header (any length). This list does not block opening the version and does not add a split to the INDEX. If the user does not ask for the fix, only remind them.
 
-若 **開工前仍須拍板** 非空（且不是已標成非目標）：**停止**。告訴使用者先拍板，勿開審查迴圈當拍板。
+If **decisions still required before start** is non-empty (and those items are not already marked non-goals): **stop**. Tell the user to decide first. Do not open a review loop as a substitute for a decision.
 
-若 INDEX 過短、已定案不是完整句子、驗收無法客觀判斷：本 agent **先補文件到可審**，再進步驟 1。補的是把已寫意圖寫清楚，不是發明新品語意。需要產品抉擇則問使用者。
+If the INDEX is too short, decided items are not full sentences, or acceptance cannot be judged objectively: this agent **fills the docs until they are reviewable**, then enters step 1. Filling means writing the already stated intent clearly. It does not invent new product semantics. Ask the user when a product choice is required.
 
-預檢禁區：
+Preflight bans:
 
-- 勿把定案只留在 chat
-- 勿把助記詞、私鑰、密碼、個人地址、生產 RPC 秘密寫進 INDEX／docs／reasoning／HANDOFF／審查報告
-- 勿把 backlog 或未排程構想當成已定案。與 INDEX 衝突時以 INDEX 為準
-- 主路徑不得用：operation store hydrate 找請求、預設廣播全 tab、手寫 rehydrate 當主同步、硬編碼或明文持久密碼、inject 持有長期私鑰、宣告未實作的 Wallet Standard 方法
-- 倉庫尚無整包測試指令。該版 INDEX 必須寫明手驗或測試指令；**禁止**假設 `bun test`
-- 實作範圍限本倉庫
+- Do not leave a decision only in chat
+- Do not write mnemonics, private keys, passwords, personal addresses, or production RPC secrets into INDEX / docs / reasoning / HANDOFF / review reports
+- Do not treat backlog or unscheduled ideas as decided. When they conflict with the INDEX, the INDEX wins
+- The main path must not: find a request by hydrating an operation store, broadcast to every tab by default, use a handwritten rehydrate bus as the main sync path, hardcode or persist a plaintext password, let inject hold a long-lived private key, or declare an unimplemented Wallet Standard method
+- The repo has no full-suite test command yet. This version's INDEX must name the manual checks or test commands. **Do not** assume `bun test`
+- Implementation stays in this repo
 
 ---
 
-## 1. 設計審查迴圈
+## 1. Design-review loop
 
-同一檔：`dev-docs/roadmap/<VER>/docs/design-review.md`。**勿為每輪另開新檔**；累加輪次、穩定 ID（`H1`、`M3`…），修復輪 **勿重編號**。
+One file: `dev-docs/roadmap/<VER>/docs/design-review.md`. **Do not open a new file per round.** Append rounds. Keep stable IDs (`H1`, `M3`, …). A fix round **does not renumber**.
 
-### 1a. Spawn 審查
+### 1a. Spawn the review
 
-用 Task：`subagent_type=generalPurpose`，**不要** `resume`。`run_in_background=false`。prompt 用 [prompts.md](prompts.md)「設計審查」整段，填入 `<VER>` 與錨點路徑。
+Use Task: `subagent_type=generalPurpose`, **no** `resume`. `run_in_background=false`. Use the full "Design review" prompt in [prompts.md](prompts.md). Fill `<VER>` and the anchor paths.
 
-要求 subagent 回傳：總評一句、未關閉 HIGH 列表、建議修的 MEDIUM、**是否判定不可行**、報告檔路徑。
+Require the subagent to return: one-sentence verdict, open HIGH list, MEDIUMs that should be fixed, **whether the proposal is infeasible**, and the report path.
 
-若 Task 失敗：重試一次新 spawn；仍失敗則停，向使用者說明。
+If Task fails: retry once with a new spawn. If it fails again, stop and tell the user.
 
-### 1b. 讀報告並分流
+### 1b. Read the report and route
 
-讀 `design-review.md`（以檔案為準，不認 subagent 閒聊）。
+Read `design-review.md` (the file is the source; ignore subagent chatter).
 
-**停止（提案不可行）** — 出現任一即停，**不要**為過關而扭曲產品句：
+**Stop (proposal not feasible)** — stop on any of these. **Do not** twist a product sentence to pass the gate:
 
-- 審查寫明本版與非目標／架構禁區／既有契約不可調和，且無「只改文件、不改產品意圖」的修法
-- 主路徑必須把 pending 做成持久 Zustand、廣播全 tab、或硬編碼密碼才能工作
-- 主路徑必須依賴 INDEX 禁止的能力（含未宣告卻要靠的 Wallet Standard 方法）
-- 待拍板無法從已定案推出，繼續改文件只是猜
-- 連續多輪同一 HIGH 無進展，本質是產品未決
+- The review says this version cannot be reconciled with non-goals, architecture bans, or an existing contract, and there is no fix that only edits docs without changing product intent
+- The main path works only if pending is durable Zustand, results broadcast to every tab, or a password is hardcoded
+- The main path depends on a capability the INDEX forbids (including a Wallet Standard method that is relied on but not declared)
+- An open decision cannot be derived from decided sentences, and more doc edits would only be a guess
+- The same HIGH makes no progress across several rounds because the product is undecided
 
-停止時：用繁中書面語說明理由、引用 finding ID、列出若要繼續需使用者拍板的題。**不要**開始實作。
+When stopping: explain in Traditional Chinese, cite finding IDs, and list the questions the user must decide before work can continue. **Do not** start implementation.
 
-**收斂（可行）** — 本 agent：
+**Converge (feasible)** — this agent:
 
-1. 同意的 HIGH／應修 MEDIUM → 寫進 INDEX 已定案與對應 HOW／reasoning／HANDOFF（完整句子，GUIDELINES 自足）
-2. 不同意的 MEDIUM／LOW → 在 INDEX 或 reasoning 寫清否決理由，或在報告標 **非阻擋**（須真的不擋主路徑／驗收）
-3. 不以 review 檔當契約；契約只在 INDEX＋docs
-4. 改定案若改變產品句／非目標／架構禁區：先問使用者；小實作細節可自決
+1. Agreed HIGH and MEDIUM that should be fixed → write them into the INDEX decided section and the matching HOW / reasoning / HANDOFF (full sentences, GUIDELINES self-sufficient)
+2. Disagreed MEDIUM / LOW → write the rejection reason in the INDEX or reasoning, or mark the report item **non-blocking** (it must really not block the main path or acceptance)
+3. The review file is not the contract. The contract is INDEX plus docs
+4. If a decided change alters a product sentence, a non-goal, or an architecture ban: ask the user first. Small implementation details may be decided here
 
-然後 **再 1a**（新 spawn，禁止 resume）。告知審查者：對照**現** INDEX；核對舊 ID 狀態；可新增 ID，勿重編舊號。
+Then **1a again** (new spawn, no resume). Tell the reviewer: compare the **current** INDEX; check old ID status; new IDs are allowed; do not renumber old ones.
 
-建議上限 **8** 輪。達上限仍有未關 HIGH：停、彙報，勿 silently 實作。
+Suggested cap: **8** rounds. If open HIGHs remain at the cap: stop and report. Do not implement silently.
 
-### 設計閘門（通過才能進實作）
+### Design gate (required before implementation)
 
-- [ ] 無未關閉 **HIGH**
-- [ ] 同意的 **MEDIUM** 已寫進檔案，或標非阻擋
-- [ ] INDEX 待拍板為空（或僅非目標）
-- [ ] `HANDOFF.md` 存在且含 paste-ready starter prompt
-- [ ] 非目標寫清
-- [ ] 最新一輪審查總評寫明門檻通過（本 agent 須自己核對檔案，不盲信一句話）
+- [ ] No open **HIGH**
+- [ ] Agreed **MEDIUM** items are written into files, or marked non-blocking
+- [ ] INDEX decisions-before-start is empty (or only non-goals)
+- [ ] `HANDOFF.md` exists and contains a paste-ready starter prompt
+- [ ] Non-goals are written clearly
+- [ ] The latest round's verdict says the gate passes (this agent checks the file; do not trust one sentence blindly)
 
 ---
 
 ## 2. HANDOFF
 
-閘門通過後確認 `HANDOFF.md`：讀檔順序、產品摘要、**Track 順序**、禁區、錨點、完成檢查、paste-ready。
+After the gate passes, confirm `HANDOFF.md`: read order, product summary, **Track order**, bans, anchors, done checks, paste-ready.
 
-實作開始時：INDEX 狀態 → `in progress`。
-
----
-
-## 3. Track 節奏與測試
-
-嚴格跟 INDEX／HANDOFF 的 Track 順序。禁非目標。INDEX 已定案不要再問；**沉默才提問**。沉默時仍遵守 GUIDELINES 架構禁區。
-
-測試以 **該版 INDEX** 寫明的指令或手驗為準。倉庫尚無預設整包指令；有整包指令後以 `dev-docs/roadmap/GUIDELINES.md`「出貨檔案」表為準。
-
-| 時機 | 測試期望 |
-|------|----------|
-| **每個 Track 結束** | 該 Track 相關 unit／手驗；對應驗收句成立再進下一 Track |
-| **全部 Track 結束** | 必跑該版約定的整包測試；尚無指令則逐條完成 INDEX 手驗並留下結果 |
-| **實作審查前後** | 再跑同一組；寫入 implementation-review |
-
-Popup、popout、注入頁有行為改動：用未封裝擴充把該流程走一遍（該版驗收點：連接、拒絕、簽名、鎖屏等）。不要只看靜態截圖。若當下沒有瀏覽器可載入擴充，寫明哪幾條驗收未在瀏覽器走完。
-
-引入測試 runner、changelog、或全域契約檔時，回寫 GUIDELINES「出貨檔案」表，並讓 `CHANGELOG.md`（倉庫根）與版本號一致。
+When implementation starts: INDEX status → `in progress`.
 
 ---
 
-## 4. 實作審查迴圈（中改以上預設做）
+## 3. Track rhythm and tests
 
-檔案：`dev-docs/roadmap/<VER>/docs/implementation-review.md`（同一檔累加輪次）。
+Follow the Track order in the INDEX / HANDOFF. Non-goals are forbidden. Do not re-ask what the INDEX already decided. **Ask only when it is silent.** Silence still obeys the GUIDELINES architecture bans.
 
-Spawn 新 Task（禁止 resume 實作對話）。prompt 用 [prompts.md](prompts.md)「實作審查」。
+Tests are the commands or manual checks that **this version's INDEX** names. The repo has no default full-suite command. After one exists, follow the "ship files" table in `dev-docs/roadmap/GUIDELINES.md`.
 
-| 輪 | 誰 | 做什麼 |
-|----|-----|--------|
-| 初審 | 新 subagent | 只讀 INDEX＋docs＋diff；開 findings；跑該版測試或手驗並記錄 |
-| 修復 | 本實作 session | 只修追蹤項；更新同一份報告狀態欄 |
-| 複審 | 再開新 subagent（建議）或本 agent 自核後再獨立 spawn | 核對已關項；重跑測試；留意迴歸 |
-| 獨立核實（中改以上建議） | **新** spawn | 不延續實作對話；對碼＋該版測試再驗 |
+| When | Expected test |
+|------|----------------|
+| **End of each Track** | Unit or manual checks for that Track. The matching acceptance sentence holds before the next Track |
+| **All Tracks done** | Run this version's agreed full suite. If there is no command, complete each INDEX manual check and record the result |
+| **Around implementation review** | Run the same set again. Write the result into implementation-review |
 
-Findings 分級與出貨門檻同 agent-workflow：HIGH 必須關；MEDIUM 預設修或標非阻擋；LOW 可不擋。審查 agent **不改程式**。
+When popup, popout, or an injected page changes behavior: walk that flow in the unpacked extension (this version's acceptance points: connect, reject, sign, lock, and so on). A static screenshot is not enough. If no browser can load the extension right now, write which acceptance items were not walked in a browser.
 
-若實作審查發現 **設計契約** 仍分叉：回到步驟 1 的規劃收斂改文件，必要時再設計複審；不要用程式「發明」INDEX 沒有的語意。
-
----
-
-## 5. 出貨前（本技能預設停在「可出貨、待使用者同意 commit」）
-
-- [ ] 無未關閉 HIGH
-- [ ] 同意的 MEDIUM 已修或標非阻擋
-- [ ] INDEX **驗收**全勾（或 implementation-review 逐條通過）
-- [ ] 該版約定的測試或手驗已通過，且 UI 流程已在擴充裡走完（或報告寫明無法走完的原因）
-- [ ] 倉庫根 `changelog.md` 已記本版，且 `Next` 沒有仍屬本版的句子；若已有 `package.json`，`version` 與 `X.Y.Z` 一致；`wallet/manifest.config.ts` 的 `version` 與 `X.Y.Z` 一致；根 `README.md` 的版本句與 `version.md` 相同，且 `version.md` 等於 README 表裡最新一個 `shipped`
-- [ ] [`dev-docs/roadmap/README.md`](../../../dev-docs/roadmap/README.md) 該列改 `shipped`。這張表是狀態來源；INDEX 狀態與它相同
-- [ ] 本版新增或改動的訊息／storage／custody／能力表路徑已寫進 INDEX
-- [ ] 該構想已出貨則從 `dev-docs/roadmap/backlog/` **刪列＋刪獨立檔**
-- [ ] 若本版吃進未歸版：`unversioned.md` 與 changelog `Next` 已清空那些條目
-- [ ] INDEX 狀態 `shipped` **僅在**驗收與測試通過且使用者同意出貨時改；否則維持 `in progress`
-
-**不要 git commit**，除非使用者明確要求。
+When introducing a test runner, the changelog, or a global contract file, update the GUIDELINES "ship files" table, and keep root `CHANGELOG.md` consistent with the version number.
 
 ---
 
-## 對使用者的進度（精簡）
+## 4. Implementation-review loop (default for medium changes and up)
 
-每階段結束用短段說明：現在輪次、未關 HIGH、下一步（再審／收斂／實作 Track X／停止）。不要把 subagent 全文貼進對話。
+File: `dev-docs/roadmap/<VER>/docs/implementation-review.md` (append rounds to the same file).
+
+Spawn a new Task (do not resume the implementation conversation). Use the "Implementation review" prompt in [prompts.md](prompts.md).
+
+| Round | Who | What |
+|-------|-----|------|
+| Initial | New subagent | Read only INDEX + docs + diff; open findings; run this version's tests or manual checks and record them |
+| Fix | This implementation session | Fix only tracked items; update the status column in the same report |
+| Re-review | A new subagent (suggested), or this agent self-checks and then spawns an independent review | Check closed items; rerun tests; watch for regressions |
+| Independent check (suggested for medium changes and up) | A **new** spawn | Does not continue the implementation chat; rechecks code and this version's tests |
+
+Finding grades and the ship bar match agent-workflow: HIGH must close; MEDIUM is fixed by default or marked non-blocking; LOW may stay open. The review agent **does not change code**.
+
+If implementation review finds the **design contract** still diverges: return to planning convergence in step 1 and edit docs. Run another design review when needed. Do not "invent" semantics in code that the INDEX does not have.
+
+---
+
+## 5. Before ship (this skill stops at "ready to ship, waiting for the user to allow commit")
+
+- [ ] No open HIGH
+- [ ] Agreed MEDIUM items are fixed or marked non-blocking
+- [ ] INDEX **acceptance** is fully checked (or implementation-review passes each item)
+- [ ] This version's tests or manual checks passed, and the UI flow was walked in the extension (or the report says why it could not be walked)
+- [ ] Root `changelog.md` records this version, and `Next` has no sentence that still belongs to this version. If `package.json` exists, `version` matches `X.Y.Z`. `wallet/manifest.config.ts` `version` matches `X.Y.Z`. The version sentence in root `README.md` matches `version.md`, and `version.md` equals the latest `shipped` row in the README table
+- [ ] That row in [`dev-docs/roadmap/README.md`](../../../dev-docs/roadmap/README.md) is `shipped`. That table is the status source. The INDEX status matches it
+- [ ] Paths for messages, storage, custody, or capability tables added or changed in this version are written in the INDEX
+- [ ] A shipped idea is **removed from the table and its standalone file is deleted** under `dev-docs/roadmap/backlog/`
+- [ ] If this version absorbed unversioned work: those items are cleared from `unversioned.md` and changelog `Next`
+- [ ] INDEX status becomes `shipped` **only** when acceptance and tests pass and the user agrees to ship. Otherwise it stays `in progress`
+
+**Do not git commit** unless the user explicitly asks.
+
+---
+
+## Progress for the user (short)
+
+At the end of each stage, a short paragraph: current round, open HIGHs, and the next step (review again / converge / implement Track X / stop). Do not paste the full subagent text into the chat.

@@ -8,46 +8,46 @@ description: >-
 
 # Airwave e2e
 
-劇本在 [`test/e2e/scenarios/`](../../../test/e2e/scenarios/)。服務與設定以 [`test/e2e/README.md`](../../../test/e2e/README.md) 為準。
+Scenarios live in [`test/e2e/scenarios/`](../../../test/e2e/scenarios/). Services and setup follow [`test/e2e/README.md`](../../../test/e2e/README.md).
 
-對使用者用繁體中文回報。不要把密碼、助記詞、API key 寫進劇本或回報。
+Reply to the user in Traditional Chinese. Do not write passwords, mnemonics, or API keys into scenarios or reports.
 
-## 架構（務必分開）
+## Architecture (keep these apart)
 
-- **`solana-test-validator`（`:8899`）**＝**Solana JSON-RPC**（餘額、airdrop、送交易、確認）。每則劇本 `bun run e2e-validator` 重置帳本，需要 SOL 時再 `solana airdrop … --url http://127.0.0.1:8899`。不要把這條 RPC mock 掉。
-- **mock（`:8787`）**＝**外掛 HTTP only**（Helius 活動、Jupiter token search、OpenRouter AI、另一叢集的 blockhash 探針）。回應是合成 fixture，見 [`test/e2e/fixtures/`](../../../test/e2e/fixtures/)。不要打真網。
+- **`solana-test-validator` (`:8899`)** is **Solana JSON-RPC** (balances, airdrop, send, confirm). Each scenario runs `bun run e2e-validator` to reset the ledger, then `solana airdrop … --url http://127.0.0.1:8899` when it needs SOL. Do not mock this RPC.
+- **mock (`:8787`)** is **extension HTTP only** (Helius activity, Jupiter token search, OpenRouter AI, blockhash probe for another cluster). Responses are synthetic fixtures in [`test/e2e/fixtures/`](../../../test/e2e/fixtures/). Do not hit the live network.
 
-## Mock 資料（合成）
+## Mock data (synthetic)
 
-執行期讀 [`test/e2e/fixtures/`](../../../test/e2e/fixtures/)（可選 `AIRWAVE_E2E_FIXTURES` 覆寫）。檔案是手寫／產生的假資料，不是生產錄音。規則見該目錄 `README.md`。
+Runtime reads [`test/e2e/fixtures/`](../../../test/e2e/fixtures/) (optional override: `AIRWAVE_E2E_FIXTURES`). Files are handwritten or generated fake data, not production captures. Rules are in that directory's `README.md`.
 
 - `jupiter/tokens-v2-search.json`
 - `helius/address-transactions-page1.json`
 - `helius/address-transactions-page2.json`
-- `openrouter/chat-completions.json`（須含 `What This Transaction Does`）
+- `openrouter/chat-completions.json` (must contain `What This Transaction Does`)
 - `openrouter/decisions.json`
 
-## 開跑前
+## Before a run
 
-1. `bun run e2e-preflight`（缺 `solana`／`solana-test-validator` 或缺五份 fixture → 硬失敗）。
-2. 載入未封裝擴充：`wallet/dist`。
-3. 優先 Side panel（工具列 popup → 側欄）；不要開裸 popout／approval URL。
-4. `bun run e2e-mock`，確認 `http://127.0.0.1:8787/health` 為 `ok: true`。
-5. **每一則** `bun run e2e-validator`，等 `:8899` 可連；不要沿用上一則帳本。
-6. `bun run test-web`。
-7. 依 README「錢包設定」設好；Mainnet 不要設自訂 RPC。
-8. 需要 SOL：`solana airdrop <額> <地址> --url http://127.0.0.1:8899`（不要用 test-web 預設公開 Devnet airdrop）。
+1. `bun run e2e-preflight` (hard-fail if `solana` / `solana-test-validator` is missing, or any of the five fixtures is missing).
+2. Load the unpacked extension from `wallet/dist`.
+3. Prefer the side panel (toolbar popup → side panel). Do not open a bare popout or approval URL.
+4. `bun run e2e-mock`, then confirm `http://127.0.0.1:8787/health` is `ok: true`.
+5. For **every** scenario, `bun run e2e-validator` and wait until `:8899` accepts connections. Do not reuse the previous scenario's ledger.
+6. `bun run test-web`.
+7. Apply the wallet settings in the README. Do not set a custom RPC on Mainnet.
+8. When SOL is required: `solana airdrop <amount> <address> --url http://127.0.0.1:8899` (do not use the test-web default public Devnet airdrop).
 
-## 解鎖
+## Unlock
 
-密碼由執行端 out-of-band 提供。不要寫進劇本或回報。
+The password is supplied out of band by the runner. Do not write it into a scenario or a report.
 
-## 操作與判定
+## Steps and verdict
 
-只做該劇本步驟。`test-web` 的 `rpc`／`otherRpc` 必須與劇本一致，否則停止。通過時列出劇本檔名；失敗寫步驟與畫面文字。不要把沒跑的劇本書成通過。
+Follow only that scenario's steps. Stop if `test-web` `rpc` / `otherRpc` does not match the scenario. On pass, name the scenario file. On fail, name the step and the on-screen text. Do not mark an unrun scenario as passed.
 
-劇本 `01` 核對 test-web log 的 `Broadcast signature:` 與 `Confirmed:`（confirmed 或 finalized 後都印 `Confirmed:`）。
+Scenario `01` checks the test-web log for `Broadcast signature:` and `Confirmed:` (printed after both confirmed and finalized).
 
-## Alpenglow 與確認
+## Alpenglow and confirmation
 
-本機 `solana-test-validator` 在 Alpenglow 後約 150ms 就會 finalize。錢包／劇本把「已確認」當成 finalized-only 即可，不必再等一段 confirmed 中間態。
+Local `solana-test-validator` finalizes in about 150ms after Alpenglow. The wallet and scenarios may treat "confirmed" as finalized-only. Do not wait for a separate confirmed intermediate state.

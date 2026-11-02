@@ -4,9 +4,15 @@ This repo is **Airwave**, a Solana Chrome extension wallet. Later it may add a k
 
 Feature ideas: [`dev-docs/roadmap/backlog/INDEX.md`](dev-docs/roadmap/backlog/INDEX.md).
 
+## Language
+
 **Replies to the user are Traditional Chinese written prose.** Proper names, paths, APIs, and file names stay in English.
 
-**Documents default to 繁體中文書面語** unless the user says otherwise, or a spec already requires another language. Shipped version docs at or before 0.53.0 stay as they were written. Domain entries keep their Chinese term names.
+**Documents default to English** unless the user says otherwise, or a spec already requires another language. That includes `INDEX.md`, `reasoning.md`, `how.md`, `HANDOFF.md`, review reports, and other roadmap prose. Identifiers, paths, commands, JSON keys, and enums are English.
+
+Shipped version docs at or before 0.53.0 stay as they were written. Do not rewrite them only to change language. Domain term names follow [`dev-docs/DOMAIN.md`](dev-docs/DOMAIN.md). New domain prose is English.
+
+UI strings live in the message catalog (`ui-messages` and locale files). Traditional Chinese, Simplified Chinese, and English are three catalogs. Do not hard-code a single language into a contract.
 
 ---
 

@@ -1,45 +1,45 @@
-# 審查報告骨架
+# Review report skeleton
 
-審查 subagent 寫入 `dev-docs/roadmap/<VER>/docs/` 時用此結構。同一檔累加輪次。
+Review subagents use this structure when writing `dev-docs/roadmap/<VER>/docs/`. Append rounds to the same file. Write the report in English.
 
 ## design-review.md
 
 ```markdown
 # Design review — <VER> Airwave Wallet
 
-- 日期：（Asia/Hong_Kong）
-- 輪次：**初審**／**第 N 輪複審**
-- 角色：設計審查（不改 INDEX／HOW／reasoning／HANDOFF／程式；不以本檔當已定案）
-- 對照基準：[`../INDEX.md`](../INDEX.md) 已定案＋驗收；HOW／WHY／HANDOFF 連結
-- 架構禁區：[`../../GUIDELINES.md`](../../GUIDELINES.md)
-- 現行程式抽樣：（錨點檔；倉庫尚無程式時寫「無」）
-- **總評：**（無未關閉 HIGH／有未關閉 HIGH／提案不可行）。審查門檻通過與否。
+- Date: (Asia/Hong_Kong)
+- Round: **initial** / **re-review N**
+- Role: design review (does not edit INDEX / HOW / reasoning / HANDOFF / code; this file is not the contract)
+- Baseline: decided sentences and acceptance in [`../INDEX.md`](../INDEX.md); links to HOW / WHY / HANDOFF
+- Architecture bans: [`../../GUIDELINES.md`](../../GUIDELINES.md)
+- Current-code sample: (anchor files; write "none" if the repo has no code yet)
+- **Verdict:** (no open HIGH / open HIGH remains / proposal not feasible). Whether the review gate passes.
 
-## Findings（本輪）
+## Findings (this round)
 
-關閉＝已寫進 INDEX／HOW／HANDOFF；仍開＝契約仍分叉；非阻擋＝記錄即可。
+Closed = written into INDEX / HOW / HANDOFF. Open = the contract still diverges. Non-blocking = record only.
 
 ### HIGH
-#### H1 — 標題 — **仍開／關閉／不可行**
-問題、為何是 HIGH、建議寫進已定案的完整句子（擇一須寫死）。
+#### H1 — title — **open / closed / infeasible**
+The problem, why it is HIGH, and the full sentence to write into the decided section (one option must be locked).
 
 ### MEDIUM
-表格或分節：ID、本輪狀態、依據。
+Table or subsections: ID, status this round, basis.
 
 ### LOW
-表格即可。
+A table is enough.
 
-## 驗收對照
-驗收句 | 設計層是否可測 | 缺口
+## Acceptance cross-check
+Acceptance sentence | testable at design level | gap
 
-## 與現碼抽樣
-現碼未做本版 ≠ 設計 HIGH。標出與提案互斥的現行行為。不要把 backlog 或未排程構想當成現行程式。
+## Current-code sample
+Current code not yet doing this version is not a design HIGH. Call out current behavior that contradicts the proposal. Do not treat backlog or unscheduled ideas as current code.
 
-## 修復追蹤表
-ID | 級 | 狀態 | 關閉位置（INDEX 條／HOW 節）
+## Fix tracker
+ID | grade | status | where it closed (INDEX item / HOW section)
 
-## 歷審摘要
-輪次 | 日期 | 結論
+## Prior rounds
+Round | date | conclusion
 ```
 
 ## implementation-review.md
@@ -47,20 +47,20 @@ ID | 級 | 狀態 | 關閉位置（INDEX 條／HOW 節）
 ```markdown
 # Implementation review — <VER> Airwave Wallet
 
-- 日期、輪次、對照基準＝INDEX
-- 角色：實作審查（不改程式）
-- **總評：** 可否出貨（無未關 HIGH／該版測試或手驗是否通過）
+- Date, round, baseline = INDEX
+- Role: implementation review (does not change code)
+- **Verdict:** whether it can ship (no open HIGH / whether this version's tests or manual checks passed)
 
 ## Findings
-H／M／L，穩定 ID
+H / M / L, stable IDs
 
-## 驗收對照
-INDEX 驗收句 | 通過／失敗 | 證據（測／檔／未封裝擴充手驗）
+## Acceptance cross-check
+INDEX acceptance sentence | pass / fail | evidence (test / file / unpacked-extension manual check)
 
-## 測試結果
-指令：該版 INDEX 或 GUIDELINES 寫明者；尚無則寫「無整包測試指令」並列手驗結果。
-禁止寫入助記詞、私鑰、密碼。
+## Test results
+Command: what this version's INDEX or GUIDELINES names. If none, write "no full-suite test command" and list manual-check results.
+Do not write mnemonics, private keys, or passwords.
 
-## 修復追蹤
-## 歷審摘要
+## Fix tracker
+## Prior rounds
 ```
