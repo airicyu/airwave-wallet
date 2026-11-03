@@ -96,6 +96,7 @@ export async function measureV1ResourceUse(
   }
 }
 
+
 /** Smallest positive multiple of 32768. A measured 0 becomes 32768. */
 export function roundLoadedAccountsDataSize(measured: number): number {
   const page = 32768;
