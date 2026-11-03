@@ -50,7 +50,7 @@ The password is supplied out of band by the runner. Do not write it into a scena
 
 Follow only that scenario's steps. Stop if `test-web` `rpc` / `otherRpc` does not match the scenario. On pass, name the scenario file. On fail, name the step and the on-screen text. Do not mark an unrun scenario as passed.
 
-Scenario `01` checks the test-web log for `Broadcast signature:` and `Confirmed:` (printed after both confirmed and finalized).
+Scenario `01` checks the test-web log for `Broadcast signature:` and `Confirmed:` (printed after both confirmed and finalized). Scenario `07` checks the v1 fee card and the logs `v1 signTransaction returned:` and `v1 signAndSendTransaction ok:`.
 
 ## Alpenglow and confirmation
 
