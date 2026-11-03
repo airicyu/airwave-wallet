@@ -53,3 +53,10 @@ Mock 的 `getLatestBlockhash` 固定回 `11111111111111111111111111111111`（合
 - 活動劇本另把 Helius API URL 設成 `http://127.0.0.1:8787`
 
 `test-web` 預設仍可能打公開 Devnet。劇本要加：`http://127.0.0.1:5173/?rpc=http://127.0.0.1:8899`。Cluster 不符再加 `&otherRpc=http://127.0.0.1:8787`。
+
+## Scenario 07（v1）
+
+- 需要能接受 v1 交易的本機 validator：Solana CLI / Agave **4.2+**（`enable_tx_v1`；本機已用 4.3.x 驗證過）。
+- 錢包設定裡的預設優先費維持出廠 `5000`（步驟 1 驗「交易內已帶 5000、未被設定覆寫」；步驟 2 才驗省略優先費時帶入設定預設值）。
+- test-web 按鈕：`Sign transaction（v1）`、`…省略優先費`、`…優先費 0`、`…省略 CU limit`、`…已有簽章`、`signAndSendTransaction（v1，錢包代送）`。
+
