@@ -77,6 +77,7 @@ Steps 2 and 3 are direction only until an INDEX schedules them. Do not start the
 ## Working habits
 
 - **Do not commit unless the user asks.** **Do not push unless the user asks.** The user pushes by hand. Shipping and committing do not include a push.
+- **Branches.** Development starts on a version branch named `vX.Y.Z` or a feature branch. Do not develop on `master`. A branch may hold several commits. Open a merge request into `master` only when that branch's work is finished and the user asks for the MR. Do not merge it unless the user asks.
 - Roadmap and review reports must **not** contain real mnemonics, private keys, passwords, or production secrets (see GUIDELINES privacy).
 - Implementation stays in this repo. Prefer `test/test-web/` for tests. Do not assume an external dApp must change.
 - Anything discussed in chat but not written into the roadmap or a contract file **does not exist** for the next agent. Decisions go into files.

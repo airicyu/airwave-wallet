@@ -19,7 +19,7 @@ import {
 } from "../sign-tx-body";
 import { renderFeeCard, renderTxDetails } from "../dom/fee-details";
 import { sess } from "./session";
-import { hasCuPair, localTotalFeeLamports, retrySimDisabled } from "./cu";
+import { feePairReady, hasCuPair, isV1FeeSession, localTotalFeeLamports, retrySimDisabled } from "./cu";
 import { isSendStatusLocked, setSignButtons } from "./dom";
 import { blockhashProbeBlocksApprove, resetBlockhashProbeSession, syncBlockhashMismatchCard } from "./blockhash-probe";
 import { isSignTxKind } from "./kinds";
@@ -51,7 +51,7 @@ function refreshFeeTotal(sim: SimulatePendingTxResult | null, loading: boolean):
     loading,
     cuWriteError: sim?.cuWriteError,
     totalLamports: localTotalFeeLamports(sim),
-    estimating: !hasCuPair() && sess.txCuEditable && !sim?.cuWriteError,
+    estimating: !feePairReady() && sess.txCuEditable && !sim?.cuWriteError,
     progressUserMessage,
     tr,
   });
@@ -135,7 +135,7 @@ export function renderSignTransactionBody(sim: SimulatePendingTxResult | null, l
   syncBlockhashMismatchCard();
   if (!sess.feeFrozenForSim || sess.cuApplyBusy) {
     refreshFeeTotal(sim, loading);
-    if (!loading && hasCuPair()) sess.feeFrozenForSim = true;
+    if (!loading && feePairReady()) sess.feeFrozenForSim = true;
   }
 }
 
@@ -151,8 +151,13 @@ export async function runSimulation(): Promise<void> {
     paintDeltaOnly(sess.lastSim, true);
   }
 
-  const payload: { requestId: string; cuLimit?: number; cuPrice?: number } = { requestId: sess.requestId };
-  if (sess.cuUserOverride && hasCuPair()) {
+  const payload: { requestId: string; cuLimit?: number; cuPrice?: number; priorityFeeLamports?: string } = {
+    requestId: sess.requestId,
+  };
+  if (sess.cuUserOverride && isV1FeeSession() && sess.localCuLimit != null && sess.localPriorityFee != null) {
+    payload.cuLimit = sess.localCuLimit;
+    payload.priorityFeeLamports = sess.localPriorityFee;
+  } else if (sess.cuUserOverride && hasCuPair()) {
     payload.cuLimit = sess.localCuLimit!;
     payload.cuPrice = sess.localCuPrice!;
   }
@@ -184,8 +189,14 @@ export async function runSimulation(): Promise<void> {
     sess.lastAcceptedSimSeq = seq;
     sess.lastSim = result;
     sess.txCuEditable = result.cuEditable === true;
+    sess.txMessageVersion = result.messageVersion ?? "legacy";
     if (result.cuLimit != null) sess.localCuLimit = result.cuLimit;
-    if (result.cuPrice != null) sess.localCuPrice = result.cuPrice;
+    if (result.messageVersion === 1) {
+      sess.localPriorityFee = result.priorityFeeLamports ?? null;
+      sess.localCuPrice = null;
+    } else if (result.cuPrice != null) {
+      sess.localCuPrice = result.cuPrice;
+    }
   }
   renderSignTransactionBody(sess.lastSim, false);
   applyApproveFromSimulation(sess.lastSim);

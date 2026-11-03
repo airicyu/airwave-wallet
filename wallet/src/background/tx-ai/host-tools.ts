@@ -227,7 +227,7 @@ export async function executeHostTool(args: {
   if (args.name === "rpc_get_transaction") {
     const signature = asPubkey(input.signature);
     if (!signature) return { ok: false, error: "signature required" };
-    return rpcRead(args.rpcUrl, "getTransaction", [signature, { encoding: "json", maxSupportedTransactionVersion: 0 }], args.signal);
+    return rpcRead(args.rpcUrl, "getTransaction", [signature, { encoding: "json", maxSupportedTransactionVersion: 1 }], args.signal);
   }
   if (args.name === "rpc_get_latest_blockhash") {
     return rpcRead(args.rpcUrl, "getLatestBlockhash", [{ commitment: "confirmed" }], args.signal);

@@ -12,7 +12,9 @@ import {
   CU_CHECK_SVG,
   cuPairInBounds,
   draftsAreDirty,
+  isV1FeeSession,
   parseCuFieldInput,
+  v1FeeInBounds,
 } from "../shell/cu";
 import { progressUserMessage, tr } from "../shell/locale";
 
@@ -81,9 +83,10 @@ export function renderFeeCard(sim: SimulatePendingTxResult | null, loading: bool
   limitInp.value = limitShown;
   limitWrap.append(limitInp);
 
+  const v1 = sim?.messageVersion === 1 || isV1FeeSession();
   const priceWrap = document.createElement("label");
   priceWrap.className = "cu-field";
-  priceWrap.textContent = "CU price";
+  priceWrap.textContent = v1 ? tr("approval.priorityFee") : "CU price";
   const priceInp = document.createElement("input");
   priceInp.type = "text";
   priceInp.inputMode = "numeric";
@@ -91,9 +94,11 @@ export function renderFeeCard(sim: SimulatePendingTxResult | null, loading: bool
   priceInp.disabled = loading || !sess.txCuEditable || sim?.cuWriteError != null;
   const priceShown = sess.cuDirty
     ? sess.draftPriceStr
-    : sess.localCuPrice != null
-      ? String(sess.localCuPrice)
-      : "";
+    : v1
+      ? sess.localPriorityFee ?? ""
+      : sess.localCuPrice != null
+        ? String(sess.localCuPrice)
+        : "";
   priceInp.value = priceShown;
   priceWrap.append(priceInp);
 
@@ -110,7 +115,7 @@ export function renderFeeCard(sim: SimulatePendingTxResult | null, loading: bool
     }
     const limit = parseCuFieldInput(limitInp.value);
     const price = parseCuFieldInput(priceInp.value);
-    const ok = cuPairInBounds(limit, price);
+    const ok = v1 ? v1FeeInBounds(limit, priceInp.value) : cuPairInBounds(limit, price);
     applyBtn.classList.remove("pending", "busy");
     applyBtn.innerHTML = "";
     if (sess.cuApplyBusy) {
@@ -146,13 +151,24 @@ export function renderFeeCard(sim: SimulatePendingTxResult | null, loading: bool
     if (!sess.txCuEditable || !sess.requestId) return;
     const limit = parseCuFieldInput(limitInp.value);
     const price = parseCuFieldInput(priceInp.value);
-    if (!cuPairInBounds(limit, price)) return;
-    sess.cuUserOverride = true;
-    sess.localCuLimit = limit;
-    sess.localCuPrice = price;
-    sess.cuDirty = false;
-    sess.draftLimitStr = String(limit);
-    sess.draftPriceStr = String(price);
+    if (v1) {
+      if (!v1FeeInBounds(limit, priceInp.value)) return;
+      sess.cuUserOverride = true;
+      sess.localCuLimit = limit;
+      sess.localPriorityFee = BigInt(priceInp.value.trim()).toString();
+      sess.localCuPrice = null;
+      sess.cuDirty = false;
+      sess.draftLimitStr = String(limit);
+      sess.draftPriceStr = sess.localPriorityFee;
+    } else {
+      if (!cuPairInBounds(limit, price)) return;
+      sess.cuUserOverride = true;
+      sess.localCuLimit = limit;
+      sess.localCuPrice = price;
+      sess.cuDirty = false;
+      sess.draftLimitStr = String(limit);
+      sess.draftPriceStr = String(price);
+    }
     sess.cuApplyBusy = true;
     sess.signTxBodyReady = false;
     sess.feeFrozenForSim = false;

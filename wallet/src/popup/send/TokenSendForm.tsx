@@ -53,7 +53,7 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
     if (raw != null && raw !== 0n) {
       halfDisabled = raw / 2n === 0n;
       if (row.id === NATIVE_SOL_ID) {
-        const reserve = solReserveLamports(wallet.settings.defaultCuPrice);
+        const reserve = solReserveLamports(BigInt(wallet.settings.defaultPriorityFeeLamports));
         maxDisabled = raw <= reserve;
       } else {
         maxDisabled = false;

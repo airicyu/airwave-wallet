@@ -63,8 +63,10 @@ export type Settings = {
   openRouterDecisionsModelMode: TxAiModelMode;
   openRouterDecisionsModelChain: string[];
   txAiAnalysisEnabled: boolean;
-  /** micro-lamports per CU; default CU price for unsigned signTransaction. */
+  /** micro-lamports per CU; default CU price for unsigned legacy and v0. */
   defaultCuPrice: number;
+  /** Lamports, decimal string. Default priority fee for v1. */
+  defaultPriorityFeeLamports: string;
   locale: UiLocale;
   shell: ShellMode;
   /** First-account RPC guide already seen (Skip or open Settings both count). */
@@ -132,6 +134,7 @@ export const DEFAULT_SETTINGS: Settings = {
   openRouterDecisionsModelChain: [],
   txAiAnalysisEnabled: true,
   defaultCuPrice: 25_000,
+  defaultPriorityFeeLamports: "5000",
   locale: "zh-Hant",
   shell: "window",
   rpcGuideDismissed: false,

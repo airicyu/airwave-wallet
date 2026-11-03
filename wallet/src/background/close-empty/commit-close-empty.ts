@@ -21,7 +21,6 @@ import type { KeyPairSigner } from "@solana/signers";
 import type { ClosableEntry, CloseEmptyCommitResult } from "../../shared/close-empty";
 import {
   lamportsDecimalString,
-  priorityFeeLamportsFromCu,
   signatureFeeLamports,
 } from "../../shared/close-empty";
 import { rpcUrlToWebSocket } from "../../shared/rpc";
@@ -43,7 +42,7 @@ function feeTotalForPlan(settings: Settings, plan: StoredClosePlan): string {
   let pri = 0n;
   for (const tx of plan.txs) {
     sig += signatureFeeLamports(1);
-    pri += priorityFeeLamportsFromCu(tx.cuLimit, settings.defaultCuPrice);
+    pri += BigInt(settings.defaultPriorityFeeLamports);
   }
   return lamportsDecimalString(sig + pri);
 }
@@ -178,7 +177,8 @@ export async function commitCloseEmpty(planId: string): Promise<
       blockhash,
       lastValidBlockHeight,
       tx.cuLimit,
-      settings.defaultCuPrice,
+      tx.dataSize,
+      BigInt(settings.defaultPriorityFeeLamports),
     );
     planMessages.push(
       buildCloseTransactionMessage(
@@ -187,7 +187,8 @@ export async function commitCloseEmpty(planId: string): Promise<
         blockhash,
         lastValidBlockHeight,
         tx.cuLimit,
-        settings.defaultCuPrice,
+        tx.dataSize,
+        BigInt(settings.defaultPriorityFeeLamports),
       ),
     );
     const loaded = session.getLoadedAccount(tx.ownerAccountId);

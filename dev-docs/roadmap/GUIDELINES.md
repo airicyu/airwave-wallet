@@ -116,6 +116,8 @@ The status table in [`README.md`](README.md) is the **source of truth**. Each ve
 
 **More changes while a version is `in progress`.** Append that version's `INDEX` and its changelog heading. Do not open another version.
 
+**Branches.** Development starts on a version branch named `vX.Y.Z` or a feature branch. Do not develop on `master`. A branch may hold several commits. Open a merge request into `master` only when that branch's work is finished and the user asks for the MR. Do not merge it unless the user asks.
+
 **Push.** The user pushes by hand. Shipping, editing, and committing do not include `git push`. Do not push unless the user asks.
 
 Update [`README.md`](README.md) when a version is added or its status changes. [`changelog.md`](../../changelog.md) records what shipped. It does not replace `INDEX.md`.

@@ -9,8 +9,11 @@ import {
   compileTransaction,
   createTransactionMessage,
   pipe,
+  setTransactionMessageComputeUnitLimit,
   setTransactionMessageFeePayer,
   setTransactionMessageLifetimeUsingBlockhash,
+  setTransactionMessageLoadedAccountsDataSizeLimit,
+  setTransactionMessagePriorityFeeLamports,
 } from "@solana/kit";
 import { getTransferSolInstruction } from "@solana-program/system";
 import {
@@ -36,6 +39,13 @@ import { parseAmountUiToRaw, solReserveLamports } from "../../shared/send";
 import type { Settings } from "../../shared/protocol";
 import { solanaRpcForUrl } from "../../shared/rpc";
 import { encodeWireTransaction } from "../../shared/tx";
+import { computeCloseEmptyUnitLimit } from "../../shared/close-empty";
+import {
+  measureV1ResourceUse,
+  roundLoadedAccountsDataSize,
+  V1_PROVISIONAL_CU_LIMIT,
+  V1_PROVISIONAL_LOADED_ACCOUNTS_DATA_SIZE,
+} from "../simulate/v1-config-tx";
 import { getWalletSendState } from "./wallet-send-state";
 
 export type BeginSendPayload = {
@@ -50,7 +60,8 @@ export type BeginSendErrorCode =
   | "WALLET_LOCKED"
   | "INVALID_PAYLOAD"
   | "INSUFFICIENT_FUNDS"
-  | "INVALID_ADDRESS";
+  | "INVALID_ADDRESS"
+  | "SIM_FAILED";
 
 function tokenProgramAddress(kind: TokenProgramKind): typeof TOKEN_PROGRAM_ADDRESS | typeof TOKEN_2022_PROGRAM_ADDRESS {
   return kind === "token-2022" ? TOKEN_2022_PROGRAM_ADDRESS : TOKEN_PROGRAM_ADDRESS;
@@ -100,7 +111,7 @@ export async function buildWalletSendTransaction(
 
   const rpc = solanaRpcForUrl(settings.rpcUrl);
   const fromAddress = address(signer.address);
-  const reserve = solReserveLamports(settings.defaultCuPrice);
+  const reserve = solReserveLamports(BigInt(settings.defaultPriorityFeeLamports));
   const instructions: Instruction[] = [];
 
   if (row.id === NATIVE_SOL_ID) {
@@ -186,7 +197,7 @@ export async function buildWalletSendTransaction(
   ws.lastValidBlockHeight = Number(latest.value.lastValidBlockHeight);
 
   const txMessage = pipe(
-    createTransactionMessage({ version: 0 }),
+    createTransactionMessage({ version: 1 }),
     (m) => setTransactionMessageFeePayer(fromAddress, m),
     (m) =>
       setTransactionMessageLifetimeUsingBlockhash(
@@ -199,7 +210,26 @@ export async function buildWalletSendTransaction(
     (m) => appendTransactionMessageInstructions(instructions, m),
   );
 
-  const tx = compileTransaction(txMessage);
+  const priorityFee = BigInt(settings.defaultPriorityFeeLamports);
+  const provisional = pipe(
+    txMessage,
+    (m) => setTransactionMessageComputeUnitLimit(V1_PROVISIONAL_CU_LIMIT, m),
+    (m) => setTransactionMessageLoadedAccountsDataSizeLimit(V1_PROVISIONAL_LOADED_ACCOUNTS_DATA_SIZE, m),
+    (m) => setTransactionMessagePriorityFeeLamports(priorityFee, m),
+  );
+  const measuredUse = await measureV1ResourceUse(settings.rpcUrl, compileTransaction(provisional));
+  if (measuredUse == null) return { code: "SIM_FAILED" };
+  const finalMessage = pipe(
+    txMessage,
+    (m) => setTransactionMessageComputeUnitLimit(computeCloseEmptyUnitLimit(measuredUse.unitsConsumed), m),
+    (m) =>
+      setTransactionMessageLoadedAccountsDataSizeLimit(
+        roundLoadedAccountsDataSize(measuredUse.loadedAccountsDataSize),
+        m,
+      ),
+    (m) => setTransactionMessagePriorityFeeLamports(priorityFee, m),
+  );
+  const tx = compileTransaction(finalMessage);
   return { txBytes: encodeWireTransaction(tx) };
 }
 
