@@ -51,6 +51,14 @@ export function SettingsHub({ settings }: { settings: PublicSettings }): JSX.Ele
         </button>
       </li>
       <li>
+        <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-priority-fee")}>
+          <span className="hub-label">{t("settings.hub.priorityFee")}</span>
+          <span className="hub-summary" id="hub-summary-priority-fee">
+            {settings.defaultPriorityFeeLamports}
+          </span>
+        </button>
+      </li>
+      <li>
         <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-wallet-lock")}>
           <span className="hub-label">{t("settings.hub.walletLock")}</span>
         </button>

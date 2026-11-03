@@ -18,6 +18,7 @@ import {
   type Settings,
   type UiLocale,
 } from "../../shared/protocol";
+import { normalizePriorityFeeSetting } from "../../shared/protocol";
 import { normalizeDefaultCuPrice } from "../simulate";
 import {
   isLegalOpenRouterModelId,
@@ -181,6 +182,7 @@ export function normalizeSettings(raw: Partial<Settings> | undefined): Settings 
     ...txAi,
     txAiAnalysisEnabled: raw?.txAiAnalysisEnabled ?? true,
     defaultCuPrice: normalizeDefaultCuPrice(raw?.defaultCuPrice),
+    defaultPriorityFeeLamports: normalizePriorityFeeSetting(raw?.defaultPriorityFeeLamports),
     locale: normalizeUiLocale(raw?.locale),
     shell: normalizeShellMode(raw?.shell),
     rpcGuideDismissed: raw?.rpcGuideDismissed === true,

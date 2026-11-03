@@ -158,7 +158,7 @@ export const airwaveWallet: Wallet = {
     } satisfies SolanaSignMessageFeature[typeof SolanaSignMessage],
     [SolanaSignTransaction]: {
       version: "1.0.0",
-      supportedTransactionVersions: [0, "legacy"] as const,
+      supportedTransactionVersions: [0, 1, "legacy"] as const,
       signTransaction: async (...inputs) => {
         const outputs = [];
         for (const input of inputs) {
@@ -175,7 +175,7 @@ export const airwaveWallet: Wallet = {
     } satisfies SolanaSignTransactionFeature[typeof SolanaSignTransaction],
     [SolanaSignAndSendTransaction]: {
       version: "1.0.0",
-      supportedTransactionVersions: [0, "legacy"] as const,
+      supportedTransactionVersions: [0, 1, "legacy"] as const,
       signAndSendTransaction: async (...inputs) => {
         const outputs = [];
         for (const input of inputs) {

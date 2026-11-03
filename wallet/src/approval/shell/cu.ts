@@ -17,6 +17,21 @@ export function hasCuPair(): boolean {
   return sess.localCuLimit != null && sess.localCuPrice != null;
 }
 
+export function isV1FeeSession(): boolean {
+  return sess.txMessageVersion === 1;
+}
+
+export function v1FeeInBounds(limit: number | null, feeRaw: string): boolean {
+  if (limit == null || limit < CU_LIMIT_MIN || limit > CU_LIMIT_MAX) return false;
+  if (!/^\d+$/.test(feeRaw.trim())) return false;
+  try {
+    const n = BigInt(feeRaw.trim());
+    return n >= 0n && n <= 1_000_000_000n;
+  } catch {
+    return false;
+  }
+}
+
 export function cuPairInBounds(limit: number | null, price: number | null): boolean {
   return (
     limit != null &&
@@ -30,7 +45,11 @@ export function cuPairInBounds(limit: number | null, price: number | null): bool
 
 export function draftsAreDirty(limitRaw: string, priceRaw: string): boolean {
   const committedL = sess.localCuLimit == null ? "" : String(sess.localCuLimit);
-  const committedP = sess.localCuPrice == null ? "" : String(sess.localCuPrice);
+  const committedP = isV1FeeSession()
+    ? sess.localPriorityFee ?? ""
+    : sess.localCuPrice == null
+      ? ""
+      : String(sess.localCuPrice);
   return limitRaw.trim() !== committedL || priceRaw.trim() !== committedP;
 }
 
@@ -55,6 +74,12 @@ export function localTotalFeeLamports(sim: SimulatePendingTxResult | null): numb
   return sim.totalFeeLamports ?? null;
 }
 
+/** v1 fee total is known once the priority fee is set, even when CU limit is omitted. */
+export function feePairReady(): boolean {
+  if (sess.txMessageVersion === 1) return sess.localPriorityFee != null;
+  return hasCuPair();
+}
+
 export function retrySimDisabled(): boolean {
-  return sess.simulating || sess.cuDirty || (sess.txCuEditable && !hasCuPair());
+  return sess.simulating || sess.cuDirty || (sess.txCuEditable && !feePairReady());
 }

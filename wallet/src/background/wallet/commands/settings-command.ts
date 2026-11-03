@@ -5,7 +5,7 @@
 import type { ExtensionRequest, ExtensionResponse } from "../../../shared/protocol";
 import { notifyAccountChanged } from "../../messaging";
 import { respond } from "../../messaging";
-import { isAllowedCustomRpc, isPublicClusterRpc, toPublicSettings } from "../../../shared/protocol";
+import { isAllowedCustomRpc, isPublicClusterRpc, parsePriorityFeeLamports, toPublicSettings } from "../../../shared/protocol";
 import { isVendorApiUrlDraft } from "../../../shared/rpc";
 import { syncIdleLockAlarm } from "../../idle-lock/idle-lock";
 import {
@@ -80,6 +80,18 @@ export async function handlePatchSettings(req: ExtensionRequest): Promise<Extens
       requestId: req.requestId,
       ok: false,
       error: { code: "INVALID_PAYLOAD", message: "Idle lock minutes must be 1–1440" },
+    });
+  }
+  if (
+    Object.prototype.hasOwnProperty.call(patch, "defaultPriorityFeeLamports") &&
+    (typeof patch.defaultPriorityFeeLamports !== "string" ||
+      parsePriorityFeeLamports(patch.defaultPriorityFeeLamports) == null)
+  ) {
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: false,
+      error: { code: "INVALID_PAYLOAD", message: "Invalid priority fee" },
     });
   }
   const settings = await readSettings();

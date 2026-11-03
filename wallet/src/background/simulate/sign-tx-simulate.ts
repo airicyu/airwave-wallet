@@ -30,12 +30,14 @@ import type { SimulatePendingTxResult } from "../../shared/tx";
 import type { Cluster } from "../../shared/protocol";
 import { messageBytesToUint8Array } from "../../shared/tx";
 import { decodeWireTransaction } from "../../shared/tx";
+import { simulateV1Sign } from "./simulate-v1-sign";
 
 const CU_WRITE_FAIL_CODE = "CU_WRITE_FAILED";
 
 export type SimulateSignTxPayload = {
   cuLimit?: number;
   cuPrice?: number;
+  priorityFeeLamports?: string;
 };
 
 export type SimulateSignTxOutcome =
@@ -172,6 +174,7 @@ export async function simulateSignTransaction(
   signerPubkey: string,
   cluster: Cluster,
   defaultCuPrice: number,
+  defaultPriorityFeeLamports: string,
   jupiterApiKey: string,
   jupiterApiUrl: string,
   payload: SimulateSignTxPayload,
@@ -192,6 +195,21 @@ export async function simulateSignTransaction(
       totalFeeLamports: null,
     };
     return { ok: true, result, seq };
+  }
+
+  if (compiledMessage.version === 1) {
+    return simulateV1Sign({
+      ctx,
+      requestId,
+      seq,
+      originalBytes,
+      signerPubkey,
+      cluster,
+      defaultPriorityFeeLamports,
+      jupiterApiKey,
+      jupiterApiUrl,
+      payload,
+    });
   }
 
   const signed = isTransactionSigned(originalBytes);

@@ -153,6 +153,8 @@ export function CloseEmptyPickScreen({
       tokenProgram: e.tokenProgram,
     })),
     estimateCloseEmptyTxBytes,
+    4096,
+    64,
   );
 
   const toggleAll = () => {

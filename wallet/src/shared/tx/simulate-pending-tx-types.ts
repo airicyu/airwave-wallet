@@ -58,6 +58,9 @@ export type SimulatePendingTxResult = {
   totalFeeLamports?: number | null;
   cuLimit?: number | null;
   cuPrice?: number | null;
+  /** Decimal lamports. Present on a v1 fee card. */
+  priorityFeeLamports?: string | null;
+  messageVersion?: 0 | 1 | "legacy";
   cuWriteError?: string;
   /** Unsigned txs may change CU limit/price. */
   cuEditable?: boolean;

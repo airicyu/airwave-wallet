@@ -63,6 +63,7 @@ export type View =
   | "settings-keys"
   | "settings-tx-ai"
   | "settings-cu-price"
+  | "settings-priority-fee"
   | "settings-wallet-lock"
   | "settings-debug"
   | "settings-password"
@@ -100,6 +101,7 @@ export const SUBPAGE_TITLE_KEYS: Record<Exclude<View, "home-token" | "home-activ
   "settings-keys": "nav.settingsKeys",
   "settings-tx-ai": "nav.settingsTxAi",
   "settings-cu-price": "nav.settingsCuPrice",
+  "settings-priority-fee": "nav.settingsPriorityFee",
   "settings-wallet-lock": "nav.settingsWalletLock",
   "settings-debug": "nav.settingsDebug",
   "settings-password": "nav.settingsWalletLockPassword",

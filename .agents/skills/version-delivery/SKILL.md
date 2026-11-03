@@ -14,7 +14,7 @@ disable-model-invocation: true
 
 This skill runs one **Airwave Wallet roadmap version**. Sources: [`dev-docs/roadmap/agent-workflow.md`](../../../dev-docs/roadmap/agent-workflow.md), [`dev-docs/roadmap/GUIDELINES.md`](../../../dev-docs/roadmap/GUIDELINES.md), and the repo-root `AGENTS.md`.
 
-Reply to the user in **Traditional Chinese**. **Do not commit unless the user asks.** Docs this skill writes default to **English**.
+Reply to the user in **Traditional Chinese**. **Do not commit unless the user asks.** Docs this skill writes default to **English**. Work stays on the version branch or a feature branch, not on `master`. That branch may hold several commits. Open a merge request into `master` only when the user says the branch is finished.
 
 Paste-ready prompts and the report skeleton are in this directory: [prompts.md](prompts.md), [review-template.md](review-template.md).
 

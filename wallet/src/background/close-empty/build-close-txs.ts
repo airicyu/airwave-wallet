@@ -8,14 +8,13 @@ import {
   compileTransaction,
   createTransactionMessage,
   pipe,
+  setTransactionMessageComputeUnitLimit,
   setTransactionMessageFeePayer,
   setTransactionMessageLifetimeUsingBlockhash,
+  setTransactionMessageLoadedAccountsDataSizeLimit,
+  setTransactionMessagePriorityFeeLamports,
   type Blockhash,
 } from "@solana/kit";
-import {
-  getSetComputeUnitLimitInstruction,
-  getSetComputeUnitPriceInstruction,
-} from "@solana-program/compute-budget";
 import { getCloseAccountInstruction, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import {
   getCloseAccountInstruction as getCloseAccountInstruction2022,
@@ -37,6 +36,7 @@ export type BuiltCloseTx = {
   lastValidBlockHeight: bigint;
   cuLimit: number;
   cuPrice: number;
+  dataSize: number;
 };
 
 function programAddress(kind: TokenProgramKind) {
@@ -81,7 +81,8 @@ export function measureCloseTxWireBytes(
   blockhash: Blockhash,
   lastValidBlockHeight: bigint,
   cuLimit: number,
-  cuPrice: number,
+  dataSize: number,
+  priorityFee: bigint,
   entriesForOwner: ClosableEntry[],
 ): number {
   const txMessage = buildCloseTransactionMessage(
@@ -101,7 +102,8 @@ export function measureCloseTxWireBytes(
     blockhash,
     lastValidBlockHeight,
     cuLimit,
-    cuPrice,
+    dataSize,
+    priorityFee,
   );
   const tx = compileTransaction(txMessage);
   return encodeWireTransaction(tx).length;
@@ -112,30 +114,27 @@ export function buildCloseTransactionMessage(
   tokenAccounts: string[],
   blockhash: Blockhash,
   lastValidBlockHeight: bigint,
-  cuLimit: number | null,
-  cuPrice: number | null,
+  cuLimit: number,
+  dataSize: number,
+  priorityFee: bigint,
 ) {
   const first = entries.find((e) => tokenAccounts.includes(e.tokenAccount))!;
   const owner = first.owner;
   const program = first.tokenProgram;
   const ownerAddr = address(owner);
   const closeIxs = closeIxsForAccounts(ownerAddr, ownerAddr, program, tokenAccounts);
-  const budgetIxs: Instruction[] = [];
-  if (cuLimit != null) {
-    budgetIxs.push(getSetComputeUnitLimitInstruction({ units: cuLimit }));
-  }
-  if (cuPrice != null) {
-    budgetIxs.push(getSetComputeUnitPriceInstruction({ microLamports: cuPrice }));
-  }
   return pipe(
-    createTransactionMessage({ version: 0 }),
+    createTransactionMessage({ version: 1 }),
     (m) => setTransactionMessageFeePayer(ownerAddr, m),
     (m) =>
       setTransactionMessageLifetimeUsingBlockhash(
         { blockhash, lastValidBlockHeight },
         m,
       ),
-    (m) => appendTransactionMessageInstructions([...budgetIxs, ...closeIxs], m),
+    (m) => appendTransactionMessageInstructions(closeIxs, m),
+    (m) => setTransactionMessageComputeUnitLimit(cuLimit, m),
+    (m) => setTransactionMessageLoadedAccountsDataSizeLimit(dataSize, m),
+    (m) => setTransactionMessagePriorityFeeLamports(priorityFee, m),
   );
 }
 
@@ -145,7 +144,8 @@ export function buildUnsignedCloseTx(
   blockhash: Blockhash,
   lastValidBlockHeight: bigint,
   cuLimit: number,
-  cuPrice: number,
+  dataSize: number,
+  priorityFee: bigint,
 ): BuiltCloseTx {
   const first = entries.find((e) => tokenAccounts.includes(e.tokenAccount))!;
   const owner = first.owner;
@@ -156,7 +156,8 @@ export function buildUnsignedCloseTx(
     blockhash,
     lastValidBlockHeight,
     cuLimit,
-    cuPrice,
+    dataSize,
+    priorityFee,
   );
   const tx = compileTransaction(txMessage);
   const accounts = tokenAccounts.map((ta) => {
@@ -172,7 +173,8 @@ export function buildUnsignedCloseTx(
     unsignedBytes: encodeWireTransaction(tx),
     lastValidBlockHeight,
     cuLimit,
-    cuPrice,
+    cuPrice: 0,
+    dataSize,
   };
 }
 
@@ -182,7 +184,8 @@ export function packAndBuildCloseTxGroups(
   blockhash: Blockhash,
   lastValidBlockHeight: bigint,
   cuLimit: number,
-  cuPrice: number,
+  dataSize: number,
+  priorityFee: bigint,
 ): BuiltCloseTx[] {
   const packItems = entries.map((e) => ({
     tokenAccount: e.tokenAccount,
@@ -191,6 +194,6 @@ export function packAndBuildCloseTxGroups(
   }));
   const groups = packCloseEmptyAccounts(packItems, measure);
   return groups.map((tokenAccounts) =>
-    buildUnsignedCloseTx(entries, tokenAccounts, blockhash, lastValidBlockHeight, cuLimit, cuPrice),
+    buildUnsignedCloseTx(entries, tokenAccounts, blockhash, lastValidBlockHeight, cuLimit, dataSize, priorityFee),
   );
 }

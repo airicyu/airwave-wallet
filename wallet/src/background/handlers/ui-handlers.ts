@@ -254,6 +254,7 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
       requestId: string;
       cuLimit?: number;
       cuPrice?: number;
+      priorityFeeLamports?: string;
     };
     const { requestId } = payload;
     const p = getPending(requestId);
@@ -317,9 +318,14 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
       signerPubkey,
       settings.cluster,
       settings.defaultCuPrice,
+      settings.defaultPriorityFeeLamports,
       settings.jupiterApiKey,
       jupiterApiUrlForCall(settings),
-      { cuLimit: payload.cuLimit, cuPrice: payload.cuPrice },
+      {
+        cuLimit: payload.cuLimit,
+        cuPrice: payload.cuPrice,
+        priorityFeeLamports: payload.priorityFeeLamports,
+      },
     );
     if (!sim.ok) {
       return respond({

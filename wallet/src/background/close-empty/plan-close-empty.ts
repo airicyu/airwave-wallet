@@ -2,13 +2,12 @@
  * Builds unsigned close-empty transactions from the in-memory list selection and stores a plan.
  * Does not sign, broadcast, or rescan the closable list from cache alone.
  */
-import { estimateResourceLimitsFactory } from "@solana/kit";
+import { compileTransaction } from "@solana/kit";
 import { randomUUID } from "./uuid";
 import type { ClosableEntry, CloseEmptyPlanResult } from "../../shared/close-empty";
 import { computeCloseEmptyUnitLimit } from "../../shared/close-empty";
 import {
   lamportsDecimalString,
-  priorityFeeLamportsFromCu,
   signatureFeeLamports,
   sumLamportStrings,
 } from "../../shared/close-empty";
@@ -25,6 +24,9 @@ import {
 } from "./build-close-txs";
 import { getLastListClosableEntries } from "./list-closable";
 import { putClosePlan, type StoredClosePlan } from "./plan-store";
+import { simulateTransactionRpc } from "../simulate/simulate-rpc";
+import { SimDeadline } from "../simulate/sim-deadline";
+import { roundLoadedAccountsDataSize } from "../simulate/v1-config-tx";
 
 export async function planCloseEmpty(
   tokenAccounts: string[],
@@ -73,7 +75,7 @@ export async function planCloseEmpty(
   const latest = await rpc.getLatestBlockhash({ commitment: "confirmed" }).send();
   const blockhash = latest.value.blockhash as import("@solana/kit").Blockhash;
   const lastValidBlockHeight = latest.value.lastValidBlockHeight;
-  const cuPrice = settings.defaultCuPrice;
+  const priorityFee = BigInt(settings.defaultPriorityFeeLamports);
 
   const measure = (accounts: string[], owner: string, program: ClosableEntry["tokenProgram"]) =>
     measureCloseTxWireBytes(
@@ -82,8 +84,9 @@ export async function planCloseEmpty(
       program,
       blockhash,
       lastValidBlockHeight,
-      200_000,
-      cuPrice,
+      1_400_000,
+      67_108_864,
+      priorityFee,
       selected.filter((e) => e.owner === owner && e.tokenProgram === program),
     );
 
@@ -92,25 +95,32 @@ export async function planCloseEmpty(
     owner: e.owner,
     tokenProgram: e.tokenProgram,
   }));
-  const groups = packCloseEmptyAccounts(packItems, measure);
+  const groups = packCloseEmptyAccounts(packItems, measure, 4096, 64);
 
-  const estimateResourceLimits = estimateResourceLimitsFactory({ rpc });
   const builtTxs: ReturnType<typeof buildUnsignedCloseTx>[] = [];
 
   try {
     for (const group of groups) {
-      const estimateMsg = buildCloseTransactionMessage(
+      const provisional = buildCloseTransactionMessage(
         selected,
         group,
         blockhash,
         lastValidBlockHeight,
-        null,
-        null,
+        1_400_000,
+        67_108_864,
+        priorityFee,
       );
-      const { computeUnitLimit: simulatedUnits } = await estimateResourceLimits(estimateMsg, {
-        commitment: "confirmed",
-      });
-      const computeUnitLimit = computeCloseEmptyUnitLimit(simulatedUnits);
+      const simValue = await simulateTransactionRpc(
+        settings.rpcUrl,
+        compileTransaction(provisional),
+        new SimDeadline(),
+        { replaceRecentBlockhash: false },
+      );
+      if (simValue.err != null || typeof simValue.unitsConsumed !== "number") {
+        return { ok: false, code: "CU_ESTIMATE_FAILED", message: "CLOSE_EMPTY_CU_FAILED" };
+      }
+      const measured = (simValue as { loadedAccountsDataSize?: number }).loadedAccountsDataSize ?? 0;
+      const computeUnitLimit = computeCloseEmptyUnitLimit(simValue.unitsConsumed);
       builtTxs.push(
         buildUnsignedCloseTx(
           selected,
@@ -118,7 +128,8 @@ export async function planCloseEmpty(
           blockhash,
           lastValidBlockHeight,
           computeUnitLimit,
-          cuPrice,
+          roundLoadedAccountsDataSize(measured),
+          priorityFee,
         ),
       );
     }
@@ -135,7 +146,7 @@ export async function planCloseEmpty(
   for (const tx of builtTxs) {
     for (const a of tx.accounts) reclaim += BigInt(a.rentLamports);
     const sig = signatureFeeLamports(1);
-    const pri = priorityFeeLamportsFromCu(tx.cuLimit, tx.cuPrice);
+    const pri = priorityFee;
     const total = sig + pri;
     feeSigParts.push(lamportsDecimalString(sig));
     feePriParts.push(lamportsDecimalString(pri));
@@ -147,6 +158,7 @@ export async function planCloseEmpty(
       lastValidBlockHeight: tx.lastValidBlockHeight,
       cuLimit: tx.cuLimit,
       cuPrice: tx.cuPrice,
+      dataSize: tx.dataSize,
       tokenAccounts: tx.tokenAccounts,
       accounts: tx.accounts,
       signatureLamports: lamportsDecimalString(sig),
