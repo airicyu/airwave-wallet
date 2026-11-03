@@ -10,7 +10,7 @@ This directory is the version contract for **airwave-wallet**. An agent with no 
 | [../ui-design-principles.md](../ui-design-principles.md) | Popup UI rules (when to write, icon buttons, long strings). Used when an INDEX is silent |
 | [../design-demos/](../design-demos/) | Informal HTML concept demos, one folder per version. On conflict, that version's INDEX wins |
 | [agent-workflow.md](./agent-workflow.md) | Who reviews, when to write HANDOFF, what to test between Tracks |
-| [unversioned.md](./unversioned.md) | Code changes after the latest version shipped and before the next version is opened. Docs, policy, and terms are not listed. Status in the table below is the source of truth |
+| [unversioned.md](./unversioned.md) | Code changes after the latest version shipped and before the next version is opened. Opening or continuing a version moves that batch into the version. Docs, policy, and terms are not listed. Status in the table below is the source of truth |
 | `.agents/skills/version-delivery/` | Deliver one version: design-review gate, Track implementation, ship checklist |
 
 | Version | Status | Summary |

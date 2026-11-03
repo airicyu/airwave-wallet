@@ -2,7 +2,7 @@
 
 - **Status:** `in progress`
 - **Upstream:** [0.53.0](../0.53.0/INDEX.md) shipped. Idea text: [backlog/v1-transaction.md](../backlog/v1-transaction.md). This INDEX wins. Format notes: [solana-tx-versions.md](../../research/solana-tx-versions.md).
-- **Changelog:** one paragraph under `0.54.0`. The test-web v1 button that was unversioned is included. The e2e harness stays unversioned.
+- **Changelog:** one paragraph under `0.54.0`. The test-web v1 button and the e2e harness that were unversioned are included. They ship with this version.
 
 ## Product
 
@@ -33,6 +33,7 @@ The wallet signs, simulates, and sends v1 transactions, and builds its own send 
 | Wallet-built | Token send (`wallet/src/background/send/wallet-begin-send.ts`) and close-empty (`wallet/src/background/close-empty/build-close-txs.ts`) use `createTransactionMessage({ version: 1 })`. Compile a provisional packet with CU limit `1400000` and loaded-accounts data size `67108864`, simulate that packet once, then compile the message the user approves. CU limit is `computeCloseEmptyUnitLimit(unitsConsumed)`. Loaded-accounts data size is the smallest positive multiple of `32768` that is greater than or equal to the measured size, so a measured `0` becomes `32768`. Write `defaultPriorityFeeLamports` into the config. Do not insert `ComputeBudget` instructions. If that simulation fails, do not open the approval and do not send. The in-wallet send reserve (`TokenSendForm.tsx`, `send-logic.ts`, `wallet-begin-send.ts`) and the close-empty fee total (`plan-close-empty.ts`, `commit-close-empty.ts`, `build-close-txs.ts`) use `BigInt` of the stored `defaultPriorityFeeLamports` as the priority term. They do not use `defaultCuPrice` for that term. The signature fee stays 5000 lamports per signer. `HomeTokenList.tsx` keeps `defaultCuPrice` only as a reload dependency. |
 | Close-empty packing | Pack against 4096 bytes and stop at 64 addresses. `CLOSE_EMPTY_MAX_TX_BYTES` (1232) does not apply to these v1 transactions. |
 | Read path | `getTransaction` in `wallet/src/background/tx-ai/host-tools.ts` uses `maxSupportedTransactionVersion: 1`. Any other wallet `getTransaction` or `getBlock` that passes a max version also uses `1`. |
+| Folded work | The e2e harness already in the tree ships with this version: `test/e2e` fixtures, the Bun preflight and mock, the e2e-wallet skill, and `test/test-web`. Helius settings accept a localhost HTTP origin. This version does not change that harness. |
 | test-web | The existing `sign-tx-v1` button stays. It builds a v1 self-transfer that already has a priority fee. This version also adds `sign-tx-v1-no-fee`, `sign-tx-v1-zero-fee`, `sign-tx-v1-no-cu`, `sign-tx-v1-signed`, and `sign-and-send-tx-v1`. `sign-and-send-tx-v1` calls `signAndSendTransaction` with that same unsigned v1 self-transfer so the wallet sends it. After this version, approving an unsigned sample can return a signed packet whose first byte is `0x81`. |
 
 ## Out of scope
@@ -41,7 +42,6 @@ The wallet signs, simulates, and sends v1 transactions, and builds its own send 
 - SIMD-0596 (96 addresses). The cap in this version is 64.
 - Rewriting a v1 message that already has any non-zero signature.
 - A design demo. The settings row and the fee card keep their current layout.
-- The e2e harness. It stays in [unversioned.md](../unversioned.md).
 
 ## Acceptance
 

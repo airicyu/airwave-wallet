@@ -1,12 +1,8 @@
 # Changelog
 
-## Next
-
-e2e harness: in-repo sanitized mock fixtures under `test/e2e/fixtures`, Bun TypeScript `e2e-preflight` / `e2e-mock`, Side-panel-first agent skill docs, and `test/test-web` for the manual dApp. Helius accepts a localhost HTTP origin so the mock can be selected in settings.
-
 ## 0.54.0
 
-test-web `sign-tx-v1` requests a v1 self-transfer signature, and `sign-and-send-tx-v1` asks the wallet to send that same v1 packet. The sign screen already opens. This version makes the v1 fee path, wallet-built v1 transactions, and the `1` advertisement correct. Not shipped.
+test-web `sign-tx-v1` requests a v1 self-transfer signature, and `sign-and-send-tx-v1` asks the wallet to send that same v1 packet. The sign screen already opens. This version makes the v1 fee path, wallet-built v1 transactions, and the `1` advertisement correct. The e2e harness that was already in the tree ships with this version: sanitized mock fixtures under `test/e2e/fixtures`, Bun TypeScript `e2e-preflight` / `e2e-mock`, the Side-panel-first agent skill, and `test/test-web` as the manual dApp. Helius accepts a localhost HTTP origin so the mock can be selected in settings. Not shipped.
 
 ## 0.53.0 — 2026-10-31
 

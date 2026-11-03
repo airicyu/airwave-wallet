@@ -95,7 +95,9 @@ A version proceeds by stating the work, writing it into that version's proposal 
 
 If the previous version is not `shipped`, do not open a new version. This is a soft rule: remind the user, do not hard-block. If they still want it opened, open it.
 
-When the latest version is `shipped` and the next version is not opened, new **code** work is unversioned. Record it in [`dev-docs/roadmap/unversioned.md`](dev-docs/roadmap/unversioned.md) and add one sentence under `Next` at the top of the changelog. Both places list the same changes. The user later chooses: fold them into the version just shipped, open the next version for them, or leave them unversioned after shipping. Do not guess before they choose. Docs, privacy policy, and terms are not tracked on the roadmap.
+When the latest version is `shipped` and the next version is not opened, new **code** work is unversioned. Record it in [`dev-docs/roadmap/unversioned.md`](dev-docs/roadmap/unversioned.md) and add one sentence under `Next` at the top of the changelog. Both places list the same changes. Docs, privacy policy, and terms are not tracked on the roadmap.
+
+Opening a version, or continuing one that is already `in progress`, absorbs that batch. The open version is built on top of it and ships it. Move the `unversioned.md` items into that version's INDEX and move the changelog `Next` sentences under that version's heading. Then `unversioned.md` has nothing current, and the changelog has no `Next` section. Do not leave `Next` sitting above an in-progress version.
 
 More changes while a version is in progress go into that version's INDEX and under that version's changelog heading. Do not open the next version.
 
