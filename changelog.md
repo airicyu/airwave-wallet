@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.55.0
+## 0.55.0 — 2026-11-05
 
 No wallet change. e2e scenarios `01`–`07` are short English steps with a single Pass paragraph. Visual checks use `test/e2e/visual/matrix.yaml` (`look` lines) and the English PNGs under `refs/`. A miss is reported; the golden is replaced only after confirmation. There is no pixel-diff script.
 

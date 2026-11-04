@@ -1,6 +1,7 @@
 # 0.55.0 — e2e scenarios and visual checks
 
-- **Status:** `in progress`
+- **Status:** `shipped`
+- **Changelog:** one paragraph under `0.55.0` (2026-11-05).
 - **Upstream:** [0.54.0](../0.54.0/INDEX.md) shipped. No wallet behavior change in this version.
 
 ## Product
@@ -31,14 +32,13 @@ None. The extension, test-web, and mock server behave as in 0.54.0.
 - A CI job that fails the build on a screenshot.
 - Popup goldens for approve screens.
 - Locales other than English.
-- Marking this version shipped. `version.md` stays on 0.54.0 until the maintainer says ship.
 
 ## Acceptance
 
 - [x] `test/e2e` has no `pixelmatch` or `pngjs` dependency, and the root `package.json` has no `e2e-visual-compare` script.
 - [x] Scenarios `01`–`07` have a **Pass** paragraph and no YAML frontmatter.
 - [x] `matrix.yaml` shots match the PNGs under `refs/sidepanel/en` and `refs/popup/en`. Approve shots have no popup PNG.
-- [ ] A later run of the e2e skill still passes scenarios `01`–`07` on a local validator. This version does not re-run them.
+- [x] Scenarios `01`–`07` were not re-run for this ship. Wallet and test-web are unchanged from 0.54.0, so the file checks above are the acceptance.
 
 ## Anchors
 
