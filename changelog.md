@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.55.0
+
+No wallet change. e2e scenarios `01`–`07` are short English steps with a single Pass paragraph. Visual checks use `test/e2e/visual/matrix.yaml` (`look` lines) and the English PNGs under `refs/`. A miss is reported; the golden is replaced only after confirmation. There is no pixel-diff script.
+
 ## 0.54.0 — 2026-11-04
 
 The wallet signs, simulates, and sends v1 transactions, and builds token send and close-empty as v1. Settings has a default priority fee of 5000 lamports. A v1 approval shows CU limit and that priority fee. Legacy and v0 still use CU price. `signTransaction` and `signAndSendTransaction` advertise version `1`. test-web adds the v1 fee-card and sign-and-send samples. The e2e harness ships with this version: sanitized fixtures under `test/e2e/fixtures`, Bun `e2e-preflight` / `e2e-mock`, the side-panel-first skill, and scenario `07-v1-sign`. Helius settings accept a localhost HTTP origin.

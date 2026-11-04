@@ -6,3 +6,6 @@ dist/
 *.zip
 wallet/pending.test.mjs
 wallet/connection-tabs.test.mjs
+
+# local solana-test-validator ledger
+test-ledger/

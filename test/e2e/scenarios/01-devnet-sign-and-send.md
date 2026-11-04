@@ -1,11 +1,13 @@
-# Devnet 簽名並送出
+# Devnet sign and send
 
-前置：本則已 `bun run e2e-validator` 重置帳本。Mock 在 `8787`。錢包已建立並解鎖，cluster 為 Devnet，Devnet RPC 為 `http://127.0.0.1:8899`，Debug mode 開，Mainnet blockhash RPC 為 `http://127.0.0.1:8787`，Mainnet 沒有自訂 RPC。優先用 Side panel 操作錢包殼。
+**Shell:** real Side panel (`#btn-shell-to-sidebar` from the Home popup).
 
-1. 對錢包地址準備 SOL：優先 `bun run e2e-prep -- <地址>`（reset＋**只 airdrop 一次**）；或手動 `solana airdrop 2 <地址> --url http://127.0.0.1:8899`（同一則不要再 airdrop）。不要按 test-web 的 Devnet airdrop，那個按鈕打的是頁面上的 RPC，而預設頁面不是驗證器。
-2. 打開 `test-web`，網址帶 `?rpc=http://127.0.0.1:8899`。Log 第一行的 RPC 必須是這個位址。
-3. 按 Connect。在擴充功能的連線核准畫面（Side panel 殼內，或審批視窗）按允許。
-4. 頁面顯示已連線的地址後，按 Sign and send transaction。
-5. 在簽名核准畫面確認沒有 cluster 不符的通知，然後按核准。
+**Prep:** `bun run e2e-prep -- <address>` once. Do not airdrop again.
 
-期望：test-web 的 log 有 `Broadcast signature:` 和 `Confirmed:`（`test-web` 在 confirmed 或 finalized 後都印 `Confirmed:`），沒有 `Sign and send error`。核准畫面不曾顯示 cluster 不符。Side panel 首頁的 SOL 餘額少於 2。
+**Settings:** Devnet, RPC `http://127.0.0.1:8899`, Debug on, Mainnet blockhash RPC `http://127.0.0.1:8787`, no Mainnet custom RPC, priority fee `5000`.
+
+1. Open `http://127.0.0.1:5173/?rpc=http://127.0.0.1:8899`. The log RPC must match.
+2. Connect, then Allow in the Side panel.
+3. Sign and send transaction, then Approve. There must be no cluster-mismatch notice.
+
+**Pass:** test-web log has `Broadcast signature:` and `Confirmed:`, and no `Sign and send error`. After Refresh, Home SOL is less than 2.

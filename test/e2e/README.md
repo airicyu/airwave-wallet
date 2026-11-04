@@ -68,8 +68,15 @@ Mock 的 `getLatestBlockhash` 固定回 `11111111111111111111111111111111`（合
 - 每則前用 `bun run e2e-prep -- <地址>`（或等效 reset＋**單次** airdrop），不要在 prep 之外再 airdrop。
 - test-web 按鈕：`Sign transaction（v1）`、`…省略優先費`、`…優先費 0`、`…省略 CU limit`、`…已有簽章`、`signAndSendTransaction（v1，錢包代送）`。
 
-## 已知限制（行為 e2e）
+## Scenario 格式
 
-- 現有 01–07 驗的是行為／狀態／log，**不**驗 UI 長相（版面、色、間距）。視覺回歸另開。
+行為劇本是 `scenarios/01`–`07` 的短步驟，判定只看該檔的 **Pass** 段。一律在 Side panel 跑，不要為 popup 再複製一篇。
+
+## 視覺檢查
+
+畫面清單只在 [`visual/matrix.yaml`](./visual/matrix.yaml)。做法見 [`visual/README.md`](./visual/README.md)：對著 `refs/` 看該 shot 的 `look`，不對整張圖做像素比對。Side panel 高度、地址、SOL 數字可以不同。`look` 不符就向 maintainer 匯報，確認後才換金樣。
+
+## 已知限制
+
 - 真實 docked Side panel 難被一般 Playwright 掛上；agent／人工點 UI 即可。
 
