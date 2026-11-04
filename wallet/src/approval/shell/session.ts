@@ -55,6 +55,8 @@ export type ShellSession = {
   lastAcceptedSimSeq: number;
   localCuLimit: number | null;
   localCuPrice: number | null;
+  localPriorityFee: string | null;
+  txMessageVersion: 0 | 1 | "legacy" | null;
   cuUserOverride: boolean;
   txCuEditable: boolean;
   cuDirty: boolean;
@@ -133,6 +135,8 @@ export const sess: ShellSession = {
   lastAcceptedSimSeq: 0,
   localCuLimit: null,
   localCuPrice: null,
+  localPriorityFee: null,
+  txMessageVersion: null,
   cuUserOverride: false,
   txCuEditable: false,
   cuDirty: false,

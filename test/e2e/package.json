@@ -5,7 +5,8 @@
   "scripts": {
     "preflight": "bun preflight.ts",
     "mock": "bun mock-server.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prep": "bun prep.ts"
   },
   "devDependencies": {
     "@types/bun": "1.3.3",

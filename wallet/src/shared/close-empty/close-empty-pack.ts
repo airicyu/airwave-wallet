@@ -36,6 +36,7 @@ export function packCloseEmptyAccounts(
   items: PackableCloseItem[],
   measure: MeasureCloseTxGroupBytes,
   maxBytes = CLOSE_EMPTY_MAX_TX_BYTES,
+  maxAddresses?: number,
 ): string[][] {
   const byGroup = new Map<string, PackableCloseItem[]>();
   for (const item of items) {
@@ -52,7 +53,9 @@ export function packCloseEmptyAccounts(
     let current: string[] = [];
     for (const { tokenAccount } of groupItems) {
       const trial = [...current, tokenAccount];
-      if (current.length > 0 && measure(trial, owner, program) > maxBytes) {
+      const overBytes = measure(trial, owner, program) > maxBytes;
+      const overAddresses = maxAddresses != null && 2 + trial.length > maxAddresses;
+      if (current.length > 0 && (overBytes || overAddresses)) {
         txGroups.push(current);
         current = [tokenAccount];
       } else {
@@ -64,6 +67,11 @@ export function packCloseEmptyAccounts(
   return txGroups;
 }
 
-export function countCloseEmptyTransactions(items: PackableCloseItem[], measure: MeasureCloseTxGroupBytes): number {
-  return packCloseEmptyAccounts(items, measure).length;
+export function countCloseEmptyTransactions(
+  items: PackableCloseItem[],
+  measure: MeasureCloseTxGroupBytes,
+  maxBytes = CLOSE_EMPTY_MAX_TX_BYTES,
+  maxAddresses?: number,
+): number {
+  return packCloseEmptyAccounts(items, measure, maxBytes, maxAddresses).length;
 }

@@ -112,9 +112,13 @@ The status table in [`README.md`](README.md) is the **source of truth**. Each ve
 
 **Do not open the next version on your own.** While the previous version is not `shipped`, do not start a new version directory. If the user asks for one anyway, remind them and let them decide.
 
-**Code changes while the latest version is `shipped` and the next is not opened.** Append the same batch to [`unversioned.md`](unversioned.md) and to the `Next` section of [`changelog.md`](../../changelog.md). Do not invent the next number. The user later folds them into the shipped version, opens the next version, or ships while leaving them unversioned. Docs, privacy policy, and terms are not tracked on the roadmap.
+**Code changes while the latest version is `shipped` and the next is not opened.** Append the same batch to [`unversioned.md`](unversioned.md) and to the `Next` section of [`changelog.md`](../../changelog.md). Do not invent the next number. Docs, privacy policy, and terms are not tracked on the roadmap.
+
+**Opening or continuing a version absorbs that batch.** The open version is built on top of it and ships it. Move the items into that version's INDEX and under its changelog heading. Clear `unversioned.md` and remove the changelog `Next` section. Do not leave `Next` above an in-progress version.
 
 **More changes while a version is `in progress`.** Append that version's `INDEX` and its changelog heading. Do not open another version.
+
+**Branches.** Development starts on a version branch named `vX.Y.Z` or a feature branch. Do not develop on `master`. A branch may hold several commits. Open a merge request into `master` only when that branch's work is finished and the user asks for the MR. Do not merge it unless the user asks.
 
 **Push.** The user pushes by hand. Shipping, editing, and committing do not include `git push`. Do not push unless the user asks.
 

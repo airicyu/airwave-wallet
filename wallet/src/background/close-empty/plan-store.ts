@@ -13,6 +13,7 @@ export type StoredClosePlanTx = {
   lastValidBlockHeight: bigint;
   cuLimit: number;
   cuPrice: number;
+  dataSize: number;
   tokenAccounts: string[];
   accounts: Array<{ tokenAccount: string; symbol: string; rentLamports: string }>;
   signatureLamports: string;

@@ -77,6 +77,7 @@ Steps 2 and 3 are direction only until an INDEX schedules them. Do not start the
 ## Working habits
 
 - **Do not commit unless the user asks.** **Do not push unless the user asks.** The user pushes by hand. Shipping and committing do not include a push.
+- **Branches.** Development starts on a version branch named `vX.Y.Z` or a feature branch. Do not develop on `master`. A branch may hold several commits. Open a merge request into `master` only when that branch's work is finished and the user asks for the MR. Do not merge it unless the user asks.
 - Roadmap and review reports must **not** contain real mnemonics, private keys, passwords, or production secrets (see GUIDELINES privacy).
 - Implementation stays in this repo. Prefer `test/test-web/` for tests. Do not assume an external dApp must change.
 - Anything discussed in chat but not written into the roadmap or a contract file **does not exist** for the next agent. Decisions go into files.
@@ -94,7 +95,9 @@ A version proceeds by stating the work, writing it into that version's proposal 
 
 If the previous version is not `shipped`, do not open a new version. This is a soft rule: remind the user, do not hard-block. If they still want it opened, open it.
 
-When the latest version is `shipped` and the next version is not opened, new **code** work is unversioned. Record it in [`dev-docs/roadmap/unversioned.md`](dev-docs/roadmap/unversioned.md) and add one sentence under `Next` at the top of the changelog. Both places list the same changes. The user later chooses: fold them into the version just shipped, open the next version for them, or leave them unversioned after shipping. Do not guess before they choose. Docs, privacy policy, and terms are not tracked on the roadmap.
+When the latest version is `shipped` and the next version is not opened, new **code** work is unversioned. Record it in [`dev-docs/roadmap/unversioned.md`](dev-docs/roadmap/unversioned.md) and add one sentence under `Next` at the top of the changelog. Both places list the same changes. Docs, privacy policy, and terms are not tracked on the roadmap.
+
+Opening a version, or continuing one that is already `in progress`, absorbs that batch. The open version is built on top of it and ships it. Move the `unversioned.md` items into that version's INDEX and move the changelog `Next` sentences under that version's heading. Then `unversioned.md` has nothing current, and the changelog has no `Next` section. Do not leave `Next` sitting above an in-progress version.
 
 More changes while a version is in progress go into that version's INDEX and under that version's changelog heading. Do not open the next version.
 

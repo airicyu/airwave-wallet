@@ -25,14 +25,14 @@ export function keysFromLoaded(
   loaded: RpcLoadedAddresses | null | undefined,
 ): (string | undefined)[] {
   const staticKeys = [...message.staticAccounts];
-  if (message.version === "legacy") return staticKeys;
+  if (message.version === "legacy" || message.version === 1) return staticKeys;
   const writable = loaded?.writable ?? [];
   const readonly = loaded?.readonly ?? [];
   return [...staticKeys, ...writable, ...readonly];
 }
 
 export function v0LookupCount(message: CompiledMessage): number {
-  if (message.version === "legacy") return 0;
+  if (message.version === "legacy" || message.version === 1) return 0;
   let n = 0;
   for (const lu of compiledAddressTableLookups(message)) {
     n += lu.writableIndexes.length + lu.readonlyIndexes.length;
@@ -44,7 +44,7 @@ export function expandV0AccountKeys(
   message: CompiledMessage,
   byTable: AddressesByLookupTableAddress,
 ): Address[] | null {
-  if (message.version === "legacy") return [...message.staticAccounts];
+  if (message.version === "legacy" || message.version === 1) return [...message.staticAccounts];
   const keys = [...message.staticAccounts];
   for (const lookup of compiledAddressTableLookups(message)) {
     const addrs = byTable[lookup.lookupTableAddress as Address];
@@ -66,7 +66,7 @@ export async function resolveAccountKeysFromTables(
   message: CompiledMessage,
   deadline: SimDeadline,
 ): Promise<(Address | undefined)[] | "rpc" | "timeout"> {
-  if (message.version === "legacy") {
+  if (message.version === "legacy" || message.version === 1) {
     return [...message.staticAccounts];
   }
   try {

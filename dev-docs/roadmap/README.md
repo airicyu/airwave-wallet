@@ -10,7 +10,7 @@ This directory is the version contract for **airwave-wallet**. An agent with no 
 | [../ui-design-principles.md](../ui-design-principles.md) | Popup UI rules (when to write, icon buttons, long strings). Used when an INDEX is silent |
 | [../design-demos/](../design-demos/) | Informal HTML concept demos, one folder per version. On conflict, that version's INDEX wins |
 | [agent-workflow.md](./agent-workflow.md) | Who reviews, when to write HANDOFF, what to test between Tracks |
-| [unversioned.md](./unversioned.md) | Code changes after the latest version shipped and before the next version is opened. Docs, policy, and terms are not listed. Status in the table below is the source of truth |
+| [unversioned.md](./unversioned.md) | Code changes after the latest version shipped and before the next version is opened. Opening or continuing a version moves that batch into the version. Docs, policy, and terms are not listed. Status in the table below is the source of truth |
 | `.agents/skills/version-delivery/` | Deliver one version: design-review gate, Track implementation, ship checklist |
 
 | Version | Status | Summary |
@@ -69,6 +69,7 @@ This directory is the version contract for **airwave-wallet**. An agent with no 
 | [0.51.0](./0.51.0/INDEX.md) | shipped | Create combined uses the manage page layout |
 | [0.52.0](./0.52.0/INDEX.md) | shipped | Add-account chooser rows, plus the folded Helius guide line and Debug mode settings |
 | [0.53.0](./0.53.0/INDEX.md) | shipped | Sign approval Devnet strip, a blockhash cluster mismatch that disables Approve, Mainnet as the cluster for a new install, and the folded source cleanup |
+| [0.54.0](./0.54.0/INDEX.md) | in progress | Sign, simulate, and build v1 transactions. Settings default priority fee is 5000 lamports |
 
 **Version numbers:** a **patch** on `x.y.z` (for example **0.3.1**) is only a bugfix for that minor. It does not schedule a new feature. A new feature is the next **minor** (0.3.0 → 0.4.0 → 0.5.0).
 

@@ -2,13 +2,18 @@
  * Builds unsigned close-empty transactions from the in-memory list selection and stores a plan.
  * Does not sign, broadcast, or rescan the closable list from cache alone.
  */
-import { estimateResourceLimitsFactory } from "@solana/kit";
+import { compileTransaction } from "@solana/kit";
+import {
+  measureV1ResourceUse,
+  roundLoadedAccountsDataSize,
+  V1_PROVISIONAL_CU_LIMIT,
+  V1_PROVISIONAL_LOADED_ACCOUNTS_DATA_SIZE,
+} from "../simulate/v1-config-tx";
 import { randomUUID } from "./uuid";
 import type { ClosableEntry, CloseEmptyPlanResult } from "../../shared/close-empty";
 import { computeCloseEmptyUnitLimit } from "../../shared/close-empty";
 import {
   lamportsDecimalString,
-  priorityFeeLamportsFromCu,
   signatureFeeLamports,
   sumLamportStrings,
 } from "../../shared/close-empty";
@@ -73,7 +78,7 @@ export async function planCloseEmpty(
   const latest = await rpc.getLatestBlockhash({ commitment: "confirmed" }).send();
   const blockhash = latest.value.blockhash as import("@solana/kit").Blockhash;
   const lastValidBlockHeight = latest.value.lastValidBlockHeight;
-  const cuPrice = settings.defaultCuPrice;
+  const priorityFee = BigInt(settings.defaultPriorityFeeLamports);
 
   const measure = (accounts: string[], owner: string, program: ClosableEntry["tokenProgram"]) =>
     measureCloseTxWireBytes(
@@ -82,8 +87,9 @@ export async function planCloseEmpty(
       program,
       blockhash,
       lastValidBlockHeight,
-      200_000,
-      cuPrice,
+      V1_PROVISIONAL_CU_LIMIT,
+      V1_PROVISIONAL_LOADED_ACCOUNTS_DATA_SIZE,
+      priorityFee,
       selected.filter((e) => e.owner === owner && e.tokenProgram === program),
     );
 
@@ -92,33 +98,34 @@ export async function planCloseEmpty(
     owner: e.owner,
     tokenProgram: e.tokenProgram,
   }));
-  const groups = packCloseEmptyAccounts(packItems, measure);
+  const groups = packCloseEmptyAccounts(packItems, measure, 4096, 64);
 
-  const estimateResourceLimits = estimateResourceLimitsFactory({ rpc });
   const builtTxs: ReturnType<typeof buildUnsignedCloseTx>[] = [];
 
   try {
     for (const group of groups) {
-      const estimateMsg = buildCloseTransactionMessage(
+      const provisional = buildCloseTransactionMessage(
         selected,
         group,
         blockhash,
         lastValidBlockHeight,
-        null,
-        null,
+        V1_PROVISIONAL_CU_LIMIT,
+        V1_PROVISIONAL_LOADED_ACCOUNTS_DATA_SIZE,
+        priorityFee,
       );
-      const { computeUnitLimit: simulatedUnits } = await estimateResourceLimits(estimateMsg, {
-        commitment: "confirmed",
-      });
-      const computeUnitLimit = computeCloseEmptyUnitLimit(simulatedUnits);
+      const measuredUse = await measureV1ResourceUse(settings.rpcUrl, compileTransaction(provisional));
+      if (measuredUse == null) {
+        return { ok: false, code: "CU_ESTIMATE_FAILED", message: "CLOSE_EMPTY_CU_FAILED" };
+      }
       builtTxs.push(
         buildUnsignedCloseTx(
           selected,
           group,
           blockhash,
           lastValidBlockHeight,
-          computeUnitLimit,
-          cuPrice,
+          computeCloseEmptyUnitLimit(measuredUse.unitsConsumed),
+          roundLoadedAccountsDataSize(measuredUse.loadedAccountsDataSize),
+          priorityFee,
         ),
       );
     }
@@ -135,7 +142,7 @@ export async function planCloseEmpty(
   for (const tx of builtTxs) {
     for (const a of tx.accounts) reclaim += BigInt(a.rentLamports);
     const sig = signatureFeeLamports(1);
-    const pri = priorityFeeLamportsFromCu(tx.cuLimit, tx.cuPrice);
+    const pri = priorityFee;
     const total = sig + pri;
     feeSigParts.push(lamportsDecimalString(sig));
     feePriParts.push(lamportsDecimalString(pri));
@@ -147,6 +154,7 @@ export async function planCloseEmpty(
       lastValidBlockHeight: tx.lastValidBlockHeight,
       cuLimit: tx.cuLimit,
       cuPrice: tx.cuPrice,
+      dataSize: tx.dataSize,
       tokenAccounts: tx.tokenAccounts,
       accounts: tx.accounts,
       signatureLamports: lamportsDecimalString(sig),

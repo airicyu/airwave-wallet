@@ -32,8 +32,11 @@ import {
   getTransactionEncoder,
   lamports,
   pipe,
+  setTransactionMessageComputeUnitLimit,
   setTransactionMessageFeePayer,
   setTransactionMessageLifetimeUsingBlockhash,
+  setTransactionMessageLoadedAccountsDataSizeLimit,
+  setTransactionMessagePriorityFeeLamports,
   type Blockhash,
   type Signature,
 } from "@solana/kit";
@@ -64,6 +67,12 @@ const btnSignTxFail = document.getElementById("sign-tx-fail") as HTMLButtonEleme
 const btnSignTxClusterMismatch = document.getElementById(
   "sign-tx-cluster-mismatch",
 ) as HTMLButtonElement;
+const btnSignTxV1 = document.getElementById("sign-tx-v1") as HTMLButtonElement;
+const btnSignTxV1NoFee = document.getElementById("sign-tx-v1-no-fee") as HTMLButtonElement;
+const btnSignTxV1ZeroFee = document.getElementById("sign-tx-v1-zero-fee") as HTMLButtonElement;
+const btnSignTxV1NoCu = document.getElementById("sign-tx-v1-no-cu") as HTMLButtonElement;
+const btnSignTxV1Signed = document.getElementById("sign-tx-v1-signed") as HTMLButtonElement;
+const btnSignAndSendTxV1 = document.getElementById("sign-and-send-tx-v1") as HTMLButtonElement;
 const btnAirdrop = document.getElementById("airdrop") as HTMLButtonElement;
 
 function log(...args: unknown[]): void {
@@ -98,6 +107,12 @@ function enableSigning(addressStr: string | undefined): void {
   btnSignAndSendTxStdFail.disabled = !ok;
   btnSignTxFail.disabled = !ok;
   btnSignTxClusterMismatch.disabled = !ok;
+  btnSignTxV1.disabled = !ok;
+  btnSignTxV1NoFee.disabled = !ok;
+  btnSignTxV1ZeroFee.disabled = !ok;
+  btnSignTxV1NoCu.disabled = !ok;
+  btnSignTxV1Signed.disabled = !ok;
+  btnSignAndSendTxV1.disabled = !ok;
   btnAirdrop.disabled = !ok;
   if (addressStr) setStatus(`已連線：${addressStr}`);
 }
@@ -203,6 +218,60 @@ async function buildSelfTransferTxWithBlockhashRpc(
   );
   const tx = compileTransaction(txMessage);
   return new Uint8Array(getTransactionEncoder().encode(tx));
+}
+
+/** v1 self-transfer. Each flag controls one config field or a non-zero signature slot. */
+async function buildV1SelfTransferTx(
+  fromAddress: ReturnType<typeof address>,
+  options: {
+    cuLimit?: number;
+    dataSize?: number;
+    priorityFee?: bigint | null;
+    signedSlot?: boolean;
+  } = {},
+): Promise<Uint8Array> {
+  const latest = await rpc().getLatestBlockhash({ commitment: "confirmed" }).send();
+  let txMessage = pipe(
+    createTransactionMessage({ version: 1 }),
+    (m) => setTransactionMessageFeePayer(fromAddress, m),
+    (m) =>
+      setTransactionMessageLifetimeUsingBlockhash(
+        {
+          blockhash: latest.value.blockhash,
+          lastValidBlockHeight: latest.value.lastValidBlockHeight,
+        },
+        m,
+      ),
+    (m) =>
+      appendTransactionMessageInstruction(
+        getTransferSolInstruction({
+          source: createNoopSigner(fromAddress),
+          destination: fromAddress,
+          amount: lamports(0n),
+        }),
+        m,
+      ),
+  );
+  if (options.cuLimit !== undefined) {
+    txMessage = setTransactionMessageComputeUnitLimit(options.cuLimit, txMessage);
+  }
+  if (options.dataSize !== undefined) {
+    txMessage = setTransactionMessageLoadedAccountsDataSizeLimit(options.dataSize, txMessage);
+  }
+  if (options.priorityFee !== undefined && options.priorityFee !== null) {
+    txMessage = setTransactionMessagePriorityFeeLamports(options.priorityFee, txMessage);
+  }
+  let tx = compileTransaction(txMessage);
+  if (options.signedSlot) {
+    const slot = new Uint8Array(64);
+    slot.fill(1);
+    tx = { ...tx, signatures: { ...tx.signatures, [fromAddress]: slot as unknown as Signature } };
+  }
+  const bytes = new Uint8Array(getTransactionEncoder().encode(tx));
+  if (bytes[0] !== 0x81) {
+    throw new Error(`expected v1 prefix 0x81, got ${bytes[0]}`);
+  }
+  return bytes;
 }
 
 async function syntheticTxMessageBytes(): Promise<Uint8Array> {
@@ -418,6 +487,96 @@ btnSignTxFail.addEventListener("click", async () => {
   }
 });
 
+btnSignTxV1.addEventListener("click", async () => {
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as
+      | StandardConnectFeature[typeof StandardConnect]
+      | undefined;
+    const signTx = wallet.features[SolanaSignTransaction] as
+      | SolanaSignTransactionFeature[typeof SolanaSignTransaction]
+      | undefined;
+    if (!connect || !signTx) return;
+
+    const { accounts } = await connect.connect({ silent: true });
+    const account = accounts[0];
+    if (!account) throw new Error("no account");
+
+    const tx = await buildV1SelfTransferTx(address(account.address), {
+      cuLimit: 5000,
+      dataSize: 32 * 1024,
+      priorityFee: 5000n,
+    });
+    log("v1 sign: self-transfer 0 SOL, priority fee already 5000.");
+
+    const [out] = await signTx.signTransaction({
+      account,
+      chain: "solana:devnet",
+      transaction: tx,
+    });
+    log("v1 signTransaction returned:", bs58.encode(out.signedTransaction));
+  } catch (e) {
+    const err = e as Error & { code?: string };
+    log("v1 sign error:", err.code ?? "", err.message ?? e);
+  }
+});
+
+async function signPreparedV1(
+  label: string,
+  build: (from: ReturnType<typeof address>) => Promise<Uint8Array>,
+): Promise<void> {
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as
+      | StandardConnectFeature[typeof StandardConnect]
+      | undefined;
+    const signTx = wallet.features[SolanaSignTransaction] as
+      | SolanaSignTransactionFeature[typeof SolanaSignTransaction]
+      | undefined;
+    if (!connect || !signTx) return;
+    const { accounts } = await connect.connect({ silent: true });
+    const account = accounts[0];
+    if (!account) throw new Error("no account");
+    const tx = await build(address(account.address));
+    log(label);
+    const [out] = await signTx.signTransaction({
+      account,
+      chain: "solana:devnet",
+      transaction: tx,
+    });
+    log("v1 signTransaction returned:", bs58.encode(out.signedTransaction));
+  } catch (e) {
+    const err = e as Error & { code?: string };
+    log("v1 sign error:", err.code ?? "", err.message ?? e);
+  }
+}
+
+btnSignTxV1NoFee.addEventListener("click", () =>
+  signPreparedV1("v1 no priority fee", (from) =>
+    buildV1SelfTransferTx(from, { cuLimit: 5000, dataSize: 32 * 1024, priorityFee: null }),
+  ),
+);
+btnSignTxV1ZeroFee.addEventListener("click", () =>
+  signPreparedV1("v1 priority fee 0", (from) =>
+    buildV1SelfTransferTx(from, { cuLimit: 5000, dataSize: 32 * 1024, priorityFee: 0n }),
+  ),
+);
+btnSignTxV1NoCu.addEventListener("click", () =>
+  signPreparedV1("v1 no CU limit", (from) =>
+    buildV1SelfTransferTx(from, { dataSize: 32 * 1024, priorityFee: 5000n }),
+  ),
+);
+btnSignTxV1Signed.addEventListener("click", () =>
+  signPreparedV1("v1 signed slot", (from) =>
+    buildV1SelfTransferTx(from, {
+      cuLimit: 5000,
+      dataSize: 32 * 1024,
+      priorityFee: 5000n,
+      signedSlot: true,
+    }),
+  ),
+);
+
 btnSignTxClusterMismatch.addEventListener("click", async () => {
   try {
     const wallet = await waitForAirwave();
@@ -526,6 +685,46 @@ btnSignAndSendTx.addEventListener("click", async () => {
     log("Confirmed:", signature);
   } catch (e) {
     log("Sign and send error:", e instanceof Error ? e.message : e);
+  }
+});
+
+btnSignAndSendTxV1.addEventListener("click", async () => {
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as
+      | StandardConnectFeature[typeof StandardConnect]
+      | undefined;
+    const signAndSend = wallet.features[SolanaSignAndSendTransaction] as
+      | SolanaSignAndSendTransactionFeature[typeof SolanaSignAndSendTransaction]
+      | undefined;
+    if (!connect) return;
+    if (!signAndSend) {
+      throw new Error(`wallet 無 ${SolanaSignAndSendTransaction} feature`);
+    }
+
+    const { accounts } = await connect.connect({ silent: true });
+    const account = accounts[0];
+    if (!account) throw new Error("no account");
+    if (account.chains[0] !== "solana:devnet") {
+      throw new Error("test-web 只測 Devnet。請在錢包 Settings 把網路改成 Devnet 再按代送。");
+    }
+
+    const tx = await buildV1SelfTransferTx(address(account.address), {
+      cuLimit: 5000,
+      dataSize: 32 * 1024,
+      priorityFee: 5000n,
+    });
+    log("v1 signAndSend: self-transfer 0 SOL, first byte 0x81, priority fee already 5000.");
+
+    const [out] = await signAndSend.signAndSendTransaction({
+      account,
+      chain: "solana:devnet",
+      transaction: tx,
+    });
+    log("v1 signAndSendTransaction ok:", bs58.encode(out.signature));
+  } catch (e) {
+    const err = e as Error & { code?: string };
+    log("v1 signAndSendTransaction error:", err.code ?? "", err.message ?? e);
   }
 });
 

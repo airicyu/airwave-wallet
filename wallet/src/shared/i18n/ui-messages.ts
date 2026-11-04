@@ -91,6 +91,11 @@ const messages = {
     "zh-Hans": "预设 CU 单价",
     "en": "Default CU price",
   },
+  "nav.settingsPriorityFee": {
+    "zh-Hant": "預設優先費",
+    "zh-Hans": "预设优先费",
+    "en": "Default priority fee",
+  },
   "nav.settingsWalletLock": {
     "zh-Hant": "錢包鎖定設定",
     "zh-Hans": "钱包锁定设置",
@@ -326,6 +331,11 @@ const messages = {
     "zh-Hant": "預設 CU 單價",
     "zh-Hans": "预设 CU 单价",
     "en": "Default CU price",
+  },
+  "settings.hub.priorityFee": {
+    "zh-Hant": "預設優先費",
+    "zh-Hans": "预设优先费",
+    "en": "Default priority fee",
   },
   "settings.idleAutoLock.enable": {
     "zh-Hant": "閒置自動鎖定",

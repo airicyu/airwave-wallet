@@ -59,17 +59,15 @@ function u64(data: Uint8Array, offset: number): bigint {
 }
 
 function accountKeys(message: CompiledTransactionMessage): string[] {
-  if (message.version === 1) return [];
   return message.staticAccounts.map((account) => String(account));
 }
 
 function signerCount(message: CompiledTransactionMessage): number {
-  if (message.version === 1) return 0;
   return message.header.numSignerAccounts;
 }
 
 function writableAccount(message: CompiledTransactionMessage, index: number, length: number): boolean {
-  if (message.version === 1 || index < 0 || index >= length) return false;
+  if (index < 0 || index >= length) return false;
   const { numSignerAccounts, numReadonlySignerAccounts, numReadonlyNonSignerAccounts } = message.header;
   if (index < numSignerAccounts) return index < numSignerAccounts - numReadonlySignerAccounts;
   return index < length - numReadonlyNonSignerAccounts;

@@ -31,9 +31,8 @@ export function formatRawToAmountUi(raw: bigint, decimals: number): string {
   return frac ? `${whole}.${frac}` : whole;
 }
 
-/** SOL fee reserve (lamports): 5_000 + ceil(200_000 × defaultCuPrice / 1_000_000). */
-export function solReserveLamports(defaultCuPrice: number): bigint {
-  const price = BigInt(Math.max(0, Math.floor(defaultCuPrice)));
-  const prio = (200_000n * price + 999_999n) / 1_000_000n;
-  return 5_000n + prio;
+/** SOL fee reserve (lamports): 5_000 signature fee plus the v1 priority fee. */
+export function solReserveLamports(priorityFeeLamports: bigint): bigint {
+  const fee = priorityFeeLamports < 0n ? 0n : priorityFeeLamports;
+  return 5_000n + fee;
 }

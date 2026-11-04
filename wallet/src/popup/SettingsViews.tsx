@@ -13,6 +13,7 @@ import { RpcGuideScreen } from "./onboarding/RpcGuideScreen";
 import {
   ChangePasswordScreen,
   CuPriceScreen,
+  PriorityFeeScreen,
   KeysScreen,
   LocaleScreen,
   NetworkScreen,
@@ -69,6 +70,12 @@ export function SettingsViews(): JSX.Element {
           {currentView === "settings-cu-price" ? (
             <section id="screen-settings-cu-price" className="screen">
               <CuPriceScreen settings={wallet.settings} />
+            </section>
+          ) : null}
+
+          {currentView === "settings-priority-fee" ? (
+            <section id="screen-settings-priority-fee" className="screen">
+              <PriorityFeeScreen settings={wallet.settings} />
             </section>
           ) : null}
 

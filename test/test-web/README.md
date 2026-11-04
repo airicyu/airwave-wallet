@@ -32,3 +32,12 @@ From the repo root: `bun run test-web`.
 8. 任一路徑 **拒絕** 或關閉 popout → log 顯示錯誤、可重試
 9. popup **切換帳戶** → 本頁 log 出現 `account change` 與新地址（不必重按 Connect）
 10. （選）popup 將 active 換成 **觀察帳戶** → Sign message／Sign transaction 應失敗（read-only）；airdrop 仍可對該地址領 devnet SOL
+
+11. **Sign transaction（v1）** → 核准畫面為 `CU limit` + 優先費（無 `CU price`）；優先費顯示交易內 `5000` → 批准 → log `v1 signTransaction returned:`
+12. **Sign transaction（v1，省略優先費）** → 優先費顯示設定預設（出廠 `5000`）→ 拒絕
+13. **Sign transaction（v1，優先費 0）** → 優先費顯示 `0` → 拒絕
+14. **Sign transaction（v1，省略 CU limit）** → 模擬失敗通知；核准仍可按 → 拒絕
+15. **Sign transaction（v1，已有簽章）** → `CU limit` 與優先費輸入皆停用 → 拒絕
+16. **signAndSendTransaction（v1，錢包代送）** → 費用卡同步驟 11；無 cluster 不符 → 批准 → log `v1 signAndSendTransaction ok:`
+
+e2e 劇本見 `test/e2e/scenarios/07-v1-sign.md`（本機 RPC：`?rpc=http://127.0.0.1:8899`）。

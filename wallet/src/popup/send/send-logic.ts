@@ -43,7 +43,7 @@ export function sendFormValid(args: {
   const frac = amount.split(".")[1] ?? "";
   if (frac.length > row.decimals) return false;
   if (row.id === NATIVE_SOL_ID) {
-    const reserve = solReserveLamports(args.state.settings.defaultCuPrice);
+    const reserve = solReserveLamports(BigInt(args.state.settings.defaultPriorityFeeLamports));
     const raw = tokenBalanceRaw(row);
     if (raw == null || raw <= reserve) return false;
   }
@@ -62,7 +62,7 @@ export function maxSendAmount(row: HomeTokenRow, state: State): string | null {
   const raw = tokenBalanceRaw(row);
   if (raw == null) return null;
   if (row.id === NATIVE_SOL_ID) {
-    const reserve = solReserveLamports(state.settings.defaultCuPrice);
+    const reserve = solReserveLamports(BigInt(state.settings.defaultPriorityFeeLamports));
     if (raw <= reserve) return null;
     return formatRawToAmountUi(raw - reserve, row.decimals);
   }
