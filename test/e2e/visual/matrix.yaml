@@ -1,0 +1,63 @@
+# Shot list for visual checks. Behavior scenarios stay in ../scenarios/ (sidepanel).
+locale: en
+shells: [sidepanel, popup]
+
+shots:
+  - id: home-assets
+    shells: [sidepanel, popup]
+    prep: e2e-prep
+    settings: { cluster: Devnet, debug: true }
+    enter: home
+    look:
+      - Assets tab is selected
+      - A SOL row is visible
+
+  - id: home-activities
+    shells: [sidepanel, popup]
+    prep: none
+    settings: { cluster: Mainnet, helius: mock }
+    enter: home
+    look:
+      - Activities tab is selected
+      - At least one activity row is visible
+
+  - id: settings-hub
+    shells: [sidepanel, popup]
+    prep: none
+    settings: { cluster: Devnet }
+    enter: settings
+    look:
+      - Settings hub is open
+      - Default priority fee shows 5000
+
+  - id: approve-sign
+    shells: [sidepanel]
+    prep: e2e-prep
+    settings: { cluster: Devnet }
+    enter: approve
+    trigger: test-web Sign transaction
+    look:
+      - Approve and Reject are both available
+      - No cluster-mismatch notice
+      - Do not Approve before the check
+
+  - id: approve-v1-fee
+    shells: [sidepanel]
+    prep: e2e-prep
+    settings: { cluster: Devnet, priorityFee: 5000 }
+    enter: approve
+    trigger: test-web Sign transaction (v1)
+    look:
+      - Fee card shows CU limit and Priority fee
+      - Priority fee is 5000
+      - No CU price field
+
+  - id: approve-cluster-mismatch
+    shells: [sidepanel]
+    prep: e2e-prep
+    settings: { cluster: Devnet }
+    enter: approve
+    trigger: test-web Sign transaction (other-cluster blockhash, chain omitted) with otherRpc=mock
+    look:
+      - Cluster-mismatch notice is visible
+      - Approve is disabled

@@ -1,0 +1,9 @@
+{
+  "walletVersion": "0.54.0",
+  "branch": "v0.55.0",
+  "git": "00ca880",
+  "locale": "en",
+  "shells": ["sidepanel", "popup"],
+  "recordedAt": "2026-11-04T14:37:46Z",
+  "notes": "Popup goldens are the default 422x600 toolbar popup (home and settings). Side panel goldens include approve shots. Checks follow matrix.yaml look lines."
+}

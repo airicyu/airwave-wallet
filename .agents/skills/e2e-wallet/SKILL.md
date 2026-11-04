@@ -33,7 +33,7 @@ Runtime reads [`test/e2e/fixtures/`](../../../test/e2e/fixtures/) (optional over
 2. Load the unpacked extension from `wallet/dist`.
 3. **Shell / Side panel (required for connect & sign)**
    - **Never** open `chrome-extension://…/src/sidepanel/index.html` (or popout/approval) as a normal browser tab. That is not Chrome’s Side panel and breaks the shell.
-   - First-run / unlock may use the **toolbar action popup** until Home chrome is visible.
+   - First-run / unlock may use the **toolbar action popup** until Home chrome is visible. Keep that popup at Chrome's default toolbar size. Do not maximize, fullscreen, or stretch it.
    - Once Home is up: open the toolbar popup → click `#btn-shell-to-sidebar` (sidebar icon; `shell.toSidebar`) so Chrome opens the **real** Side panel via `chrome.sidePanel.open`. Do connect / allow / sign / approve **inside that Side panel**.
    - If the sidebar button is missing, you are not on Home in the action popup yet — finish onboard/unlock first. Do not fall back to a tabbed extension page.
 4. `bun run e2e-mock`, then confirm `http://127.0.0.1:8787/health` is `ok: true`.
@@ -55,15 +55,21 @@ After unlock, verify settings (RPC, Debug, mock bases) and **priority fee `5000`
 
 ## Steps and verdict
 
-Follow only that scenario's steps. Stop if `test-web` `rpc` / `otherRpc` does not match the scenario. On pass, name the scenario file. On fail, name the step and the on-screen text. Do not mark an unrun scenario as passed.
+Follow only that scenario's **Pass** paragraph. Stop if `test-web` `rpc` / `otherRpc` does not match the scenario. On pass, name the scenario file. On fail, name the step and the on-screen text. Do not mark an unrun scenario as passed.
 
-Scenario `01` checks the test-web log for `Broadcast signature:` and `Confirmed:` (printed after both confirmed and finalized). Scenario `07` checks the v1 fee card and the logs `v1 signTransaction returned:` and `v1 signAndSendTransaction ok:`.
+Behavior scenarios are sidepanel only. Do not copy a scenario per shell.
 
 ## Alpenglow and confirmation
 
 Local `solana-test-validator` finalizes in about 150ms after Alpenglow. The wallet and scenarios may treat "confirmed" as finalized-only. Do not wait for a separate confirmed intermediate state.
 
+## Visual check
+
+When the user asks to verify UI, follow [`test/e2e/visual/README.md`](../../../test/e2e/visual/README.md). The shot list is only [`test/e2e/visual/matrix.yaml`](../../../test/e2e/visual/matrix.yaml).
+
+Open `refs/{shell}/en/{id}.png` beside the live frame and check that shot's `look` lines. Ignore window height, chrome around the panel, address text, and the exact SOL digits. A `look` miss is a report to the maintainer, with the shot id and shell. Do not replace a ref until they confirm.
+
 ## Known limits
 
-- Scenarios 01–07 assert behavior / state / logs, not visual layout.
+- Scenarios 01–07 assert behavior, on-screen state, and logs.
 - A real docked Chrome Side panel is hard for ordinary Playwright to drive; agent or manual UI clicks are expected.

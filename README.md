@@ -27,7 +27,7 @@ Approving is still your action. The risk report is there to read, not to approve
 
 | | |
 |---|---|
-| Version | [`version.md`](version.md) (currently 0.54.0) |
+| Version | [`version.md`](version.md) (currently 0.55.0) |
 | Changelog | [`changelog.md`](changelog.md) |
 | Disclaimer / terms | [`docs/legal/`](docs/legal/) |
 
