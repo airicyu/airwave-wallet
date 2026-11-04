@@ -1,8 +1,8 @@
 # 0.54.0 — Solana v1 transactions
 
-- **Status:** `in progress`
-- **Upstream:** [0.53.0](../0.53.0/INDEX.md) shipped. Idea text: [backlog/v1-transaction.md](../backlog/v1-transaction.md). This INDEX wins. Format notes: [solana-tx-versions.md](../../research/solana-tx-versions.md).
-- **Changelog:** one paragraph under `0.54.0`. The test-web v1 button and the e2e harness that were unversioned are included. They ship with this version.
+- **Status:** `shipped`
+- **Upstream:** [0.53.0](../0.53.0/INDEX.md) shipped. The backlog idea file was removed on ship. Format notes: [solana-tx-versions.md](../../research/solana-tx-versions.md).
+- **Changelog:** one paragraph under `0.54.0` (2026-11-04). The test-web v1 button and the e2e harness that were unversioned are included.
 
 ## Product
 
@@ -56,7 +56,7 @@ The wallet signs, simulates, and sends v1 transactions, and builds its own send 
 - [x] A legacy or v0 unsigned transaction still shows CU limit and CU price and still receives the default CU price when the price is absent. User walk of test-web 2026-11-04.
 - [ ] An in-wallet token send and a close-empty batch are v1. Each config has a CU limit, a loaded-accounts data size that is a positive multiple of 32768, and the default priority fee. Close-empty puts more than the old ~22 closes in one transaction when more than 22 empty accounts of the same owner and token program are selected, and never more than 64 addresses.
 - [ ] If the pre-build simulation fails, send and close-empty do not open the approval.
-- [ ] `host-tools.ts` requests `getTransaction` with `maxSupportedTransactionVersion: 1`.
+- [x] `host-tools.ts` requests `getTransaction` with `maxSupportedTransactionVersion: 1`. Implementation review 2026-11-04.
 
 ## Anchors
 

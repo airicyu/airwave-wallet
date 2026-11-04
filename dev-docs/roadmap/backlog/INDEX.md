@@ -6,9 +6,7 @@ New item: add a row here and write `backlog/<name>.md`.
 
 ## Scheduled
 
-| Item | Notes |
-|------|--------|
-| [Solana v1 transactions](./v1-transaction.md) | Scheduled as [0.54.0](../0.54.0/INDEX.md). That INDEX wins |
+(none)
 
 ## Unscheduled
 

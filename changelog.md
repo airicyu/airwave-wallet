@@ -1,12 +1,8 @@
 # Changelog
 
-## 0.54.0
+## 0.54.0 — 2026-11-04
 
-test-web `sign-tx-v1` requests a v1 self-transfer signature, and `sign-and-send-tx-v1` asks the wallet to send that same v1 packet. The sign screen already opens. This version makes the v1 fee path, wallet-built v1 transactions, and the `1` advertisement correct. e2e scenario `07-v1-sign` walks the v1 fee card and wallet send. The e2e harness that was already in the tree ships with this version: sanitized mock fixtures under `test/e2e/fixtures`, Bun TypeScript `e2e-preflight` / `e2e-mock`, the Side-panel-first agent skill, and `test/test-web` as the manual dApp. Helius accepts a localhost HTTP origin so the mock can be selected in settings. Not shipped.
-
-## 0.54.0
-
-test-web `sign-tx-v1` requests a v1 self-transfer signature, and `sign-and-send-tx-v1` asks the wallet to send that same v1 packet. The sign screen already opens. This version makes the v1 fee path, wallet-built v1 transactions, and the `1` advertisement correct. Not shipped.
+The wallet signs, simulates, and sends v1 transactions, and builds token send and close-empty as v1. Settings has a default priority fee of 5000 lamports. A v1 approval shows CU limit and that priority fee. Legacy and v0 still use CU price. `signTransaction` and `signAndSendTransaction` advertise version `1`. test-web adds the v1 fee-card and sign-and-send samples. The e2e harness ships with this version: sanitized fixtures under `test/e2e/fixtures`, Bun `e2e-preflight` / `e2e-mock`, the side-panel-first skill, and scenario `07-v1-sign`. Helius settings accept a localhost HTTP origin.
 
 ## 0.53.0 — 2026-10-31
 
