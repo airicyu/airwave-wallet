@@ -21,6 +21,8 @@ const PAGE_COMMANDS = new Set([
   "dapp.connect",
   "dapp.disconnect",
   "dapp.signMessage",
+  "dapp.signOffchainMessage",
+  "dapp.signIn",
   "dapp.signTransaction",
   "dapp.signAndSendTransaction",
 ]);

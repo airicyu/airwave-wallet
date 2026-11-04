@@ -7,7 +7,7 @@ import { sendExtensionRequest } from "../../shared/protocol";
 import { copyPublicKeyWithFeedback } from "../../shared/marks";
 import { sess } from "./session";
 import { closeHost, hardenWalletPasswordInput } from "./dom";
-import { isBroadcastAfterApproveKind, isSignTxKind } from "./kinds";
+import { isBroadcastAfterApproveKind, isSignTxKind, isStatementKind } from "./kinds";
 import { progressUserMessage, tr } from "./locale";
 import { refreshAfterUnlock, resolvePending } from "./flow";
 import {
@@ -96,7 +96,7 @@ export function wireShellEvents(): void {
     if (
       !sess.pending ||
       (sess.pending.kind !== "connect" &&
-        sess.pending.kind !== "signMessage" &&
+        !isStatementKind(sess.pending.kind) &&
         !isSignTxKind(sess.pending.kind))
     )
       return;

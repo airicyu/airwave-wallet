@@ -16,7 +16,7 @@
   --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
   --radius: 12px;
   --radius-sm: 8px;
-  --card-lines: 6;
+  --card-lines: 9;
 }
 
 * {

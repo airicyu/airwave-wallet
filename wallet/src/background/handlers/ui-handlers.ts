@@ -12,7 +12,13 @@ import type {
 import { jsonRpcMissing } from "../../shared/protocol";
 import { jupiterApiUrlForCall } from "../../shared/rpc";
 import { getExposedPublicKey } from "../../shared/accounts";
-import { finishConnect, finishSignMessage, finishSignTransaction } from "../pending";
+import {
+  finishConnect,
+  finishSignIn,
+  finishSignMessage,
+  finishSignOffchainMessage,
+  finishSignTransaction,
+} from "../pending";
 import { getPending, unbindPopoutByRequest } from "../pending";
 import { getTxAiAssessState, discardTxAi } from "../tx-ai/runtime";
 import { readAccounts, readSettings } from "../storage";
@@ -188,6 +194,10 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
       await finishConnect(requestId, p.tabId, p.origin, approved);
     } else if (p.kind === "signMessage") {
       await finishSignMessage(requestId, p.tabId, approved);
+    } else if (p.kind === "signOffchainMessage") {
+      await finishSignOffchainMessage(requestId, p.tabId, approved);
+    } else if (p.kind === "signIn") {
+      await finishSignIn(requestId, p.tabId, approved);
     } else if (p.kind === "signTransaction") {
       await finishSignTransaction(requestId, p.tabId, approved);
     }
@@ -215,6 +225,12 @@ export async function handleUiCommand(req: ExtensionRequest): Promise<ExtensionR
       } else if (p.kind === "signMessage") {
         unbindPopoutByRequest(requestId);
         await finishSignMessage(requestId, p.tabId, false);
+      } else if (p.kind === "signOffchainMessage") {
+        unbindPopoutByRequest(requestId);
+        await finishSignOffchainMessage(requestId, p.tabId, false);
+      } else if (p.kind === "signIn") {
+        unbindPopoutByRequest(requestId);
+        await finishSignIn(requestId, p.tabId, false);
       } else if (p.kind === "signTransaction") {
         unbindPopoutByRequest(requestId);
         await finishSignTransaction(requestId, p.tabId, false);

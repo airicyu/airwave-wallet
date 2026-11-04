@@ -24,6 +24,7 @@ import {
   exposedPk,
   isBroadcastAfterApproveKind,
   isSignTxKind,
+  isStatementKind,
 } from "./kinds";
 import { setPopoutWindowTitle, tr, progressUserMessage } from "./locale";
 import {
@@ -59,7 +60,7 @@ function startApproveHold(): void {
       applyApproveFromSimulation(sess.lastSim);
       return;
     }
-    if (sess.pending.kind === "signMessage" && !sess.pending.messageLooksLikeTx) {
+    if (isStatementKind(sess.pending.kind) && !sess.pending.messageLooksLikeTx) {
       setSignButtons({ approve: false });
     }
   }, 700);
@@ -91,8 +92,12 @@ async function refreshAfterUnlock(holdAfterUnlock: boolean): Promise<void> {
     await showConnectOrFinishReconnect();
     return;
   }
-  if (sess.pending.kind === "signMessage") {
-    await renderSignShell(sess.pending, holdAfterUnlock, "signMessage");
+  if (isStatementKind(sess.pending.kind)) {
+    await renderSignShell(
+      sess.pending,
+      holdAfterUnlock,
+      sess.pending.kind === "signIn" ? "signIn" : "signMessage",
+    );
   } else if (isSignTxKind(sess.pending.kind)) {
     await renderSignShell(sess.pending, holdAfterUnlock, "signTransaction");
   }
@@ -101,7 +106,7 @@ async function refreshAfterUnlock(holdAfterUnlock: boolean): Promise<void> {
 async function renderSignShell(
   p: PendingRecord,
   holdAfterUnlock: boolean,
-  mode: "signMessage" | "signTransaction",
+  mode: "signMessage" | "signIn" | "signTransaction",
 ): Promise<void> {
   if (!isBroadcastAfterApproveKind(p.kind)) {
     resetSendStatusUiForNewReview();
@@ -113,8 +118,10 @@ async function renderSignShell(
   if (isSendStatusLocked() || sess.requestEnded) return;
   hideAll();
   setSendStatusChrome(false);
-  const pageTitle = mode === "signTransaction" ? tr("approval.signTx") : tr("approval.signMsg");
-  setPopoutWindowTitle(mode === "signTransaction" ? "approval.signTx" : "approval.signMsg");
+  const titleKey =
+    mode === "signTransaction" ? "approval.signTx" : mode === "signIn" ? "approval.signIn" : "approval.signMsg";
+  const pageTitle = tr(titleKey);
+  setPopoutWindowTitle(titleKey);
   sess.signPageTitle.textContent = pageTitle;
   sess.viewSign.hidden = false;
   sess.signDock.hidden = false;
@@ -163,7 +170,7 @@ async function renderSignShell(
   sess.settingsCluster = state.settings.cluster;
   setSignClusterStrip(mode === "signTransaction" && state.settings.cluster === "devnet");
 
-  if (mode === "signMessage") {
+  if (mode === "signMessage" || mode === "signIn") {
     renderSignMessageBody(p, bytesFromSignMessage(p));
   } else {
     sess.txRawHex = hexCompact(bytesFromSignTransaction(p));
@@ -188,12 +195,12 @@ async function renderSignShell(
 
   setSignButtons({ reject: false });
   if (holdAfterUnlock) {
-    if (mode === "signMessage" && !p.messageLooksLikeTx) {
+    if ((mode === "signMessage" || mode === "signIn") && !p.messageLooksLikeTx) {
       startApproveHold();
     } else if (mode === "signTransaction") {
       startApproveHold();
     }
-  } else if (mode === "signMessage" && sess.approveHoldTimer == null && !p.messageLooksLikeTx) {
+  } else if ((mode === "signMessage" || mode === "signIn") && sess.approveHoldTimer == null && !p.messageLooksLikeTx) {
     setSignButtons({ approve: false });
   }
 }
@@ -233,8 +240,8 @@ export async function loadPending(): Promise<void> {
     return;
   }
 
-  if (sess.pending.kind === "signMessage") {
-    await renderSignShell(sess.pending, false, "signMessage");
+  if (isStatementKind(sess.pending.kind)) {
+    await renderSignShell(sess.pending, false, sess.pending.kind === "signIn" ? "signIn" : "signMessage");
   } else if (isSignTxKind(sess.pending.kind)) {
     await renderSignShell(sess.pending, false, "signTransaction");
   }
@@ -255,12 +262,12 @@ export async function resolvePending(decision: "approve" | "reject"): Promise<vo
     enterWalletSendConfirming();
   } else if (
     decision === "approve" &&
-    (sess.pending?.kind === "signMessage" || (sess.pending && isSignTxKind(sess.pending.kind)))
+    (sess.pending && (isStatementKind(sess.pending.kind) || isSignTxKind(sess.pending.kind)))
   ) {
     setSignButtons({ reject: true, approve: true, approveLabel: tr("approval.approving") });
   } else if (
     decision === "reject" &&
-    (sess.pending?.kind === "signMessage" || (sess.pending && isSignTxKind(sess.pending.kind)))
+    (sess.pending && (isStatementKind(sess.pending.kind) || isSignTxKind(sess.pending.kind)))
   ) {
     setSignButtons({ reject: true, approve: true });
   }
@@ -277,7 +284,7 @@ export async function resolvePending(decision: "approve" | "reject"): Promise<vo
       return;
     }
     const msg = code ? progressUserMessage(code) : tr("error.genericFailed");
-    if (sess.pending?.kind === "signMessage" || (sess.pending && isSignTxKind(sess.pending.kind))) {
+    if (sess.pending && (isStatementKind(sess.pending.kind) || isSignTxKind(sess.pending.kind))) {
       sess.signError.hidden = false;
       sess.signError.textContent = msg;
       const approveOff =

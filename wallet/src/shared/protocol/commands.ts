@@ -8,6 +8,8 @@ export type AirwaveCommand =
   | "dapp.connect"
   | "dapp.disconnect"
   | "dapp.signMessage"
+  | "dapp.signOffchainMessage"
+  | "dapp.signIn"
   | "dapp.signTransaction"
   | "dapp.signAndSendTransaction"
   | "ui.getPending"
@@ -79,6 +81,8 @@ export type ExtensionResponse = {
 export type PendingKind =
   | "connect"
   | "signMessage"
+  | "signOffchainMessage"
+  | "signIn"
   | "signTransaction"
   | "signAndSendTransaction"
   | "walletSend";
@@ -115,6 +119,16 @@ export type ConnectPayload = {
 
 export type SignMessagePayload = {
   message: number[];
+};
+
+export type SignOffchainMessagePayload = {
+  message: string;
+  requiredSigners: number[][];
+};
+
+export type SignInPayload = {
+  statementText: string;
+  offchain: boolean;
 };
 
 export type SignTransactionPayload = {

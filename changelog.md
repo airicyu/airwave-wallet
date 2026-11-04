@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.56.0 — 2026-11-05
+
+The wallet advertises `solana:signOffchainMessage` (version 1 messages) and `solana:signIn` (feature 1.1.0). An off-chain message uses the Sign message screen and shows the UTF-8 text. Sign in shows the composed SIWS statement. Approve signs that text, or wraps it as a version 1 off-chain message when the site sets `useOffchainMessage`. The message card shows nine lines before it scrolls. test-web adds off-chain, Sign in short, and Sign in full.
+
 ## 0.55.0 — 2026-11-05
 
 No wallet change. e2e scenarios `01`–`07` are short English steps with a single Pass paragraph. Visual checks use `test/e2e/visual/matrix.yaml` (`look` lines) and the English PNGs under `refs/`. A miss is reported; the golden is replaced only after confirmation. There is no pixel-diff script.

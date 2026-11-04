@@ -1724,6 +1724,11 @@ const messages = {
     "zh-Hans": "签署消息",
     "en": "Sign message",
   },
+  "approval.signIn": {
+    "zh-Hant": "登入",
+    "zh-Hans": "登录",
+    "en": "Sign in",
+  },
   "sign.clusterMismatch.title": {
     "zh-Hant": "網路不符",
     "zh-Hans": "网络不符",
