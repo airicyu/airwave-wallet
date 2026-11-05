@@ -1,6 +1,6 @@
 # 0.57.0 — Sign risk samples and durable-nonce watch
 
-- **Status:** `in progress`
+- **Status:** `shipped`
 - **Upstream:** [0.56.0](../0.56.0/INDEX.md) shipped. Absorbs the batch that was in [unversioned.md](../unversioned.md).
 - **Backlog:** none. This INDEX wins.
 
@@ -42,14 +42,14 @@ test-web follows the connected wallet cluster and offers three sign-only danger 
 
 ## Acceptance
 
-- [ ] `cd wallet && npm run typecheck`
-- [ ] `cd test/test-web && npm run build`
-- [ ] On a wallet with a small SOL balance, `#sign-tx-suspicious` reaches simulation without `ProgramAccountNotFound` for a missing program id. The AI names System Assign of the fee payer to the Address Lookup Table program. Reject the approval.
-- [ ] `#sign-tx-nonce` can create a nonce account, then open an AdvanceNonce transaction whose blockhash is that nonce. The sign AI level is at least watch, and the report says the signature can be submitted later. Reject the danger approval.
-- [ ] `#sign-tx-steal` does not fail the first transfer for 1000 SOL. Reject the approval.
-- [ ] A probe simulation that returns `err` does not set the CU limit to `ceil(unitsConsumed × 1.1)`.
-- [ ] Expanded failure details are 320px tall, the disclosure marker is visible, and copy puts the error text on the clipboard.
-- [ ] No e2e scenario clicks the three danger buttons.
+- [x] `cd wallet && npm run typecheck`
+- [x] `cd test/test-web && npm run build`
+- [x] On a wallet with a small SOL balance, `#sign-tx-suspicious` reaches simulation without `ProgramAccountNotFound` for a missing program id. The AI names System Assign of the fee payer to the Address Lookup Table program. Reject the approval. User e2e 2026-11-06.
+- [x] `#sign-tx-nonce` can create a nonce account, then open an AdvanceNonce transaction whose blockhash is that nonce. The sign AI level is at least watch, and the report says the signature can be submitted later. Reject the danger approval. User e2e 2026-11-06.
+- [x] `#sign-tx-steal` does not fail the first transfer for 1000 SOL. Reject the approval. User e2e 2026-11-06.
+- [x] A probe simulation that returns `err` does not set the CU limit to `ceil(unitsConsumed × 1.1)`. User e2e 2026-11-06.
+- [x] Expanded failure details are 320px tall, the disclosure marker is visible, and copy puts the error text on the clipboard. User e2e 2026-11-06.
+- [x] No e2e scenario clicks the three danger buttons. User e2e 2026-11-06.
 
 ## Anchors
 

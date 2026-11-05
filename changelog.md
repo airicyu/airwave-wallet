@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.57.0
+## 0.57.0 — 2026-11-06
 
 test-web follows the wallet cluster, groups its buttons, and adds three sign-only danger samples: an Address Lookup Table create plus Assign of the fee payer, a durable nonce advance plus a 0.001 SOL transfer, and a 0.001 SOL transfer with unlimited approve, SetAuthority, and close. A failed CU probe no longer uses partial `unitsConsumed` as the limit. Sign AI names those system instructions, and a durable nonce floors the level at watch because the signature can be submitted later. Simulation failure details are 320px tall, keep the disclosure marker, and can be copied. e2e must not run or approve those three samples.
 

@@ -1,6 +1,6 @@
 # 0.57.0 handoff
 
-Status is `in progress`. The tree already contains the behavior in [INDEX.md](./INDEX.md). Design review and implementation review have not been run. Do not mark `shipped` until the user says ship.
+Status is `shipped` (2026-11-06). The user ran e2e and said ship. Design review and implementation review were not a separate pass.
 
 ## Done this session
 

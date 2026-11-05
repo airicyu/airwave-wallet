@@ -72,7 +72,7 @@ This directory is the version contract for **airwave-wallet**. An agent with no 
 | [0.54.0](./0.54.0/INDEX.md) | shipped | Sign, simulate, and build v1 transactions. Settings default priority fee is 5000 lamports |
 | [0.55.0](./0.55.0/INDEX.md) | shipped | e2e scenarios keep one Pass paragraph. Visual checks use matrix `look` lines and committed PNGs. No wallet change |
 | [0.56.0](./0.56.0/INDEX.md) | shipped | `signOffchainMessage` on the Sign message screen. `signIn` shows the SIWS statement and signs text or a version 1 off-chain message |
-| [0.57.0](./0.57.0/INDEX.md) | in progress | Sign AI danger samples, failed CU probe fallback, durable-nonce watch, taller failure details |
+| [0.57.0](./0.57.0/INDEX.md) | shipped | Sign AI danger samples, failed CU probe fallback, durable-nonce watch, taller failure details |
 
 **Version numbers:** a **patch** on `x.y.z` (for example **0.3.1**) is only a bugfix for that minor. It does not schedule a new feature. A new feature is the next **minor** (0.3.0 → 0.4.0 → 0.5.0).
 
