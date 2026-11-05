@@ -4,6 +4,10 @@
 import type { PendingRecord } from "../../shared/protocol";
 import type { AccountMeta } from "../../shared/protocol";
 
+export function isStatementKind(kind: PendingRecord["kind"]): boolean {
+  return kind === "signMessage" || kind === "signOffchainMessage" || kind === "signIn";
+}
+
 export function isSignTxKind(kind: PendingRecord["kind"]): boolean {
   return kind === "signTransaction" || kind === "walletSend" || kind === "signAndSendTransaction";
 }

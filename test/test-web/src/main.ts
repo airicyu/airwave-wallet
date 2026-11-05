@@ -10,8 +10,12 @@ import {
 import {
   SolanaSignAndSendTransaction,
   type SolanaSignAndSendTransactionFeature,
+  SolanaSignIn,
+  type SolanaSignInFeature,
   SolanaSignMessage,
   type SolanaSignMessageFeature,
+  SolanaSignOffchainMessage,
+  type SolanaSignOffchainMessageFeature,
   SolanaSignTransaction,
   type SolanaSignTransactionFeature,
 } from "@solana/wallet-standard-features";
@@ -55,6 +59,9 @@ const btnDisconnect = document.getElementById("disconnect") as HTMLButtonElement
 const btnSignMsg = document.getElementById("sign-msg") as HTMLButtonElement;
 const btnSignMsgBinary = document.getElementById("sign-msg-binary") as HTMLButtonElement;
 const btnSignMsgTx = document.getElementById("sign-msg-tx") as HTMLButtonElement;
+const btnSignOffchain = document.getElementById("sign-offchain") as HTMLButtonElement;
+const btnSignInShort = document.getElementById("sign-in-short") as HTMLButtonElement;
+const btnSignInFull = document.getElementById("sign-in-full") as HTMLButtonElement;
 const btnSignTx = document.getElementById("sign-tx") as HTMLButtonElement;
 const btnSignAndSendTx = document.getElementById("sign-and-send-tx") as HTMLButtonElement;
 const btnSignAndSendTxStd = document.getElementById(
@@ -101,6 +108,9 @@ function enableSigning(addressStr: string | undefined): void {
   btnSignMsg.disabled = !ok;
   btnSignMsgBinary.disabled = !ok;
   btnSignMsgTx.disabled = !ok;
+  btnSignOffchain.disabled = !ok;
+  btnSignInShort.disabled = !ok;
+  btnSignInFull.disabled = !ok;
   btnSignTx.disabled = !ok;
   btnSignAndSendTx.disabled = !ok;
   btnSignAndSendTxStd.disabled = !ok;
@@ -419,6 +429,83 @@ btnSignMsgTx.addEventListener("click", async () => {
   } catch (e) {
     const err = e as Error & { code?: string };
     log("Sign tx-as-message error:", err.code ?? "", err.message ?? e);
+  }
+});
+
+function bytesPreview(bytes: Uint8Array): string {
+  const head = Array.from(bytes.slice(0, 8))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return `${bytes.length} bytes, first ${head}`;
+}
+
+btnSignOffchain.addEventListener("click", async () => {
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as StandardConnectFeature[typeof StandardConnect] | undefined;
+    const feature = wallet.features[SolanaSignOffchainMessage] as
+      | SolanaSignOffchainMessageFeature[typeof SolanaSignOffchainMessage]
+      | undefined;
+    if (!connect || !feature) return;
+    const { accounts } = await connect.connect({ silent: true });
+    const account = accounts[0];
+    if (!account) throw new Error("no account");
+    const [out] = await feature.signOffchainMessage({
+      messageVersion: 1,
+      account,
+      message: "Hello from Airwave off-chain",
+      requiredSigners: [account.publicKey],
+    });
+    log("Off-chain signature base58:", bs58.encode(Uint8Array.from(out.signature)));
+    log("Off-chain signed bytes:", bytesPreview(Uint8Array.from(out.signedOffchainMessage)));
+  } catch (e) {
+    const err = e as Error & { code?: string };
+    log("Off-chain error:", err.code ?? "", err.message ?? e);
+  }
+});
+
+btnSignInShort.addEventListener("click", async () => {
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as StandardConnectFeature[typeof StandardConnect] | undefined;
+    const feature = wallet.features[SolanaSignIn] as SolanaSignInFeature[typeof SolanaSignIn] | undefined;
+    if (!connect || !feature) return;
+    const { accounts } = await connect.connect({ silent: true });
+    if (!accounts[0]) throw new Error("no account");
+    const [out] = await feature.signIn({});
+    log("Sign in short signature base58:", bs58.encode(Uint8Array.from(out.signature)));
+    log("Sign in short statement:", new TextDecoder().decode(out.signedMessage));
+  } catch (e) {
+    const err = e as Error & { code?: string };
+    log("Sign in short error:", err.code ?? "", err.message ?? e);
+  }
+});
+
+btnSignInFull.addEventListener("click", async () => {
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as StandardConnectFeature[typeof StandardConnect] | undefined;
+    const feature = wallet.features[SolanaSignIn] as SolanaSignInFeature[typeof SolanaSignIn] | undefined;
+    if (!connect || !feature) return;
+    const { accounts } = await connect.connect({ silent: true });
+    if (!accounts[0]) throw new Error("no account");
+    const [out] = await feature.signIn({
+      statement: "Sign in to swap.app. This does not send a transaction.",
+      uri: "https://swap.app",
+      version: "1",
+      chainId: "solana:devnet",
+      nonce: "8f3a1c9e",
+      issuedAt: "2026-11-05T02:00:00Z",
+      expirationTime: "2026-11-05T03:00:00Z",
+      notBefore: "2026-11-05T01:00:00Z",
+      requestId: "req-1",
+      resources: ["https://swap.app/terms", "https://swap.app/order/1"],
+    });
+    log("Sign in full signature base58:", bs58.encode(Uint8Array.from(out.signature)));
+    log("Sign in full statement:", new TextDecoder().decode(out.signedMessage));
+  } catch (e) {
+    const err = e as Error & { code?: string };
+    log("Sign in full error:", err.code ?? "", err.message ?? e);
   }
 });
 

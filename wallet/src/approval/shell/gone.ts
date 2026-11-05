@@ -6,7 +6,7 @@ import { PENDING_TIMEOUT_MS } from "../../shared/protocol";
 import { stopAutoSim } from "../sign-tx-body";
 import { sess } from "./session";
 import { hideAll, isSendStatusLocked } from "./dom";
-import { isSignTxKind } from "./kinds";
+import { isSignTxKind, isStatementKind } from "./kinds";
 import { setPopoutWindowTitle, tr } from "./locale";
 
 export function showGone(): void {
@@ -22,7 +22,7 @@ export function showGone(): void {
   sess.goneTitle.textContent = tr("approval.expired");
   if (sess.pending && isSignTxKind(sess.pending.kind)) {
     sess.goneLead.textContent = tr("approval.goneTx");
-  } else if (sess.pending?.kind === "signMessage") {
+  } else if (sess.pending && isStatementKind(sess.pending.kind)) {
     sess.goneLead.textContent = tr("approval.goneMsg");
   } else {
     sess.goneLead.textContent = tr("approval.goneGeneric");

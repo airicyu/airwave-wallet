@@ -47,6 +47,8 @@ export async function rejectOrdinaryDappPending(
 const DAPP_SHELL_KINDS = new Set([
   "connect",
   "signMessage",
+  "signOffchainMessage",
+  "signIn",
   "signTransaction",
   "signAndSendTransaction",
 ]);

@@ -3,10 +3,16 @@
  * Does not schedule timeouts or store pendings in chrome.storage.
  */
 import nacl from "tweetnacl";
-import type { SignMessagePayload, SignTransactionPayload } from "../../shared/protocol";
+import type {
+  SignInPayload,
+  SignMessagePayload,
+  SignOffchainMessagePayload,
+  SignTransactionPayload,
+} from "../../shared/protocol";
+import { encodeOffchainMessageV1 } from "../../shared/tx";
 import { messageLooksLikeTransactionMessage } from "../../shared/tx";
 import { getActivePublicKey, readActiveAccountId, readSettings } from "../storage";
-import { takePending } from "./pending";
+import { getPending, takePending } from "./pending";
 import { getWorkingTx } from "./sign-tx-pending-state";
 import { sendBridgeResult, rememberConnectedTab, tabOriginStill } from "../messaging";
 import { loadedAccountForAccountId, signingErrorForAccountId } from "../session";
@@ -181,6 +187,131 @@ export async function finishSignMessage(
     ok: true,
     result: { signature: Array.from(signature) },
   });
+}
+
+async function finishPreparedBytes(
+  requestId: string,
+  tabId: number,
+  approved: boolean,
+  build: (publicKey: Uint8Array) => Uint8Array,
+  resultFor: (bytes: Uint8Array, signature: Uint8Array) => Record<string, unknown>,
+): Promise<void> {
+  const pending = takePending(requestId);
+  if (!pending) return;
+  const reply = (msg: Parameters<typeof sendBridgeResult>[1]) =>
+    sendBridgeResult(tabId, msg, pending.frameId);
+  if (!approved) {
+    await reply({
+      type: "airwave-bridge-result",
+      requestId,
+      ok: false,
+      error: { code: "USER_REJECTED", message: "User rejected" },
+    });
+    return;
+  }
+  if (!session.isUnlocked()) {
+    await reply({
+      type: "airwave-bridge-result",
+      requestId,
+      ok: false,
+      error: { code: "WALLET_LOCKED", message: "Unlock wallet in extension popup" },
+    });
+    return;
+  }
+  const signAccountId = pending.signAccountId;
+  if (!signAccountId) {
+    await reply({
+      type: "airwave-bridge-result",
+      requestId,
+      ok: false,
+      error: { code: "NO_KEY", message: "Missing key" },
+    });
+    return;
+  }
+  const accountErr = await signingErrorForAccountId(signAccountId);
+  if (accountErr) {
+    await reply({ type: "airwave-bridge-result", requestId, ok: false, error: accountErr });
+    return;
+  }
+  const loaded = await loadedAccountForAccountId(signAccountId);
+  if (!loaded) {
+    await reply({
+      type: "airwave-bridge-result",
+      requestId,
+      ok: false,
+      error: { code: "NO_KEY", message: "Missing key" },
+    });
+    return;
+  }
+  const still = await tabOriginStill(pending.tabId, pending.origin);
+  if (still !== "ok") {
+    if (still === "changed") {
+      await reply({
+        type: "airwave-bridge-result",
+        requestId,
+        ok: false,
+        error: { code: "ORIGIN_CHANGED", message: "Tab origin changed" },
+      });
+    }
+    return;
+  }
+  const publicKey = loaded.secretKeyBytes.subarray(32, 64);
+  const bytes = build(publicKey);
+  const signature = nacl.sign.detached(bytes, loaded.secretKeyBytes);
+  await reply({
+    type: "airwave-bridge-result",
+    requestId,
+    ok: true,
+    result: resultFor(bytes, signature),
+  });
+}
+
+export async function finishSignOffchainMessage(
+  requestId: string,
+  tabId: number,
+  approved: boolean,
+): Promise<void> {
+  const peeked = getPending(requestId);
+  const payload = peeked?.payload as SignOffchainMessagePayload | undefined;
+  const signers = (payload?.requiredSigners ?? []).map((item) => Uint8Array.from(item));
+  const message = payload?.message ?? "";
+  await finishPreparedBytes(
+    requestId,
+    tabId,
+    approved,
+    () => encodeOffchainMessageV1(signers, message),
+    (bytes, signature) => ({
+      signedOffchainMessage: Array.from(bytes),
+      signature: Array.from(signature),
+      signatureType: "ed25519",
+    }),
+  );
+}
+
+export async function finishSignIn(
+  requestId: string,
+  tabId: number,
+  approved: boolean,
+): Promise<void> {
+  const peeked = getPending(requestId);
+  const payload = peeked?.payload as SignInPayload | undefined;
+  const statementText = payload?.statementText ?? "";
+  const offchain = payload?.offchain === true;
+  await finishPreparedBytes(
+    requestId,
+    tabId,
+    approved,
+    (publicKey) =>
+      offchain
+        ? encodeOffchainMessageV1([publicKey], statementText)
+        : new TextEncoder().encode(statementText),
+    (bytes, signature) => ({
+      signedMessage: Array.from(bytes),
+      signature: Array.from(signature),
+      signatureType: "ed25519",
+      ...(offchain ? { signedMessageFormat: { kind: "offchainMessage", messageVersion: 1 } } : {}),
+    }),
+  );
 }
 
 export async function finishSignTransaction(

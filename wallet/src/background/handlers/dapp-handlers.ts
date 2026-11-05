@@ -25,6 +25,7 @@ import { pendingTimeoutHandlers } from "../send";
 import { signMessageEnqueueGateError } from "../session";
 import * as session from "../session";
 import { resolveDappSignChain } from "./dapp-sign-chain";
+import { activeKeyBytes, prepareOffchainPayload, prepareSignInPayload } from "./sign-statement-input";
 
 function pendingInsertRefusal(requestId: string): ExtensionResponse {
   const code = pendingInsertError(requestId);
@@ -221,6 +222,59 @@ export async function handleDappCommand(
       createdAt: Date.now(),
       signAccountId: activeId,
       messageLooksLikeTx,
+    });
+  }
+
+  if (req.command === "dapp.signOffchainMessage" || req.command === "dapp.signIn") {
+    const activeForConn = await readActiveAccountId();
+    const connections = await readConnections();
+    if (!activeForConn || connections[origin]?.accountId !== activeForConn) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "NOT_CONNECTED", message: "Origin is not connected" },
+      });
+    }
+    const gate = await signMessageEnqueueGateError();
+    if (gate) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: gate,
+      });
+    }
+    const pubkey = await getActivePublicKey();
+    const keyBytes = pubkey ? activeKeyBytes(pubkey) : null;
+    if (!pubkey || !keyBytes) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "NO_ACCOUNT", message: "No active account" },
+      });
+    }
+    const prepared =
+      req.command === "dapp.signOffchainMessage"
+        ? prepareOffchainPayload(req.payload, keyBytes)
+        : prepareSignInPayload(req.payload, origin, pubkey);
+    if (!prepared.ok) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: prepared.error,
+      });
+    }
+    return presentDappApproval(req.requestId, tabId, {
+      kind: req.command === "dapp.signOffchainMessage" ? "signOffchainMessage" : "signIn",
+      tabId,
+      frameId,
+      origin,
+      payload: prepared.payload,
+      createdAt: Date.now(),
+      signAccountId: activeForConn,
     });
   }
 

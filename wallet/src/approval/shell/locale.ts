@@ -7,6 +7,7 @@ import { DEFAULT_UI_LOCALE, messageForErrorCode, parseUiLocale, t, type UiLocale
 import type { MessageKey } from "../../shared/i18n";
 import { isInWalletShellHost } from "../../shared/protocol";
 import { applyWindowChrome } from "../../shared/shell";
+import { isSignTxKind } from "./kinds";
 import { sess } from "./session";
 
 export function tr(key: MessageKey, vars?: Record<string, string>): string {
@@ -49,7 +50,13 @@ export function applyShellLocaleToStaticChrome(): void {
   sess.btnCloseExpired.textContent = tr("common.return");
   sess.goneTitle.textContent = tr("approval.expired");
   sess.siteLabel.textContent = tr("approval.site");
-  sess.signPageTitle.textContent = tr("approval.signMsg");
+  const titleKey =
+    sess.pending?.kind === "signIn"
+      ? "approval.signIn"
+      : sess.pending && isSignTxKind(sess.pending.kind)
+        ? "approval.signTx"
+        : "approval.signMsg";
+  sess.signPageTitle.textContent = tr(titleKey);
   document.documentElement.lang = sess.shellLocale;
   if (sess.shellTitleKey && sess.shellConfig && !isInWalletShellHost(sess.shellConfig.host)) {
     applyWindowChrome(sess.shellLocale, tr(sess.shellTitleKey));

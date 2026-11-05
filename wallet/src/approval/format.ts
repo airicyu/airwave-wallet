@@ -22,6 +22,14 @@ export function avatarLetter(label: string): string {
 }
 
 export function bytesFromSignMessage(p: PendingRecord): Uint8Array {
+  if (p.kind === "signOffchainMessage") {
+    const { message } = p.payload as import("../shared/protocol").SignOffchainMessagePayload;
+    return new TextEncoder().encode(message);
+  }
+  if (p.kind === "signIn") {
+    const { statementText } = p.payload as import("../shared/protocol").SignInPayload;
+    return new TextEncoder().encode(statementText);
+  }
   const { message } = p.payload as SignMessagePayload;
   return Uint8Array.from(message);
 }

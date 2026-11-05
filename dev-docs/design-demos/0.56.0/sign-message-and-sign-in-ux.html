@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — Sign message and sign in (concept)</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --accent-dim: #2a6ea8;
+        --danger: #c75050;
+        --popup-w: 384px;
+        --popup-h: 600px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --card-lines: 12;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1120px; margin: 0 auto; padding: 28px 20px 56px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 18px; max-width: 54rem; font-size: 0.92rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+      .chip {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 7px 13px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      .chip:hover { border-color: var(--text-dim); }
+      .chip.active { border-color: var(--accent); background: #1a2838; }
+      .layout {
+        display: grid;
+        grid-template-columns: var(--popup-w) 1fr;
+        gap: 28px;
+        align-items: start;
+      }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+      .phone-cap { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+      .bar-wallet-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        min-width: 0;
+        flex: 1 1 auto;
+      }
+      .bar-wallet {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        max-width: 100%;
+        padding: 5px 12px 5px 5px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        background: var(--bg);
+        color: inherit;
+        font: inherit;
+        cursor: default;
+      }
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+      }
+      .bar-wallet-text { min-width: 0; flex: 1; text-align: left; }
+      .bar-wallet-name {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .bar-wallet-addr {
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-family: var(--mono);
+      }
+      .icon-btn {
+        flex-shrink: 0;
+        width: 34px; height: 34px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .icon-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+      .icon-btn:hover { background: var(--fill); border-color: var(--stroke); color: var(--text); }
+      .body {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 14px 12px 16px;
+      }
+      .body::-webkit-scrollbar { width: 6px; }
+      .body::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 4px; }
+      .dock {
+        flex-shrink: 0;
+        padding: 10px 12px 12px;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        display: flex;
+        gap: 8px;
+      }
+      .ghost {
+        flex: 0 0 38%;
+        border: 1px solid var(--stroke);
+        background: transparent;
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .ghost:hover { color: var(--text); border-color: var(--text-dim); }
+      .primary {
+        flex: 1;
+        border: 0;
+        background: var(--accent);
+        color: #061018;
+        font-weight: 700;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .site-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        margin: 0 0 12px;
+      }
+      .site-k {
+        flex-shrink: 0;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+      }
+      .site-code {
+        min-width: 0;
+        max-width: 100%;
+        padding: 1px 6px;
+        border-radius: 4px;
+        border: 1px solid var(--stroke-soft);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text-muted);
+        font-family: var(--mono);
+        font-size: 0.74rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .msg {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        border-radius: var(--radius);
+        padding: 12px;
+        font-size: 0.86rem;
+        line-height: 1.5;
+        color: var(--text);
+        white-space: pre-wrap;
+        word-break: break-word;
+        height: auto;
+        max-height: calc(1.5em * var(--card-lines) + 24px);
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+      .page-title {
+        margin: 0 0 14px;
+        text-align: center;
+        font-size: 1.05rem;
+        font-weight: 650;
+        letter-spacing: 0.02em;
+      }
+      .payload-k {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        font-weight: 600;
+        margin: 0 0 6px;
+      }
+      .notes { font-size: 0.86rem; color: var(--text-muted); }
+      .notes h2 { font-size: 0.95rem; color: var(--text); margin: 0 0 10px; }
+      .notes h3 { font-size: 0.82rem; color: var(--text); margin: 18px 0 8px; }
+      .notes ul { padding-left: 1.2rem; margin: 0 0 8px; }
+      .notes li { margin: 0 0 6px; }
+      .tag {
+        display: inline-block;
+        font-size: 0.68rem;
+        letter-spacing: 0.04em;
+        border: 1px solid var(--accent-dim);
+        color: var(--accent);
+        border-radius: 999px;
+        padding: 1px 8px;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>簽署訊息與登入</h1>
+      <p class="lede">
+        非正式概念稿。三個畫面共用同一殼：凍結帳戶、站點列、一張文字卡、拒絕／批准。
+        示範 <code>https://swap.app</code>、<code>7xKX…gAsU</code>。
+      </p>
+      <div class="controls" role="tablist" aria-label="畫面">
+        <button class="chip active" type="button" data-preset="offchain">Off-chain message</button>
+        <button class="chip" type="button" data-preset="short">Sign in, short</button>
+        <button class="chip" type="button" data-preset="full">Sign in, full</button>
+      </div>
+      <div class="layout">
+        <div>
+          <p class="phone-cap">Popout 384×600</p>
+          <div class="phone" id="phone">
+            <div class="top" id="top"></div>
+            <div class="body" id="body"></div>
+            <div class="dock" id="dock"></div>
+          </div>
+        </div>
+        <aside class="notes">
+          <h2>畫面意圖</h2>
+          <p><span class="tag">非正式</span>帳戶在左上，與簽署訊息 popout 同一套 widget。站點是內容第一行。視窗標題在主區正中。</p>
+          <h3>Off-chain message</h3>
+          <ul>
+            <li>視窗標題是 <code>Sign message</code>，與今天的簽署訊息視窗相同。</li>
+            <li>主體只有一張 UTF-8 文字卡，標籤沿用可讀 <code>signMessage</code> 的 <code>Message payload</code>。</li>
+            <li>可讀的 raw <code>signMessage</code> 與 off-chain message 長得一樣。使用者不用分辨這兩個功能，畫面上沒有格式切換。</li>
+            <li>沒有第四個 <code>useOffchainMessage</code> 畫面。off-chain 包裝不改變這個畫面；站點旗標只在批准之後改變要簽的位元組。</li>
+            <li>沒有 hex 區塊、警告、簽名者清單。</li>
+          </ul>
+          <h3>Sign in, short / Sign in, full</h3>
+          <ul>
+            <li>視窗標題改為 <code>Sign in</code>。殼不變：同一站點、凍結的同一帳戶。</li>
+            <li>主體是同一張 Message payload，內容就是即將簽下去的 SIWS 原文。沒送的欄位整行不出現。</li>
+            <li>短版只有固定句和地址。完整版接上 statement、URI、Version、Nonce、Issued At。</li>
+            <li><code>useOffchainMessage</code> 不改變這個畫面。</li>
+            <li>底欄是拒絕與批准。</li>
+          </ul>
+        </aside>
+      </div>
+    </div>
+    <script>
+      const ADDRESS = "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU";
+      const ORIGIN = "https://swap.app";
+
+      const OFFCHAIN =
+        "swap.app wants you to sign in with your Solana account.\n" +
+        "Nonce: 8f3a1c9e";
+
+      const SIGN_IN_SHORT =
+        "swap.app wants you to sign in with your Solana account:\n" +
+        ADDRESS;
+
+      const SIGN_IN_FULL =
+        "swap.app wants you to sign in with your Solana account:\n" +
+        ADDRESS + "\n\n" +
+        "Sign in to swap.app. This does not send a transaction.\n\n" +
+        "URI: https://swap.app\n" +
+        "Version: 1\n" +
+        "Nonce: 8f3a1c9e\n" +
+        "Issued At: 2026-11-05T02:00:00Z";
+
+      const SCREENS = {
+        offchain: { title: "Sign message", text: OFFCHAIN },
+        short: { title: "Sign in", text: SIGN_IN_SHORT },
+        full: { title: "Sign in", text: SIGN_IN_FULL },
+      };
+
+      let preset = "offchain";
+      const $ = (id) => document.getElementById(id);
+
+      const ICO_COPY =
+        '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+
+      function topBar() {
+        return `
+          <div class="bar-wallet-group">
+            <div class="bar-wallet" title="主要  7xKX…gAsU">
+              <span class="avatar" aria-hidden="true">主</span>
+              <span class="bar-wallet-text">
+                <span class="bar-wallet-name">主要</span>
+                <span class="bar-wallet-addr">7xKX…gAsU</span>
+              </span>
+            </div>
+            <button class="icon-btn" type="button" title="複製" aria-label="複製">${ICO_COPY}</button>
+          </div>`;
+      }
+
+      function render() {
+        const screen = SCREENS[preset];
+        $("top").innerHTML = topBar();
+        $("body").innerHTML = `
+          <h2 class="page-title">${screen.title}</h2>
+          <div class="site-line">
+            <span class="site-k">站點</span>
+            <span class="site-code" title="${ORIGIN}">${ORIGIN}</span>
+          </div>
+          <span class="payload-k">Message payload</span>
+          <div class="msg"></div>`;
+        $("body").querySelector(".msg").textContent = screen.text;
+        $("dock").innerHTML = `
+          <button class="ghost" type="button">拒絕</button>
+          <button class="primary" type="button">批准</button>`;
+      }
+
+      document.querySelectorAll("[data-preset]").forEach((b) => {
+        b.onclick = () => {
+          preset = b.dataset.preset;
+          document.querySelectorAll("[data-preset]").forEach((x) => x.classList.toggle("active", x === b));
+          render();
+        };
+      });
+
+      render();
+    </script>
+  </body>
+</html>

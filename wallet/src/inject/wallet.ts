@@ -5,8 +5,12 @@
 import {
   SolanaSignAndSendTransaction,
   type SolanaSignAndSendTransactionFeature,
+  SolanaSignIn,
+  type SolanaSignInFeature,
   SolanaSignMessage,
   type SolanaSignMessageFeature,
+  SolanaSignOffchainMessage,
+  type SolanaSignOffchainMessageFeature,
   SolanaSignTransaction,
   type SolanaSignTransactionFeature,
 } from "@solana/wallet-standard-features";
@@ -73,7 +77,13 @@ function accountFromPublicKey(): WalletAccount {
     address: currentPublicKeyBase58!,
     publicKey: currentPublicKeyBytes!,
     chains: [activeChain()],
-    features: [SolanaSignMessage, SolanaSignTransaction, SolanaSignAndSendTransaction],
+    features: [
+      SolanaSignMessage,
+      SolanaSignOffchainMessage,
+      SolanaSignIn,
+      SolanaSignTransaction,
+      SolanaSignAndSendTransaction,
+    ],
   };
 }
 
@@ -156,6 +166,72 @@ export const airwaveWallet: Wallet = {
         return outputs;
       },
     } satisfies SolanaSignMessageFeature[typeof SolanaSignMessage],
+    [SolanaSignOffchainMessage]: {
+      version: "1.0.0",
+      supportedMessageVersions: [1],
+      signOffchainMessage: async (...inputs) => {
+        for (const input of inputs) {
+          if (input.messageVersion !== 1) throw new Error("INVALID_INPUT");
+          if (typeof input.message !== "string" || input.message.length === 0) throw new Error("INVALID_INPUT");
+          const signers = input.requiredSigners;
+          if (!signers || signers.length === 0 || signers.length > 255) throw new Error("INVALID_INPUT");
+          const seen = new Set<string>();
+          let hasAccount = false;
+          for (const key of signers) {
+            if (key.length !== 32) throw new Error("INVALID_INPUT");
+            const id = String.fromCharCode(...key);
+            if (seen.has(id)) throw new Error("INVALID_INPUT");
+            seen.add(id);
+            if (key.length === input.account.publicKey.length && key.every((b, i) => b === input.account.publicKey[i])) {
+              hasAccount = true;
+            }
+          }
+          if (!hasAccount) throw new Error("INVALID_INPUT");
+        }
+        const outputs = [];
+        for (const input of inputs) {
+          const result = (await bridgeRequest("dapp.signOffchainMessage", {
+            messageVersion: input.messageVersion,
+            message: input.message,
+            requiredSigners: input.requiredSigners.map((key) => Array.from(key)),
+            accountPublicKey: Array.from(input.account.publicKey),
+          })) as { signedOffchainMessage: number[]; signature: number[] };
+          outputs.push({
+            signedOffchainMessage: Uint8Array.from(result.signedOffchainMessage),
+            signature: Uint8Array.from(result.signature),
+            signatureType: "ed25519" as const,
+          });
+        }
+        return outputs;
+      },
+    } satisfies SolanaSignOffchainMessageFeature[typeof SolanaSignOffchainMessage],
+    [SolanaSignIn]: {
+      version: "1.1.0",
+      signIn: async (...inputs) => {
+        const batch = inputs.length > 0 ? inputs : [{}];
+        for (const input of batch) {
+          const flag = input.useOffchainMessage;
+          if (flag == null) continue;
+          if (typeof flag !== "object" || flag.messageVersion !== 1) throw new Error("INVALID_INPUT");
+        }
+        const outputs = [];
+        for (const input of batch) {
+          const result = (await bridgeRequest("dapp.signIn", input)) as {
+            signedMessage: number[];
+            signature: number[];
+            signedMessageFormat?: { kind: "offchainMessage"; messageVersion: 1 };
+          };
+          outputs.push({
+            account: accountFromPublicKey(),
+            signedMessage: Uint8Array.from(result.signedMessage),
+            signature: Uint8Array.from(result.signature),
+            signatureType: "ed25519" as const,
+            ...(result.signedMessageFormat ? { signedMessageFormat: result.signedMessageFormat } : {}),
+          });
+        }
+        return outputs;
+      },
+    } satisfies SolanaSignInFeature[typeof SolanaSignIn],
     [SolanaSignTransaction]: {
       version: "1.0.0",
       supportedTransactionVersions: [0, 1, "legacy"] as const,
