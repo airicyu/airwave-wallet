@@ -6,10 +6,7 @@ New item: add a row here and write `backlog/<name>.md`.
 
 ## Scheduled
 
-| Item | Notes |
-|------|--------|
-| [`signOffchainMessage`](./sign-offchain-message.md) | [0.56.0](../0.56.0/INDEX.md). Sign message screen, UTF-8 statement. The INDEX wins |
-| [`solana:signIn`](./sign-in.md) | [0.56.0](../0.56.0/INDEX.md). Sign in screen. The INDEX wins |
+(none)
 
 ## Unscheduled
 

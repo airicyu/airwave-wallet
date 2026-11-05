@@ -1,6 +1,6 @@
 # 0.56.0 — Off-chain message and Sign In With Solana
 
-- **Status:** `in progress`
+- **Status:** `shipped`
 - **Upstream:** [0.55.0](../0.55.0/INDEX.md) shipped. Absorbs nothing from [unversioned.md](../unversioned.md).
 - **Backlog:** [signOffchainMessage](../backlog/sign-offchain-message.md), [solana:signIn](../backlog/sign-in.md). This INDEX wins.
 - **Demo:** [sign-message-and-sign-in-ux.html](../../design-demos/0.56.0/sign-message-and-sign-in-ux.html). On conflict, this INDEX wins.
@@ -48,13 +48,13 @@ Sign in is its own popout. It shows the SIWS statement the wallet composed, in t
 
 ## Acceptance
 
-- [ ] `cd wallet && npm run typecheck`
-- [ ] `cd test/test-web && npm run build`
-- [ ] test-web off-chain button opens Sign message, shows the UTF-8 string, and returns `signedOffchainMessage` whose first byte is `0xff` plus a 64-byte signature.
-- [ ] A readable `signMessage` still shows the same card. A binary `signMessage` still shows hex. A transaction passed to `signMessage` is still refused.
-- [ ] test-web Sign in short shows the two-line statement, signs that text, and does not set `signedMessageFormat`.
-- [ ] test-web Sign in full shows the statement with the labeled fields, signs that text, and does not set `signedMessageFormat`. User walked the popout on 2026-11-05: title 登入, site `http://localhost:5173`, and the SIWS text in the message card. They confirmed the nine-line card is OK. The returned signature and `signedMessageFormat` were not checked.
-- [ ] Closing either popout rejects the request. A reload does not resurrect it.
+- [x] `cd wallet && npm run typecheck`
+- [x] `cd test/test-web && npm run build`
+- [x] test-web off-chain button opens Sign message, shows the UTF-8 string, and returns `signedOffchainMessage` whose first byte is `0xff` plus a 64-byte signature. User e2e 2026-11-05.
+- [x] A readable `signMessage` still shows the same card. A binary `signMessage` still shows hex. A transaction passed to `signMessage` is still refused. User e2e 2026-11-05.
+- [x] test-web Sign in short shows the two-line statement, signs that text, and does not set `signedMessageFormat`. User e2e 2026-11-05.
+- [x] test-web Sign in full shows the statement with the labeled fields, signs that text, and does not set `signedMessageFormat`. User walked the popout on 2026-11-05 and confirmed the nine-line card. User e2e 2026-11-05.
+- [x] Closing either popout rejects the request. A reload does not resurrect it. User e2e 2026-11-05.
 
 ## Anchors
 
