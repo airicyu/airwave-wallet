@@ -152,6 +152,7 @@ const FLOOR: Partial<Record<string, TxAiLevel>> = {
   authority_change: "watch",
   close_account_external: "watch",
   system_assign: "watch",
+  durable_nonce: "watch",
   owner_mismatch: "high",
 };
 

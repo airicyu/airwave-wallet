@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.57.0 — 2026-11-06
+
+test-web follows the wallet cluster, groups its buttons, and adds three sign-only danger samples: an Address Lookup Table create plus Assign of the fee payer, a durable nonce advance plus a 0.001 SOL transfer, and a 0.001 SOL transfer with unlimited approve, SetAuthority, and close. A failed CU probe no longer uses partial `unitsConsumed` as the limit. Sign AI names those system instructions, and a durable nonce floors the level at watch because the signature can be submitted later. Simulation failure details are 320px tall, keep the disclosure marker, and can be copied. e2e must not run or approve those three samples.
+
 ## 0.56.0 — 2026-11-05
 
 The wallet advertises `solana:signOffchainMessage` (version 1 messages) and `solana:signIn` (feature 1.1.0). An off-chain message uses the Sign message screen and shows the UTF-8 text. Sign in shows the composed SIWS statement. Approve signs that text, or wraps it as a version 1 off-chain message when the site sets `useOffchainMessage`. The message card shows nine lines before it scrolls. test-web adds off-chain, Sign in short, and Sign in full.

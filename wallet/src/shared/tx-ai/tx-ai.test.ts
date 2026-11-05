@@ -67,7 +67,7 @@ test("flags floor raises and does not lower", () => {
   assert.equal(applyFlagsFloor("high", [{ id: "unlimited_approve" }]), "high");
   assert.equal(applyFlagsFloor("unknown", [{ id: "authority_change" }]), "watch");
   assert.equal(applyFlagsFloor("low", [{ id: "unknown_program" }]), "low");
-  assert.equal(applyFlagsFloor("low", [{ id: "durable_nonce" }, { id: "lookup_account_unchecked" }]), "low");
+  assert.equal(applyFlagsFloor("low", [{ id: "durable_nonce" }, { id: "lookup_account_unchecked" }]), "watch");
 });
 
 test("host tools reject vault, sign, and broadcast names", () => {

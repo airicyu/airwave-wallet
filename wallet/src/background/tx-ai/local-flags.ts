@@ -3,9 +3,14 @@
  * Does not trust sandbox output and does not call OpenRouter.
  */
 import { getCompiledTransactionMessageDecoder, type CompiledTransactionMessage } from "@solana/kit";
-import { compiledAddressTableLookups, messageBytesToUint8Array, normalizedCompiledInstructions } from "../../shared/tx";
+import bs58 from "bs58";
+import {
+  compiledAddressTableLookups,
+  decodeWireTransaction as decodeWire,
+  messageBytesToUint8Array,
+  normalizedCompiledInstructions,
+} from "../../shared/tx";
 import type { TxAiFlag } from "../../shared/tx-ai";
-import { decodeWireTransaction as decodeWire } from "../../shared/tx";
 
 const SYSTEM = "11111111111111111111111111111111";
 const TOKEN = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
@@ -20,6 +25,12 @@ const KNOWN: Record<string, string> = {
   ComputeBudget111111111111111111111111111111: "ComputeBudget",
   MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr: "Memo",
   Memo1UhkJRfHyvLMcVucJyeXtyXNSDyzPVsqVQ5m5: "Memo v1",
+  AddressLookupTab1e1111111111111111111111111: "Address Lookup Table",
+  Stake11111111111111111111111111111111111111: "Stake",
+  Vote111111111111111111111111111111111111111: "Vote",
+  BPFLoaderUpgradeab1e11111111111111111111111: "BPF Upgradeable Loader",
+  BPFLoader2111111111111111111111111111111111: "BPF Loader",
+  BPFLoader1111111111111111111111111111111111: "BPF Loader v1",
 };
 
 const LABELED: Record<string, string> = {
@@ -39,6 +50,8 @@ export type DecodedIx = {
   programId: string;
   program: string;
   name: string;
+  /** Instruction-data fact the account list does not show, such as a nonce authority. */
+  detail?: string;
   accounts: { pubkey: string; signer: boolean; writable: boolean; ixRole?: string }[];
 };
 
@@ -73,13 +86,23 @@ function writableAccount(message: CompiledTransactionMessage, index: number, len
   return index < length - numReadonlyNonSignerAccounts;
 }
 
-function ixName(programId: string, data: Uint8Array): { name: string; roles?: string[] } {
+function ixName(programId: string, data: Uint8Array): { name: string; roles?: string[]; detail?: string } {
   if (programId === SYSTEM && data.length >= 4) {
     const disc = u32(data, 0);
+    if (disc === 0) return { name: "CreateAccount", roles: ["payer", "newAccount"] };
     if (disc === 1) return { name: "Assign", roles: ["account"] };
     if (disc === 2) return { name: "Transfer", roles: ["from", "to"] };
     if (disc === 3) return { name: "CreateAccountWithSeed" };
     if (disc === 4) return { name: "AdvanceNonceAccount", roles: ["nonce", "recentBlockhashes", "nonceAuthority"] };
+    if (disc === 5) return { name: "WithdrawNonceAccount", roles: ["nonce", "recipient", "recentBlockhashes", "rent", "nonceAuthority"] };
+    if (disc === 6 && data.length >= 36) {
+      return {
+        name: "InitializeNonceAccount",
+        roles: ["nonce", "recentBlockhashes", "rent"],
+        detail: `authority ${bs58.encode(data.subarray(4, 36))}`,
+      };
+    }
+    if (disc === 7) return { name: "AuthorizeNonceAccount", roles: ["nonce", "nonceAuthority"] };
     if (disc === 10) return { name: "AssignWithSeed", roles: ["account"] };
     return { name: `System:${disc}` };
   }
@@ -123,9 +146,17 @@ export function decodeCompiledMessage(message: CompiledTransactionMessage): TxAi
     const labeled = LABELED[programId];
     if (!known && !labeled && programId !== "unresolved") push("unknown_program", programId);
     const data = ix.data;
-    if (index === 0 && programId === SYSTEM && data.length >= 4 && u32(data, 0) === 4) push("durable_nonce");
-    if (programId === SYSTEM && data.length >= 4 && (u32(data, 0) === 1 || u32(data, 0) === 10)) {
-      push("system_assign", u32(data, 0) === 10 ? "AssignWithSeed" : "Assign");
+    if (programId === SYSTEM && data.length >= 4 && u32(data, 0) === 6) {
+      push("durable_nonce", "InitializeNonceAccount");
+    }
+    if (index === 0 && programId === SYSTEM && data.length >= 4 && u32(data, 0) === 4) {
+      push("durable_nonce", "AdvanceNonceAccount");
+    }
+    if (programId === SYSTEM && data.length >= 36 && u32(data, 0) === 1) {
+      push("system_assign", bs58.encode(data.subarray(4, 36)));
+    }
+    if (programId === SYSTEM && data.length >= 4 && u32(data, 0) === 10) {
+      push("system_assign", "AssignWithSeed");
     }
     if ((programId === TOKEN || programId === TOKEN_2022) && data.length > 0) {
       const disc = data[0] ?? 0;
@@ -150,6 +181,7 @@ export function decodeCompiledMessage(message: CompiledTransactionMessage): TxAi
       programId,
       program: known ?? labeled ?? "unknown",
       name: meta.name,
+      ...(meta.detail ? { detail: meta.detail } : {}),
       accounts: ix.accountIndices.map((accountIndex, accountPos) => ({
         pubkey: keys[accountIndex] ?? "unresolved",
         signer: signers.has(keys[accountIndex] ?? ""),
@@ -177,6 +209,12 @@ const PREFETCH_SKIP_PUBKEYS = new Set<string>([
   TOKEN_2022,
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
   "ComputeBudget111111111111111111111111111111",
+  "AddressLookupTab1e1111111111111111111111111",
+  "Stake11111111111111111111111111111111111111",
+  "Vote111111111111111111111111111111111111111",
+  "BPFLoaderUpgradeab1e11111111111111111111111",
+  "BPFLoader2111111111111111111111111111111111",
+  "BPFLoader1111111111111111111111111111111111",
   ...Object.keys(LABELED),
 ]);
 

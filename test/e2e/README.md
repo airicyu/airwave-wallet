@@ -61,6 +61,8 @@ Mock 的 `getLatestBlockhash` 固定回 `11111111111111111111111111111111`（合
 
 `test-web` 預設仍可能打公開 Devnet。劇本要加：`http://127.0.0.1:5173/?rpc=http://127.0.0.1:8899`。Cluster 不符再加 `&otherRpc=http://127.0.0.1:8787`。
 
+不要點 test-web 的「危險樣本」，也不要在錢包裡核准：`#sign-tx-suspicious`、`#sign-tx-nonce`、`#sign-tx-steal`。沒有劇本使用它們。若簽名字畫面已打開，按拒絕。
+
 ## Scenario 07（v1）
 
 - 需要能接受 v1 交易的本機 validator：Solana CLI / Agave **4.2+**（`enable_tx_v1`；本機已用 4.3.x 驗證過）。
