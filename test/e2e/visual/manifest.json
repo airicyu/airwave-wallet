@@ -1,9 +1,12 @@
 {
-  "walletVersion": "0.54.0",
-  "branch": "v0.55.0",
-  "git": "00ca880",
+  "walletVersion": "0.55.0",
+  "branch": "v0.56.0",
+  "git": "f97f0d3",
   "locale": "en",
-  "shells": ["sidepanel", "popup"],
-  "recordedAt": "2026-11-04T14:37:46Z",
-  "notes": "Popup goldens are the default 422x600 toolbar popup (home and settings). Side panel goldens include approve shots. Checks follow matrix.yaml look lines."
+  "shells": [
+    "sidepanel",
+    "popup"
+  ],
+  "recordedAt": "2026-11-04T21:07:54Z",
+  "notes": "Added sidepanel EN goldens approve-offchain-message / approve-sign-in-short / approve-sign-in-full on v0.56.0 @ f97f0d3 (extension UI version string still 0.55.0). Prior home/settings/approve TX goldens retained. Popup goldens remain default toolbar size. Checks follow matrix.yaml look lines."
 }

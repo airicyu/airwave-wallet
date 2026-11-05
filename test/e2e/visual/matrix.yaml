@@ -61,3 +61,39 @@ shots:
     look:
       - Cluster-mismatch notice is visible
       - Approve is disabled
+  - id: approve-offchain-message
+    shells: [sidepanel]
+    prep: none
+    settings: { cluster: Devnet }
+    enter: approve
+    trigger: test-web #sign-offchain (Sign off-chain message)
+    look:
+      - Title is Sign message
+      - Readable text includes Hello from Airwave off-chain
+      - Approve and Reject are both available
+      - Do not Approve before the check
+
+  - id: approve-sign-in-short
+    shells: [sidepanel]
+    prep: none
+    settings: { cluster: Devnet }
+    enter: approve
+    trigger: test-web #sign-in-short
+    look:
+      - Title is Sign in
+      - Approve and Reject are both available
+      - Do not Approve before the check
+
+  - id: approve-sign-in-full
+    shells: [sidepanel]
+    prep: none
+    settings: { cluster: Devnet }
+    enter: approve
+    trigger: test-web #sign-in-full
+    look:
+      - Title is Sign in
+      - Statement mentions swap.app
+      - Nine lines are visible before scroll
+      - Approve and Reject are both available
+      - Do not Approve before the check
+
