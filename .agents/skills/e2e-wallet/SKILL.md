@@ -74,6 +74,10 @@ Open `refs/{shell}/en/{id}.png` beside the live frame and check that shot's `loo
 - Scenarios 01–10 assert behavior, on-screen state, and logs.
 - A real docked Chrome Side panel is hard for ordinary Playwright to drive; agent or manual UI clicks are expected.
 
+## Dangerous test-web samples
+
+Do not click, and do not approve, the test-web panel **危險樣本**. Button ids: `#sign-tx-suspicious`, `#sign-tx-nonce`, `#sign-tx-steal`. They assign the wallet away, advance a durable nonce and transfer SOL, or approve and close token accounts to a stranger. No scenario uses them. If one is open by mistake, reject it. Do not sign it.
+
 ## Sign message / Sign in (0.56+)
 
 Scenarios `08`–`10` cover `solana:signOffchainMessage` and `solana:signIn` via test-web `#sign-offchain`, `#sign-in-short`, `#sign-in-full`. Keep the real Side panel open so approvals land there (otherwise the wallet opens a popout). No airdrop. Visual goldens: `approve-offchain-message`, `approve-sign-in-short`, `approve-sign-in-full` (sidepanel × en only).

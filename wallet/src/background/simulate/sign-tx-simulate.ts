@@ -120,6 +120,7 @@ async function simulatePhase1ForLimit(
     );
     const units = value.unitsConsumed;
     if (
+      value.err == null &&
       typeof units === "number" &&
       Number.isFinite(units) &&
       Number.isInteger(units) &&

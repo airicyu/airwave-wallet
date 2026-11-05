@@ -23,18 +23,23 @@ import type { Wallet } from "@wallet-standard/base";
 import bs58 from "bs58";
 import {
   address,
+  type Address,
   appendTransactionMessageInstruction,
   compileTransaction,
   compileTransactionMessage,
   createNoopSigner,
   createSolanaRpc,
   createTransactionMessage,
+  generateKeyPairSigner,
+  getAddressEncoder,
   getAddressFromPublicKey,
+  getProgramDerivedAddress,
   getBase64EncodedWireTransaction,
   getCompiledTransactionMessageEncoder,
   getTransactionDecoder,
   getTransactionEncoder,
   lamports,
+  partiallySignTransaction,
   pipe,
   setTransactionMessageComputeUnitLimit,
   setTransactionMessageFeePayer,
@@ -45,15 +50,47 @@ import {
   type Signature,
 } from "@solana/kit";
 import { createKeyPairFromPrivateKeyBytes } from "@solana/keys";
-import { getTransferSolInstruction } from "@solana-program/system";
+import {
+  getAdvanceNonceAccountInstruction,
+  getCreateAccountInstruction,
+  getInitializeNonceAccountInstruction,
+  getNonceSize,
+  getTransferSolInstruction,
+  fetchMaybeNonce,
+  NonceState,
+} from "@solana-program/system";
+import { AccountRole, type Instruction } from "@solana/instructions";
 
 const query = new URLSearchParams(location.search);
-const DEVNET_RPC = query.get("rpc")?.trim() || "https://api.devnet.solana.com";
-const MAINNET_PUBLIC_RPC = query.get("otherRpc")?.trim() || "https://api.mainnet-beta.solana.com";
+const DEFAULT_DEVNET_RPC = "https://api.devnet.solana.com";
+const DEFAULT_MAINNET_RPC = "https://api.mainnet-beta.solana.com";
 const LAMPORTS_PER_SOL = 1_000_000_000n;
+
+type SolanaChain = "solana:devnet" | "solana:mainnet";
 
 const logEl = document.getElementById("log")!;
 const statusEl = document.getElementById("status")!;
+const clusterEl = document.getElementById("cluster")!;
+const rpcDevnetInput = document.getElementById("rpc-devnet") as HTMLInputElement;
+const rpcMainnetInput = document.getElementById("rpc-mainnet") as HTMLInputElement;
+const RPC_DEVNET_KEY = "airwave-test-web-rpc-devnet";
+const RPC_MAINNET_KEY = "airwave-test-web-rpc-mainnet";
+
+function storedRpc(key: string, queryValue: string | null, fallback: string): string {
+  const fromQuery = queryValue?.trim();
+  if (fromQuery) return fromQuery;
+  const saved = sessionStorage.getItem(key)?.trim();
+  return saved || fallback;
+}
+
+rpcDevnetInput.value = storedRpc(RPC_DEVNET_KEY, query.get("rpc"), DEFAULT_DEVNET_RPC);
+rpcMainnetInput.value = storedRpc(RPC_MAINNET_KEY, query.get("otherRpc"), DEFAULT_MAINNET_RPC);
+
+function rememberRpc(): void {
+  sessionStorage.setItem(RPC_DEVNET_KEY, rpcDevnetInput.value.trim());
+  sessionStorage.setItem(RPC_MAINNET_KEY, rpcMainnetInput.value.trim());
+}
+let sessionChain: SolanaChain | null = null;
 const btnConnect = document.getElementById("connect") as HTMLButtonElement;
 const btnDisconnect = document.getElementById("disconnect") as HTMLButtonElement;
 const btnSignMsg = document.getElementById("sign-msg") as HTMLButtonElement;
@@ -81,21 +118,52 @@ const btnSignTxV1NoCu = document.getElementById("sign-tx-v1-no-cu") as HTMLButto
 const btnSignTxV1Signed = document.getElementById("sign-tx-v1-signed") as HTMLButtonElement;
 const btnSignAndSendTxV1 = document.getElementById("sign-and-send-tx-v1") as HTMLButtonElement;
 const btnAirdrop = document.getElementById("airdrop") as HTMLButtonElement;
+const btnSignTxSuspicious = document.getElementById("sign-tx-suspicious") as HTMLButtonElement;
+const btnSignTxNonce = document.getElementById("sign-tx-nonce") as HTMLButtonElement;
+const btnSignTxSteal = document.getElementById("sign-tx-steal") as HTMLButtonElement;
 
 function log(...args: unknown[]): void {
   logEl.textContent += `${args.map(String).join(" ")}\n`;
 }
 
-log("RPC", DEVNET_RPC);
-log("Other cluster RPC", MAINNET_PUBLIC_RPC);
-
 function setStatus(text: string): void {
   statusEl.textContent = text;
 }
 
-function rpc() {
-  return createSolanaRpc(DEVNET_RPC);
+function chainOf(chains: readonly string[]): SolanaChain {
+  return chains[0] === "solana:mainnet" ? "solana:mainnet" : "solana:devnet";
 }
+
+function activeChain(): SolanaChain {
+  return sessionChain ?? "solana:devnet";
+}
+
+function rpcUrlFor(chain: SolanaChain): string {
+  const input = chain === "solana:mainnet" ? rpcMainnetInput : rpcDevnetInput;
+  const fallback = chain === "solana:mainnet" ? DEFAULT_MAINNET_RPC : DEFAULT_DEVNET_RPC;
+  return input.value.trim() || fallback;
+}
+
+function rpc() {
+  return createSolanaRpc(rpcUrlFor(activeChain()));
+}
+
+function showCluster(): void {
+  if (!sessionChain) {
+    clusterEl.textContent = "尚未連線";
+    return;
+  }
+  const label = sessionChain === "solana:mainnet" ? "Mainnet" : "Devnet";
+  clusterEl.textContent = `${label}（${rpcUrlFor(sessionChain)}）`;
+}
+
+function onRpcInput(): void {
+  rememberRpc();
+  showCluster();
+}
+
+rpcDevnetInput.addEventListener("input", onRpcInput);
+rpcMainnetInput.addEventListener("input", onRpcInput);
 
 function findAirwave(): Wallet | undefined {
   return getWallets()
@@ -103,8 +171,11 @@ function findAirwave(): Wallet | undefined {
     .find((w) => w.name === "Airwave");
 }
 
-function enableSigning(addressStr: string | undefined): void {
+function enableSigning(addressStr: string | undefined, chains?: readonly string[]): void {
+  sessionChain = addressStr && chains ? chainOf(chains) : addressStr ? sessionChain : null;
+  showCluster();
   const ok = Boolean(addressStr);
+  const airdropOk = ok && activeChain() === "solana:devnet";
   btnSignMsg.disabled = !ok;
   btnSignMsgBinary.disabled = !ok;
   btnSignMsgTx.disabled = !ok;
@@ -123,7 +194,10 @@ function enableSigning(addressStr: string | undefined): void {
   btnSignTxV1NoCu.disabled = !ok;
   btnSignTxV1Signed.disabled = !ok;
   btnSignAndSendTxV1.disabled = !ok;
-  btnAirdrop.disabled = !ok;
+  btnSignTxSuspicious.disabled = !ok;
+  btnSignTxNonce.disabled = !ok;
+  btnSignTxSteal.disabled = !ok;
+  btnAirdrop.disabled = !airdropOk;
   if (addressStr) setStatus(`已連線：${addressStr}`);
 }
 
@@ -135,9 +209,9 @@ function subscribeChange(wallet: Wallet): void {
     | StandardEventsFeature[typeof StandardEvents]
     | undefined;
   events?.on("change", (props) => {
-    const addr = props.accounts?.[0]?.address;
-    log("account change:", addr ?? "(empty)");
-    enableSigning(addr);
+    const account = props.accounts?.[0];
+    log("account change:", account?.address ?? "(empty)", account?.chains?.[0] ?? "");
+    enableSigning(account?.address, account?.chains);
   });
   changeSubscribed = true;
 }
@@ -284,6 +358,249 @@ async function buildV1SelfTransferTx(
   return bytes;
 }
 
+const SYSTEM_PROGRAM = "11111111111111111111111111111111";
+const TOKEN_PROGRAM = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+/** Fixed public addresses. No secret is stored. Do not broadcast these samples. */
+const STRANGER = address("US517G5965aydkZ46HS38QLi7UQiSojurfbQfKCELFx");
+const WSOL_MINT = address("So11111111111111111111111111111111111111112");
+const TOKEN_ACCOUNT_SPACE = 165;
+/** Deployed on every cluster. The wallet labels it Address Lookup Table. */
+const LOOKUP_TABLE_PROGRAM = address("AddressLookupTab1e1111111111111111111111111");
+
+function ix(
+  program: string,
+  accounts: Array<{ pubkey: Address; role: AccountRole }>,
+  data: Uint8Array,
+): Instruction {
+  return {
+    programAddress: address(program),
+    accounts: accounts.map((item) => ({ address: item.pubkey, role: item.role })),
+    data,
+  };
+}
+
+async function compileDangerTx(
+  payer: Address,
+  instructions: Instruction[],
+  lifetime: { blockhash: Blockhash; lastValidBlockHeight: bigint },
+): Promise<Uint8Array> {
+  let message = pipe(
+    createTransactionMessage({ version: 0 }),
+    (m) => setTransactionMessageFeePayer(payer, m),
+    (m) => setTransactionMessageLifetimeUsingBlockhash(lifetime, m),
+  );
+  for (const item of instructions) {
+    message = appendTransactionMessageInstruction(item, message as never) as typeof message;
+  }
+  return new Uint8Array(getTransactionEncoder().encode(compileTransaction(message)));
+}
+
+/**
+ * CreateLookupTable on the real Address Lookup Table program, then System Assign of the
+ * wallet to that program. The program account exists, so simulation can run; the wallet
+ * still treats the program as unknown.
+ */
+async function buildSuspiciousTx(payer: Address): Promise<Uint8Array> {
+  const client = rpc();
+  const latest = await client.getLatestBlockhash({ commitment: "confirmed" }).send();
+  const slot = await client.getSlot({ commitment: "confirmed" }).send();
+  const slotBytes = new Uint8Array(8);
+  new DataView(slotBytes.buffer).setBigUint64(0, slot, true);
+  const [lookupTable, bump] = await getProgramDerivedAddress({
+    programAddress: LOOKUP_TABLE_PROGRAM,
+    seeds: [getAddressEncoder().encode(payer), slotBytes],
+  });
+  const createData = new Uint8Array(13);
+  const createView = new DataView(createData.buffer);
+  createView.setUint32(0, 0, true);
+  createView.setBigUint64(4, slot, true);
+  createData[12] = bump;
+  const assign = new Uint8Array(36);
+  new DataView(assign.buffer).setUint32(0, 1, true);
+  assign.set(bs58.decode(LOOKUP_TABLE_PROGRAM), 4);
+  return compileDangerTx(
+    payer,
+    [
+      ix(
+        LOOKUP_TABLE_PROGRAM,
+        [
+          { pubkey: lookupTable, role: AccountRole.WRITABLE },
+          { pubkey: payer, role: AccountRole.READONLY_SIGNER },
+          { pubkey: payer, role: AccountRole.WRITABLE_SIGNER },
+          { pubkey: address(SYSTEM_PROGRAM), role: AccountRole.READONLY },
+        ],
+        createData,
+      ),
+      ix(SYSTEM_PROGRAM, [{ pubkey: payer, role: AccountRole.WRITABLE_SIGNER }], assign),
+    ],
+    { blockhash: latest.value.blockhash, lastValidBlockHeight: latest.value.lastValidBlockHeight },
+  );
+}
+
+const NONCE_DRAIN_LAMPORTS = 1_000_000n;
+
+function nonceStorageKey(payer: Address): string {
+  return `airwave-test-web-nonce:${payer}`;
+}
+
+async function readOwnedNonce(
+  payer: Address,
+): Promise<{ nonceAccount: Address; nonce: Blockhash } | null> {
+  const stored = sessionStorage.getItem(nonceStorageKey(payer));
+  if (!stored) return null;
+  const found = await fetchMaybeNonce(rpc(), address(stored));
+  if (!found.exists || found.data.state !== NonceState.Initialized || found.data.authority !== payer) {
+    return null;
+  }
+  return { nonceAccount: found.address, nonce: found.data.blockhash as unknown as Blockhash };
+}
+
+/** AdvanceNonceAccount first, then a small SOL transfer to a stranger. Lifetime is the stored nonce. */
+async function buildDurableNonceDrainTx(
+  payer: Address,
+  nonceAccount: Address,
+  nonce: Blockhash,
+): Promise<Uint8Array> {
+  return compileDangerTx(
+    payer,
+    [
+      getAdvanceNonceAccountInstruction({
+        nonceAccount,
+        nonceAuthority: createNoopSigner(payer),
+      }),
+      getTransferSolInstruction({
+        source: createNoopSigner(payer),
+        destination: STRANGER,
+        amount: NONCE_DRAIN_LAMPORTS,
+      }),
+    ],
+    { blockhash: nonce, lastValidBlockHeight: 0n },
+  );
+}
+
+/** Small SOL transfer, then approve and reassign one new token account and close another to the stranger. */
+async function buildStealTx(payer: Address): Promise<Uint8Array> {
+  const client = rpc();
+  const latest = await client.getLatestBlockhash({ commitment: "confirmed" }).send();
+  const rent = await client.getMinimumBalanceForRentExemption(BigInt(TOKEN_ACCOUNT_SPACE)).send();
+  const approveAccount = await generateKeyPairSigner();
+  const closeAccount = await generateKeyPairSigner();
+  const approve = new Uint8Array(9);
+  approve[0] = 4;
+  new DataView(approve.buffer).setBigUint64(1, 18446744073709551615n, true);
+  const setAuthority = new Uint8Array(38);
+  setAuthority[0] = 6;
+  setAuthority[1] = 2;
+  new DataView(setAuthority.buffer).setUint32(2, 1, true);
+  setAuthority.set(bs58.decode(STRANGER), 6);
+  const init = new Uint8Array(33);
+  init[0] = 18;
+  init.set(bs58.decode(payer), 1);
+  const signer = { pubkey: payer, role: AccountRole.WRITABLE_SIGNER };
+  const open = (account: Address) => [
+    getCreateAccountInstruction({
+      payer: createNoopSigner(payer),
+      newAccount: account === approveAccount.address ? approveAccount : closeAccount,
+      lamports: rent,
+      space: TOKEN_ACCOUNT_SPACE,
+      programAddress: address(TOKEN_PROGRAM),
+    }),
+    ix(
+      TOKEN_PROGRAM,
+      [
+        { pubkey: account, role: AccountRole.WRITABLE },
+        { pubkey: WSOL_MINT, role: AccountRole.READONLY },
+      ],
+      init,
+    ),
+  ];
+  let message = pipe(
+    createTransactionMessage({ version: 0 }),
+    (m) => setTransactionMessageFeePayer(payer, m),
+    (m) =>
+      setTransactionMessageLifetimeUsingBlockhash(
+        {
+          blockhash: latest.value.blockhash,
+          lastValidBlockHeight: latest.value.lastValidBlockHeight,
+        },
+        m,
+      ),
+  );
+  const instructions = [
+    getTransferSolInstruction({
+      source: createNoopSigner(payer),
+      destination: STRANGER,
+      amount: NONCE_DRAIN_LAMPORTS,
+    }),
+    ...open(approveAccount.address),
+    ix(
+      TOKEN_PROGRAM,
+      [
+        { pubkey: approveAccount.address, role: AccountRole.WRITABLE },
+        { pubkey: STRANGER, role: AccountRole.READONLY },
+        signer,
+      ],
+      approve,
+    ),
+    ix(TOKEN_PROGRAM, [{ pubkey: approveAccount.address, role: AccountRole.WRITABLE }, signer], setAuthority),
+    ...open(closeAccount.address),
+    ix(
+      TOKEN_PROGRAM,
+      [
+        { pubkey: closeAccount.address, role: AccountRole.WRITABLE },
+        { pubkey: STRANGER, role: AccountRole.WRITABLE },
+        signer,
+      ],
+      new Uint8Array([9]),
+    ),
+  ];
+  for (const item of instructions) {
+    message = appendTransactionMessageInstruction(item, message as never) as typeof message;
+  }
+  const partial = await partiallySignTransaction(
+    [approveAccount.keyPair, closeAccount.keyPair],
+    compileTransaction(message),
+  );
+  return new Uint8Array(getTransactionEncoder().encode(partial));
+}
+
+async function signDangerSample(
+  label: string,
+  build: (payer: Address) => Promise<Uint8Array>,
+): Promise<void> {
+  const proceed = window.confirm(
+    `${label}\n\n這是危險樣本。請在錢包裡拒絕，不要核准。這個頁面不會廣播。`,
+  );
+  if (!proceed) {
+    log("已取消：", label);
+    return;
+  }
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as
+      | StandardConnectFeature[typeof StandardConnect]
+      | undefined;
+    const signTx = wallet.features[SolanaSignTransaction] as
+      | SolanaSignTransactionFeature[typeof SolanaSignTransaction]
+      | undefined;
+    if (!connect || !signTx) return;
+    const { accounts } = await connect.connect({ silent: true });
+    const account = accounts[0];
+    if (!account) throw new Error("no account");
+    sessionChain = chainOf(account.chains);
+    log(label, "（只簽名，不廣播）");
+    const tx = await build(address(account.address));
+    const [out] = await signTx.signTransaction({
+      account,
+      chain: activeChain(),
+      transaction: tx,
+    });
+    log("已簽名但未廣播:", bs58.encode(out.signedTransaction));
+  } catch (e) {
+    log("危險樣本簽名錯誤:", e instanceof Error ? e.message : e);
+  }
+}
+
 async function syntheticTxMessageBytes(): Promise<Uint8Array> {
   const payer = await randomAddress();
   const compiled = compileTransactionMessage(
@@ -358,9 +675,9 @@ btnConnect.addEventListener("click", async () => {
       return;
     }
     const { accounts } = await connect.connect();
-    const addr = accounts[0]?.address;
-    log("Connected:", addr);
-    enableSigning(addr);
+    const account = accounts[0];
+    log("Connected:", account?.address, account?.chains?.[0] ?? "");
+    enableSigning(account?.address, account?.chains);
   } catch (e) {
     log("Connect error:", e instanceof Error ? e.message : e);
   }
@@ -493,7 +810,7 @@ btnSignInFull.addEventListener("click", async () => {
       statement: "Sign in to swap.app. This does not send a transaction.",
       uri: "https://swap.app",
       version: "1",
-      chainId: "solana:devnet",
+      chainId: activeChain(),
       nonce: "8f3a1c9e",
       issuedAt: "2026-11-05T02:00:00Z",
       expirationTime: "2026-11-05T03:00:00Z",
@@ -522,6 +839,10 @@ btnAirdrop.addEventListener("click", async () => {
     const account = accounts[0];
     if (!account) throw new Error("no account");
     connectedAddress = account.address;
+    sessionChain = chainOf(account.chains);
+    if (sessionChain !== "solana:devnet") {
+      throw new Error("Airdrop 只在 Devnet。錢包目前是 Mainnet。");
+    }
 
     const client = rpc();
     const owner = address(account.address);
@@ -560,12 +881,13 @@ btnSignTxFail.addEventListener("click", async () => {
     const { accounts } = await connect.connect({ silent: true });
     const account = accounts[0];
     if (!account) throw new Error("no account");
+    sessionChain = chainOf(account.chains);
 
     const tx = await buildSelfTransferTx(address(account.address), 10n * LAMPORTS_PER_SOL);
 
     const [out] = await signTx.signTransaction({
       account,
-      chain: "solana:devnet",
+      chain: activeChain(),
       transaction: tx,
     });
     log("Signed fail-case tx base58:", bs58.encode(out.signedTransaction));
@@ -588,6 +910,7 @@ btnSignTxV1.addEventListener("click", async () => {
     const { accounts } = await connect.connect({ silent: true });
     const account = accounts[0];
     if (!account) throw new Error("no account");
+    sessionChain = chainOf(account.chains);
 
     const tx = await buildV1SelfTransferTx(address(account.address), {
       cuLimit: 5000,
@@ -598,7 +921,7 @@ btnSignTxV1.addEventListener("click", async () => {
 
     const [out] = await signTx.signTransaction({
       account,
-      chain: "solana:devnet",
+      chain: activeChain(),
       transaction: tx,
     });
     log("v1 signTransaction returned:", bs58.encode(out.signedTransaction));
@@ -624,11 +947,12 @@ async function signPreparedV1(
     const { accounts } = await connect.connect({ silent: true });
     const account = accounts[0];
     if (!account) throw new Error("no account");
+    sessionChain = chainOf(account.chains);
     const tx = await build(address(account.address));
     log(label);
     const [out] = await signTx.signTransaction({
       account,
-      chain: "solana:devnet",
+      chain: activeChain(),
       transaction: tx,
     });
     log("v1 signTransaction returned:", bs58.encode(out.signedTransaction));
@@ -678,10 +1002,13 @@ btnSignTxClusterMismatch.addEventListener("click", async () => {
     const { accounts } = await connect.connect({ silent: true });
     const account = accounts[0];
     if (!account) throw new Error("no account");
+    sessionChain = chainOf(account.chains);
 
     const walletChain = account.chains.find((c) => c.startsWith("solana:")) ?? "solana:devnet";
     const blockhashRpc =
-      walletChain === "solana:mainnet" ? DEVNET_RPC : MAINNET_PUBLIC_RPC;
+      walletChain === "solana:mainnet"
+        ? rpcUrlFor("solana:devnet")
+        : rpcUrlFor("solana:mainnet");
     log(
       "Cluster mismatch sample: omit chain; blockhash from",
       blockhashRpc,
@@ -705,6 +1032,114 @@ btnSignTxClusterMismatch.addEventListener("click", async () => {
   }
 });
 
+btnSignTxSuspicious.addEventListener("click", () =>
+  signDangerSample("可疑：未知程式 + System Assign", buildSuspiciousTx),
+);
+async function signDurableNonceDrain(): Promise<void> {
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as
+      | StandardConnectFeature[typeof StandardConnect]
+      | undefined;
+    const signTx = wallet.features[SolanaSignTransaction] as
+      | SolanaSignTransactionFeature[typeof SolanaSignTransaction]
+      | undefined;
+    if (!connect || !signTx) return;
+    const { accounts } = await connect.connect({ silent: true });
+    const account = accounts[0];
+    if (!account) throw new Error("no account");
+    sessionChain = chainOf(account.chains);
+    const payer = address(account.address);
+    let nonce = await readOwnedNonce(payer);
+    if (!nonce) {
+      const create = window.confirm(
+        "這個分頁還沒有 nonce 帳戶。下一步只建立 nonce 並支付租金，頁面會廣播這一筆。請在錢包裡核准。",
+      );
+      if (!create) {
+        log("已取消：建立 nonce 帳戶");
+        return;
+      }
+      const nonceSigner = await generateKeyPairSigner();
+      const client = rpc();
+      const rent = await client.getMinimumBalanceForRentExemption(BigInt(getNonceSize())).send();
+      const latest = await client.getLatestBlockhash({ commitment: "confirmed" }).send();
+      const message = pipe(
+        createTransactionMessage({ version: 0 }),
+        (m) => setTransactionMessageFeePayer(payer, m),
+        (m) =>
+          setTransactionMessageLifetimeUsingBlockhash(
+            {
+              blockhash: latest.value.blockhash,
+              lastValidBlockHeight: latest.value.lastValidBlockHeight,
+            },
+            m,
+          ),
+        (m) =>
+          appendTransactionMessageInstruction(
+            getCreateAccountInstruction({
+              payer: createNoopSigner(payer),
+              newAccount: nonceSigner,
+              lamports: rent,
+              space: getNonceSize(),
+              programAddress: address(SYSTEM_PROGRAM),
+            }),
+            m,
+          ),
+        (m) =>
+          appendTransactionMessageInstruction(
+            getInitializeNonceAccountInstruction({
+              nonceAccount: nonceSigner.address,
+              nonceAuthority: payer,
+            }),
+            m,
+          ),
+      );
+      const partial = await partiallySignTransaction([nonceSigner.keyPair], compileTransaction(message));
+      const createBytes = new Uint8Array(getTransactionEncoder().encode(partial));
+      log("建立 nonce 帳戶（會廣播）", nonceSigner.address);
+      const [created] = await signTx.signTransaction({
+        account,
+        chain: activeChain(),
+        transaction: createBytes,
+      });
+      const wire = getBase64EncodedWireTransaction(getTransactionDecoder().decode(created.signedTransaction));
+      const signature = await client
+        .sendTransaction(wire, { encoding: "base64", skipPreflight: false, preflightCommitment: "confirmed" })
+        .send();
+      log("Nonce create signature:", signature);
+      await confirmSignature(signature);
+      sessionStorage.setItem(nonceStorageKey(payer), nonceSigner.address);
+      const stored = await readOwnedNonce(payer);
+      if (!stored) throw new Error("nonce account missing after confirm");
+      nonce = stored;
+    }
+    const danger = window.confirm(
+      "接下來是 AdvanceNonce 後轉 0.001 SOL 給陌生地址。請在錢包裡拒絕，不要核准。這個頁面不會廣播這一筆。",
+    );
+    if (!danger) {
+      log("已取消：durable nonce 轉出");
+      return;
+    }
+    log("Durable nonce 後轉 0.001 SOL 給陌生地址（只簽名，不廣播）");
+    const tx = await buildDurableNonceDrainTx(payer, nonce.nonceAccount, nonce.nonce);
+    const [out] = await signTx.signTransaction({
+      account,
+      chain: activeChain(),
+      transaction: tx,
+    });
+    log("已簽名但未廣播:", bs58.encode(out.signedTransaction));
+  } catch (e) {
+    log("Durable nonce 樣本錯誤:", e instanceof Error ? e.message : e);
+  }
+}
+
+btnSignTxNonce.addEventListener("click", () => {
+  void signDurableNonceDrain();
+});
+btnSignTxSteal.addEventListener("click", () =>
+  signDangerSample("偷錢：轉 SOL、無限 Approve、SetAuthority、CloseAccount", buildStealTx),
+);
+
 btnSignTx.addEventListener("click", async () => {
   try {
     const wallet = await waitForAirwave();
@@ -719,12 +1154,13 @@ btnSignTx.addEventListener("click", async () => {
     const { accounts } = await connect.connect({ silent: true });
     const account = accounts[0];
     if (!account) throw new Error("no account");
+    sessionChain = chainOf(account.chains);
 
     const tx = await buildSelfTransferTx(address(account.address), 0n);
 
     const [out] = await signTx.signTransaction({
       account,
-      chain: "solana:devnet",
+      chain: activeChain(),
       transaction: tx,
     });
     log("Signed tx base58:", bs58.encode(out.signedTransaction));
@@ -747,12 +1183,13 @@ btnSignAndSendTx.addEventListener("click", async () => {
     const { accounts } = await connect.connect({ silent: true });
     const account = accounts[0];
     if (!account) throw new Error("no account");
+    sessionChain = chainOf(account.chains);
 
     const tx = await buildSelfTransferTx(address(account.address), 0n);
 
     const [out] = await signTx.signTransaction({
       account,
-      chain: "solana:devnet",
+      chain: activeChain(),
       transaction: tx,
     });
     log("Signed for send, broadcasting…");
@@ -792,9 +1229,7 @@ btnSignAndSendTxV1.addEventListener("click", async () => {
     const { accounts } = await connect.connect({ silent: true });
     const account = accounts[0];
     if (!account) throw new Error("no account");
-    if (account.chains[0] !== "solana:devnet") {
-      throw new Error("test-web 只測 Devnet。請在錢包 Settings 把網路改成 Devnet 再按代送。");
-    }
+    sessionChain = chainOf(account.chains);
 
     const tx = await buildV1SelfTransferTx(address(account.address), {
       cuLimit: 5000,
@@ -805,7 +1240,7 @@ btnSignAndSendTxV1.addEventListener("click", async () => {
 
     const [out] = await signAndSend.signAndSendTransaction({
       account,
-      chain: "solana:devnet",
+      chain: activeChain(),
       transaction: tx,
     });
     log("v1 signAndSendTransaction ok:", bs58.encode(out.signature));
@@ -832,15 +1267,13 @@ btnSignAndSendTxStd.addEventListener("click", async () => {
     const { accounts } = await connect.connect({ silent: true });
     const account = accounts[0];
     if (!account) throw new Error("no account");
-    if (account.chains[0] !== "solana:devnet") {
-      throw new Error("test-web 只測 Devnet。請在錢包 Settings 把網路改成 Devnet 再按代送。");
-    }
+    sessionChain = chainOf(account.chains);
 
     const tx = await buildSelfTransferTx(address(account.address), 0n);
 
     const [out] = await signAndSend.signAndSendTransaction({
       account,
-      chain: "solana:devnet",
+      chain: activeChain(),
       transaction: tx,
     });
     log("signAndSendTransaction ok:", bs58.encode(out.signature));
@@ -867,16 +1300,14 @@ btnSignAndSendTxStdFail.addEventListener("click", async () => {
     const { accounts } = await connect.connect({ silent: true });
     const account = accounts[0];
     if (!account) throw new Error("no account");
-    if (account.chains[0] !== "solana:devnet") {
-      throw new Error("test-web 只測 Devnet。請在錢包 Settings 把網路改成 Devnet 再按代送。");
-    }
+    sessionChain = chainOf(account.chains);
 
     const tx = await buildSelfTransferTx(address(account.address), 10n * LAMPORTS_PER_SOL);
     log("signAndSendTransaction fail-case: 自轉 10 SOL，預期模擬／鏈上失敗");
 
     const [out] = await signAndSend.signAndSendTransaction({
       account,
-      chain: "solana:devnet",
+      chain: activeChain(),
       transaction: tx,
     });
     log("Unexpected: fail-case signAndSendTransaction succeeded:", bs58.encode(out.signature));
