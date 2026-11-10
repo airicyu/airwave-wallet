@@ -33,25 +33,30 @@ export function ApprovalSign({
 }): JSX.Element {
   return (
     <div ref={refs.shellRef} className="approval-sign-shell">
-      <div className="bar-wallet-group compact">
-        <div className="bar-wallet static-wallet">
-          <span ref={refs.avatarRef} className="avatar" aria-hidden="true">A</span>
-          <span className="bar-wallet-text">
-            <span ref={refs.labelRef} className="bar-wallet-name">Account</span>
-            <span ref={refs.addrRef} className="bar-wallet-addr" />
-          </span>
-          <button
-            ref={refs.copyPkRef}
-            type="button"
-            className="icon-btn ghost-inline"
-            title={t("common.copy")}
-            aria-label={t("common.copy")}
-          >
-            {COPY_ICON}
-          </button>
+      <header className="top-bar">
+        <div className="bar-home">
+          <div className="bar-wallet-group">
+            <div className="bar-wallet static-wallet">
+              <span className="bar-wallet-hit">
+                <span ref={refs.avatarRef} className="avatar" aria-hidden="true">A</span>
+                <span className="bar-wallet-text">
+                  <span ref={refs.labelRef} className="bar-wallet-name">Account</span>
+                  <span ref={refs.addrRef} className="bar-wallet-addr" />
+                </span>
+              </span>
+              <button
+                ref={refs.copyPkRef}
+                type="button"
+                className="icon-btn ghost-inline"
+                title={t("common.copy")}
+                aria-label={t("common.copy")}
+              >
+                {COPY_ICON}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-      <hr className="account-rule" aria-hidden="true" />
+      </header>
       <div className="cluster-strip" role="status" hidden>
         Devnet
       </div>

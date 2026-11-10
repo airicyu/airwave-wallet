@@ -23,7 +23,7 @@ import {
   WatchAccountScreen,
 } from "./onboarding/OnboardingScreens";
 import { screenEnterKey } from "./runtime";
-import { CombinedSwitchScreen } from "./accounts/CombinedManage";
+import { CombinedManageScreen, CombinedSwitchScreen } from "./accounts/CombinedManage";
 import {
   CombinedAddChoice,
   CombinedLocalScreen,
@@ -124,6 +124,12 @@ export function AccountViews(): JSX.Element {
           {currentView === "account-manage" ? (
             <section id="screen-account-manage" className="screen">
               <ManageScreen wallet={wallet} />
+            </section>
+          ) : null}
+
+          {currentView === "account-combined-manage" ? (
+            <section className="screen">
+              <CombinedManageScreen wallet={wallet} />
             </section>
           ) : null}
 

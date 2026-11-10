@@ -1,5 +1,6 @@
 /**
  * Add-member choice, multi-address paste, and local pick for a combined draft.
+ * Local rows stay staged until Confirm appends them and returns to create.
  * Does not call wallet.addCombinedSub. The draft is created on the create page.
  */
 import { useState } from "react";
@@ -58,22 +59,35 @@ export function CombinedCreatePasteScreen(): JSX.Element {
 }
 
 export function CombinedCreateLocalScreen({ wallet }: { wallet: State }): JSX.Element {
+  const { navigateTo } = usePopupContext();
   const { t } = useT();
   const draft = useCombinedDraft();
+  const [picked, setPicked] = useState<string[]>([]);
   const locals = wallet.accounts.filter(isSigningOrWatch);
+  useRegisterDock({
+    label: t("common.confirm"),
+    disabled: picked.length === 0,
+    onPrimary: () => {
+      appendCombinedMembers(picked.join("\n"));
+      navigateTo("add-combined");
+    },
+  });
   return (
     <div className="pick-list">
       {locals.map((a) => {
         const pk = parsePublicKeyBase58(a.publicKeyBase58) ?? a.publicKeyBase58;
         const inSet = draft.members.includes(pk);
+        const on = picked.includes(pk);
         return (
           <button
             key={a.id}
             type="button"
-            className="manage-action-row neutral"
+            className={`manage-action-row neutral${on ? " on" : ""}`}
             disabled={inSet}
+            aria-pressed={on}
             onClick={() => {
-              if (!inSet) appendCombinedMembers(a.publicKeyBase58);
+              if (inSet) return;
+              setPicked((prev) => (prev.includes(pk) ? prev.filter((item) => item !== pk) : [...prev, pk]));
             }}
           >
             <span>

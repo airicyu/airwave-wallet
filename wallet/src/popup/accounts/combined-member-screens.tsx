@@ -51,7 +51,7 @@ export function CombinedPasteScreen({ wallet }: { wallet: State }): JSX.Element 
       if (!res.ok) showError(apiErrorMessage(locale, res.error, "error.addFailed"));
       else {
         await refresh();
-        navigateTo("account-manage");
+        navigateTo("account-combined-manage");
       }
     },
   });
@@ -134,7 +134,7 @@ export function MemberRenameScreen({ wallet }: { wallet: State }): JSX.Element {
       if (!res.ok) showError(apiErrorMessage(locale, res.error, "error.renameFailed"));
       else {
         await refresh();
-        navigateTo("account-manage");
+        navigateTo("account-combined-manage");
       }
     },
   });

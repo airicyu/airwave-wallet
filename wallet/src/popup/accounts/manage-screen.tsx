@@ -1,13 +1,12 @@
 /**
- * Popup per-account manage screen for signing, watch, and read-only accounts.
- * Combined accounts delegate to CombinedManagePanel instead of this layout.
+ * Popup per-account manage screen for signing, watch, read-only, and combined accounts.
+ * Combined rows are a menu: open the member sheet, or remove the account. The sheet is account-combined-manage.
  */
 import type { JSX } from "react";
-import { isCombinedAccount, isSigningOrWatch } from "../../shared/accounts";
+import { getExposedPublicKey, isCombinedAccount, isSigningOrWatch } from "../../shared/accounts";
 import { sendExtensionRequest } from "../../shared/protocol";
 import { accountKind } from "../../shared/protocol";
 import { apiErrorMessage } from "../../shared/i18n";
-import { CombinedManagePanel } from "./CombinedManage";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
 import type { State } from "../types";
@@ -19,14 +18,13 @@ export function ManageScreen({ wallet }: { wallet: State }): JSX.Element {
   if (!acc) return <p className="muted">{t("error.accountNotFound")}</p>;
   const combined = isCombinedAccount(acc);
   const ro = !combined && accountKind(acc) === "readOnly";
-  if (combined) return <CombinedManagePanel acc={acc} wallet={wallet} />;
   return (
     <>
       <p id="manage-name" className="manage-name">
         {acc.label}
       </p>
       <p id="manage-addr" className="manage-addr">
-        {isSigningOrWatch(acc) ? acc.publicKeyBase58 : ""}
+        {combined || isSigningOrWatch(acc) ? getExposedPublicKey(acc) : ""}
       </p>
       <p id="manage-readOnly-badge" className="badge" hidden={!ro}>
         {t("accounts.badgeReadOnly")}
@@ -41,6 +39,15 @@ export function ManageScreen({ wallet }: { wallet: State }): JSX.Element {
         >
           <span>{t("accounts.revealPrivateKey")}</span>
         </button>
+        {combined ? (
+          <button
+            type="button"
+            className="manage-action-row neutral"
+            onClick={() => navigateTo("account-combined-manage")}
+          >
+            <span>{t("accounts.manageCombined")}</span>
+          </button>
+        ) : null}
         <button
           type="button"
           className="manage-action-row danger"
@@ -48,7 +55,7 @@ export function ManageScreen({ wallet }: { wallet: State }): JSX.Element {
           onClick={async () => {
             clearError();
             if (!focusAccountId) return;
-            if (!confirm(t("accounts.removeConfirm"))) return;
+            if (!combined && !confirm(t("accounts.removeConfirm"))) return;
             const res = await sendExtensionRequest("wallet.deleteAccount", { accountId: focusAccountId });
             if (!res.ok) showError(apiErrorMessage(locale, res.error, "error.deleteFailed"));
             else {
@@ -58,7 +65,7 @@ export function ManageScreen({ wallet }: { wallet: State }): JSX.Element {
             }
           }}
         >
-          {t("accounts.removeWalletAccount")}
+          {combined ? t("accounts.removeCombined") : t("accounts.removeWalletAccount")}
         </button>
       </div>
     </>
