@@ -252,17 +252,6 @@ details.raw-details summary {
   pointer-events: none;
 }
 
-.approval-sign-shell > .bar-wallet-group {
-  width: max-content;
-  max-width: 100%;
-  margin: 0 12px 10px;
-  padding-top: 12px;
-}
-
-.approval-sign-shell > .account-rule {
-  margin: 0 12px;
-}
-
 .approval-sign-shell {
   flex: 1;
   min-height: 0;

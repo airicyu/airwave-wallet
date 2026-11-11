@@ -49,6 +49,7 @@ export type View =
   | "add-combined-local"
   | "account-rename"
   | "account-manage"
+  | "account-combined-manage"
   | "account-switch"
   | "account-manage-add"
   | "account-manage-paste"
@@ -88,6 +89,7 @@ export const SUBPAGE_TITLE_KEYS: Record<Exclude<View, "home-token" | "home-activ
   "add-combined-local": "common.localAccounts",
   "account-rename": "common.name",
   "account-manage": "nav.accountManage",
+  "account-combined-manage": "accounts.manageCombined",
   "account-switch": "accounts.changeCurrentWallet",
   "account-manage-add": "common.add",
   "account-manage-paste": "common.address",

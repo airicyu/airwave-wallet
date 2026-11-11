@@ -292,3 +292,8 @@ textarea:focus-visible {
 .manage-action-row.neutral:hover {
   border-color: var(--text-dim);
 }
+
+.manage-action-row.on {
+  border-color: var(--accent);
+  background: #1a2838;
+}

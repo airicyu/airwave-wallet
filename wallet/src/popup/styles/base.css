@@ -220,6 +220,10 @@ body {
   font: inherit;
 }
 
+.static-wallet .bar-wallet-hit {
+  cursor: default;
+}
+
 .cluster-strip {
   flex-shrink: 0;
   padding: 5px 14px;

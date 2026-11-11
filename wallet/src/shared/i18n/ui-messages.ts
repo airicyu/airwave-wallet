@@ -1473,6 +1473,16 @@ const messages = {
     "zh-Hans": "管理账户",
     "en": "Manage account",
   },
+  "accounts.manageCombined": {
+    "zh-Hant": "管理聚合錢包帳戶",
+    "zh-Hans": "管理聚合钱包账户",
+    "en": "Manage combined wallet account",
+  },
+  "accounts.removeCombined": {
+    "zh-Hant": "移除聚合錢包帳戶",
+    "zh-Hans": "移除聚合钱包账户",
+    "en": "Remove combined wallet account",
+  },
   "accounts.revealPrivateKey": {
     "zh-Hant": "顯示私鑰",
     "zh-Hans": "显示私钥",

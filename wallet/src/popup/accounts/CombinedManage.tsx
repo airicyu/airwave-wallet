@@ -188,6 +188,14 @@ export function CombinedManagePanel({
   );
 }
 
+export function CombinedManageScreen({ wallet }: { wallet: State }): JSX.Element {
+  const { focusAccountId } = usePopupContext();
+  const { t } = useT();
+  const acc = wallet.accounts.find((a) => a.id === focusAccountId);
+  if (!acc || !("subPubkeys" in acc)) return <p className="muted">{t("error.accountNotFound")}</p>;
+  return <CombinedManagePanel acc={acc} wallet={wallet} />;
+}
+
 export function CombinedSwitchScreen({ wallet }: { wallet: State }): JSX.Element {
   const { focusAccountId } = usePopupContext();
   const { t } = useT();
