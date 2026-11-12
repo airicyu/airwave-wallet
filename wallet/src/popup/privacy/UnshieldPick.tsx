@@ -4,16 +4,16 @@
  */
 import { useEffect, useState, type JSX } from "react";
 import { NATIVE_SOL_ID, type HomeTokenRow } from "../../shared/home";
-import { sendExtensionRequest } from "../../shared/protocol";
-import { TokenIcon, TokenTrust } from "../components/HomeTokenList";
+import { TokenIcon, TokenTrust } from "../home/HomeTokenList";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
 import { PrivacySkeleton } from "./PrivacySkeleton";
+import { loadPrivacyStatus, type PrivacyRow } from "./privacy-status";
 import { clearUnshieldDraft, setUnshieldBack } from "./unshield-draft";
 
 const SOL_MINT = "11111111111111111111111111111111";
 
-type Row = { mint: string; amount: string; usdLabel?: string };
+type Row = Pick<PrivacyRow, "mint" | "amount" | "usdLabel">;
 
 export function UnshieldPick(): JSX.Element {
   const { t } = useT();
@@ -23,12 +23,10 @@ export function UnshieldPick(): JSX.Element {
 
   useEffect(() => {
     let cancelled = false;
-    void sendExtensionRequest("wallet.privacyStatus", {}).then((res) => {
+    void loadPrivacyStatus().then((body) => {
       if (cancelled) return;
       setReady(true);
-      if (!res.ok) return;
-      const body = res.result as { rows?: Row[] };
-      setRows(body.rows ?? []);
+      if (body.kind === "registered") setRows(body.rows);
     });
     return () => {
       cancelled = true;

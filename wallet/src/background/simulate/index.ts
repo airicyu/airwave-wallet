@@ -1,5 +1,6 @@
 /**
- * Re-exports the public simulate API for pending tx preview and compute budget helpers.
+ * Re-exports simulation of a pending transaction and the compute-budget helpers.
+ * Callers outside this folder import this file rather than a module inside it.
  */
 export { SimDeadline } from "./sim-deadline";
 export { buildInspectorUrl } from "./inspector-url";

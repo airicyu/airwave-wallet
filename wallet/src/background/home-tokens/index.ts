@@ -1,5 +1,6 @@
 /**
- * Re-exports home token fetch service, command handler, and owner parsed-token cache access.
+ * Re-exports home-token fetch, the command handler, and the owner parsed-token cache.
+ * Callers outside this folder import this file rather than a module inside it.
  */
 export * from "./home-tokens-service";
 export { handleGetHomeTokens } from "./get-home-tokens-command";

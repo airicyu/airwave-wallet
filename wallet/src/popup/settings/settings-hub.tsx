@@ -1,3 +1,7 @@
+/**
+ * The settings list. Each row opens one settings screen and shows that screen's icon.
+ * The individual screens own their fields. This hub does not write settings itself.
+ */
 import type { JSX } from "react";
 import type { PublicSettings } from "../../shared/protocol";
 import type { UiLocale } from "../../shared/protocol";

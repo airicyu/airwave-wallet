@@ -1,3 +1,7 @@
+/**
+ * Renames the active account. The new label is sent with the existing rename command.
+ * It does not change the public key or the vault secret.
+ */
 import type { JSX } from "react";
 import { useState } from "react";
 import { getExposedPublicKey } from "../../shared/accounts";

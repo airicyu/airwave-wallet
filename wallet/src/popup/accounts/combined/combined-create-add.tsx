@@ -5,12 +5,12 @@
  */
 import { useState } from "react";
 import type { JSX } from "react";
-import { isSigningOrWatch, parsePublicKeyBase58 } from "../../shared/accounts";
-import { shortAddr } from "../lib/format";
-import { usePopupContext } from "../state/PopupContext";
-import { useRegisterDock } from "../state/dock";
-import { useT } from "../state/useT";
-import type { State } from "../types";
+import { isSigningOrWatch, parsePublicKeyBase58 } from "../../../shared/accounts";
+import { shortAddr } from "../../lib/format";
+import { usePopupContext } from "../../state/PopupContext";
+import { useRegisterDock } from "../../state/dock";
+import { useT } from "../../state/useT";
+import type { State } from "../../types";
 import { appendCombinedMembers, keysFromPaste, useCombinedDraft } from "./combined-logic";
 
 export function CombinedCreateAddChoice(): JSX.Element {

@@ -3,8 +3,8 @@
  * Does not write chrome.storage or call wallet commands.
  */
 import { useSyncExternalStore } from "react";
-import { parsePublicKeyBase58 } from "../../shared/accounts";
-import type { View } from "../types";
+import { parsePublicKeyBase58 } from "../../../shared/accounts";
+import type { View } from "../../types";
 
 export type CombinedCreateDraft = {
   label: string;

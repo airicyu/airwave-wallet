@@ -1,5 +1,6 @@
 /**
  * Placeholder bars shown while a private-balance page waits for its first status.
+ * The panel and the token detail decide when to replace the skeleton with rows or an error.
  */
 import type { JSX } from "react";
 

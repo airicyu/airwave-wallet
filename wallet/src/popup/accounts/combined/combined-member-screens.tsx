@@ -4,15 +4,15 @@
  */
 import { useState } from "react";
 import type { JSX } from "react";
-import { ACCOUNT_LABEL_MAX } from "../../shared/accounts";
-import { isSigningOrWatch, parsePublicKeyBase58 } from "../../shared/accounts";
-import { sendExtensionRequest } from "../../shared/protocol";
-import { apiErrorMessage } from "../../shared/i18n";
-import { shortAddr } from "../lib/format";
-import { usePopupContext } from "../state/PopupContext";
-import { useRegisterDock } from "../state/dock";
-import { useT } from "../state/useT";
-import type { State } from "../types";
+import { ACCOUNT_LABEL_MAX } from "../../../shared/accounts";
+import { isSigningOrWatch, parsePublicKeyBase58 } from "../../../shared/accounts";
+import { sendExtensionRequest } from "../../../shared/protocol";
+import { apiErrorMessage } from "../../../shared/i18n";
+import { shortAddr } from "../../lib/format";
+import { usePopupContext } from "../../state/PopupContext";
+import { useRegisterDock } from "../../state/dock";
+import { useT } from "../../state/useT";
+import type { State } from "../../types";
 
 let memberRenamePk = "";
 

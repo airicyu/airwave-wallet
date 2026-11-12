@@ -4,15 +4,15 @@
  */
 import type { Dispatch, SetStateAction, JSX } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { sendExtensionRequest } from "../../shared/protocol";
-import type { SeedPathKind } from "../../shared/vault";
-import { apiErrorMessage, displayStoredError } from "../../shared/i18n";
-import { SensitiveTextInput } from "../components/WalletPasswordInput";
-import { shortAddr } from "../lib/format";
-import { usePopupContext } from "../state/PopupContext";
-import { useT } from "../state/useT";
-import { useRegisterDock } from "../state/dock";
-import { viewAfterAccountCreated } from "../lib/rpc-guide";
+import { sendExtensionRequest } from "../../../shared/protocol";
+import type { SeedPathKind } from "../../../shared/vault";
+import { apiErrorMessage, displayStoredError } from "../../../shared/i18n";
+import { SensitiveTextInput } from "../../components/WalletPasswordInput";
+import { shortAddr } from "../../lib/format";
+import { usePopupContext } from "../../state/PopupContext";
+import { useT } from "../../state/useT";
+import { useRegisterDock } from "../../state/dock";
+import { viewAfterAccountCreated } from "../../lib/rpc-guide";
 import {
   emptyImportSeedDraft,
   importSeedBackToWords,

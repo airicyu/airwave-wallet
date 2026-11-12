@@ -4,7 +4,7 @@
  */
 import type { JSX } from "react";
 import { useEffect, useRef, useState } from "react";
-import { IconRefresh } from "./StrokeIcon";
+import { IconRefresh } from "../components/StrokeIcon";
 import { useT } from "../state/useT";
 
 const COOLDOWN_MS = 3000;

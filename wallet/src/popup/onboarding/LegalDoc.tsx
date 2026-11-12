@@ -1,3 +1,7 @@
+/**
+ * Renders one legal markdown document as headings and paragraphs.
+ * It skips the top-level title. The About hub chooses which document to pass in.
+ */
 import type { JSX } from "react";
 
 export function LegalDoc({ markdown }: { markdown: string }): JSX.Element {

@@ -1,4 +1,7 @@
-/** signTransaction pending: service-worker memory only; not persisted. */
+/**
+ * Working state for a signTransaction approval. It lives in the service worker memory for that request.
+ * It is not written to chrome.storage. Lock and a finished request drop it.
+ */
 export type SignTxPendingState = {
   workingTx?: Uint8Array;
   writeSeq: number;

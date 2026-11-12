@@ -12,8 +12,9 @@ import { useT } from "../state/useT";
 import { useRegisterDock } from "../state/dock";
 import { halfSendAmount, maxSendAmount } from "../send/send-logic";
 import { homeTokenRowForSendBalance } from "../../shared/send";
-import { syncWalletSendAbortId } from "../components/ApprovalHost";
+import { syncWalletSendAbortId } from "../approval/ApprovalHost";
 import { RegisterWait } from "./RegisterWait";
+import { loadPrivacyStatus } from "./privacy-status";
 import { markShieldApproval, readShieldAmount, readShieldBack, writeShieldAmount } from "./shield-approval";
 
 export function ShieldForm(): JSX.Element {
@@ -47,14 +48,9 @@ export function ShieldForm(): JSX.Element {
   }, [navigateTo, row, setBackOverride, setTitleOverride, t]);
 
   const load = useCallback(async () => {
-    const res = await sendExtensionRequest("wallet.privacyStatus", {});
-    if (!res.ok) {
-      setRegistered(false);
-      return;
-    }
-    const body = res.result as { kind?: string; canPayFee?: boolean };
+    const body = await loadPrivacyStatus();
     setRegistered(body.kind === "registered");
-    setCanPayFee(body.canPayFee === true);
+    setCanPayFee(body.kind === "unregistered" && body.canPayFee);
   }, []);
 
   useEffect(() => {

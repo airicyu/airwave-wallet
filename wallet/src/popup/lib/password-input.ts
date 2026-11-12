@@ -1,4 +1,7 @@
-/** Reduce the chance the browser/password manager treats seed or secret-key fields as saveable (not a guarantee). */
+/**
+ * Sets attributes that make a password manager less likely to save a seed, a secret key, or the unlock password.
+ * This is not a guarantee. The field components in WalletPasswordInput call these helpers. They do not store the value.
+ */
 export function hardenSensitiveTextInput(el: HTMLInputElement | HTMLTextAreaElement): void {
   el.autocomplete = "off";
   el.setAttribute("autocapitalize", "off");

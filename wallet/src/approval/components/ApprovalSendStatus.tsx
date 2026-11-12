@@ -1,5 +1,7 @@
 /**
- * Wallet-send status DOM: confirming, failed, and confirmed cards in the sign body.
+ * Status cards for a wallet send after approve: confirming, failed, and confirmed.
+ * The sign body chooses which card to show from the send result.
+ * This file does not submit the transaction or poll the chain.
  */
 export {
   enterWalletSendConfirming,

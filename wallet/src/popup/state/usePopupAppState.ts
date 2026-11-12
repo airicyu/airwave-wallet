@@ -19,7 +19,7 @@ import {
 } from "../../flow";
 import { walletShellSurfaceFromHref } from "../../shared/shell";
 import type { HomeTokenRow } from "../../shared/home";
-import { abortWalletSendOnPopupUnload, syncWalletSendAbortId } from "../components/ApprovalHost";
+import { abortWalletSendOnPopupUnload, syncWalletSendAbortId } from "../approval/ApprovalHost";
 import { consumeShieldApproval } from "../privacy/shield-approval";
 import { consumePrivateSendApproval } from "../privacy/private-send-draft";
 import { consumeUnshieldApproval } from "../privacy/unshield-draft";

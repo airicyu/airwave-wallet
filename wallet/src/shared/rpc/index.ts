@@ -1,4 +1,7 @@
-/** Re-exports Solana RPC helpers, rate-limit retry, and the Helius API target. */
+/**
+ * Re-exports Solana RPC helpers, rate-limit retry, and the Helius API target.
+ * Callers outside this folder import this file rather than a module inside it.
+ */
 export * from "./helius-api-target";
 export * from "./vendor-api-url";
 export * from "./rpc-rate-limit";

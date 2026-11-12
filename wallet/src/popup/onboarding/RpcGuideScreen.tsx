@@ -1,7 +1,11 @@
+/**
+ * First-run guide that asks the user to request an RPC endpoint before using Mainnet.
+ * It links to RPC settings. It does not save an RPC URL itself.
+ */
 import type { JSX } from "react";
 import { useCallback } from "react";
 import { sendExtensionRequest } from "../../shared/protocol";
-import { FirstRunBrand } from "../components/FirstRunBrand";
+import { FirstRunBrand } from "./FirstRunBrand";
 import { usePopupContext } from "../state/PopupContext";
 import { useRegisterDock } from "../state/dock";
 import { useT } from "../state/useT";

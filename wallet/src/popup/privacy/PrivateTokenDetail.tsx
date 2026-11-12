@@ -4,36 +4,29 @@
  */
 import { useEffect, useState, type JSX } from "react";
 import { NATIVE_SOL_ID, shortMint, type HomeTokenRow } from "../../shared/home";
-import { sendExtensionRequest } from "../../shared/protocol";
 import { CopyIconButton } from "../components/CopyPkButton";
-import { TokenIcon } from "../components/HomeTokenList";
+import { TokenIcon } from "../home/HomeTokenList";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
 import { clearShieldAmount, setShieldBack } from "./shield-approval";
 import { clearUnshieldDraft, setUnshieldBack } from "./unshield-draft";
 import { clearPrivateSendDraft } from "./private-send-draft";
+import { loadPrivacyStatus, privacyRowForMint, type PrivacyRow } from "./privacy-status";
 import { PrivacySkeleton } from "./PrivacySkeleton";
 import { IconMerge, IconSend, IconShield, IconUnshield } from "../components/StrokeIcon";
 import { UtxoReceipt } from "./UtxoReceipt";
 
-type Note = { id: string; amount: string };
-type Row = { mint: string; amount: string; notes: Note[] };
-
 export function PrivateTokenDetail({ mint }: { mint: string }): JSX.Element {
   const { t } = useT();
   const { navigateTo, homeTokenRows } = usePopupContext();
-  const [row, setRow] = useState<Row | null>(null);
+  const [row, setRow] = useState<PrivacyRow | null>(null);
   const [phase, setPhase] = useState<"loading" | "ready" | "missing">("loading");
 
   useEffect(() => {
     let cancelled = false;
-    void sendExtensionRequest("wallet.privacyStatus", {}).then((res) => {
-      if (cancelled || !res.ok) {
-        if (!cancelled) setPhase("missing");
-        return;
-      }
-      const body = res.result as { kind?: string; rows?: Row[] };
-      const found = body.rows?.find((item) => item.mint === mint) ?? null;
+    void loadPrivacyStatus().then((body) => {
+      if (cancelled) return;
+      const found = body.kind === "registered" ? privacyRowForMint(body.rows, mint) ?? null : null;
       setRow(found);
       setPhase(found ? "ready" : "missing");
     });

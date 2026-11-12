@@ -7,7 +7,7 @@ import { useCallback, useState } from "react";
 import { sendExtensionRequest } from "../../shared/protocol";
 import { apiErrorMessage, localeFromChromeUi, LOCALE_ENDONYM, t, UI_LOCALES } from "../../shared/i18n";
 import type { UiLocale } from "../../shared/protocol";
-import { FirstRunBrand } from "../components/FirstRunBrand";
+import { FirstRunBrand } from "./FirstRunBrand";
 import { usePopupContext } from "../state/PopupContext";
 import { SetupScreen } from "./OnboardingScreens";
 

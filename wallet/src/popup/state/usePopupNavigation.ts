@@ -3,9 +3,9 @@
  * Does not mirror chrome.storage or own close-empty drafts.
  */
 import { useCallback, useRef, useState, type MutableRefObject } from "react";
-import { abortWalletSendOnPopupUnload } from "../components/ApprovalHost";
+import { abortWalletSendOnPopupUnload } from "../approval/ApprovalHost";
 import { BACK_PARENT } from "../runtime";
-import { noteCombinedCreateNavigation } from "../accounts/combined-logic";
+import { noteCombinedCreateNavigation } from "../accounts/combined/combined-logic";
 import { clearSendDraft } from "../send/send-draft";
 import type { View } from "../types";
 

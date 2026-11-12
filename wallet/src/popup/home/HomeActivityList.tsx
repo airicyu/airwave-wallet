@@ -16,7 +16,7 @@ import { sendExtensionRequest } from "../../shared/protocol";
 import { MainnetRpcStop } from "./MainnetRpcStop";
 import type { State, View } from "../types";
 import { useT } from "../state/useT";
-import { IconExternal } from "./StrokeIcon";
+import { IconExternal } from "../components/StrokeIcon";
 
 type Phase = "loading" | "empty" | "error" | "list";
 type MoreBar = "off" | "loading" | "error";

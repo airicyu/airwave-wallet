@@ -1,3 +1,7 @@
+/**
+ * The account chip in the popup top bar: kind mark, label, and short address.
+ * Tapping it opens the account list. It does not switch the active account by itself.
+ */
 import type { JSX } from "react";
 import { accountVisualKind } from "../../shared/marks";
 import { getExposedPublicKey } from "../../shared/accounts";

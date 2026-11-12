@@ -23,13 +23,13 @@ import {
   WatchAccountScreen,
 } from "./onboarding/OnboardingScreens";
 import { screenEnterKey } from "./runtime";
-import { CombinedManageScreen, CombinedSwitchScreen } from "./accounts/CombinedManage";
+import { CombinedManageScreen, CombinedSwitchScreen } from "./accounts/combined/CombinedManage";
 import {
   CombinedAddChoice,
   CombinedLocalScreen,
   CombinedPasteScreen,
   MemberRenameScreen,
-} from "./accounts/combined-member-screens";
+} from "./accounts/combined/combined-member-screens";
 import { usePopupContext } from "./state/PopupContext";
 
 export function AccountViews(): JSX.Element {

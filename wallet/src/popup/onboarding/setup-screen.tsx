@@ -6,7 +6,7 @@ import type { JSX } from "react";
 import { useState } from "react";
 import { sendExtensionRequest } from "../../shared/protocol";
 import { apiErrorMessage } from "../../shared/i18n";
-import { FirstRunBrand } from "../components/FirstRunBrand";
+import { FirstRunBrand } from "./FirstRunBrand";
 import { WalletPasswordInput } from "../components/WalletPasswordInput";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";

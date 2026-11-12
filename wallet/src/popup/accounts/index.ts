@@ -1,5 +1,6 @@
 /**
- * This file re-exports the public surface of the popup accounts folder: the account screens and the combined-account draft logic.
+ * Re-exports the popup account screens and the combined-account draft.
+ * Callers outside this folder import this file rather than a module inside it.
  */
 export * from "./AccountsScreens";
-export * from "./combined-logic";
+export * from "./combined/combined-logic";

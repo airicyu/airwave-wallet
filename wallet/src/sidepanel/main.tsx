@@ -1,3 +1,8 @@
+/**
+ * Sidebar entry. It renders the same App as the popup and marks the document as a wallet-shell surface.
+ * It keeps a sidebar presence port and reconnects that port while the panel is visible.
+ * The popup entry does not open this port. Idle-surface tracking is shared with the popup.
+ */
 import { createRoot } from "react-dom/client";
 import { App } from "../popup/App";
 import { keepIdleSurfacePort } from "../shared/shell";

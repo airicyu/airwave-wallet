@@ -1,3 +1,8 @@
+/**
+ * Close-empty screens: the recycle button, the account pick, confirm, sending, and the result.
+ * Planning and submitting the close transactions stay in the service worker.
+ * This file only collects the user's choice and shows the command result.
+ */
 import type { JSX } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRegisterDock } from "../state/dock";

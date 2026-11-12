@@ -21,8 +21,8 @@ import {
   sortCombinedTokenMembers,
   type HomeTokenRow,
 } from "../../shared/home";
-import { CopyIconButton } from "./CopyPkButton";
-import { IconChevronDown, IconSend, IconShield } from "./StrokeIcon";
+import { CopyIconButton } from "../components/CopyPkButton";
+import { IconChevronDown, IconSend, IconShield } from "../components/StrokeIcon";
 import { shortAddr } from "../lib/format";
 import { usePopupContext } from "../state/PopupContext";
 import { t as translate } from "../../shared/i18n";

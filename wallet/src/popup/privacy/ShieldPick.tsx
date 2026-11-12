@@ -4,7 +4,7 @@
  */
 import type { JSX } from "react";
 import { homeTokenRowForSendBalance } from "../../shared/send";
-import { TokenIcon, TokenTrust } from "../components/HomeTokenList";
+import { TokenIcon, TokenTrust } from "../home/HomeTokenList";
 import { tokenBalanceRaw } from "../send/send-logic";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";

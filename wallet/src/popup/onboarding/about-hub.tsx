@@ -1,3 +1,7 @@
+/**
+ * The About screen: brand, version, and links to the disclaimer, terms, and privacy policy.
+ * The legal text itself is rendered by LegalDoc on the following screens.
+ */
 import type { JSX } from "react";
 import { BrandMark } from "../components/BrandMark";
 import { usePopupContext } from "../state/PopupContext";

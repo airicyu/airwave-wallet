@@ -4,9 +4,9 @@
  */
 import { useCallback, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { isSigningOrWatch, parsePublicKeyBase58 } from "../../shared/accounts";
-import type { SigningOrWatchMeta } from "../../shared/protocol";
-import type { State } from "../types";
+import { isSigningOrWatch, parsePublicKeyBase58 } from "../../../shared/accounts";
+import type { SigningOrWatchMeta } from "../../../shared/protocol";
+import type { State } from "../../types";
 
 const DRAG_PX = 6;
 

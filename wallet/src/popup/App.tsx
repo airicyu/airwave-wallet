@@ -1,3 +1,8 @@
+/**
+ * Popup root. It binds the app state and the bottom dock, then draws PopupMarkup.
+ * It sets the window title from the stored locale.
+ * Navigation, vault unlock, and send requests live in usePopupAppState.
+ */
 import type { JSX } from "react";
 import { useEffect } from "react";
 import { parseUiLocale, t } from "../shared/i18n";

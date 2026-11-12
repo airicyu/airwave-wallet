@@ -1,6 +1,9 @@
 /**
- * Unshield form. The amount returns to the signing address.
- * Confirm asks the service worker to prove the withdrawal and open approval.
+ * Unshield form. The amount returns to the signing address. There is no recipient field.
+ * Auto-select uses the same note order as Private Send. Confirm asks the service worker to build the withdrawal and open approval.
+ * Back returns to the screen that opened this form, which is either the private token or the Unshield picker.
+ *
+ * Confirm currently sends the mint and the amount. It does not send the selected note ids, so the service worker chooses notes again while it builds the proof.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from "react";
 import { NATIVE_SOL_ID } from "../../shared/home";
@@ -11,31 +14,12 @@ import { amountUiToRaw, formatRawToAmountUi } from "../../shared/send";
 import { usePopupContext } from "../state/PopupContext";
 import { useRegisterDock } from "../state/dock";
 import { useT } from "../state/useT";
-import { syncWalletSendAbortId } from "../components/ApprovalHost";
+import { syncWalletSendAbortId } from "../approval/ApprovalHost";
 import { clearUnshieldDraft, markUnshieldApproval, readUnshieldBack, readUnshieldDraft, setUnshieldBack, writeUnshieldDraft } from "./unshield-draft";
 import { PrivacySkeleton } from "./PrivacySkeleton";
 import { UtxoReceipt } from "./UtxoReceipt";
-
-type Note = { id: string; amount: string; amountRaw: string };
-
-function sorted(notes: Note[]): Note[] {
-  return [...notes].sort((a, b) => {
-    const amount = BigInt(b.amountRaw) - BigInt(a.amountRaw);
-    if (amount !== 0n) return amount > 0n ? 1 : -1;
-    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
-  });
-}
-
-function cover(notes: Note[], target: bigint): string[] {
-  let sum = 0n;
-  const ids: string[] = [];
-  for (const note of notes) {
-    if (sum >= target) break;
-    ids.push(note.id);
-    sum += BigInt(note.amountRaw);
-  }
-  return ids;
-}
+import { coverAmount, notesByAmountDesc, type SpendNote } from "./note-cover";
+import { loadPrivacyStatus, privacyRowForMint } from "./privacy-status";
 
 export function UnshieldForm(): JSX.Element {
   const draft = readUnshieldDraft();
@@ -45,7 +29,7 @@ export function UnshieldForm(): JSX.Element {
   const [auto, setAuto] = useState(draft.auto);
   const [open, setOpen] = useState(draft.open);
   const [selected, setSelected] = useState<string[]>(draft.selected);
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [notes, setNotes] = useState<SpendNote[]>([]);
   const [balance, setBalance] = useState("—");
   const [formError, setFormError] = useState("");
   const [ready, setReady] = useState(false);
@@ -55,7 +39,7 @@ export function UnshieldForm(): JSX.Element {
   const publicId = mint === SOL_MINT ? NATIVE_SOL_ID : mint;
   const row = homeTokenRows.find((item) => item.id === publicId);
   const decimals = row?.decimals ?? 9;
-  const order = useMemo(() => sorted(notes), [notes]);
+  const order = useMemo(() => notesByAmountDesc(notes), [notes]);
 
   useEffect(() => {
     setTitleOverride(row ? `${t("privacy.unshield")} ${row.symbol}` : t("privacy.unshield"));
@@ -71,12 +55,11 @@ export function UnshieldForm(): JSX.Element {
 
   useEffect(() => {
     let cancelled = false;
-    void sendExtensionRequest("wallet.privacyStatus", {}).then((res) => {
+    void loadPrivacyStatus().then((body) => {
       if (cancelled) return;
       setReady(true);
-      if (!res.ok) return;
-      const body = res.result as { rows?: { mint: string; amount: string; notes: Note[] }[] };
-      const found = body.rows?.find((item) => item.mint === mint || (mint === NATIVE_SOL_ID && item.mint === SOL_MINT));
+      if (body.kind !== "registered") return;
+      const found = privacyRowForMint(body.rows, mint);
       if (!found) return;
       setNotes(found.notes);
       setBalance(found.amount);
@@ -87,7 +70,7 @@ export function UnshieldForm(): JSX.Element {
   }, [mint]);
 
   const target = amountUiToRaw(amount.trim(), decimals) ?? 0n;
-  const picked = auto ? cover(order, target) : selected;
+  const picked = auto ? coverAmount(order, target) : selected;
   const pickedSum = picked.reduce((sum, id) => sum + BigInt(order.find((item) => item.id === id)?.amountRaw ?? "0"), 0n);
   const overLimit = picked.length > 40;
   const short = target > 0n && pickedSum < target;

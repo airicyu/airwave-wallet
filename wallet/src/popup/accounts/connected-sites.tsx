@@ -1,3 +1,7 @@
+/**
+ * Lists origins this wallet has approved, and removes one origin when the user dismisses it.
+ * The connection records live in chrome.storage. This screen only reads them and sends the disconnect command.
+ */
 import type { JSX } from "react";
 import { sendExtensionRequest } from "../../shared/protocol";
 import { IconX } from "../components/StrokeIcon";

@@ -1,3 +1,10 @@
+/**
+ * Hosts the shared approval shell for a wallet send opened inside the popup or sidebar.
+ * Reject and success return to the form that started the request.
+ * Leaving the approval view aborts that pending request once.
+ *
+ * Privacy flows mark a one-shot flag before opening this host. Reject and success read that flag to choose Shield, Unshield, Send, or Merge. A public send has no flag and returns to token send. Merge finish and cancel use the same request id as the approval.
+ */
 import type { JSX } from "react";
 import { memo } from "react";
 import { ApprovalShell } from "../../approval/ApprovalShell";

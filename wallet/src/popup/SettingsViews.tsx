@@ -7,7 +7,7 @@ import disclaimerMd from "../../../docs/legal/disclaimer.md?raw";
 import termsMd from "../../../docs/legal/terms-of-use.md?raw";
 import privacyMd from "../../../docs/legal/privacy-policy.md?raw";
 import { ConnectedSites } from "./accounts/AccountsScreens";
-import { LegalDoc } from "./components/LegalDoc";
+import { LegalDoc } from "./onboarding/LegalDoc";
 import { AboutHub } from "./onboarding/OnboardingScreens";
 import { RpcGuideScreen } from "./onboarding/RpcGuideScreen";
 import {

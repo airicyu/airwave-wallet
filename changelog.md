@@ -32,6 +32,18 @@ Settings asks for a Helius API key and stores the key. Private balance and Mainn
 
 Sign AI names privacy-ring deposit, transact, merge, and user-registry instructions. A payload containing `TSPP/derive/v1` is rejected before approval.
 
+### Source file headers
+
+Every `.ts` and `.tsx` file under `wallet/src` has an English header. Files that had no header, or only one sentence, now say what the file owns in a short paragraph. A second paragraph is used only where a wrong edit would drop a batch, sign later merge groups without another approval, or ignore the notes the user selected.
+
+### Folder grouping
+
+Combined-account screens live under `popup/accounts/combined`. Seed generate, burner generate, seed import, and secret import each have their own folder under `popup/onboarding`. Home lists live in `popup/home`. The popup approval host lives in `popup/approval`. The first-run mark, the reroll button, and the legal document view live with onboarding. The password field stays shared, because unlock, import, reveal, and change-password all use it.
+
+### Shared privacy helpers
+
+Shield, Unshield, Send, and Merge share one check for an unlocked signing account and a Helius RPC, and one step that queues the built transaction for approval. Send and Unshield share one note order: largest amount first, then id, taking notes until the amount is covered. Those screens, the private tab, the token detail, Shield, and Merge read registration through one status helper.
+
 ### Still open
 
 Send and Unshield still do not pass the chosen notes into the proof.

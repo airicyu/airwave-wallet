@@ -1,3 +1,8 @@
+/**
+ * The unlock card shown when a sign approval finds the vault locked.
+ * It collects the password through refs the shell owns.
+ * Session unlock lives in the service worker. This card does not store the password.
+ */
 import type { JSX, Ref } from "react";
 import { brandIconUrl } from "../../shared/marks";
 import type { MessageKey } from "../../shared/i18n";

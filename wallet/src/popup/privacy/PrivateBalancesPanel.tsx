@@ -5,8 +5,9 @@
 import { useCallback, useEffect, useState, type JSX } from "react";
 import { NATIVE_SOL_ID, type HomeTokenRow } from "../../shared/home";
 import { sendExtensionRequest } from "../../shared/protocol";
+import { loadPrivacyStatus } from "./privacy-status";
 import { IconChevronDown, IconShield, IconUnshield } from "../components/StrokeIcon";
-import { TokenIcon, TokenTrust } from "../components/HomeTokenList";
+import { TokenIcon, TokenTrust } from "../home/HomeTokenList";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
 import { PrivacySkeleton } from "./PrivacySkeleton";
@@ -33,17 +34,12 @@ export function PrivateBalancesPanel(): JSX.Element {
   const [openMint, setOpenMint] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const res = await sendExtensionRequest("wallet.privacyStatus", {});
-    if (!res.ok) {
+    const body = await loadPrivacyStatus();
+    if (body.kind === "error") {
       setStatus({ kind: "error" });
       return;
     }
-    const body = res.result as Status;
-    if (body && (body.kind === "unavailable" || body.kind === "unregistered" || body.kind === "registered")) {
-      setStatus(body);
-      return;
-    }
-    setStatus({ kind: "error" });
+    setStatus(body);
   }, []);
 
   useEffect(() => {

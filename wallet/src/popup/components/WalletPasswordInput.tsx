@@ -1,3 +1,8 @@
+/**
+ * Password and secret text fields used by unlock, import, reveal, and change-password.
+ * Each field applies the browser hardening in password-input so a password manager is less likely to offer a save.
+ * That hardening is not a guarantee. Callers own the value and the submit.
+ */
 import type { JSX, KeyboardEvent } from "react";
 import { useEffect, useRef } from "react";
 import { hardenSensitiveTextInput, hardenWalletPasswordInput } from "../lib/password-input";

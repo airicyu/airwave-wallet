@@ -1,5 +1,6 @@
 /**
- * This file re-exports the public surface of the flow folder: page types, the stack, the pending-to-page map, reject, and the connect, sign, and host components.
+ * Re-exports the public surface of the flow folder: page types, the stack, the pending-to-page map, reject, and the connect, sign, and host components.
+ * Callers outside this folder import this file rather than a module inside it.
  */
 export type { FlowEntry, FlowPageId } from "./types";
 export { popFlow, popFlowByRequestId, pushFlow, topFlow } from "./stack";

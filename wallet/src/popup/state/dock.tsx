@@ -1,3 +1,9 @@
+/**
+ * The bottom primary action for the screen that is showing.
+ * A screen registers the label and handler while it is mounted, and clears them on leave.
+ * PopupMarkup draws the button. This file does not choose the route.
+ * A busy registration replaces the label with a spinner and ignores further clicks.
+ */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { JSX, ReactNode } from "react";
 

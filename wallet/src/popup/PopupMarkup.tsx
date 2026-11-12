@@ -1,3 +1,8 @@
+/**
+ * Popup chrome: the top bar, account widget, back control, and the screen body.
+ * It picks the home, account, settings, close-empty, locked, or setup view from the current route.
+ * Each of those modules owns its own form. This file also draws the toast and the dock button.
+ */
 import type { JSX } from "react";
 import { FlowHost } from "../flow";
 import { CopyPkButton } from "./components/CopyPkButton";

@@ -16,7 +16,7 @@ import { beginTokenSend, findTokenRowById, halfSendAmount, maxSendAmount, sendFo
 import { patchSendDraft, readSendDraft } from "./send-draft";
 import { IconBook, IconX } from "../components/StrokeIcon";
 import { shortAddr } from "../lib/format";
-import { syncWalletSendAbortId } from "../components/ApprovalHost";
+import { syncWalletSendAbortId } from "../approval/ApprovalHost";
 
 export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
   const {

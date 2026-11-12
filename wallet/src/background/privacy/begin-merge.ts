@@ -1,6 +1,10 @@
 /**
  * Builds merge transactions in groups of at most 52 notes.
- * The first group opens one approval. Later groups are signed after that approval.
+ * The first group is placed on the existing wallet-send approval queue.
+ * Later groups stay in memory under that same request id until the approval finishes or the user rejects it.
+ * This file does not draw the merge form. The popup sends the selected note ids.
+ *
+ * After that approval, finish signs each remaining group with the loaded key and submits it without another approval screen. Cancel drops the stored groups. A failed insert of the first approval must not leave a batch behind.
  */
 import { address, getBase64EncodedWireTransaction } from "@solana/kit";
 import bs58 from "bs58";
@@ -9,29 +13,18 @@ import type { Bytes32 } from "@heliuslabs/spr/keypair";
 import { SOL_MINT, Wallet } from "@heliuslabs/spr/transaction";
 import { buildMergeTransaction, syncWallet } from "@heliuslabs/spr/wallet";
 import type { ExtensionRequest, ExtensionResponse } from "../../shared/protocol";
-import { NATIVE_SOL_ID } from "../../shared/home";
 import { solanaRpcForUrl } from "../../shared/rpc";
 import { decodeWireTransaction, encodeWireTransaction, partiallySignWireTransaction } from "../../shared/tx";
-import { walletShellSurfaceFromHref } from "../../shared/shell";
 import { respond } from "../messaging";
-import { addPending, pendingInsertError, schedulePendingTimeout } from "../pending";
-import { pendingTimeoutHandlers } from "../send/wallet-send-broadcast";
-import { readAccounts, readActiveAccountId, readSettings } from "../storage";
+import { readSettings } from "../storage";
 import { getLoadedAccount, isUnlocked } from "../session";
 import { walletKeysFor } from "./keys";
 import { stashMergeBatch, takeMergeBatch } from "./merge-batch";
-import { privacyRpcUrl, signingTarget } from "./target";
+import { queueWalletSend } from "./queue-send";
+import { privacyAsset, privacyFail, privacySession } from "./ready";
+import { privacyRpcUrl } from "./target";
 
 const GROUP = 52;
-
-function fail(req: ExtensionRequest, code: string): ExtensionResponse {
-  return respond({
-    kind: "airwave-ext-res",
-    requestId: req.requestId,
-    ok: false,
-    error: { code, message: code },
-  });
-}
 
 function chunks(ids: string[]): string[][] {
   const groups: string[][] = [];
@@ -50,53 +43,37 @@ export async function handleBeginMerge(
   const body = req.payload as { mint?: string; ids?: string[] };
   const mint = body.mint?.trim() ?? "";
   const ids = (body.ids ?? []).filter((id) => typeof id === "string" && id.length > 0);
-  if (!mint || ids.length < 2) return fail(req, "INVALID_PAYLOAD");
-  const settings = await readSettings();
-  const rpcUrl = privacyRpcUrl(settings);
-  const target = signingTarget(await readAccounts(), await readActiveAccountId());
-  if (!rpcUrl || target === "watch" || target === "missing") return fail(req, "PRIVACY_UNAVAILABLE");
-  const loaded = getLoadedAccount(target.accountId);
-  if (!isUnlocked() || !loaded) return fail(req, "WALLET_LOCKED");
-  const asset = mint === NATIVE_SOL_ID || mint === SOL_MINT ? SOL_MINT : mint;
+  if (!mint || ids.length < 2) return privacyFail(req, "INVALID_PAYLOAD");
+  const ready = await privacySession(req);
+  if ("kind" in ready) return ready;
+  const asset = privacyAsset(mint);
   const groups = chunks(ids);
   try {
-    const client = privacyClient(rpcUrl, settings.cluster);
-    const keys = await walletKeysFor(target.accountId, client.proofService);
+    const client = privacyClient(ready.rpcUrl, ready.settings.cluster);
+    const keys = await walletKeysFor(ready.target.accountId, client.proofService);
     const wallet = new Wallet({ identity: keys.address() });
     await syncWallet({ wallet, keys, client });
     const tx = await buildMergeTransaction({
       client,
       wallet,
       keys,
-      feePayer: address(target.address),
+      feePayer: address(ready.target.address),
       asset: address(asset),
       inputs: hashes(groups[0]!),
     });
-    const requestId = crypto.randomUUID();
+    const queued = queueWalletSend(req, sender, ready.target.accountId, tx);
+    if ("kind" in queued) return queued;
     if (groups.length > 1) {
-      stashMergeBatch(requestId, { accountId: target.accountId, asset, groups: groups.slice(1) });
+      stashMergeBatch(queued.requestId, { accountId: ready.target.accountId, asset, groups: groups.slice(1) });
     }
-    const url = sender.url ?? sender.tab?.url ?? "";
-    const reserved = addPending(requestId, {
-      kind: "walletSend",
-      tabId: 0,
-      frameId: 0,
-      origin: "airwave:wallet",
-      payload: { transaction: Array.from(encodeWireTransaction(tx)) },
-      createdAt: Date.now(),
-      signAccountId: target.accountId,
-      uiHost: walletShellSurfaceFromHref(url) === "sidebar" ? "sidebar" : "window",
-    });
-    if (!reserved) return fail(req, pendingInsertError(requestId));
-    schedulePendingTimeout(requestId, pendingTimeoutHandlers);
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
       ok: true,
-      result: { requestId, groups: groups.length },
+      result: { requestId: queued.requestId, groups: groups.length },
     });
   } catch {
-    return fail(req, "PRIVACY_MERGE_FAILED");
+    return privacyFail(req, "PRIVACY_MERGE_FAILED");
   }
 }
 
@@ -115,7 +92,7 @@ export async function handleFinishMergeBatch(req: ExtensionRequest): Promise<Ext
   const settings = await readSettings();
   const rpcUrl = privacyRpcUrl(settings);
   const loaded = getLoadedAccount(batch.accountId);
-  if (!rpcUrl || !loaded || !isUnlocked()) return fail(req, "WALLET_LOCKED");
+  if (!rpcUrl || !loaded || !isUnlocked()) return privacyFail(req, "WALLET_LOCKED");
   const chainRpc = settings.rpcUrl.trim() || rpcUrl;
   const client = privacyClient(rpcUrl, settings.cluster);
   const keys = await walletKeysFor(batch.accountId, client.proofService);

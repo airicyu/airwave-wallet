@@ -1,4 +1,7 @@
-/** Derive wss/ws from Settings rpcUrl for rpcSubscriptions. */
+/**
+ * Derives the websocket URL from the saved RPC HTTP URL for account subscriptions.
+ * An http URL becomes ws, and an https URL becomes wss. Callers do not store a second URL.
+ */
 export function rpcUrlToWebSocket(rpcUrl: string): string {
   const t = rpcUrl.trim();
   if (!t) throw new Error("JSON-RPC URL required");

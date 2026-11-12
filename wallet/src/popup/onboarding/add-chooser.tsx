@@ -1,3 +1,7 @@
+/**
+ * The add-account chooser and the import chooser.
+ * Each row only navigates. Seed generate, burner generate, and the two import flows own their screens.
+ */
 import type { JSX } from "react";
 import {
   IconDownload,

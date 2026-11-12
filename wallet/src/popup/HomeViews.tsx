@@ -4,8 +4,8 @@
  */
 import type { JSX } from "react";
 import { useState } from "react";
-import { HomeActivityList } from "./components/HomeActivityList";
-import { HomeTokenList, TokenDetailView } from "./components/HomeTokenList";
+import { HomeActivityList } from "./home/HomeActivityList";
+import { HomeTokenList, TokenDetailView } from "./home/HomeTokenList";
 import { PrivateBalancesPanel } from "./privacy/PrivateBalancesPanel";
 import { PrivateTokenDetail } from "./privacy/PrivateTokenDetail";
 import { ShieldForm } from "./privacy/ShieldForm";
@@ -16,8 +16,8 @@ import { PrivateSendForm } from "./privacy/PrivateSendForm";
 import { ShieldPick } from "./privacy/ShieldPick";
 import { clearShieldAmount, setShieldBack } from "./privacy/shield-approval";
 import { CloseEmptyRecycleButton } from "./close-empty/CloseEmptyFeature";
-import { RefreshAssetsButton } from "./components/RefreshAssetsButton";
-import { ApprovalHost } from "./components/ApprovalHost";
+import { RefreshAssetsButton } from "./home/RefreshAssetsButton";
+import { ApprovalHost } from "./approval/ApprovalHost";
 import { jsonRpcMissing } from "../shared/protocol";
 import { sendExtensionRequest } from "../shared/protocol";
 import { screenEnterKey } from "./runtime";

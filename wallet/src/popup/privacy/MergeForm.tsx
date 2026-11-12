@@ -10,8 +10,9 @@ import { apiErrorMessage } from "../../shared/i18n";
 import { usePopupContext } from "../state/PopupContext";
 import { useRegisterDock } from "../state/dock";
 import { useT } from "../state/useT";
-import { syncWalletSendAbortId } from "../components/ApprovalHost";
+import { syncWalletSendAbortId } from "../approval/ApprovalHost";
 import { markMergeApproval } from "./merge-draft";
+import { loadPrivacyStatus, privacyRowForMint } from "./privacy-status";
 import { PrivacySkeleton } from "./PrivacySkeleton";
 import { UtxoReceipt } from "./UtxoReceipt";
 
@@ -47,12 +48,11 @@ export function MergeForm(): JSX.Element {
 
   useEffect(() => {
     let cancelled = false;
-    void sendExtensionRequest("wallet.privacyStatus", {}).then((res) => {
+    void loadPrivacyStatus().then((body) => {
       if (cancelled) return;
       setReady(true);
-      if (!res.ok) return;
-      const body = res.result as { rows?: { mint: string; notes: Note[] }[] };
-      const found = body.rows?.find((item) => item.mint === mint || (mint === NATIVE_SOL_ID && item.mint === SOL_MINT));
+      if (body.kind !== "registered") return;
+      const found = privacyRowForMint(body.rows, mint);
       if (found) setNotes(found.notes);
     });
     return () => {

@@ -1,3 +1,7 @@
+/**
+ * The Airwave mark used on first-run, unlock, and about.
+ * Size is only lg or sm. It does not choose the surrounding layout.
+ */
 import type { JSX } from "react";
 import { brandIconUrl } from "../../shared/marks";
 

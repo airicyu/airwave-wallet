@@ -4,18 +4,18 @@
  */
 import type { JSX } from "react";
 import { useCallback, useEffect, useState } from "react";
-import { ACCOUNT_LABEL_MAX } from "../../shared/accounts";
-import { getExposedPublicKey, isSigningOrWatch } from "../../shared/accounts";
-import { sendExtensionRequest } from "../../shared/protocol";
-import type { AccountMeta } from "../../shared/protocol";
-import { apiErrorMessage } from "../../shared/i18n";
-import { CopyIconButton } from "../components/CopyPkButton";
-import { DiceRerollButton } from "../components/DiceRerollButton";
-import { shortAddr } from "../lib/format";
-import { usePopupContext } from "../state/PopupContext";
-import { useT } from "../state/useT";
-import { useRegisterDock } from "../state/dock";
-import { viewAfterAccountCreated } from "../lib/rpc-guide";
+import { ACCOUNT_LABEL_MAX } from "../../../shared/accounts";
+import { getExposedPublicKey, isSigningOrWatch } from "../../../shared/accounts";
+import { sendExtensionRequest } from "../../../shared/protocol";
+import type { AccountMeta } from "../../../shared/protocol";
+import { apiErrorMessage } from "../../../shared/i18n";
+import { CopyIconButton } from "../../components/CopyPkButton";
+import { DiceRerollButton } from "../DiceRerollButton";
+import { shortAddr } from "../../lib/format";
+import { usePopupContext } from "../../state/PopupContext";
+import { useT } from "../../state/useT";
+import { useRegisterDock } from "../../state/dock";
+import { viewAfterAccountCreated } from "../../lib/rpc-guide";
 import { createBurnerDraft, rollBurnerDraft, type BurnerDraft } from "./generate-burner-flow";
 
 export function GenerateBurnerScreen(): JSX.Element {

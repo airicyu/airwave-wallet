@@ -5,17 +5,17 @@
 import { useCallback, useEffect, useState } from "react";
 import type { JSX } from "react";
 import { setMemberRenamePk } from "./combined-member-screens";
-import { parsePublicKeyBase58 } from "../../shared/accounts";
-import { sendExtensionRequest } from "../../shared/protocol";
-import { accountKind, type CombinedAccountMeta } from "../../shared/protocol";
-import { apiErrorMessage } from "../../shared/i18n";
-import { AccountKindMark } from "../components/AccountKindMark";
-import { CopyIconButton } from "../components/CopyPkButton";
-import { IconPlus, IconRename, IconTrash } from "../components/StrokeIcon";
-import { shortAddr } from "../lib/format";
-import { usePopupContext } from "../state/PopupContext";
-import { useT } from "../state/useT";
-import type { State } from "../types";
+import { parsePublicKeyBase58 } from "../../../shared/accounts";
+import { sendExtensionRequest } from "../../../shared/protocol";
+import { accountKind, type CombinedAccountMeta } from "../../../shared/protocol";
+import { apiErrorMessage } from "../../../shared/i18n";
+import { AccountKindMark } from "../../components/AccountKindMark";
+import { CopyIconButton } from "../../components/CopyPkButton";
+import { IconPlus, IconRename, IconTrash } from "../../components/StrokeIcon";
+import { shortAddr } from "../../lib/format";
+import { usePopupContext } from "../../state/PopupContext";
+import { useT } from "../../state/useT";
+import type { State } from "../../types";
 import { localCombinedMember, useMemberSheetDrag } from "./member-sheet-drag";
 
 export function CombinedManagePanel({

@@ -4,14 +4,14 @@
  */
 import type { JSX } from "react";
 import { useCallback, useState } from "react";
-import { ACCOUNT_LABEL_MAX } from "../../shared/accounts";
-import { sendExtensionRequest } from "../../shared/protocol";
-import { apiErrorMessage } from "../../shared/i18n";
-import { SensitiveTextArea } from "../components/WalletPasswordInput";
-import { usePopupContext } from "../state/PopupContext";
-import { useT } from "../state/useT";
-import { useRegisterDock } from "../state/dock";
-import { viewAfterAccountCreated } from "../lib/rpc-guide";
+import { ACCOUNT_LABEL_MAX } from "../../../shared/accounts";
+import { sendExtensionRequest } from "../../../shared/protocol";
+import { apiErrorMessage } from "../../../shared/i18n";
+import { SensitiveTextArea } from "../../components/WalletPasswordInput";
+import { usePopupContext } from "../../state/PopupContext";
+import { useT } from "../../state/useT";
+import { useRegisterDock } from "../../state/dock";
+import { viewAfterAccountCreated } from "../../lib/rpc-guide";
 import { detectSecret } from "./import-secret";
 
 export function ImportSecretScreen(): JSX.Element {
