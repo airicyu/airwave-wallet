@@ -20,6 +20,10 @@ import {
 import { walletShellSurfaceFromHref } from "../../shared/shell";
 import type { HomeTokenRow } from "../../shared/home";
 import { abortWalletSendOnPopupUnload, syncWalletSendAbortId } from "../components/ApprovalHost";
+import { consumeShieldApproval } from "../privacy/shield-approval";
+import { consumePrivateSendApproval } from "../privacy/private-send-draft";
+import { consumeUnshieldApproval } from "../privacy/unshield-draft";
+import { consumeMergeApproval } from "../privacy/merge-draft";
 import { useCloseEmptyPopup } from "./useCloseEmptyPopup";
 import { usePopupNavigation } from "./usePopupNavigation";
 import {
@@ -67,7 +71,7 @@ export function usePopupAppState() {
   const [closableScanGen, setClosableScanGen] = useState(0);
   const bumpClosableScan = useCallback(() => setClosableScanGen((g) => g + 1), []);
   const [toast, setToast] = useState("");
-  const [toastVariant, setToastVariant] = useState<"error" | "warn">("error");
+  const [toastVariant, setToastVariant] = useState<"error" | "warn" | "ok">("error");
   const [pendingSendFormError, setPendingSendFormError] = useState<string | null>(null);
   const errorHideTimer = useRef<number | null>(null);
   const lastActiveAccountId = useRef<string | null>(null);
@@ -89,7 +93,7 @@ export function usePopupAppState() {
     setToastVariant("error");
   }, []);
 
-  const showToast = useCallback((msg: string, variant: "error" | "warn" = "error") => {
+  const showToast = useCallback((msg: string, variant: "error" | "warn" | "ok" = "error") => {
     if (errorHideTimer.current != null) {
       window.clearTimeout(errorHideTimer.current);
       errorHideTimer.current = null;
@@ -176,6 +180,23 @@ export function usePopupAppState() {
   }, [activeWalletSendRequestId]);
 
   useEffect(() => {
+    if (currentView !== "send-approval" || activeWalletSendRequestId) return;
+    const mergeId = consumeMergeApproval();
+    if (mergeId) void sendExtensionRequest("wallet.cancelMergeBatch", { requestId: mergeId });
+    navigateTo(
+      consumeUnshieldApproval()
+        ? "unshield"
+        : consumePrivateSendApproval()
+          ? "private-send"
+          : consumeShieldApproval()
+            ? "shield"
+            : mergeId
+              ? "merge"
+              : "home-token",
+    );
+  }, [activeWalletSendRequestId, currentView, navigateTo]);
+
+  useEffect(() => {
     const state = mirror.wallet;
     if (!state) return;
     if (state.vaultExists && !state.unlocked) {
@@ -191,7 +212,7 @@ export function usePopupAppState() {
       setPendingSendFormError(null);
       resetCloseEmptyFlow();
       const view = bagRef.current.currentView;
-      if (view === "token-send" || view === "token-detail") {
+      if (view === "token-send" || view === "token-detail" || view === "private-detail" || view === "shield" || view === "shield-pick" || view === "private-send" || view === "unshield" || view === "unshield-pick" || view === "merge" || view === "send-approval") {
         navigateTo("home-token");
       }
       if (view.startsWith("close-empty")) {
@@ -224,12 +245,15 @@ export function usePopupAppState() {
       if (!bagRef.current.activeWalletSendRequestId || notice.requestId !== bagRef.current.activeWalletSendRequestId) {
         return;
       }
-      if (notice.ok) return;
-      const wasApproval = bagRef.current.currentView === "send-approval";
+      if (notice.ok) {
+        consumeShieldApproval();
+        consumePrivateSendApproval();
+        consumeUnshieldApproval();
+        return;
+      }
       setActiveWalletSendRequestId(null);
       bagRef.current.activeWalletSendRequestId = null;
       syncWalletSendAbortId(null);
-      if (wasApproval) navigateTo("token-send");
       setPendingSendFormError(notice.error ?? "CANCELLED");
     };
     const openSidebarFlow = (requestId: string) => {

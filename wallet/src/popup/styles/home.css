@@ -75,6 +75,69 @@
   border-color: var(--accent);
 }
 
+.token-detail-action {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1 1 calc(50% - 10px);
+  max-width: calc(50% - 5px);
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  background: var(--fill);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.1;
+  cursor: pointer;
+}
+
+.token-detail-action svg {
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+
+.token-detail-action:hover {
+  background: color-mix(in srgb, var(--accent) 16%, var(--fill));
+  border-color: var(--accent-dim);
+}
+
+.token-detail-action.is-shield svg {
+  color: var(--ok);
+}
+
+.token-detail-action.is-shield:hover {
+  background: color-mix(in srgb, var(--ok) 16%, var(--fill));
+  border-color: color-mix(in srgb, var(--ok) 50%, var(--stroke));
+}
+
+.token-detail-action.is-unshield svg {
+  color: var(--warn);
+}
+
+.token-detail-action.is-unshield:hover {
+  background: color-mix(in srgb, var(--warn) 16%, var(--fill));
+  border-color: color-mix(in srgb, var(--warn) 50%, var(--stroke));
+}
+
+.token-detail-action.is-merge svg {
+  color: #b7a6f0;
+}
+
+.token-detail-action.is-merge:hover {
+  background: color-mix(in srgb, #b7a6f0 16%, var(--fill));
+  border-color: color-mix(in srgb, #b7a6f0 50%, var(--stroke));
+}
+
+.token-detail-hero + .token-detail-meta {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--stroke);
+}
+
 .token-detail-meta {
   display: flex;
   flex-direction: column;

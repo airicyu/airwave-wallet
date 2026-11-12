@@ -19,7 +19,7 @@ Version and changes: [version.md](../version.md), [changelog.md](../changelog.md
 
 - **Devnet** / **Mainnet**. A new install starts on Mainnet. Devnet may use the official public RPC.
 - **Mainnet requires your own JSON-RPC.** Without it the wallet will not hit the official public node, and Home stays blocked. The usual path is a [Helius](https://www.helius.dev/) key whose **RPC URL** you put in Settings → RPC (steps in [user-guide.md](./user-guide.md)).
-- Settings also has optional **Helius API URL** (DAS names / icons, parsed Mainnet Activity) and **Jupiter API key** (name overrides). Those fields are not RPC.
+- Settings also has an optional **Helius API key** (private balance, parsed Mainnet Activity) and **Jupiter API key** (name overrides). Those fields are not RPC.
 
 ---
 

@@ -220,6 +220,8 @@ function RpcEditor({
       if (saved) onClose();
     });
   };
+  const baseline = isNew ? "" : url;
+  const dirty = !isPublic && draft !== baseline;
   return (
     <div className="rpc-edit">
       <input
@@ -233,16 +235,16 @@ function RpcEditor({
         onKeyDown={(ev) => {
           if (ev.key === "Enter") {
             ev.preventDefault();
-            if (!isPublic) confirm();
+            if (dirty) confirm();
           }
           if (ev.key === "Escape") onClose();
         }}
       />
-      {!isPublic ? (
+      {dirty ? (
         <>
           <button
             type="button"
-            className="icon-btn ghost-inline rpc-icon-btn"
+            className="icon-btn ghost-inline confirm-tick rpc-icon-btn"
             title={t("common.confirm")}
             aria-label={t("common.confirm")}
             onMouseDown={(e) => e.preventDefault()}
@@ -250,18 +252,16 @@ function RpcEditor({
           >
             <IconCheck />
           </button>
-          {isNew ? (
-            <button
-              type="button"
-              className="icon-btn ghost-inline rpc-icon-btn danger"
-              title={t("common.discard")}
-              aria-label={t("common.discard")}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={onClose}
-            >
-              <IconX />
-            </button>
-          ) : null}
+          <button
+            type="button"
+            className="icon-btn ghost-inline discard-cross rpc-icon-btn"
+            title={t("common.discard")}
+            aria-label={t("common.discard")}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => setDraft(baseline)}
+          >
+            <IconX />
+          </button>
         </>
       ) : null}
     </div>

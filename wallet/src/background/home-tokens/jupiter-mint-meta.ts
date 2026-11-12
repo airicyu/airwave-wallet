@@ -74,6 +74,7 @@ type JupiterTokenHit = {
   name?: string;
   symbol?: string;
   icon?: string;
+  decimals?: number;
 };
 
 function parseJupiterSearchArray(json: unknown): Map<string, JupiterTokenHit> {
@@ -97,7 +98,9 @@ function parseJupiterSearchArray(json: unknown): Map<string, JupiterTokenHit> {
       organicScoreLabel: trimMeta(rec.organicScoreLabel),
       name: trimMeta(rec.name),
       symbol: trimMeta(rec.symbol),
-      icon: httpsIconUrl(rec.icon),
+      decimals: typeof rec.decimals === "number" && Number.isInteger(rec.decimals) && rec.decimals >= 0 && rec.decimals <= 18
+        ? rec.decimals
+        : undefined,
     });
   }
   return map;
@@ -222,6 +225,35 @@ export async function lookupJupiterMintMetadata(
     } catch {
       break;
     }
+  }
+  return out;
+}
+
+export type JupiterUsdQuote = { usdPrice: string; decimals?: number };
+
+/** Mainnet unit price and decimals from Jupiter tokens v2 search. Price is a decimal string. */
+export async function lookupJupiterUsdQuotes(
+  mints: string[],
+  jupiterApiKey: string,
+  jupiterApiUrl: string,
+): Promise<Map<string, JupiterUsdQuote>> {
+  const out = new Map<string, JupiterUsdQuote>();
+  if (mints.length === 0) return out;
+  const signal = new AbortController().signal;
+  const key = jupiterApiKey.trim();
+  const headers: Record<string, string> = {};
+  if (key) headers["x-api-key"] = key;
+  const url = jupiterSearchUrl(jupiterApiUrl, mints.slice(0, JUPITER_BATCH_SIZE).join(","));
+  try {
+    const res = await fetchWith429Retry(url, { method: "GET", headers }, signal);
+    if (!res.ok) return out;
+    const json = (await res.json()) as unknown;
+    for (const [mint, hit] of parseJupiterSearchArray(json)) {
+      if (hit.usdPrice == null) continue;
+      out.set(mint, { usdPrice: String(hit.usdPrice), decimals: hit.decimals });
+    }
+  } catch {
+    return out;
   }
   return out;
 }

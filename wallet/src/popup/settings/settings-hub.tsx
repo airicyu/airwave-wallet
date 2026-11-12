@@ -2,6 +2,7 @@ import type { JSX } from "react";
 import type { PublicSettings } from "../../shared/protocol";
 import type { UiLocale } from "../../shared/protocol";
 import { LOCALE_ENDONYM, t } from "../../shared/i18n";
+import { IconBug, IconCoin, IconGlobe, IconKey, IconLock, IconNetwork, IconSpark } from "../components/StrokeIcon";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
 
@@ -18,7 +19,10 @@ export function SettingsHub({ settings }: { settings: PublicSettings }): JSX.Ele
     <ul className="settings-hub-list" id="settings-hub-list">
       <li>
         <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-locale")}>
-          <span className="hub-label">{t("settings.hub.language")}</span>
+          <span className="hub-main">
+            <span className="hub-ico"><IconGlobe size={18} /></span>
+            <span className="hub-label">{t("settings.hub.language")}</span>
+          </span>
           <span className="hub-summary" id="hub-summary-locale">
             {LOCALE_ENDONYM[settings.locale]}
           </span>
@@ -26,46 +30,53 @@ export function SettingsHub({ settings }: { settings: PublicSettings }): JSX.Ele
       </li>
       <li>
         <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-rpc")}>
-          <span className="hub-label">{t("settings.hub.rpc")}</span>
+          <span className="hub-main">
+            <span className="hub-ico"><IconNetwork size={18} /></span>
+            <span className="hub-label">{t("settings.hub.rpc")}</span>
+          </span>
         </button>
       </li>
       <li>
         <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-keys")}>
-          <span className="hub-label">{t("settings.hub.apiKeys")}</span>
+          <span className="hub-main">
+            <span className="hub-ico"><IconKey size={18} /></span>
+            <span className="hub-label">{t("settings.hub.apiKeys")}</span>
+          </span>
         </button>
       </li>
       <li>
         <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-tx-ai")}>
-          <span className="hub-label">{t("settings.hub.txAi")}</span>
+          <span className="hub-main">
+            <span className="hub-ico"><IconSpark size={18} /></span>
+            <span className="hub-label">{t("settings.hub.txAi")}</span>
+          </span>
           <span className="hub-summary" id="hub-summary-tx-ai">
             {txAiHubOnOff(settings, locale)}
           </span>
         </button>
       </li>
       <li>
-        <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-cu-price")}>
-          <span className="hub-label">{t("settings.hub.cuPrice")}</span>
-          <span className="hub-summary" id="hub-summary-cu-price">
-            {String(settings.defaultCuPrice)}
-          </span>
-        </button>
-      </li>
-      <li>
-        <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-priority-fee")}>
-          <span className="hub-label">{t("settings.hub.priorityFee")}</span>
-          <span className="hub-summary" id="hub-summary-priority-fee">
-            {settings.defaultPriorityFeeLamports}
+        <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-tx-fee")}>
+          <span className="hub-main">
+            <span className="hub-ico"><IconCoin size={18} /></span>
+            <span className="hub-label">{t("settings.hub.txFee")}</span>
           </span>
         </button>
       </li>
       <li>
         <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-wallet-lock")}>
-          <span className="hub-label">{t("settings.hub.walletLock")}</span>
+          <span className="hub-main">
+            <span className="hub-ico"><IconLock size={18} /></span>
+            <span className="hub-label">{t("settings.hub.walletLock")}</span>
+          </span>
         </button>
       </li>
       <li>
         <button type="button" className="settings-hub-row" onClick={() => navigateTo("settings-debug")}>
-          <span className="hub-label">{t("settings.hub.debug")}</span>
+          <span className="hub-main">
+            <span className="hub-ico"><IconBug size={18} /></span>
+            <span className="hub-label">{t("settings.hub.debug")}</span>
+          </span>
           <span className="hub-summary" id="hub-summary-debug">
             {settings.debugModeEnabled ? t("settings.txAiAnalysis.enable") : t("settings.txAiAnalysis.off")}
           </span>

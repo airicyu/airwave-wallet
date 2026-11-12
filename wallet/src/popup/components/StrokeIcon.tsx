@@ -44,6 +44,41 @@ export function IconBook({ size = 16 }: { size?: number }): JSX.Element {
   );
 }
 
+export function IconSend({ size = 22 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <path d="M5 19L19 5" />
+      <path d="M9 5h10v10" />
+    </StrokeIcon>
+  );
+}
+
+export function IconShield({ size = 22 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <path d="M12 3l8 3v6c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V6l8-3z" />
+    </StrokeIcon>
+  );
+}
+
+export function IconUnshield({ size = 22 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <path d="M12 3l8 3v6c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V6l8-3z" />
+      <path d="M12 8v5M9.5 11.2L12 13.7l2.5-2.5" />
+    </StrokeIcon>
+  );
+}
+
+export function IconMerge({ size = 22 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <path d="M12 3l9 5-9 5-9-5 9-5z" />
+      <path d="M3 12l9 5 9-5" />
+    </StrokeIcon>
+  );
+}
+
 export function IconPlus({ size = 16 }: { size?: number }): JSX.Element {
   return (
     <StrokeIcon size={size}>
@@ -279,6 +314,34 @@ export function IconX({ size = 16 }: { size?: number }): JSX.Element {
   );
 }
 
+export function IconSpark({ size = 16 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <path d="M12 3l1.4 5.2L18.5 9.5 13.4 11 12 16.2 10.6 11 5.5 9.5l5.1-1.3z" />
+      <path d="M18 15l.6 2 2 .6-2 .6-.6 2-.6-2-2-.6 2-.6z" />
+    </StrokeIcon>
+  );
+}
+
+export function IconCoin({ size = 16 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <ellipse cx="12" cy="7" rx="7" ry="3" />
+      <path d="M5 7v5c0 1.7 3.1 3 7 3s7-1.3 7-3V7" />
+      <path d="M5 12v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" />
+    </StrokeIcon>
+  );
+}
+
+export function IconBug({ size = 16 }: { size?: number }): JSX.Element {
+  return (
+    <StrokeIcon size={size}>
+      <path d="M8 9a4 4 0 0 1 8 0v5a4 4 0 0 1-8 0z" />
+      <path d="M12 9v9" />
+      <path d="M4 11l4 1M20 11l-4 1M4 16l4-1M20 16l-4-1" />
+    </StrokeIcon>
+  );
+}
 export function IconKey({ size = 16 }: { size?: number }): JSX.Element {
   return (
     <StrokeIcon size={size}>

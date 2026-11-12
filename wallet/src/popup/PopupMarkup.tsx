@@ -34,7 +34,11 @@ import { useDock } from "./state/dock";
 function ErrorToast(): JSX.Element {
   const { toast, toastVariant, clearError } = usePopupContext();
   const className =
-    toastVariant === "warn" ? "toast-banner toast-warn" : "error toast-error";
+    toastVariant === "ok"
+      ? "toast-banner toast-ok"
+      : toastVariant === "warn"
+        ? "toast-banner toast-warn"
+        : "error toast-error";
   return (
     <p
       id="error"
@@ -312,12 +316,13 @@ export function PopupMarkup(): JSX.Element {
             ) : null}
             <button
               type="button"
-              className="primary-btn"
+              className={dock?.busy ? "primary-btn is-busy" : "primary-btn"}
               id="dock-primary"
-              disabled={dock?.disabled ?? true}
+              disabled={(dock?.disabled ?? true) || dock?.busy === true}
+              aria-busy={dock?.busy === true}
               onClick={() => void dock?.onPrimary()}
             >
-              {dock?.label ?? ""}
+              {dock?.busy ? <span className="btn-spin" aria-hidden="true" /> : dock?.label ?? ""}
             </button>
           </div>
         </footer>

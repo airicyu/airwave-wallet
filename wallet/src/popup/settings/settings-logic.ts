@@ -15,6 +15,7 @@ import {
 } from "../../shared/protocol";
 import { apiErrorMessage, DEFAULT_UI_LOCALE, messageForErrorCode, t } from "../../shared/i18n";
 import type { MessageKey } from "../../shared/i18n";
+import { heliusApiKeyFromStored } from "../../shared/rpc";
 import type { State } from "../types";
 
 export const MASKED_SECRET_DISPLAY = "••••••";
@@ -176,10 +177,12 @@ export async function persistHeliusField(args: {
   locale: UiLocale;
 }): Promise<boolean> {
   const stored = (await readStoredIntegrationSecrets()).heliusApiUrl;
-  let heliusApiUrl = args.draft.trim();
-  if (heliusApiUrl === MASKED_SECRET_DISPLAY) heliusApiUrl = stored;
+  let draft = args.draft.trim();
+  if (draft === MASKED_SECRET_DISPLAY) draft = stored;
+  const heliusApiUrl = draft ? heliusApiKeyFromStored(draft) : "";
+  if (draft && !heliusApiUrl) return false;
   if (heliusApiUrl === stored) return true;
-  return patchSettingsPartial({ heliusApiUrl }, args.io, args.locale);
+  return patchSettingsPartial({ heliusApiUrl: heliusApiUrl ?? "" }, args.io, args.locale);
 }
 
 export async function persistJupiterField(args: {

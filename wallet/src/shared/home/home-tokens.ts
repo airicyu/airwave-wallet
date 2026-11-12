@@ -36,7 +36,7 @@ export type HomeTokenRow = {
   uiAmount: number;
   uiAmountLabel: string;
   usdLabel: string;
-  /** Row USD total (not unit price). Omit if invalid or "—". For sorting; do not parse usdLabel as the source of truth. */
+  /** Row USD total (not unit price). Omit when there is no price. For sorting; do not parse usdLabel as the source of truth. */
   usdTotal?: number;
   iconLetter: string;
   iconUrl?: string;
@@ -64,7 +64,7 @@ export function iconLetterForSymbol(symbol: string): string {
 }
 
 export function formatUsdLabel(price: number): string {
-  if (!Number.isFinite(price)) return "—";
+  if (!Number.isFinite(price)) return "";
   return `$${price.toFixed(2)}`;
 }
 
@@ -137,7 +137,7 @@ export function buildHomeTokenRows(
       symbol: "SOL",
       uiAmount: solAmount,
       uiAmountLabel: solAmount.toLocaleString(undefined, { maximumFractionDigits: 9 }),
-      usdLabel: solUsd != null ? formatUsdLabel(solUsd) : "—",
+      usdLabel: solUsd != null ? formatUsdLabel(solUsd) : "",
       usdTotal: solUsd != null && Number.isFinite(solUsd) ? solUsd : undefined,
       iconLetter: "SO",
       iconUrl: NATIVE_SOL_ICON_URL,
@@ -197,7 +197,7 @@ export function buildHomeTokenRows(
       uiAmountLabel: ui.toLocaleString(undefined, {
         maximumFractionDigits: Math.min(decimals, 9),
       }),
-      usdLabel: mintUsd != null ? formatUsdLabel(mintUsd) : "—",
+      usdLabel: mintUsd != null ? formatUsdLabel(mintUsd) : "",
       usdTotal: mintUsd != null && Number.isFinite(mintUsd) ? mintUsd : undefined,
       iconLetter: iconLetterForSymbol(symbol),
       iconUrl: isWrappedSol ? NATIVE_SOL_ICON_URL : iconUrl,
@@ -222,7 +222,7 @@ export function buildHomeTokenRowsFromOwnerParsed(
       symbol: "SOL",
       uiAmount: solAmount,
       uiAmountLabel: solAmount.toLocaleString(undefined, { maximumFractionDigits: 9 }),
-      usdLabel: "—",
+      usdLabel: "",
       iconLetter: "SO",
       iconUrl: NATIVE_SOL_ICON_URL,
       decimals: 9,
@@ -264,7 +264,7 @@ export function buildHomeTokenRowsFromOwnerParsed(
       uiAmountLabel: ui.toLocaleString(undefined, {
         maximumFractionDigits: Math.min(decimals, 9),
       }),
-      usdLabel: "—",
+      usdLabel: "",
       iconLetter: iconLetterForSymbol(symbol),
       iconUrl: isWrappedSol ? NATIVE_SOL_ICON_URL : undefined,
       decimals,

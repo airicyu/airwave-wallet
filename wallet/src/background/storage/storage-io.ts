@@ -3,7 +3,7 @@
  * Does not manage in-memory pending maps or session unlock keys in chrome.storage.session.
  */
 import { getExposedPublicKey } from "../../shared/accounts";
-import { DEFAULT_JUPITER_API_URL, DEFAULT_OPENROUTER_API_URL } from "../../shared/rpc";
+import { DEFAULT_JUPITER_API_URL, DEFAULT_OPENROUTER_API_URL, heliusApiKeyFromStored } from "../../shared/rpc";
 import {
   customRpcForCluster,
   effectiveRpcUrl,
@@ -173,7 +173,7 @@ export function normalizeSettings(raw: Partial<Settings> | undefined): Settings 
     cluster,
     rpcByCluster,
     rpcUrl: effectiveRpcUrl(cluster, rpcByCluster[cluster]),
-    heliusApiUrl: typeof raw?.heliusApiUrl === "string" ? raw.heliusApiUrl : "",
+    heliusApiUrl: heliusApiKeyFromStored(typeof raw?.heliusApiUrl === "string" ? raw.heliusApiUrl : "") ?? "",
     jupiterApiUrl: typeof raw?.jupiterApiUrl === "string" ? raw.jupiterApiUrl : DEFAULT_JUPITER_API_URL,
     jupiterApiKey: typeof raw?.jupiterApiKey === "string" ? raw.jupiterApiKey : "",
     openRouterApiKey: typeof raw?.openRouterApiKey === "string" ? raw.openRouterApiKey : "",

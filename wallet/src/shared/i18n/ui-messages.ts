@@ -86,20 +86,15 @@ const messages = {
     "zh-Hans": "API 密钥",
     "en": "API keys",
   },
-  "nav.settingsCuPrice": {
-    "zh-Hant": "預設 CU 單價",
-    "zh-Hans": "预设 CU 单价",
-    "en": "Default CU price",
-  },
-  "nav.settingsPriorityFee": {
-    "zh-Hant": "預設優先費",
-    "zh-Hans": "预设优先费",
-    "en": "Default priority fee",
+  "nav.settingsTxFee": {
+    "zh-Hant": "交易手續費",
+    "zh-Hans": "交易手续费",
+    "en": "Transaction fee",
   },
   "nav.settingsWalletLock": {
-    "zh-Hant": "錢包鎖定設定",
-    "zh-Hans": "钱包锁定设置",
-    "en": "Wallet lock settings",
+    "zh-Hant": "錢包鎖定",
+    "zh-Hans": "钱包锁定",
+    "en": "Wallet lock",
   },
   "nav.settingsWalletLockPassword": {
     "zh-Hant": "錢包鎖定密碼",
@@ -327,15 +322,30 @@ const messages = {
     "zh-Hans": "API 密钥",
     "en": "API keys",
   },
-  "settings.hub.cuPrice": {
-    "zh-Hant": "預設 CU 單價",
-    "zh-Hans": "预设 CU 单价",
-    "en": "Default CU price",
+  "settings.keys.helius": {
+    "zh-Hant": "Helius API 金鑰",
+    "zh-Hans": "Helius API 密钥",
+    "en": "Helius API key",
   },
-  "settings.hub.priorityFee": {
-    "zh-Hant": "預設優先費",
-    "zh-Hans": "预设优先费",
-    "en": "Default priority fee",
+  "settings.keys.jupiter": {
+    "zh-Hant": "Jupiter API 金鑰",
+    "zh-Hans": "Jupiter API 密钥",
+    "en": "Jupiter API key",
+  },
+  "settings.hub.txFee": {
+    "zh-Hant": "交易手續費",
+    "zh-Hans": "交易手续费",
+    "en": "Transaction fee",
+  },
+  "settings.fee.priority": {
+    "zh-Hant": "預設優先費（V1 交易）",
+    "zh-Hans": "预设优先费（V1 交易）",
+    "en": "Default priority fee (V1 Tx)",
+  },
+  "settings.fee.cuPrice": {
+    "zh-Hant": "預設 CU 單價（Legacy / V0 交易）",
+    "zh-Hans": "预设 CU 单价（Legacy / V0 交易）",
+    "en": "Default CU price (Legacy / V0 Tx)",
   },
   "settings.idleAutoLock.enable": {
     "zh-Hant": "閒置自動鎖定",
@@ -363,14 +373,14 @@ const messages = {
     "en": "Decrease minutes",
   },
   "settings.hub.walletLock": {
-    "zh-Hant": "錢包鎖定設定",
-    "zh-Hans": "钱包锁定设置",
-    "en": "Wallet lock settings",
+    "zh-Hant": "錢包鎖定",
+    "zh-Hans": "钱包锁定",
+    "en": "Wallet lock",
   },
   "settings.hub.debug": {
-    "zh-Hant": "Debug mode 設定",
-    "zh-Hans": "Debug mode 设置",
-    "en": "Debug mode settings",
+    "zh-Hant": "Debug mode",
+    "zh-Hans": "Debug mode",
+    "en": "Debug mode",
   },
   "settings.debug.enable": {
     "zh-Hant": "Debug mode",
@@ -424,9 +434,9 @@ const messages = {
     "en": "AI settings",
   },
   "nav.settingsDebug": {
-    "zh-Hant": "Debug mode 設定",
-    "zh-Hans": "Debug mode 设置",
-    "en": "Debug mode settings",
+    "zh-Hant": "Debug mode",
+    "zh-Hans": "Debug mode",
+    "en": "Debug mode",
   },
   /* settings */
   "settings.txAiAnalysis.enable": {
@@ -465,8 +475,8 @@ const messages = {
     "en": "Enter at least one valid model id",
   },
   "settings.openRouter.apiKey": {
-    "zh-Hant": "OpenRouter API key",
-    "zh-Hans": "OpenRouter API key",
+    "zh-Hant": "OpenRouter API 金鑰",
+    "zh-Hans": "OpenRouter API 密钥",
     "en": "OpenRouter API key",
   },
   "settings.openRouter.model": {
@@ -861,6 +871,98 @@ const messages = {
     "zh-Hant": "資產",
     "zh-Hans": "资产",
     "en": "Assets",
+  },
+  "home.tokens": {
+    "zh-Hant": "代幣",
+    "zh-Hans": "代币",
+    "en": "Tokens",
+  },
+  "home.privateBalances": {
+    "zh-Hant": "私人餘額",
+    "zh-Hans": "私人余额",
+    "en": "Private Balances",
+  },
+  "privacy.unavailable": {
+    "zh-Hant": "不可用",
+    "zh-Hans": "不可用",
+    "en": "Unavailable",
+  },
+  "privacy.register": {
+    "zh-Hant": "註冊",
+    "zh-Hans": "注册",
+    "en": "Register",
+  },
+  "privacy.registerFailed": {
+    "zh-Hant": "註冊失敗",
+    "zh-Hans": "注册失败",
+    "en": "Registration failed",
+  },
+  "privacy.registering": {
+    "zh-Hant": "帳號註冊中",
+    "zh-Hans": "账号注册中",
+    "en": "Registering this account",
+  },
+  "privacy.registered": {
+    "zh-Hant": "這個錢包已註冊。",
+    "zh-Hans": "这个钱包已注册。",
+    "en": "This wallet is registered.",
+  },
+  "nav.privateDetail": {
+    "zh-Hant": "私人餘額",
+    "zh-Hans": "私人余额",
+    "en": "Private balance",
+  },
+  "privacy.shield": { "zh-Hant": "轉入私人", "zh-Hans": "转入私人", "en": "Shield" },
+  "privacy.shieldToken": { "zh-Hant": "轉入私人餘額", "zh-Hans": "转入私人余额", "en": "Shield token" },
+  "privacy.selectToken": {
+    "zh-Hant": "選擇要轉入私人餘額的代幣",
+    "zh-Hans": "选择要转入私人余额的代币",
+    "en": "Select a token to shield",
+  },
+  "privacy.privateSend": {
+    "zh-Hant": "發送私人餘額",
+    "zh-Hans": "发送私人余额",
+    "en": "Private balance send",
+  },
+  "privacy.paste": { "zh-Hant": "貼上", "zh-Hans": "粘贴", "en": "Paste" },
+  "privacy.utxoSelection": { "zh-Hant": "選擇 UTXO", "zh-Hans": "选择 UTXO", "en": "UTXOs selection" },
+  "privacy.utxoList": { "zh-Hant": "UTXO 列表", "zh-Hans": "UTXO 列表", "en": "UTXO list" },
+  "privacy.autoSelect": { "zh-Hant": "自動選擇", "zh-Hans": "自动选择", "en": "Auto select" },
+  "privacy.insufficient": { "zh-Hant": "餘額不足", "zh-Hans": "余额不足", "en": "Insufficient balance" },
+  "privacy.over40": { "zh-Hant": "超過上限 40 張 UTXO", "zh-Hans": "超过上限 40 张 UTXO", "en": "Over the limit of 40 UTXOs" },
+  "privacy.unregisteredRecipient": { "zh-Hant": "這個地址尚未註冊", "zh-Hans": "这个地址尚未注册", "en": "This address is not registered" },
+  "privacy.unshield": { "zh-Hant": "轉回公開", "zh-Hans": "转回公开", "en": "Unshield" },
+  "privacy.unshieldToken": { "zh-Hant": "轉回公開餘額", "zh-Hans": "转回公开余额", "en": "Unshield token" },
+  "privacy.selectUnshieldToken": {
+    "zh-Hant": "選擇要轉回公開餘額的代幣",
+    "zh-Hans": "选择要转回公开余额的代币",
+    "en": "Select a token to unshield",
+  },
+  "privacy.privateBalance": { "zh-Hant": "私人餘額", "zh-Hans": "私人余额", "en": "Private balance" },
+  "privacy.becomesPublic": {
+    "zh-Hant": "這筆金額會變成公開餘額",
+    "zh-Hans": "这笔金额会变成公开余额",
+    "en": "This amount becomes public.",
+  },
+  "privacy.merge": { "zh-Hant": "合併 UTXO", "zh-Hans": "合并 UTXO", "en": "Merge UTXO" },
+  "privacy.mergeTitle": { "zh-Hant": "合併 UTXO", "zh-Hans": "合并 UTXO", "en": "Merge UTXO" },
+  "privacy.selectAll": { "zh-Hant": "全選", "zh-Hans": "全选", "en": "Select all" },
+  "privacy.clearAll": { "zh-Hant": "清除", "zh-Hans": "清除", "en": "Clear all" },
+  "privacy.utxos": { "zh-Hant": "UTXO", "zh-Hans": "UTXO", "en": "UTXOs" },
+  "privacy.utxoCount": {
+    "zh-Hant": "UTXO 數量：{count}",
+    "zh-Hans": "UTXO 数量：{count}",
+    "en": "Number of UTXOs: {count}",
+  },
+  "privacy.utxoWarn": {
+    "zh-Hant": "UTXO數量多於40個, 建議進行Merge UTXO操作",
+    "zh-Hans": "UTXO数量多于40个, 建议进行Merge UTXO操作",
+    "en": "More than 40 UTXOs. Merge UTXO is recommended.",
+  },
+  "privacy.registerConsent": {
+    "zh-Hant": "這個錢包第一次使用前要先註冊。",
+    "zh-Hans": "这个钱包第一次使用前要先注册。",
+    "en": "Register this wallet before using it for the first time.",
   },
   "common.activity": {
     "zh-Hant": "活動",
@@ -1372,6 +1474,11 @@ const messages = {
     "zh-Hant": "已加入",
     "zh-Hans": "已加入",
     "en": "Already added",
+  },
+  "accounts.pickLocalToAdd": {
+    "zh-Hant": "選擇要加入的錢包帳戶",
+    "zh-Hans": "选择要加入的钱包账户",
+    "en": "Select the wallet accounts that you want to add",
   },
   "accounts.memberCount": {
     "zh-Hant": "{count} 個成員地址",

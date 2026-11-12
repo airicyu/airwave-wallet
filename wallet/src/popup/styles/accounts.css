@@ -278,10 +278,34 @@
   margin-top: 1px;
 }
 
+.combined-paste {
+  display: block;
+  width: 100%;
+  min-height: 140px;
+  margin: 0;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  resize: vertical;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-sm);
+  background: var(--fill);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.combined-pick-hint {
+  margin: 0 0 12px;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
 .combined-pick-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   margin-bottom: 12px;
 }
 
@@ -291,19 +315,33 @@
   align-items: center;
   column-gap: 10px;
   width: 100%;
-  margin: 0 0 8px;
-  padding: 8px 10px;
+  margin: 0;
+  padding: 10px 12px;
   border: 1px solid var(--stroke);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--fill);
   cursor: pointer;
   font-size: 0.84rem;
 }
 
+.combined-pick-row.on {
+  border-color: var(--accent);
+}
+
+.combined-pick-row:has(input:disabled) {
+  opacity: 0.55;
+  cursor: default;
+}
+
 .combined-pick-row input {
+  display: block;
   width: 16px;
   height: 16px;
+  min-width: 16px;
   margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
   accent-color: var(--accent);
 }
 

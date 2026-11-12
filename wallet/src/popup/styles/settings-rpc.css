@@ -24,7 +24,6 @@
 
 .keys-input-row {
   display: flex;
-  align-items: center;
   gap: 4px;
 }
 
@@ -221,7 +220,6 @@
 
 .rpc-edit {
   display: flex;
-  align-items: center;
   gap: 6px;
   padding: 0 4px 8px 26px;
 }

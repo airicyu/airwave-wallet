@@ -99,6 +99,9 @@ const btnSignMsgTx = document.getElementById("sign-msg-tx") as HTMLButtonElement
 const btnSignOffchain = document.getElementById("sign-offchain") as HTMLButtonElement;
 const btnSignInShort = document.getElementById("sign-in-short") as HTMLButtonElement;
 const btnSignInFull = document.getElementById("sign-in-full") as HTMLButtonElement;
+const btnSignMsgTspp = document.getElementById("sign-msg-tspp") as HTMLButtonElement;
+const btnSignOffchainTspp = document.getElementById("sign-offchain-tspp") as HTMLButtonElement;
+const btnSignInTspp = document.getElementById("sign-in-tspp") as HTMLButtonElement;
 const btnSignTx = document.getElementById("sign-tx") as HTMLButtonElement;
 const btnSignAndSendTx = document.getElementById("sign-and-send-tx") as HTMLButtonElement;
 const btnSignAndSendTxStd = document.getElementById(
@@ -182,6 +185,9 @@ function enableSigning(addressStr: string | undefined, chains?: readonly string[
   btnSignOffchain.disabled = !ok;
   btnSignInShort.disabled = !ok;
   btnSignInFull.disabled = !ok;
+  btnSignMsgTspp.disabled = !ok;
+  btnSignOffchainTspp.disabled = !ok;
+  btnSignInTspp.disabled = !ok;
   btnSignTx.disabled = !ok;
   btnSignAndSendTx.disabled = !ok;
   btnSignAndSendTxStd.disabled = !ok;
@@ -823,6 +829,65 @@ btnSignInFull.addEventListener("click", async () => {
   } catch (e) {
     const err = e as Error & { code?: string };
     log("Sign in full error:", err.code ?? "", err.message ?? e);
+  }
+});
+
+const TSPP_DERIVE = "TSPP/derive/v1";
+
+btnSignMsgTspp.addEventListener("click", async () => {
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as StandardConnectFeature[typeof StandardConnect] | undefined;
+    const signMessage = wallet.features[SolanaSignMessage] as SolanaSignMessageFeature[typeof SolanaSignMessage] | undefined;
+    if (!connect || !signMessage) return;
+    const { accounts } = await connect.connect({ silent: true });
+    const account = accounts[0];
+    if (!account) throw new Error("no account");
+    await signMessage.signMessage({ account, message: new TextEncoder().encode(TSPP_DERIVE) });
+    log("TSPP signMessage unexpectedly succeeded");
+  } catch (e) {
+    const err = e as Error & { code?: string };
+    log("TSPP signMessage rejected:", err.code ?? "", err.message ?? e);
+  }
+});
+
+btnSignOffchainTspp.addEventListener("click", async () => {
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as StandardConnectFeature[typeof StandardConnect] | undefined;
+    const feature = wallet.features[SolanaSignOffchainMessage] as
+      | SolanaSignOffchainMessageFeature[typeof SolanaSignOffchainMessage]
+      | undefined;
+    if (!connect || !feature) return;
+    const { accounts } = await connect.connect({ silent: true });
+    const account = accounts[0];
+    if (!account) throw new Error("no account");
+    await feature.signOffchainMessage({
+      messageVersion: 1,
+      account,
+      message: TSPP_DERIVE,
+      requiredSigners: [account.publicKey],
+    });
+    log("TSPP off-chain unexpectedly succeeded");
+  } catch (e) {
+    const err = e as Error & { code?: string };
+    log("TSPP off-chain rejected:", err.code ?? "", err.message ?? e);
+  }
+});
+
+btnSignInTspp.addEventListener("click", async () => {
+  try {
+    const wallet = await waitForAirwave();
+    const connect = wallet.features[StandardConnect] as StandardConnectFeature[typeof StandardConnect] | undefined;
+    const feature = wallet.features[SolanaSignIn] as SolanaSignInFeature[typeof SolanaSignIn] | undefined;
+    if (!connect || !feature) return;
+    const { accounts } = await connect.connect({ silent: true });
+    if (!accounts[0]) throw new Error("no account");
+    await feature.signIn({ statement: TSPP_DERIVE });
+    log("TSPP sign-in unexpectedly succeeded");
+  } catch (e) {
+    const err = e as Error & { code?: string };
+    log("TSPP sign-in rejected:", err.code ?? "", err.message ?? e);
   }
 });
 

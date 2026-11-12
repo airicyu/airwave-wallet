@@ -84,7 +84,7 @@ export function usePopupNavigation(deps: {
     if (view === "close-empty-confirm") {
       d.clearCloseEmptyDraft();
     }
-    if (view === "token-detail") {
+    if (view === "token-detail" || view === "private-detail") {
       d.setDetailTokenId(null);
       navigateTo("home-token");
       return;

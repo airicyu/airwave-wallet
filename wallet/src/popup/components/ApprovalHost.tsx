@@ -2,6 +2,10 @@ import type { JSX } from "react";
 import { memo } from "react";
 import { ApprovalShell } from "../../approval/ApprovalShell";
 import { sendExtensionRequest } from "../../shared/protocol";
+import { consumeUnshieldApproval } from "../privacy/unshield-draft";
+import { consumeMergeApproval } from "../privacy/merge-draft";
+import { consumeShieldApproval } from "../privacy/shield-approval";
+import { consumePrivateSendApproval } from "../privacy/private-send-draft";
 import type { UiHost } from "../../shared/protocol";
 import { walletShellSurfaceFromHref } from "../../shared/shell";
 import { usePopupContext } from "../state/PopupContext";
@@ -37,11 +41,19 @@ export const ApprovalHost = memo(function ApprovalHost({ requestId }: { requestI
         onWalletSendReject: () => {
           syncWalletSendAbortId(null);
           api.setActiveWalletSendRequestId(null);
-          api.navigateTo("token-send");
+          const mergeId = consumeMergeApproval();
+          if (mergeId) {
+            void sendExtensionRequest("wallet.cancelMergeBatch", { requestId: mergeId });
+            api.navigateTo("merge");
+            return;
+          }
+          api.navigateTo(consumeUnshieldApproval() ? "unshield" : consumePrivateSendApproval() ? "private-send" : consumeShieldApproval() ? "shield" : "token-send");
         },
         onWalletSendSuccessExit: () => {
           syncWalletSendAbortId(null);
           api.setActiveWalletSendRequestId(null);
+          const mergeId = consumeMergeApproval();
+          if (mergeId) void sendExtensionRequest("wallet.finishMergeBatch", { requestId: mergeId });
           api.setDetailTokenId(null);
           api.setHomeAssetsForce(true);
           api.navigateTo("home-token");

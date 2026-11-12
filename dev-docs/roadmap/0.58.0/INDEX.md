@@ -1,6 +1,6 @@
 # 0.58.0 — Combined create confirm and manage menu
 
-- **Status:** `in progress`
+- **Status:** `shipped`
 - **Upstream:** [0.57.0](../0.57.0/INDEX.md) shipped. Absorbs the batch that was in [unversioned.md](../unversioned.md).
 - **Backlog:** none. This INDEX wins.
 

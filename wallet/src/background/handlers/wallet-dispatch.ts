@@ -9,6 +9,11 @@ import {
   handlePlanCloseEmpty,
 } from "../close-empty";
 import { handleGetHomeActivity } from "../home-activity";
+import { handleBeginMerge, handleCancelMergeBatch, handleFinishMergeBatch } from "../privacy/begin-merge";
+import { handleBeginPrivateSend, handlePrivacyRecipient } from "../privacy/begin-private-send";
+import { handleBeginUnshield } from "../privacy/begin-unshield";
+import { handleBeginShield } from "../privacy/begin-shield";
+import { handlePrivacyRegister, handlePrivacyStatus } from "../privacy/commands";
 import { handleGetHomeTokens } from "../home-tokens";
 import { respond } from "../messaging";
 import {
@@ -95,6 +100,15 @@ export async function handleWalletCommand(
   if (req.command === "wallet.planCloseEmpty") return handlePlanCloseEmpty(req);
   if (req.command === "wallet.commitCloseEmpty") return handleCommitCloseEmpty(req);
   if (req.command === "wallet.getHomeActivity") return handleGetHomeActivity(req);
+  if (req.command === "wallet.privacyStatus") return handlePrivacyStatus(req);
+  if (req.command === "wallet.privacyRegister") return handlePrivacyRegister(req);
+  if (req.command === "wallet.beginShield") return handleBeginShield(req, sender);
+  if (req.command === "wallet.beginPrivateSend") return handleBeginPrivateSend(req, sender);
+  if (req.command === "wallet.privacyRecipient") return handlePrivacyRecipient(req);
+  if (req.command === "wallet.beginUnshield") return handleBeginUnshield(req, sender);
+  if (req.command === "wallet.beginMerge") return handleBeginMerge(req, sender);
+  if (req.command === "wallet.finishMergeBatch") return handleFinishMergeBatch(req);
+  if (req.command === "wallet.cancelMergeBatch") return handleCancelMergeBatch(req);
   if (req.command === "storage.patchSettings") return handlePatchSettings(req);
   return respond({
     kind: "airwave-ext-res",

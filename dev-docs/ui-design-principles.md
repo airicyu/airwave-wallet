@@ -75,4 +75,4 @@ Keep CSS transitions at 120–160ms, opacity or color only. A segment change doe
 
 ## 10. Copy
 
-Errors and empty states are one short sentence (one line when possible). Buttons are verbs (Save, Cancel, Lock wallet). Do not use "please" or feature essays. Traditional Chinese, Simplified Chinese, and English share one catalog and the same line breaks.
+Errors and empty states are one short sentence (one line when possible). Buttons are verbs (Save, Cancel, Lock wallet). Do not use "please" or feature essays. Do not add a paragraph that explains the action, what becomes public, or what a balance means. Do not put an intro sentence above a list. Do not prefix a number with a word the layout already shows; use the same row as the existing screen. Validation text is one line and only appears when the action is blocked. Traditional Chinese, Simplified Chinese, and English share one catalog and the same line breaks.

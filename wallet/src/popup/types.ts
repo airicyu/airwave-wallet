@@ -26,6 +26,13 @@ export type View =
   | "home-activity"
   | "rpc-guide"
   | "token-detail"
+  | "private-detail"
+  | "shield"
+  | "shield-pick"
+  | "private-send"
+  | "unshield"
+  | "unshield-pick"
+  | "merge"
   | "token-send"
   | "send-pick"
   | "address-cards"
@@ -63,8 +70,7 @@ export type View =
   | "settings-rpc"
   | "settings-keys"
   | "settings-tx-ai"
-  | "settings-cu-price"
-  | "settings-priority-fee"
+  | "settings-tx-fee"
   | "settings-wallet-lock"
   | "settings-debug"
   | "settings-password"
@@ -102,8 +108,7 @@ export const SUBPAGE_TITLE_KEYS: Record<Exclude<View, "home-token" | "home-activ
   "settings-rpc": "nav.settingsRpc",
   "settings-keys": "nav.settingsKeys",
   "settings-tx-ai": "nav.settingsTxAi",
-  "settings-cu-price": "nav.settingsCuPrice",
-  "settings-priority-fee": "nav.settingsPriorityFee",
+  "settings-tx-fee": "nav.settingsTxFee",
   "settings-wallet-lock": "nav.settingsWalletLock",
   "settings-debug": "nav.settingsDebug",
   "settings-password": "nav.settingsWalletLockPassword",
@@ -113,6 +118,13 @@ export const SUBPAGE_TITLE_KEYS: Record<Exclude<View, "home-token" | "home-activ
   "about-privacy": "nav.aboutPrivacy",
   "connected-sites": "nav.connectedSites",
   "token-detail": "nav.tokenDetail",
+  "private-detail": "nav.privateDetail",
+  "shield": "privacy.shield",
+  "shield-pick": "privacy.shieldToken",
+  "private-send": "privacy.privateSend",
+  unshield: "privacy.unshield",
+  "unshield-pick": "privacy.unshieldToken",
+  merge: "privacy.mergeTitle",
   "token-send": "nav.tokenSend",
   "send-pick": "addressCards.pick",
   "address-cards": "menu.addressCards",

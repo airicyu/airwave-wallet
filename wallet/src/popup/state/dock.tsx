@@ -5,6 +5,8 @@ export type DockRegistration = {
   label: string;
   disabled: boolean;
   onPrimary: () => void | Promise<void>;
+  /** Replaces the label with a spinner and ignores further clicks. */
+  busy?: boolean;
   /** One line above the primary button (for example selected count). */
   meta?: string;
   secondaryLabel?: string;
@@ -36,6 +38,7 @@ export function useRegisterDock(spec: DockRegistration | null): void {
   const label = spec?.label ?? "";
   const disabled = spec?.disabled ?? true;
   const meta = spec?.meta;
+  const busy = spec?.busy ?? false;
   const onPrimary = spec?.onPrimary;
   const secondaryLabel = spec?.secondaryLabel;
   const onSecondary = spec?.onSecondary;
@@ -45,7 +48,7 @@ export function useRegisterDock(spec: DockRegistration | null): void {
       setDock(null);
       return () => setDock(null);
     }
-    setDock({ label, disabled, onPrimary, meta, secondaryLabel, onSecondary });
+    setDock({ label, disabled, onPrimary, meta, secondaryLabel, onSecondary, busy });
     return () => setDock(null);
-  }, [active, label, disabled, meta, onPrimary, secondaryLabel, onSecondary, setDock]);
+  }, [active, label, disabled, meta, onPrimary, secondaryLabel, onSecondary, busy, setDock]);
 }

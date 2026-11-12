@@ -11,6 +11,7 @@ import {
   shouldUseRpcTransientToast,
 } from "../../shared/i18n";
 import { jsonRpcMissing } from "../../shared/protocol";
+import { accountKind } from "../../shared/protocol";
 import { canWalletSendFromActiveAccount, homeTokenRowForSendBalance } from "../../shared/send";
 import { MainnetRpcStop } from "./MainnetRpcStop";
 import {
@@ -21,7 +22,7 @@ import {
   type HomeTokenRow,
 } from "../../shared/home";
 import { CopyIconButton } from "./CopyPkButton";
-import { IconChevronDown } from "./StrokeIcon";
+import { IconChevronDown, IconSend, IconShield } from "./StrokeIcon";
 import { shortAddr } from "../lib/format";
 import { usePopupContext } from "../state/PopupContext";
 import { t as translate } from "../../shared/i18n";
@@ -247,7 +248,7 @@ function TokenRow({
   );
 }
 
-function TokenTrust({ row }: { row: HomeTokenRow }): JSX.Element {
+export function TokenTrust({ row }: { row: HomeTokenRow }): JSX.Element {
   const { t } = useT();
   const native = row.id === NATIVE_SOL_ID;
   const verified = native || row.isVerified === true;
@@ -274,7 +275,7 @@ function TokenTrust({ row }: { row: HomeTokenRow }): JSX.Element {
   );
 }
 
-function TokenIcon({ row }: { row: HomeTokenRow }): JSX.Element {
+export function TokenIcon({ row }: { row: HomeTokenRow }): JSX.Element {
   const [failed, setFailed] = useState(false);
   if (row.iconUrl && !failed) {
     return (
@@ -294,10 +295,12 @@ export function TokenDetailView({
   wallet,
   tokenId,
   onSend,
+  onShield,
 }: {
   wallet: State;
   tokenId: string;
   onSend: () => void;
+  onShield: () => void;
 }): JSX.Element {
   const { homeTokenRows } = usePopupContext();
   const { t } = useT();
@@ -311,6 +314,7 @@ export function TokenDetailView({
   }
   const active = wallet.accounts.find((a) => a.id === wallet.activeAccountId);
   const canSend = canWalletSendFromActiveAccount(wallet.accounts, active, wallet.unlocked);
+  const watchOnly = active != null && accountKind(active) === "readOnly";
   const balanceRow = active ? homeTokenRowForSendBalance(row, active) : row;
 
   return (
@@ -319,9 +323,18 @@ export function TokenDetailView({
         <TokenIcon row={row} />
         <h3 className="token-detail-name">{row.name || row.symbol}</h3>
         {canSend ? (
-          <button type="button" className="token-detail-send-btn" onClick={onSend}>
-            {t("send.action")}
-          </button>
+          <div className="privacy-actions">
+            <button type="button" className="token-detail-action" onClick={onSend}>
+              <IconSend />
+              {t("send.action")}
+            </button>
+            {!watchOnly ? (
+              <button type="button" className="token-detail-action is-shield" onClick={onShield}>
+                <IconShield />
+                {t("privacy.shield")}
+              </button>
+            ) : null}
+          </div>
         ) : null}
       </div>
       <div className="token-detail-meta">

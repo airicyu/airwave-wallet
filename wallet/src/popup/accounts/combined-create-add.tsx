@@ -45,9 +45,10 @@ export function CombinedCreatePasteScreen(): JSX.Element {
   return (
     <div className="field">
       <label htmlFor="combined-create-paste">{t("common.address")}</label>
-      <input
+      <textarea
         id="combined-create-paste"
-        className="mono"
+        className="mono combined-paste"
+        rows={6}
         value={value}
         spellCheck={false}
         placeholder={t("onboarding.pasteMulti")}
@@ -73,30 +74,33 @@ export function CombinedCreateLocalScreen({ wallet }: { wallet: State }): JSX.El
     },
   });
   return (
-    <div className="pick-list">
-      {locals.map((a) => {
-        const pk = parsePublicKeyBase58(a.publicKeyBase58) ?? a.publicKeyBase58;
-        const inSet = draft.members.includes(pk);
-        const on = picked.includes(pk);
-        return (
-          <button
-            key={a.id}
-            type="button"
-            className={`manage-action-row neutral${on ? " on" : ""}`}
-            disabled={inSet}
-            aria-pressed={on}
-            onClick={() => {
-              if (inSet) return;
-              setPicked((prev) => (prev.includes(pk) ? prev.filter((item) => item !== pk) : [...prev, pk]));
-            }}
-          >
-            <span>
-              {a.label} · {shortAddr(pk)}
-              {inSet ? ` · ${t("accounts.alreadyIn")}` : ""}
-            </span>
-          </button>
-        );
-      })}
-    </div>
+    <>
+      <p className="combined-pick-hint">{t("accounts.pickLocalToAdd")}</p>
+      <div className="combined-pick-list">
+        {locals.map((a) => {
+          const pk = parsePublicKeyBase58(a.publicKeyBase58) ?? a.publicKeyBase58;
+          const inSet = draft.members.includes(pk);
+          const on = picked.includes(pk);
+          return (
+            <label key={a.id} className={`combined-pick-row${on ? " on" : ""}`}>
+              <input
+                type="checkbox"
+                checked={on}
+                disabled={inSet}
+                onChange={() => {
+                  if (inSet) return;
+                  setPicked((prev) => (prev.includes(pk) ? prev.filter((item) => item !== pk) : [...prev, pk]));
+                }}
+              />
+              <span className="pick-name">
+                {a.label}
+                {inSet ? ` · ${t("accounts.alreadyIn")}` : ""}
+              </span>
+              <span className="pick-addr">{shortAddr(pk)}</span>
+            </label>
+          );
+        })}
+      </div>
+    </>
   );
 }

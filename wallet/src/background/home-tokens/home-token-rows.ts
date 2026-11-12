@@ -41,7 +41,7 @@ function mergedUsdFields(
       }
     }
   }
-  return { usdLabel: "—" };
+  return { usdLabel: "" };
 }
 
 export function mergeMultiOwnerRows(

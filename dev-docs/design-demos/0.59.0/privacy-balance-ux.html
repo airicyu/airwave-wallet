@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Airwave — 私人餘額（概念稿）</title>
+    <!--
+      Informal concept demo. Not the contract.
+      dev-docs/roadmap/0.59.0/INDEX.md wins on any conflict.
+    -->
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --stroke-soft: #222a34;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --accent-dim: #2a6ea8;
+        --danger: #c75050;
+        --ok: #4ecb8d;
+        --popup-w: 384px;
+        --popup-h: 640px;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+        --mono: Menlo, "Cascadia Mono", ui-monospace, "Microsoft JhengHei UI", "PingFang TC", monospace;
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: #080b0e;
+        color: var(--text);
+        line-height: 1.45;
+      }
+      .page { max-width: 1120px; margin: 0 auto; padding: 28px 20px 56px; }
+      h1 { font-size: 1.28rem; font-weight: 600; margin: 0 0 8px; }
+      .lede { color: var(--text-muted); margin: 0 0 18px; max-width: 54rem; font-size: 0.92rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+      .chip {
+        border: 1px solid var(--stroke);
+        background: var(--bg-elevated);
+        color: var(--text);
+        padding: 7px 13px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      .chip:hover { border-color: var(--text-dim); }
+      .chip.active { border-color: var(--accent); background: #1a2838; }
+      .layout {
+        display: grid;
+        grid-template-columns: var(--popup-w) 1fr;
+        gap: 28px;
+        align-items: start;
+      }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+      .phone-cap { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; }
+      .phone {
+        width: var(--popup-w);
+        height: var(--popup-h);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+        min-height: 52px;
+        flex-shrink: 0;
+      }
+      .top h2 {
+        font-size: 0.95rem;
+        margin: 0;
+        font-weight: 600;
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .widget {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        flex: 1;
+      }
+      .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--fill);
+        display: grid;
+        place-items: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .widget-name {
+        display: block;
+        font-size: 0.86rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .icon-btn {
+        flex-shrink: 0;
+        width: 34px;
+        height: 34px;
+        border: 0;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        box-shadow: none;
+        color: var(--muted);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+      .icon-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+      .icon-btn:hover { color: var(--text); background: transparent; }
+      .icon-btn:active { transform: scale(0.94); }
+      .icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+      .body { flex: 1; min-height: 0; overflow-y: auto; padding: 12px; }
+      .body.talk-page { display: flex; flex-direction: column; overflow: hidden; }
+      .talk {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: stretch;
+        gap: 18px;
+        padding: 8px 8px 28px;
+      }
+      .talk .copy { margin: 0; color: var(--text); font-size: 0.95rem; line-height: 1.55; text-align: left; }
+      .talk .primary { width: min(100%, 220px); align-self: center; }
+      .body::-webkit-scrollbar { width: 6px; }
+      .body::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 4px; }
+      .dock {
+        flex-shrink: 0;
+        padding: 10px 12px 12px;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg-elevated);
+      }
+      .primary {
+        width: 100%;
+        border: 0;
+        background: var(--accent);
+        color: #061018;
+        font-weight: 700;
+        font-size: 0.88rem;
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .primary:disabled { opacity: 0.4; cursor: not-allowed; }
+      .primary.loading { opacity: 0.7; }
+      .segs {
+        display: flex;
+        gap: 6px;
+        padding: 4px;
+        background: var(--fill);
+        border-radius: 999px;
+        margin-bottom: 12px;
+      }
+      .seg {
+        flex: 1;
+        border: 0;
+        background: transparent;
+        color: var(--text-muted);
+        border-radius: 999px;
+        padding: 6px 8px;
+        font: inherit;
+        font-size: 0.75rem;
+        cursor: pointer;
+      }
+      .seg.on { background: var(--bg-elevated); color: var(--text); font-weight: 600; }
+      .tabbar {
+        flex-shrink: 0;
+        display: flex;
+        border-top: 1px solid var(--stroke-soft);
+        background: var(--bg);
+      }
+      .tab {
+        flex: 1;
+        border: 0;
+        background: transparent;
+        color: var(--text-dim);
+        padding: 12px 8px 14px;
+        font: inherit;
+        font-size: 0.78rem;
+        cursor: pointer;
+      }
+      .tab.on {
+        color: var(--accent);
+        box-shadow: inset 0 2px 0 var(--accent);
+      }
+      .copy { margin: 0 0 12px; color: var(--text-muted); font-size: 0.84rem; }
+      .copy strong { color: var(--text); font-weight: 600; }
+      .token-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+      .note-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; max-height: 168px; overflow-y: auto; }
+      .detail-body { display: flex; flex-direction: column; overflow: hidden; }
+      .detail-body .note-list { flex: 1; min-height: 0; max-height: none; }
+      .utxo-card { border: 1px solid var(--stroke-soft); border-radius: var(--radius); background: var(--bg-elevated); display: flex; flex-direction: column; min-height: 0; }
+      .utxo-section.open { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+      .utxo-card.open .note-list { flex: 1; min-height: 0; max-height: none; overflow-y: auto; }
+      .disc { display: inline-block; margin-right: 6px; color: var(--text-muted); }
+      .utxo-section.open .disc { transform: rotate(90deg); }
+      .utxo-card .switch-row, .utxo-card .note-list { margin-left: 10px; margin-right: 10px; }
+      .utxo-card .switch-row { margin-top: 4px; }
+      .utxo-card .note-list { margin-bottom: 10px; }
+      .switch-row { display: flex; align-items: center; justify-content: flex-start; gap: 8px; margin: 0 0 8px; }
+      .switch {
+        width: 42px; height: 24px; border-radius: 999px; border: 1px solid var(--stroke);
+        background: var(--fill); position: relative; padding: 0; flex-shrink: 0;
+      }
+      .switch::after {
+        content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
+        border-radius: 50%; background: var(--text-muted);
+      }
+      .switch.on { border-color: color-mix(in srgb, var(--ok) 45%, var(--stroke)); background: color-mix(in srgb, var(--ok) 18%, var(--fill)); }
+      .switch.on::after { left: 20px; background: var(--ok); }
+      .row {
+        border: 1px solid var(--stroke-soft);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        padding: 10px 12px;
+        cursor: pointer;
+      }
+      .row:hover { border-color: var(--stroke); }
+      .row-main, .row-actions, .member, .note {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+      .grow { flex: 1; min-width: 0; }
+      .note .sub { flex: 1; min-width: 0; }
+      .icon-btn.point-right svg { transform: rotate(-90deg); }
+      .member-panel { margin-top: 8px; display: flex; flex-direction: column; gap: 12px; }
+      .member-head { display: flex; align-items: center; gap: 8px; }
+      .member-head .grow { display: flex; flex-direction: column; gap: 4px; }
+      .member-block { display: flex; flex-direction: column; gap: 4px; }
+      .member-top, .member-amt { display: flex; justify-content: space-between; gap: 8px; }
+      .member-top .sub { color: var(--text); font-size: 0.84rem; }
+      .member-amt .sub { font-size: 0.78rem; }
+      .pct { color: var(--text-muted); font-size: 0.78rem; }
+      .bar { height: 3px; border-radius: 99px; background: var(--fill); overflow: hidden; }
+      .bar i { display: block; height: 100%; background: var(--accent); }
+        flex: 0 1 46%;
+        margin-left: 12px;
+        text-align: right;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .token-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--fill);
+        display: grid;
+        place-items: center;
+        font-size: 0.68rem;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .trust {
+        position: relative;
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        background: color-mix(in srgb, var(--ok) 18%, var(--bg-elevated));
+        color: var(--ok);
+      }
+      .trust.empty { background: transparent; box-shadow: none; }
+      .score {
+        position: absolute;
+        right: -2px;
+        bottom: -2px;
+        min-width: 13px;
+        height: 11px;
+        padding: 0 3px;
+        border-radius: 4px;
+        font-size: 8px;
+        font-weight: 700;
+        line-height: 11px;
+        text-align: center;
+        background: color-mix(in srgb, var(--ok) 16%, var(--bg));
+        color: var(--ok);
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--ok) 35%, var(--stroke));
+      }
+      .sym { font-weight: 650; font-size: 0.9rem; }
+      .sub, .mono {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .amt { font-variant-numeric: tabular-nums; font-weight: 600; }
+      .qty { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+      .usd { margin-left: auto; font-weight: 650; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+      .verb {
+        border: 1px solid var(--stroke);
+        background: var(--fill);
+        color: var(--text);
+        border-radius: 12px;
+        padding: 8px 10px;
+        font: inherit;
+        font-size: 0.78rem;
+        cursor: pointer;
+      }
+      .actions-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        width: 100%;
+      }
+      .actions-row .verb { flex: 1 1 calc(50% - 8px); max-width: calc(50% - 4px); }
+      .verb:hover { border-color: var(--accent-dim); }
+      .nested { margin: 8px 0 0 18px; display: flex; flex-direction: column; gap: 6px; }
+      .note, .member {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        min-height: 44px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: var(--fill);
+        cursor: default;
+      }
+      .note .sub, .note .amt { font-family: var(--mono); color: var(--text); }
+      .note:has(.check) { cursor: pointer; }
+      .note.off { opacity: 0.45; }
+      .check {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        border: 1px solid var(--text-dim);
+        flex-shrink: 0;
+        position: relative;
+        background: transparent;
+      }
+      .check.on { border-color: var(--text); }
+      .check.on::after {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 1px;
+        width: 4px;
+        height: 8px;
+        border: solid var(--text);
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+      }
+      .field { margin-bottom: 10px; }
+      .field label, .kicker {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        margin-bottom: 4px;
+      }
+      input[type="text"] {
+        width: 100%;
+        background: var(--fill);
+        border: 1px solid var(--stroke);
+        color: var(--text);
+        border-radius: var(--radius-sm);
+        padding: 8px 10px;
+        font: inherit;
+        font-size: 0.88rem;
+      }
+      .balance-line {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        padding: 8px 2px 14px;
+        margin-bottom: 18px;
+        border-bottom: 1px solid var(--stroke-soft);
+      }
+      .balance-line .k { color: var(--text-muted); font-size: 1.15rem; font-weight: 650; }
+      .balance-line.apart { margin-top: 8px; border-bottom: 0; padding-top: 0; border-top: 0; }
+      .to-private { display: flex; justify-content: center; padding: 14px 0 6px; color: var(--text-dim); }
+      .to-private svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+      .amount-line { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+      .amount-line label { color: var(--text-muted); font-size: 0.84rem; flex-shrink: 0; }
+      .amount-line input { flex: 1; min-width: 0; }
+      .recipient-line { display: flex; align-items: center; gap: 8px; }
+      .recipient-line input { flex: 1; min-width: 0; }
+      .send-rule { border: 0; border-top: 1px solid var(--stroke-soft); margin: 18px 0 0; }
+      .merge-actions { display: flex; gap: 12px; margin: 14px 0 16px; }
+      .utxo-title { margin: 16px 0 10px; font-size: 0.92rem; font-weight: 650; }
+      .utxo-count { margin: 0 0 10px; font-size: 0.84rem; color: var(--text-muted); }
+      .utxo-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; margin: 12px 0 8px; }
+      .utxo-head .utxo-title { margin: 0; line-height: 24px; }
+      .utxo-head .switch-row { margin: 0; height: 24px; align-items: center; }
+      .banner {
+        border-radius: var(--radius-sm);
+        padding: 8px 10px;
+        font-size: 0.8rem;
+        margin-bottom: 10px;
+        background: #2a1c1c;
+        color: #f0c2c2;
+      }
+      .banner.info { background: #1a2838; color: #c5dff6; }
+      .meta { font-size: 0.8rem; color: var(--text-muted); margin: 0 0 10px; }
+      .kv { display: flex; justify-content: space-between; gap: 12px; font-size: 0.84rem; margin-bottom: 8px; }
+      .kv span:last-child { font-family: var(--mono); font-size: 0.75rem; text-align: right; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+      .side h3 { margin: 0 0 8px; font-size: 0.95rem; }
+      .side p { margin: 0 0 10px; color: var(--text-muted); font-size: 0.88rem; }
+      .hero { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 0 8px; text-align: center; }
+      .hero .token-icon { width: 52px; height: 52px; font-size: 0.72rem; }
+      .hero .sym { font-size: 1rem; font-weight: 650; }
+      .actions-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+      .actions-row.center { justify-content: center; }
+      .total { font-size: 1.35rem; font-weight: 650; margin: 4px 0 0; }
+      .spin {
+        width: 14px;
+        height: 14px;
+        border: 2px solid #061018;
+        border-top-color: transparent;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+        vertical-align: -2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>私人餘額</h1>
+      <p class="lede">
+        非正式概念稿。Default Ring 的註冊、Shield、Send、Merge、Unshield 畫面。契約以
+        <code>dev-docs/roadmap/0.59.0/INDEX.md</code> 為準。假資料，地址如 Ab3…x9K2。
+      </p>
+      <div class="controls" id="chips"></div>
+      <div class="layout">
+        <div>
+          <div class="phone-cap" id="cap"></div>
+          <div class="phone" id="phone"></div>
+        </div>
+        <aside class="side" id="side"></aside>
+      </div>
+    </div>
+    <script>
+      const back =
+        '<button class="icon-btn" type="button" title="Back"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>';
+      const menu =
+        '<button class="icon-btn" type="button" title="Menu"><svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>';
+      const chev =
+        '<button class="icon-btn" type="button" title="Expand"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>';
+      const chevRight =
+        '<button class="icon-btn point-right" type="button" title="Expand"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>';
+
+      function homeTop(name) {
+        return (
+          '<header class="top"><div class="widget"><span class="avatar">A</span><span class="grow"><span class="widget-name">' +
+          name +
+          "</span></span></div>" +
+          menu +
+          "</header>"
+        );
+      }
+      function pageTop(title) {
+        return '<header class="top">' + back + "<h2>" + title + "</h2></header>";
+      }
+      function segs(which) {
+        return (
+          '<div class="segs"><button class="seg' +
+          (which === "tokens" ? " on" : "") +
+          '" type="button">Tokens</button><button class="seg' +
+          (which === "private" ? " on" : "") +
+          '" type="button">Private Balances</button></div>'
+        );
+      }
+      function foot() {
+        return '<nav class="tabbar"><button class="tab on" type="button">Assets</button><button class="tab" type="button">Activities</button></nav>';
+      }
+      function trust(score) {
+        return (
+          '<span class="trust" title="Jupiter verified"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l7 3v6c0 5-3.2 8.6-7 10-3.8-1.4-7-5-7-10V5l7-3z"/><path d="M8.2 12.2l2.3 2.3 5.2-5.4" fill="none" stroke="#0f1419" stroke-width="2"/></svg><span class="score">' +
+          score +
+          "</span></span>"
+        );
+      }
+      function trustEmpty() {
+        return '<span class="trust empty" aria-hidden="true"></span>';
+      }
+      function utxoLine(amt, id) {
+        return (
+          '<li class="note"><span class="sub">' +
+          id +
+          '</span><span class="amt">' +
+          amt +
+          "</span></li>"
+        );
+      }
+      function utxo(amt, id, on) {
+        return (
+          '<li class="note"><span class="check' +
+          (on ? " on" : "") +
+          '"></span><span class="sub">' +
+          id +
+          '</span><span class="amt">' +
+          amt +
+          "</span></li>"
+        );
+      }
+
+      const registerCopy = "這個錢包第一次使用前要先註冊。";
+
+      function sendPage(opts) {
+        const book =
+          '<button class="icon-btn" type="button" title="Address book"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></button>';
+        return (
+          '<header class="top">' + back + "<h2>" + (opts.title || "Private balance send (SOL)") + "</h2>" + menu + "</header>" +
+          '<div class="body send-body">' +
+          (opts.unshield
+            ? '<div class="balance-line"><span class="k">Private balance:</span><span class="v">1.684567891 SOL</span></div>'
+            : '<div class="balance-line"><span class="k">Balance:</span><span class="v">1.684567891 SOL</span></div>') +
+          '<div class="amount-line"><label>Amount</label><input type="text" value="' + opts.amount + '" readonly /><button class="verb" type="button">50%</button><button class="verb" type="button">Max</button></div>' +
+          (opts.unshield
+            ? ""
+            : '<label class="field-label">Recipient</label><div class="recipient-line"><input type="text" value="' + opts.recipient + '" placeholder="Base58 address" readonly />' + book + "</div>") +
+          (opts.banner ? '<div class="banner" style="margin-top:12px">' + opts.banner + "</div>" : "") +
+          (opts.notes == null
+            ? ""
+            : '<div class="utxo-section' + (opts.open ? " open" : "") + '"><hr class="send-rule" /><div class="utxo-head"><p class="utxo-title"><span class="disc">▸</span>UTXOs selection</p><div class="switch-row"><span>自動選擇</span><button class="switch' + (opts.auto ? " on" : "") + '" type="button" role="switch" aria-checked="' + (opts.auto ? "true" : "false") + '"></button></div></div>' +
+              (opts.open
+                ? '<div class="utxo-card open"><ul class="note-list">' + opts.notes + "</ul></div>"
+                : "") +
+              "</div>") +
+          "</div>" +
+          '<footer class="dock"><button class="primary" type="button"' + (opts.off ? " disabled" : "") + ">Confirm</button></footer>"
+        );
+      }
+
+      const frames = [
+        {
+          id: "unreg",
+          chip: "未註冊",
+          cap: "Private Balances 分頁就是註冊面，沒有另一頁。",
+          side: "說明會永久公開 viewing 與 nullifier 公鑰，花費公開 SOL 手續費，不移動代幣。按鈕本身就是同意。",
+          phone:
+            homeTop("主錢包") +
+            '<div class="body talk-page">' +
+            segs("private") +
+            '<div class="talk"><p class="copy">' + registerCopy + '</p><button class="primary" type="button">註冊</button></div></div>' + foot(),
+        },
+        {
+          id: "loading",
+          chip: "註冊載入中",
+          cap: "送出中按鈕顯示載入，忽略再按。",
+          side: "註冊不開一般批准畫面。失敗留在這一狀態，按鈕可以再按。",
+          phone:
+            homeTop("主錢包") +
+            '<div class="body talk-page">' +
+            segs("private") +
+            '<div class="talk"><p class="copy">' + registerCopy + '</p><button class="primary loading" type="button" disabled><span class="spin"></span>註冊</button></div></div>' + foot(),
+        },
+        {
+          id: "nofee",
+          chip: "手續費不足",
+          cap: "公開 SOL 付不起手續費時，註冊停用。",
+          side: "私人餘額不能付網路費。",
+          phone:
+            homeTop("主錢包") +
+            '<div class="body talk-page">' +
+            segs("private") +
+            '<div class="talk"><p class="copy">' + registerCopy + '</p><button class="primary" type="button" disabled>註冊</button></div></div>' + foot(),
+        },
+        {
+          id: "registered",
+          chip: "已註冊",
+          cap: "列預設收合。SOL 展開後是 UTXO。",
+          side: "點整張代幣卡進私人代幣詳情。Shield 與 Unshield 在列表上方，每行兩個。展開後的 UTXO 是卡片。",
+          phone:
+            homeTop("主錢包") +
+            '<div class="body">' +
+            segs("private") +
+            '<ul class="token-list"><li class="row"><div class="row-main">' +
+            trust(99) +
+            '<span class="token-icon">◎</span><span class="grow"><span class="sym">Solana</span><div class="qty">1.6845678912345 SOL</div></span><span class="usd">$142.80</span>' +
+            chev +
+            "</div><ul class=\"nested\">" +
+            utxoLine("1.2345678912345", "a1b2c3d4") +
+            utxoLine("0.45", "e5f60718") +
+            '</ul></li><li class="row"><div class="row-main">' +
+            trust(100) +
+            '<span class="token-icon">$</span><span class="grow"><span class="sym">USD Coin</span><div class="qty">20.00 USDC</div></span><span class="usd">$20.00</span>' +
+            chevRight +
+            "</div></li></ul></div>" +
+            '<footer class="dock"><div class="actions-row"><button class="verb" type="button">轉入私人</button><button class="verb" type="button">轉回公開</button></div></footer>' + foot(),
+        },
+        {
+          id: "combined",
+          chip: "合併帳戶",
+          cap: "成員列右側有第二層展開，預設收合。這裡打開第一個，其餘三個收合。",
+          side: "展開後才列出那個地址的 UTXO。點代幣卡仍進主錢包的私人詳情。",
+          phone:
+            homeTop("綜合Wallet") +
+            '<div class="body">' +
+            segs("private") +
+            '<ul class="token-list"><li class="row"><div class="row-main">' + trust(99) + '<span class="token-icon">SOL</span><span class="grow"><span class="sym">Solana</span><div class="sub">0.274640369 SOL</div></span><span class="amt">$23.28</span>' +
+            chev +
+            '</div><div class="member-panel">' +
+            '<div class="member-block"><div class="member-head"><div class="grow"><div class="member-top"><span class="sub">7CoH…c2yh</span><span class="pct">29%</span></div><div class="member-amt"><span class="sub">0.080442926 SOL</span></div><div class="bar"><i style="width:29%"></i></div></div>' +
+            chev +
+            '</div><ul class="note-list" style="margin-top:8px">' +
+            utxoLine("0.050000000", "a1b2c3d4") +
+            utxoLine("0.030442926", "e5f60718") +
+            '</ul></div>' +
+            '<div class="member-block"><div class="member-head"><div class="grow"><div class="member-top"><span class="sub">2nho…14bH</span><span class="pct">28%</span></div><div class="member-amt"><span class="sub">0.077990441 SOL</span></div><div class="bar"><i style="width:28%"></i></div></div>' +
+            chevRight +
+            '</div></div>' +
+            '<div class="member-block"><div class="member-head"><div class="grow"><div class="member-top"><span class="sub">buwa…9XsS</span><span class="pct">25%</span></div><div class="member-amt"><span class="sub">0.06900068 SOL</span></div><div class="bar"><i style="width:25%"></i></div></div>' +
+            chevRight +
+            '</div></div>' +
+            '<div class="member-block"><div class="member-head"><div class="grow"><div class="member-top"><span class="sub">8Cqe…W6HM</span><span class="pct">17%</span></div><div class="member-amt"><span class="sub">0.047281202 SOL</span></div><div class="bar"><i style="width:17%"></i></div></div>' +
+            chevRight +
+            "</div></div></div></li></ul></div>" + foot(),
+        },
+        {
+          id: "detail",
+          chip: "私人代幣詳情",
+          cap: "圖示在名稱上方。按鈕每行兩個：送出、轉入私人、轉回公開、合併 UTXO。",
+          side: "按鈕下面先留空、一條分隔線、再留空，才是 Amount 與 Mint。UTXO 是卡片，不能點。",
+          phone:
+            pageTop("USD Coin") +
+            '<div class="body detail-body"><div class="hero"><span class="token-icon">US</span><span class="sym">USD Coin</span></div><div class="actions-row"><button class="verb" type="button">送出</button><button class="verb" type="button">轉入私人</button><button class="verb" type="button">轉回公開</button><button class="verb" type="button">合併 UTXO</button></div><hr class="send-rule" /><div class="kv"><span>Amount</span><span>1.25 USDC</span></div><div class="kv"><span>Mint</span><span>EPjF…Dt1v</span></div><hr class="send-rule" /><p class="utxo-title">UTXO</p><p class="utxo-count">UTXO 數量：6</p><ul class="note-list">' +
+            utxoLine("0.80", "a1b2c3d4") +
+            utxoLine("0.45", "e5f60718") +
+            utxoLine("0.20", "aa11bb22") +
+            utxoLine("0.12", "cc33dd44") +
+            utxoLine("0.08", "ee55ff66") +
+            utxoLine("0.04", "00112233") +
+            "</ul></div>",
+        },
+        {
+          id: "detail-many",
+          chip: "UTXO 達 40",
+          cap: "張數達到 40 時，張數下面有一行建議 Merge。",
+          side: "少於 40 張沒有這行。列表仍在提示下面，太多時在列表內捲動。",
+          phone:
+            pageTop("USD Coin") +
+            '<div class="body detail-body"><div class="hero"><span class="token-icon">US</span><span class="sym">USD Coin</span></div><div class="actions-row"><button class="verb" type="button">送出</button><button class="verb" type="button">轉入私人</button><button class="verb" type="button">轉回公開</button><button class="verb" type="button">合併 UTXO</button></div><hr class="send-rule" /><div class="kv"><span>Amount</span><span>1.25 USDC</span></div><div class="kv"><span>Mint</span><span>EPjF…Dt1v</span></div><hr class="send-rule" /><p class="utxo-title">UTXO</p><p class="utxo-count">UTXO 數量：53</p><div class="banner">UTXO數量多於40個, 建議進行Merge UTXO操作</div><ul class="note-list">' +
+            utxoLine("0.80", "a1b2c3d4") +
+            utxoLine("0.45", "e5f60718") +
+            utxoLine("0.20", "aa11bb22") +
+            utxoLine("0.12", "cc33dd44") +
+            utxoLine("0.08", "ee55ff66") +
+            utxoLine("0.04", "00112233") +
+            "</ul></div>",
+        },
+        {
+          id: "public-row",
+          chip: "公開列",
+          cap: "跟現在的 Tokens 卡一樣：名稱、下面是數量，右邊是美元。單一帳戶沒有箭頭。",
+          side: "點整列進代幣詳情。Send 與 Shield 在詳情裡。合併帳戶才有那顆展開箭頭。",
+          phone:
+            homeTop("8C") +
+            '<div class="body">' +
+            segs("tokens") +
+            '<ul class="token-list">' +
+            '<li class="row"><div class="row-main">' + trust(99) + '<span class="token-icon">◎</span><span class="grow"><span class="sym">Solana</span><div class="qty">0.047281202 SOL</div></span><span class="usd">$4.01</span></div></li>' +
+            '<li class="row"><div class="row-main">' + trust(100) + '<span class="token-icon">I</span><span class="grow"><span class="sym">International Stable Cur...</span><div class="qty">1.000006 ISC</div></span><span class="usd">$2.15</span></div></li>' +
+            '<li class="row"><div class="row-main">' + trust(100) + '<span class="token-icon">$</span><span class="grow"><span class="sym">USD Coin</span><div class="qty">1.024231 USDC</div></span><span class="usd">$1.02</span></div></li>' +
+            "</ul></div>" + foot(),
+        },
+        {
+          id: "shield",
+          chip: "Shield",
+          cap: "沒有收款人。50% 與 Max 用公開餘額。",
+          side: "沒有收款人。確認才開一般批准畫面。",
+          phone:
+            '<header class="top">' + back + "<h2>Shield SOL</h2>" + menu + "</header>" +
+            '<div class="body"><div class="balance-line"><span class="k">Balance:</span><span class="v">0.047281202 SOL</span></div><div class="amount-line"><label>Amount</label><input type="text" value="0" readonly /><button class="verb" type="button">50%</button><button class="verb" type="button">Max</button></div></div>' +
+            '<footer class="dock"><button class="primary" type="button">Confirm</button></footer>',
+        },
+        {
+          id: "shield-unreg",
+          chip: "Shield 未註冊",
+          cap: "未註冊時同一顆註冊按鈕，沒有數量表單。",
+          side: "註冊成功後留在這一頁，再顯示數量。返回在左上。",
+          phone:
+            pageTop("Shield") +
+            '<div class="body talk-page"><div class="talk"><p class="copy">' + registerCopy + '</p><button class="primary" type="button">註冊</button></div></div>',
+        },
+        {
+          id: "picker",
+          chip: "Select token",
+          cap: "跟 Tokens 同一張卡。未驗證仍留盾的空位。",
+          side: "餘額大於零才列出。選一列進 Shield。",
+          phone:
+            pageTop("Shield token") +
+            '<div class="body"><p class="utxo-title">Select a token to shield</p><ul class="token-list">' +
+            '<li class="row"><div class="row-main">' + trust(99) + '<span class="token-icon">◎</span><span class="grow"><span class="sym">Solana</span><div class="qty">0.047281202 SOL</div></span><span class="usd">$4.01</span></div></li>' +
+            '<li class="row"><div class="row-main">' + trustEmpty() + '<span class="token-icon">US</span><span class="grow"><span class="sym">USD Coin</span><div class="qty">12.00 USDC</div></span><span class="usd">$12.00</span></div></li>' +
+            "</ul></div>",
+        },
+        {
+          id: "send",
+          chip: "Send",
+          cap: "自動選擇已開啟，由大到小勾到足夠。",
+          side: "差額是找零，回到自己的私人 note。畫面上不寫這句。",
+          phone: sendPage({
+            amount: "1.00",
+            recipient: "Hk2…q8Wn",
+            auto: true,
+            notes: utxo("0.80", "a1b2c3d4", true) + utxo("0.45", "e5f60718", true) + utxo("0.20", "aa11bb22", true) + utxo("0.12", "cc33dd44", false) + utxo("0.08", "ee55ff66", false) + utxo("0.04", "00112233", false),
+          }),
+        },
+        {
+          id: "send-short",
+          chip: "餘額不足",
+          cap: "選中合計低於數量，不能送出。",
+          side: "自動選擇關閉時由使用者勾 note。",
+          phone: sendPage({
+            amount: "1.00",
+            recipient: "Hk2…q8Wn",
+            auto: false,
+            banner: "餘額不足",
+            off: true,
+            open: true,
+            notes: utxo("0.80", "a1b2c3d4", false) + utxo("0.45", "e5f60718", true),
+          }),
+        },
+        {
+          id: "send-40",
+          chip: "超過 40 張",
+          cap: "驗證橫幅擋住送出，不會自己去 Merge。",
+          side: "手選超過 40 張，或依排序需要超過 40 張，都是同一條規則。",
+          phone: sendPage({
+            amount: "1.00",
+            recipient: "Hk2…q8Wn",
+            auto: true,
+            banner: "超過上限 40 張 UTXO",
+            off: true,
+            open: true,
+            notes: utxo("0.02", "aa01", true) + utxo("0.02", "aa02", true) + utxo("0.01", "aa41", true),
+          }),
+        },
+        {
+          id: "send-unreg",
+          chip: "收款人未註冊",
+          cap: "沒有 user record 就擋住 Send。",
+          side: "不會改成公開提領。頁面不要求使用者填 owner hash 或 viewing 公鑰。",
+          phone: sendPage({
+            amount: "1.00",
+            recipient: "Zz9…n0Qp",
+            banner: "這個地址尚未註冊",
+            off: true,
+          }),
+        },
+        {
+          id: "unshield",
+          chip: "Unshield",
+          cap: "收款人預填自己的短地址，可以改。",
+          side: "收款人不需要註冊紀錄。資產與數量會變成公開。找零仍是私人 note。",
+          phone: sendPage({
+            title: "Unshield SOL",
+            unshield: true,
+            amount: "0.40",
+            auto: true,
+            notes: utxo("0.80", "a1b2c3d4", true) + utxo("0.45", "e5f60718", false),
+          }),
+        },
+        {
+          id: "merge",
+          chip: "Merge",
+          cap: "由小到大。53 張走清空空代幣帳戶的批次批准。",
+          side: "帶額外資料的 note 不能選。Merge 不付款給別人，所有人與合計不變。52 張以內是一次批准。",
+          phone:
+            '<header class="top">' + back + "<h2>Merge UTXO (SOL)</h2>" + menu + "</header>" +
+            '<div class="body"><p class="utxo-count">Number of UTXOs: 53</p><div class="merge-actions"><button class="verb" type="button">Select all</button><button class="verb" type="button">Clear all</button></div><ul class="note-list">' +
+            utxo("0.01", "m100", true) +
+            utxo("0.02", "m240", true) +
+            '<li class="note off"><span class="check"></span><span class="sub">m9aa</span><span class="amt">0.05</span></li>' +
+            "</ul></div>" +
+            '<footer class="dock"><button class="primary" type="button">Confirm</button></footer>',
+        },
+        {
+          id: "unavailable",
+          chip: "不可用",
+          cap: "RPC 不是 Helius 時，Private Balances 沒有任何動作。",
+          side: "沒有第二個 API key 欄位。用這個叢集已儲存的 URL。",
+          phone:
+            homeTop("主錢包") +
+            '<div class="body">' +
+            segs("private") +
+            '<p class="copy">不可用</p></div>' + foot(),
+        },
+      ];
+
+      const chips = document.getElementById("chips");
+      const phone = document.getElementById("phone");
+      const cap = document.getElementById("cap");
+      const side = document.getElementById("side");
+
+      frames.forEach((frame, i) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "chip" + (i === 0 ? " active" : "");
+        b.textContent = frame.chip;
+        b.dataset.id = frame.id;
+        chips.appendChild(b);
+      });
+
+      function show(id) {
+        const frame = frames.find((f) => f.id === id);
+        phone.innerHTML = frame.phone;
+        cap.textContent = frame.cap;
+        side.innerHTML = "<h3>" + frame.chip + "</h3><p>" + frame.side + "</p>";
+        chips.querySelectorAll(".chip").forEach((el) => {
+          el.classList.toggle("active", el.dataset.id === id);
+        });
+      }
+
+      chips.addEventListener("click", (e) => {
+        const b = e.target.closest(".chip");
+        if (b) show(b.dataset.id);
+      });
+      show("unreg");
+    </script>
+  </body>
+</html>

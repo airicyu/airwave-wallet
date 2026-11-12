@@ -11,8 +11,7 @@ import {
   type HomeActivityRow,
 } from "../../shared/home";
 import { jsonRpcMissing, type Settings } from "../../shared/protocol";
-import { jupiterApiUrlForCall, solanaRpcForUrl } from "../../shared/rpc";
-import { resolveHeliusApiTarget, type HeliusApiTarget } from "../../shared/rpc";
+import { jupiterApiUrlForCall, solanaRpcForUrl, heliusApiKeyFromStored, OFFICIAL_HELIUS_API_ORIGIN } from "../../shared/rpc";
 import {
   lookupJupiterMintMetadata,
   peekCachedMintDisplay,
@@ -74,12 +73,12 @@ async function attachIcons(rows: HomeActivityRow[], settings: Settings): Promise
 
 async function fetchEnhanced(
   owner: string,
-  target: HeliusApiTarget,
+  apiKey: string,
   settings: Settings,
   before?: string,
 ): Promise<HomeActivityRow[]> {
-  const url = new URL(`${target.origin}/v0/addresses/${encodeURIComponent(owner)}/transactions`);
-  if (target.apiKey) url.searchParams.set("api-key", target.apiKey);
+  const url = new URL(`${OFFICIAL_HELIUS_API_ORIGIN}/v0/addresses/${encodeURIComponent(owner)}/transactions`);
+  url.searchParams.set("api-key", apiKey);
   url.searchParams.set("limit", String(homeActivityLimit()));
   url.searchParams.set("token-accounts", "balanceChanged");
   url.searchParams.set("sort-order", "desc");
@@ -121,12 +120,12 @@ export async function getHomeActivity(
     return { rows: [], error: "unavailable" };
   }
   try {
-    const helius = resolveHeliusApiTarget(settings.heliusApiUrl);
-    if (jsonRpcMissing(settings) && !helius) {
+    const apiKey = heliusApiKeyFromStored(settings.heliusApiUrl);
+    if (jsonRpcMissing(settings) && !apiKey) {
       return { rows: [], error: "unavailable" };
     }
-    if (settings.cluster === "mainnet" && helius) {
-      return { rows: await fetchEnhanced(owner, helius, settings, before) };
+    if (settings.cluster === "mainnet" && apiKey) {
+      return { rows: await fetchEnhanced(owner, apiKey, settings, before) };
     }
     return { rows: await fetchSignatures(owner, settings, before) };
   } catch {

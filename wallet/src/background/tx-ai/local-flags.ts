@@ -41,7 +41,41 @@ const LABELED: Record<string, string> = {
   LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo: "Meteora DLMM",
   cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG: "Meteora DAMM v2",
   "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P": "Pump.fun",
+  ring1GaLCuJnkUMVkX2JeZLTTX17wKsV4fZmPVzXANW: "Shielded Pool",
+  regy3WAeRXMYuMYxr5iK3Bf9Arr3PcxGxyzAddbiqDQ: "User Registry",
 };
+
+const POOL = "ring1GaLCuJnkUMVkX2JeZLTTX17wKsV4fZmPVzXANW";
+const REGISTRY = "regy3WAeRXMYuMYxr5iK3Bf9Arr3PcxGxyzAddbiqDQ";
+
+const POOL_IX = [
+  "createProtocolConfig",
+  "updateProtocolConfig",
+  "createTree",
+  "pauseTree",
+  "setTreeFees",
+  "claimTreeLamports",
+  "createAssetCounter",
+  "createSplInterface",
+  "createRingConfig",
+  "updateRingConfig",
+  "updateRingConfigOwner",
+  "setRingActivation",
+  "batchUpdateNullifierTree",
+  "closeNullifierPdas",
+  "emitEvent",
+  "deposit",
+  "transact",
+  "mergeTransact",
+  "ringDeposit",
+  "ringTransact",
+  "ringMergeTransact",
+  "ringAuthorityTransact",
+  "createCache",
+  "closeCache",
+] as const;
+
+const REGISTRY_IX = ["Register", "SetMergeEncryption", "UpdateKeys"] as const;
 
 const AUTH_TYPE = ["MintTokens", "FreezeAccount", "AccountOwner", "CloseAccount"];
 
@@ -115,6 +149,14 @@ function ixName(programId: string, data: Uint8Array): { name: string; roles?: st
     if (disc === 12) return { name: "TransferChecked", roles: ["source", "mint", "destination", "owner"] };
     if (disc === 13) return { name: "ApproveChecked", roles: ["source", "mint", "delegate", "owner"] };
     return { name: `Token:${disc}` };
+  }
+  if (programId === POOL && data.length > 0) {
+    const tag = data[0] ?? 0;
+    return { name: POOL_IX[tag] ?? `ShieldedPool:${tag}` };
+  }
+  if (programId === REGISTRY && data.length > 0) {
+    const tag = data[0] ?? 0;
+    return { name: REGISTRY_IX[tag] ?? `UserRegistry:${tag}` };
   }
   return { name: "unknown" };
 }

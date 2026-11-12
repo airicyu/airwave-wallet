@@ -49,21 +49,16 @@ The seed phrase is shown once. Write it down offline. Do not screenshot it into 
 Without your own Mainnet RPC, Home will not load balances and you cannot send.
 
 1. Sign up at [Helius](https://www.helius.dev/) and create an API key in the dashboard.
-2. Copy the dashboard **RPC URL** (shaped like `https://mainnet.helius-rpc.com/?api-key=…`). This is **not** the Settings **Helius API URL** field.
+2. Copy the dashboard **RPC URL** (shaped like `https://mainnet.helius-rpc.com/?api-key=…`). This is **not** the Settings **Helius API key** field.
 3. In the wallet, open **Settings → RPC** (or **Set RPC** on the first-run guide): add that URL and select it as the current Mainnet RPC.
 
 Devnet does not need a custom RPC; the built-in public endpoint is enough.
 
-### 3.2 Helius API URL (token names / Activity — optional)
+### 3.2 Helius API key (private balance and Mainnet Activity — optional)
 
-Settings → **API keys** → **Helius API URL**.
+Settings → **API keys** → **Helius API key**.
 
-You can paste:
-
-- the dashboard API URL (`https://…` with `api-key`), or
-- the key alone (official Helius keys that start with `77` are accepted).
-
-This field powers **DAS holdings** (names, icons) and parsed Mainnet **Activity**. It is **not** JSON-RPC and is not a fallback for 3.1. The Jupiter API key is on the same page, also optional, and overrides token names.
+Paste the key from the Helius dashboard, not the RPC URL. A previously saved URL is read as the `api-key` query on that URL. Private-balance calls use `devnet.helius-rpc.com` or `mainnet.helius-rpc.com` for the wallet's cluster, with this key. Parsed Mainnet Activity uses `https://api.helius.xyz`. Neither call uses the RPC list. The Jupiter API key is on the same page, also optional, and overrides token names.
 
 A stored value shows as `••••••`; Reveal shows the full string. It writes on blur or the row confirm control. There is no page-level Save.
 

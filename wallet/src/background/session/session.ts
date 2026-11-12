@@ -13,6 +13,7 @@ import { loadedAccountFromStoredSecret } from "../../shared/vault";
 import { isSigningOrWatch } from "../../shared/accounts";
 import { accountKind, SESSION_UNLOCKED } from "../../shared/protocol";
 import { readAccounts, readVaultBlob } from "../storage";
+import { clearPrivacyKeys } from "../privacy/keys";
 
 export class AccountKeyMismatchError extends Error {
   readonly code = "ACCOUNT_KEY_MISMATCH" as const;
@@ -67,6 +68,7 @@ function clearUnlockedMemory(): void {
   vaultKey = null;
   vaultSaltB64 = null;
   accountsById.clear();
+  clearPrivacyKeys();
 }
 
 export async function loadSecrets(secrets: VaultSecrets): Promise<void> {

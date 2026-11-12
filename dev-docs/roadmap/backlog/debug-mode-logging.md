@@ -4,7 +4,7 @@ Not scheduled in any version INDEX. **Not a contract.** After it is scheduled, t
 
 ## Current
 
-Wallet actions and failures have no dedicated log the user or a developer can turn on. Diagnosing a failed send, sign, swap, or unlock means reading the service-worker console by hand.
+0.59.0 writes a failed command name, error code, and scrubbed message to the service-worker console while debug mode is on. Debug off writes nothing. There is still no on-device log the user can open, export, or clear.
 
 ## Intent
 
