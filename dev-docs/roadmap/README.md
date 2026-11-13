@@ -75,6 +75,7 @@ This directory is the version contract for **airwave-wallet**. An agent with no 
 | [0.57.0](./0.57.0/INDEX.md) | shipped | Sign AI danger samples, failed CU probe fallback, durable-nonce watch, taller failure details |
 | [0.58.0](./0.58.0/INDEX.md) | shipped | Combined create local Confirm, and combined Manage with member sheet or remove |
 | [0.59.0](./0.59.0/INDEX.md) | shipped | Private balance on the Helius Default Ring |
+| [0.59.1](./0.59.1/INDEX.md) | shipped | Private amounts use mint decimals. Balance lines are one smaller row |
 
 **Version numbers:** a **patch** on `x.y.z` (for example **0.3.1**) is only a bugfix for that minor. It does not schedule a new feature. A new feature is the next **minor** (0.3.0 → 0.4.0 → 0.5.0).
 
