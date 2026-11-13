@@ -1,8 +1,6 @@
 # Changelog
 
-## 0.59.0
-
-In progress.
+## 0.59.0 — 2026-11-13
 
 ### Combined account add
 
