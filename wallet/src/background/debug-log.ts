@@ -24,3 +24,11 @@ export async function debugLogFailure(command: string, code: string, message: st
   if (!settings?.debugModeEnabled) return;
   console.info("[airwave]", command, "failed", code, scrub(message));
 }
+
+/** Soft status lines (ok:true) that still need a breadcrumb while debug mode is on. */
+export async function debugLogInfo(command: string, detail: string): Promise<void> {
+  if (!inServiceWorker()) return;
+  const settings = await readSettings().catch(() => null);
+  if (!settings?.debugModeEnabled) return;
+  console.info("[airwave]", command, scrub(detail));
+}

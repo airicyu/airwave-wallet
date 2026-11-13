@@ -3,15 +3,13 @@
  * Choosing a row opens the Unshield amount page for that mint.
  */
 import { useEffect, useState, type JSX } from "react";
-import { NATIVE_SOL_ID, type HomeTokenRow } from "../../shared/home";
 import { TokenIcon, TokenTrust } from "../home/HomeTokenList";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
 import { PrivacySkeleton } from "./PrivacySkeleton";
 import { loadPrivacyStatus, type PrivacyRow } from "./privacy-status";
+import { privacyTokenCard } from "./privacy-token-card";
 import { clearUnshieldDraft, setUnshieldBack } from "./unshield-draft";
-
-const SOL_MINT = "11111111111111111111111111111111";
 
 type Row = Pick<PrivacyRow, "mint" | "amount" | "usdLabel">;
 
@@ -40,20 +38,7 @@ export function UnshieldPick(): JSX.Element {
       <p className="shield-pick-lead">{t("privacy.selectUnshieldToken")}</p>
       <ul className="token-list">
         {rows.map((row) => {
-          const publicId = row.mint === SOL_MINT ? NATIVE_SOL_ID : row.mint;
-          const known = homeTokenRows.find((item) => item.id === publicId);
-          const card: HomeTokenRow = known
-            ? { ...known, uiAmountLabel: row.amount, usdLabel: row.usdLabel ?? "" }
-            : {
-                id: publicId,
-                name: row.mint.slice(0, 4),
-                symbol: "",
-                uiAmount: 0,
-                uiAmountLabel: row.amount,
-                usdLabel: row.usdLabel ?? "",
-                iconLetter: row.mint.slice(0, 1),
-                decimals: 0,
-              };
+          const card = privacyTokenCard(row.mint, row.amount, row.usdLabel, homeTokenRows);
           return (
             <li key={row.mint}>
               <div

@@ -5,10 +5,10 @@
 import { address } from "@solana/kit";
 import { findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import { privacyClient } from "./client";
-import { SOL_MINT } from "@heliuslabs/spr/transaction";
 import { buildDepositTransaction, isWalletRegistered } from "@heliuslabs/spr/wallet";
 import type { ExtensionRequest, ExtensionResponse } from "../../shared/protocol";
 import { NATIVE_SOL_ID } from "../../shared/home";
+import { SOL_MINT } from "../../shared/privacy/sol-mint";
 import { parseAmountUiToRaw } from "../../shared/send";
 import { respond } from "../messaging";
 import { getHomeTokensForOwners } from "../home-tokens";

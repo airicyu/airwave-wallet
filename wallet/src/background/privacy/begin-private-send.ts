@@ -1,20 +1,22 @@
 /**
  * Checks a recipient's registry record and builds one private transfer with its proof.
- * Does not turn a missing record into a public withdrawal.
+ * Confirm sends the selected note ids. This file spends those notes and does not choose another set.
  */
 import { address } from "@solana/kit";
 import { privacyClient } from "./client";
-import { SOL_MINT, Wallet } from "@heliuslabs/spr/transaction";
-import { buildTransferTransaction, fetchUserRecord, syncWallet } from "@heliuslabs/spr/wallet";
+import { Wallet } from "@heliuslabs/spr/transaction";
+import { fetchUserRecord, syncWallet } from "@heliuslabs/spr/wallet";
 import { parsePublicKeyBase58 } from "../../shared/accounts";
 import type { ExtensionRequest, ExtensionResponse } from "../../shared/protocol";
 import { NATIVE_SOL_ID } from "../../shared/home";
+import { SOL_MINT } from "../../shared/privacy/sol-mint";
 import { parseAmountUiToRaw } from "../../shared/send";
 import { respond } from "../messaging";
 import { getHomeTokensForOwners } from "../home-tokens";
 import { walletKeysFor } from "./keys";
 import { queueWalletSend } from "./queue-send";
 import { privacyAsset, privacyFail, privacySession } from "./ready";
+import { buildSelectedSpend } from "./spend-notes";
 
 export async function handlePrivacyRecipient(req: ExtensionRequest): Promise<ExtensionResponse> {
   const owner = (req.payload as { address?: string }).address?.trim() ?? "";
@@ -35,11 +37,13 @@ export async function handleBeginPrivateSend(
   req: ExtensionRequest,
   sender: chrome.runtime.MessageSender,
 ): Promise<ExtensionResponse> {
-  const body = req.payload as { mint?: string; amountUi?: string; recipient?: string };
+  const body = req.payload as { mint?: string; amountUi?: string; recipient?: string; ids?: string[] };
   const mint = body.mint?.trim() ?? "";
   const amountUi = body.amountUi?.trim() ?? "";
   const recipient = body.recipient?.trim() ?? "";
-  if (!mint || !amountUi || !parsePublicKeyBase58(recipient)) return privacyFail(req, "INVALID_PAYLOAD");
+  const ids = (body.ids ?? []).filter((id) => typeof id === "string" && id.length > 0);
+  if (!mint || !amountUi || !parsePublicKeyBase58(recipient) || ids.length === 0) return privacyFail(req, "INVALID_PAYLOAD");
+  if (ids.length > 40) return privacyFail(req, "TOO_MANY_NOTES");
   const ready = await privacySession(req);
   if ("kind" in ready) return ready;
   const asset = privacyAsset(mint);
@@ -56,14 +60,16 @@ export async function handleBeginPrivateSend(
     const keys = await walletKeysFor(ready.target.accountId, client.proofService);
     const wallet = new Wallet({ identity: keys.address() });
     await syncWallet({ wallet, keys, client });
-    const tx = await buildTransferTransaction({
+    const tx = await buildSelectedSpend({
       client,
       wallet,
       keys,
-      feePayer: address(ready.target.address),
-      recipient: address(recipient),
-      asset: address(asset),
+      feePayer: ready.target.address,
+      asset,
       amount,
+      ids,
+      kind: "transfer",
+      recipient,
     });
     const queued = queueWalletSend(req, sender, ready.target.accountId, tx);
     if ("kind" in queued) return queued;
@@ -73,7 +79,11 @@ export async function handleBeginPrivateSend(
       ok: true,
       result: { requestId: queued.requestId },
     });
-  } catch {
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "";
+    if (code === "TOO_MANY_NOTES" || code === "UNKNOWN_NOTE" || code === "INSUFFICIENT_NOTES" || code === "INVALID_NOTES" || code === "RECIPIENT_UNREGISTERED") {
+      return privacyFail(req, code);
+    }
     return privacyFail(req, "PRIVACY_SEND_FAILED");
   }
 }

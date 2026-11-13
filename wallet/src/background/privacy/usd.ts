@@ -4,11 +4,10 @@
  */
 import Big from "big.js";
 import { lookupJupiterUsdQuotes } from "../home-tokens/jupiter-mint-meta";
+import { WRAPPED_SOL_MINT } from "../../shared/home";
+import { SOL_MINT } from "../../shared/privacy/sol-mint";
 import { jupiterApiUrlForCall } from "../../shared/rpc";
 import type { Settings } from "../../shared/protocol";
-
-const SOL_MINT = "11111111111111111111111111111111";
-const WRAPPED_SOL_MINT = "So11111111111111111111111111111111111111112";
 
 function labelFor(raw: string, decimals: number, price: string): string | null {
   try {

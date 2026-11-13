@@ -3,11 +3,10 @@
  * Auto-select uses the same note order as Private Send. Confirm asks the service worker to build the withdrawal and open approval.
  * Back returns to the screen that opened this form, which is either the private token or the Unshield picker.
  *
- * Confirm currently sends the mint and the amount. It does not send the selected note ids, so the service worker chooses notes again while it builds the proof.
+ * Confirm sends the selected note ids with the amount. The recipient is the signing address.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from "react";
 import { NATIVE_SOL_ID } from "../../shared/home";
-import { SOL_MINT } from "@heliuslabs/spr/transaction";
 import { sendExtensionRequest } from "../../shared/protocol";
 import { apiErrorMessage } from "../../shared/i18n";
 import { amountUiToRaw, formatRawToAmountUi } from "../../shared/send";
@@ -19,7 +18,7 @@ import { clearUnshieldDraft, markUnshieldApproval, readUnshieldBack, readUnshiel
 import { PrivacySkeleton } from "./PrivacySkeleton";
 import { UtxoReceipt } from "./UtxoReceipt";
 import { coverAmount, notesByAmountDesc, type SpendNote } from "./note-cover";
-import { loadPrivacyStatus, privacyRowForMint } from "./privacy-status";
+import { loadPrivacyStatus, privacyRowForMint, SOL_MINT } from "./privacy-status";
 
 export function UnshieldForm(): JSX.Element {
   const draft = readUnshieldDraft();
@@ -86,7 +85,7 @@ export function UnshieldForm(): JSX.Element {
     buildingRef.current = true;
     setBuilding(true);
     setFormError("");
-    const res = await sendExtensionRequest("wallet.beginUnshield", { mint, amountUi: amount.trim() });
+    const res = await sendExtensionRequest("wallet.beginUnshield", { mint, amountUi: amount.trim(), ids: picked });
     if (!res.ok) {
       buildingRef.current = false;
       setBuilding(false);
@@ -98,7 +97,7 @@ export function UnshieldForm(): JSX.Element {
     setActiveWalletSendRequestId(requestId);
     syncWalletSendAbortId(requestId);
     navigateTo("send-approval");
-  }, [amount, locale, mint, navigateTo, setActiveWalletSendRequestId]);
+  }, [amount, locale, mint, navigateTo, picked, setActiveWalletSendRequestId]);
 
   useRegisterDock({
     label: t("send.confirm"),

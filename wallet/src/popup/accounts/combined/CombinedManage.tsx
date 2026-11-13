@@ -166,7 +166,6 @@ export function CombinedManagePanel({
                 onClick={() => {
                   void (async () => {
                     clearError();
-                    if (!confirm(t("accounts.removeMemberConfirm"))) return;
                     const res = await sendExtensionRequest("wallet.removeCombinedSub", {
                       combinedId: acc.id,
                       publicKeyBase58: pk,

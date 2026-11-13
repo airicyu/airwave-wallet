@@ -3,7 +3,7 @@
  * coverAmount walks that order and takes a prefix whose sum covers the target.
  * Merge sorts notes the other way and does not use this helper.
  *
- * The walk stops once the running sum covers the target. It does not skip a larger note to leave less change. The ids it returns are a display selection until the begin command sends them.
+ * The walk stops once the running sum covers the target. It does not skip a larger note to leave less change. The ids it returns are the notes confirm sends into the proof.
  */
 export type SpendNote = { id: string; amount: string; amountRaw: string };
 

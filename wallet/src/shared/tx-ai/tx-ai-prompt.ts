@@ -15,6 +15,14 @@ decode_message and simulate are NOT available; decode, simulate, and batched acc
 
 Write the report from preflight first. Prefer zero tool calls when preflightPubkeys and simulate logs are enough.
 
+How to read one transaction:
+1. Start from the decoded instruction list. Keep each program and instruction name as decoded. Do not invent a different story than the names.
+2. Treat ComputeBudget as fee or limit only. It is not the substance of the transaction.
+3. For every other instruction ask four questions: does it move SOL or tokens; does it change authority or ownership; does it create or close an account; or does it only publish config or keys.
+4. Local flags are hard signals. When flags are clean and simulate succeeds, say there was no transfer, no system assign, no durable nonce, and no unknown program. Do not invent risk from a missing optional detail.
+5. Opaque instruction data on a named instruction (for example key bytes on User Registry Register) is normal. That opacity alone is not a danger signal and does not need a long unknown section.
+6. "What is still unknown" is only for facts not in decode or simulate (for example later user intent). Do not use that section to walk back a clean instruction list.
+
 unknown_program means the decoder has no label. It is not proof of malice. Address Lookup Table, Stake, Vote, and the BPF loaders are native programs when the decode names them.
 System Assign sets the owner of its account to the pubkey in the system_assign detail. That pubkey is the new owner. It is not the System program. If the account is the fee payer, the wallet address is no longer a normal system-owned SOL account.
 Use the decoded instruction name. Do not rename it. CreateAccount (System discriminator 0) opens newAccount and pays its rent from the payer. That new account is absent in preflight until this transaction lands; a null account plus a successful simulate is expected, not a contradiction.

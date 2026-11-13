@@ -4,7 +4,6 @@
  */
 import { useCallback, useEffect, useRef, useState, type JSX } from "react";
 import { NATIVE_SOL_ID } from "../../shared/home";
-import { SOL_MINT } from "@heliuslabs/spr/transaction";
 import { sendExtensionRequest } from "../../shared/protocol";
 import { apiErrorMessage } from "../../shared/i18n";
 import { usePopupContext } from "../state/PopupContext";
@@ -14,7 +13,8 @@ import { halfSendAmount, maxSendAmount } from "../send/send-logic";
 import { homeTokenRowForSendBalance } from "../../shared/send";
 import { syncWalletSendAbortId } from "../approval/ApprovalHost";
 import { RegisterWait } from "./RegisterWait";
-import { loadPrivacyStatus } from "./privacy-status";
+import { markRegisterFrom } from "./register-return";
+import { loadPrivacyStatus, SOL_MINT } from "./privacy-status";
 import { markShieldApproval, readShieldAmount, readShieldBack, writeShieldAmount } from "./shield-approval";
 
 export function ShieldForm(): JSX.Element {
@@ -111,8 +111,11 @@ export function ShieldForm(): JSX.Element {
                 setFailed(res.error?.message || t("privacy.registerFailed"));
                 return;
               }
-              showToast(t("privacy.registered"), "ok");
-              void load().finally(() => setBusy(false));
+              const { requestId } = res.result as { requestId: string };
+              markRegisterFrom("shield");
+              setActiveWalletSendRequestId(requestId);
+              setBusy(false);
+              navigateTo("send-approval");
             });
           }}
         >

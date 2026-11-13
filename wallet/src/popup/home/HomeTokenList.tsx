@@ -315,6 +315,7 @@ export function TokenDetailView({
   const active = wallet.accounts.find((a) => a.id === wallet.activeAccountId);
   const canSend = canWalletSendFromActiveAccount(wallet.accounts, active, wallet.unlocked);
   const watchOnly = active != null && accountKind(active) === "readOnly";
+  const combined = active != null && isCombinedAccount(active);
   const balanceRow = active ? homeTokenRowForSendBalance(row, active) : row;
 
   return (
@@ -328,7 +329,7 @@ export function TokenDetailView({
               <IconSend />
               {t("send.action")}
             </button>
-            {!watchOnly ? (
+            {!watchOnly && !combined ? (
               <button type="button" className="token-detail-action is-shield" onClick={onShield}>
                 <IconShield />
                 {t("privacy.shield")}

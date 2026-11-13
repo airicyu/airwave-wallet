@@ -14,6 +14,10 @@ Shield is the SDK deposit path and includes no proof. Send, Unshield, and Merge 
 
 Popup screens follow the existing send and token-detail screens. New copy goes into the three message catalogs. Register, shield, send, merge, and unshield commands follow the existing typed command plus `requestId` path. The service worker holds the in-memory shielded key and the pending approval. The UI does not read the vault.
 
+Register builds one transaction that writes the viewing public key, the nullifier public key, and `PoseidonCtrV1` merge encryption, then queues it on the existing wallet-send approval. The service worker signs it only after the user approves. Shield, Send, Unshield, and Merge already use that queue.
+
+Sign AI report knowledge lives in `wallet/src/shared/tx-ai/tx-ai-prompt.ts` and teaches a general instruction-first reading of one transaction. Decisions criteria live in `wallet/src/background/tx-ai/openrouter.ts` and grade from structure: program labels, privilege flags, and asset-path clarity. They do not name product programs. A labeled no-transfer setup with clean privilege flags may be `low`; opaque bytes on a named instruction alone are not `unknown`.
+
 UTXO selection is local. Spend order is amount descending, then `utxo_hash` ascending, and stops at 40 notes. Merge order is amount ascending, then `utxo_hash` ascending, in slices of at most 52. A merge batch reuses the close-empty batch approval.
 
 ## During implementation

@@ -98,6 +98,7 @@ function parseJupiterSearchArray(json: unknown): Map<string, JupiterTokenHit> {
       organicScoreLabel: trimMeta(rec.organicScoreLabel),
       name: trimMeta(rec.name),
       symbol: trimMeta(rec.symbol),
+      icon: httpsIconUrl(rec.icon),
       decimals: typeof rec.decimals === "number" && Number.isInteger(rec.decimals) && rec.decimals >= 0 && rec.decimals <= 18
         ? rec.decimals
         : undefined,

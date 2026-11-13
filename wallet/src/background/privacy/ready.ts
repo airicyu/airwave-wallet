@@ -3,9 +3,9 @@
  * and requires the active account to be an unlocked signing wallet. It also maps the
  * native SOL id onto the shielded SOL mint. It does not build a transaction.
  */
-import { SOL_MINT } from "@heliuslabs/spr/transaction";
 import type { ExtensionRequest, ExtensionResponse, Settings } from "../../shared/protocol";
 import { NATIVE_SOL_ID } from "../../shared/home";
+import { SOL_MINT } from "../../shared/privacy/sol-mint";
 import { respond } from "../messaging";
 import { readAccounts, readActiveAccountId, readSettings } from "../storage";
 import { getLoadedAccount, isUnlocked } from "../session";

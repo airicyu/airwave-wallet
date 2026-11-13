@@ -1,8 +1,9 @@
 /**
- * Holds merge groups that still need a proof after the one batch approval.
- * Cleared on lock. Does not store shielded secrets.
+ * Holds merge transactions that were already proved and are waiting for one confirm.
+ * Confirm signs these bytes. It does not build another transaction.
+ * Lock clears the stash. The note ids are only the labels shown on the confirm screen.
  */
-type Batch = { accountId: string; asset: string; groups: string[][] };
+type Batch = { accountId: string; wires: Uint8Array[]; groups: string[][] };
 
 const batches = new Map<string, Batch>();
 

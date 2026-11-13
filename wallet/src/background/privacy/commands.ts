@@ -1,13 +1,14 @@
 /**
- * Reads registration and private totals, and submits the one-time register transaction.
- * Does not open the generic approval screen or persist shielded secrets.
+ * Reads registration and private totals, and builds the one-time register transaction.
+ * Combined accounts aggregate vault members. Register still signs with the main wallet only.
+ * The transaction opens the normal approval screen. This file does not sign it.
+ * Shielded secrets stay in memory.
  */
 import {
   address,
   appendTransactionMessageInstructions,
   compileTransaction,
   createTransactionMessage,
-  getBase64EncodedWireTransaction,
   pipe,
   setTransactionMessageComputeUnitLimit,
   setTransactionMessageFeePayer,
@@ -19,20 +20,17 @@ import {
   getSetMergeEncryptionInstructionAsync,
   MergeEncryptionScheme,
 } from "@heliuslabs/spr/instructions";
-import { SOL_MINT, Wallet } from "@heliuslabs/spr/transaction";
-import { isWalletRegistered, syncWallet } from "@heliuslabs/spr/wallet";
-import type { ExtensionRequest, ExtensionResponse } from "../../shared/protocol";
-import bs58 from "bs58";
-import type { Signature } from "@solana/keys";
+import { isCombinedAccount } from "../../shared/accounts";
+import { accountKind, type ExtensionRequest, type ExtensionResponse } from "../../shared/protocol";
 import { solanaRpcForUrl } from "../../shared/rpc";
-import { waitForSignatureConfirmed } from "../close-empty/wait-signature-confirmed";
-import { decodeWireTransaction, encodeWireTransaction, partiallySignWireTransaction } from "../../shared/tx";
 import { respond } from "../messaging";
 import { readAccounts, readActiveAccountId, readSettings } from "../storage";
 import { getLoadedAccount, isUnlocked } from "../session";
 import { shieldedKeysFor } from "./keys";
 import { privacyRpcUrl, signingTarget } from "./target";
-import { privateUsdByMint } from "./usd";
+import { queueWalletSend } from "./queue-send";
+import { debugLogInfo } from "../debug-log";
+import { privacyRowsForCombined, privacyRowsForSigning } from "./aggregate-status";
 
 const FEE_FLOOR = 5_000n;
 
@@ -43,16 +41,6 @@ function fail(req: ExtensionRequest, code: string, message: string): ExtensionRe
     ok: false,
     error: { code, message },
   });
-}
-
-function formatAmount(mint: string, amount: bigint): string {
-  if (mint !== SOL_MINT) return amount.toString();
-  const negative = amount < 0n;
-  const value = negative ? -amount : amount;
-  const raw = value.toString().padStart(10, "0");
-  const whole = raw.slice(0, raw.length - 9);
-  const frac = raw.slice(raw.length - 9).replace(/0+$/, "");
-  return `${negative ? "-" : ""}${whole}${frac ? `.${frac}` : ""}`;
 }
 
 async function canPayFee(rpcUrl: string, owner: string): Promise<boolean> {
@@ -66,65 +54,94 @@ export async function handlePrivacyStatus(req: ExtensionRequest): Promise<Extens
   const rpcUrl = privacyRpcUrl(settings);
   const accounts = await readAccounts();
   const activeId = await readActiveAccountId();
-  const target = signingTarget(accounts, activeId);
-  if (!rpcUrl || target === "missing") {
+  const active = accounts.find((account) => account.id === activeId);
+  const activeKind = active ? (active.kind === "combined" ? "combined" : accountKind(active)) : "missing";
+  if (!rpcUrl) {
+    void debugLogInfo("wallet.privacyStatus", `no-helius active=${activeKind}`);
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
       ok: true,
-      result: { kind: "unavailable" },
+      result: { kind: "unavailable", reason: "no-helius" },
     });
   }
-  if (target === "watch") {
+  if (!active || !activeId) {
+    void debugLogInfo("wallet.privacyStatus", "missing-account");
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
       ok: true,
-      result: { kind: "unavailable" },
+      result: { kind: "unavailable", reason: "missing-account" },
     });
   }
-  if (!isUnlocked() || !getLoadedAccount(target.accountId)) {
+  if (accountKind(active) === "readOnly") {
+    void debugLogInfo("wallet.privacyStatus", "watch");
+    return respond({
+      kind: "airwave-ext-res",
+      requestId: req.requestId,
+      ok: true,
+      result: { kind: "unavailable", reason: "watch" },
+    });
+  }
+  if (!isUnlocked()) {
+    void debugLogInfo("wallet.privacyStatus", `locked active=${activeKind}`);
     return fail(req, "WALLET_LOCKED", "Wallet is locked");
   }
+
   try {
     const client = privacyClient(rpcUrl, settings.cluster);
-    const owner = address(target.address);
-    const registered = await isWalletRegistered({ rpc: client, owner });
-    if (!registered) {
-      const feeOk = await canPayFee(settings.rpcUrl.trim() || rpcUrl, target.address);
+    if (isCombinedAccount(active)) {
+      const combined = await privacyRowsForCombined(accounts, active, client, settings);
+      if (combined.kind === "unavailable") {
+        return respond({
+          kind: "airwave-ext-res",
+          requestId: req.requestId,
+          ok: true,
+          result: { kind: "unavailable", reason: "combined-no-registered-vault" },
+        });
+      }
+      void debugLogInfo("wallet.privacyStatus", `registered active=combined rows=${combined.rows.length}`);
       return respond({
         kind: "airwave-ext-res",
         requestId: req.requestId,
         ok: true,
-        result: { kind: "unregistered", canPayFee: feeOk },
+        result: { kind: "registered", rows: combined.rows },
       });
     }
-    const keys = await shieldedKeysFor(target.accountId);
-    const wallet = new Wallet({ identity: keys.address() });
-    await syncWallet({ wallet, keys, client });
-    const rows = wallet.balances().map((row) => ({
-      mint: row.mint,
-      amount: formatAmount(row.mint, row.amount),
-      amountRaw: row.amount.toString(),
-      notes: row.utxos.map((utxo) => {
-        const hash = utxo.hash(keys.address().nullifierPublicKey, client.treeId);
-        return {
-          id: bs58.encode(hash),
-          amount: formatAmount(row.mint, utxo.amount),
-          amountRaw: utxo.amount.toString(),
-          mergeable: (utxo.data.utxoData()?.length ?? 0) === 0,
-        };
-      }),
-    }));
-    const usd = await privateUsdByMint(rows, settings);
+
+    const target = signingTarget(accounts, activeId);
+    if (target === "watch" || target === "missing") {
+      void debugLogInfo("wallet.privacyStatus", `watch-or-missing active=${activeKind}`);
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: true,
+        result: { kind: "unavailable", reason: "watch-or-missing" },
+      });
+    }
+    if (!getLoadedAccount(target.accountId)) {
+      void debugLogInfo("wallet.privacyStatus", `locked target=${target.accountId}`);
+      return fail(req, "WALLET_LOCKED", "Wallet is locked");
+    }
+    const chainRpc = settings.rpcUrl.trim() || rpcUrl;
+    const body = await privacyRowsForSigning(
+      target.accountId,
+      target.address,
+      client,
+      settings,
+      () => canPayFee(chainRpc, target.address),
+    );
+    void debugLogInfo(
+      "wallet.privacyStatus",
+      body.kind === "registered"
+        ? `registered active=${activeKind} rows=${body.rows.length}`
+        : `unregistered active=${activeKind} canPayFee=${body.canPayFee ? "1" : "0"}`,
+    );
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
       ok: true,
-      result: {
-        kind: "registered",
-        rows: rows.map((row) => ({ ...row, usdLabel: usd.get(row.mint) ?? "" })),
-      },
+      result: body,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Privacy read failed";
@@ -132,7 +149,10 @@ export async function handlePrivacyStatus(req: ExtensionRequest): Promise<Extens
   }
 }
 
-export async function handlePrivacyRegister(req: ExtensionRequest): Promise<ExtensionResponse> {
+export async function handlePrivacyRegister(
+  req: ExtensionRequest,
+  sender: chrome.runtime.MessageSender,
+): Promise<ExtensionResponse> {
   const settings = await readSettings();
   const rpcUrl = privacyRpcUrl(settings);
   const accounts = await readAccounts();
@@ -179,19 +199,13 @@ export async function handlePrivacyRegister(req: ExtensionRequest): Promise<Exte
       (current) => setTransactionMessageComputeUnitLimit(200_000, current),
     );
     const compiled = compileTransaction(message);
-    const unsigned = encodeWireTransaction(compiled);
-    const signed = await partiallySignWireTransaction(unsigned, loaded.signer);
-    const wire = getBase64EncodedWireTransaction(decodeWireTransaction(signed));
-    const signature = await rpc
-      .sendTransaction(wire, { encoding: "base64", skipPreflight: false, preflightCommitment: "confirmed" })
-      .send();
-    const confirmed = await waitForSignatureConfirmed(chainRpc, signature as Signature);
-    if (!confirmed) return fail(req, "PRIVACY_REGISTER_FAILED", "Registration was not confirmed");
+    const queued = queueWalletSend(req, sender, target.accountId, compiled);
+    if ("kind" in queued) return queued;
     return respond({
       kind: "airwave-ext-res",
       requestId: req.requestId,
       ok: true,
-      result: { signature },
+      result: { requestId: queued.requestId },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Registration failed";

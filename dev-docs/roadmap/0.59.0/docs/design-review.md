@@ -4,9 +4,10 @@
 - Round: **3**
 - Role: design review (does not edit INDEX / HOW / reasoning / HANDOFF / code; this file is not the contract)
 - Baseline: decided sentences and acceptance in [`../INDEX.md`](../INDEX.md); direction in [`how.md`](./how.md); reasons in [`reasoning.md`](./reasoning.md); session note in [`../HANDOFF.md`](../HANDOFF.md). Layout fallback is the approved demo [`privacy-balance-ux.html`](../../../design-demos/0.59.0/privacy-balance-ux.html). Upstream [0.58.0](../../0.58.0/INDEX.md) is shipped and this version does not change it. [`helius-privacy-rings.md`](../../../research/helius-privacy-rings.md) is protocol notes; the INDEX wins on conflict. Backlog has no scheduled privacy item and is not a requirement.
-- Architecture bans: [`../../GUIDELINES.md`](../../GUIDELINES.md) section 4. This INDEX does not override them. Register skips the generic approval screen and still signs inside the extension, which the INDEX states on purpose. No second dApp method is declared. Pending stays in the service worker, results are not broadcast, `chrome.storage` stays the durable source of truth, and there is no hard-coded password.
+- Architecture bans: [`../../GUIDELINES.md`](../../GUIDELINES.md) section 4. This INDEX does not override them. Rounds 1–3 recorded that register skipped the generic approval screen. On 2026-11-13 the INDEX changed that: register opens that screen before it is signed. No second dApp method is declared. Pending stays in the service worker, results are not broadcast, `chrome.storage` stays the durable source of truth, and there is no hard-coded password.
 - Current-code sample: unchanged from the initial round. Privacy UI and `@heliuslabs/spr` are absent, which is expected for a draft.
 - **Verdict:** no open HIGH. The review gate passes. The proposal is feasible. M1, M2, M3, and M4 are closed in the INDEX. No MEDIUM remains open.
+- 2026-11-13: INDEX now requires the register transaction to open the normal approval screen before it is signed. Sentences below that say the tab button is the consent, or that register skips that screen, describe rounds 1–3 only.
 
 ## Load-bearing decisions
 

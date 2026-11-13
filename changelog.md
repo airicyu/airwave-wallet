@@ -6,7 +6,7 @@ In progress.
 
 ### Combined account add
 
-Adding local wallets to a new combined account uses a checkbox list. A line above the list asks which wallet accounts to add. Pasting addresses uses a multi-line field, so several public keys can be pasted at once.
+Adding local wallets on create or manage uses a checkbox list. A line above the list asks which wallet accounts to add. Pasting addresses uses a multi-line field, so several public keys can be pasted at once. Manage Confirm adds each new address, then returns to the manage page.
 
 ### Settings screens
 
@@ -14,7 +14,7 @@ Back from AI settings returns to Settings. Confirm and discard use the same boxe
 
 ### Private balances
 
-The private tab has Shield and Unshield pickers. Action buttons sit two per row, each with a colored icon and a label. UTXO rows are cards with a short id, a copy control, and an amount plus its unit. Confirm shows a spinner while a proof is built. An approval screen with no request id leaves that screen. Chinese labels say 轉入私人 and 轉回公開.
+The private tab has Shield and Unshield pickers. Action buttons sit two per row, each with a colored icon and a label. UTXO rows are cards with a short id, a copy control, and an amount plus its unit. Confirm shows a spinner while a proof is built. An approval screen with no request id leaves that screen. Chinese labels say 轉入私人 and 轉回公開. Register builds one transaction and opens the normal approval screen. The wallet signs it only after the user approves.
 
 ### Type
 
@@ -30,7 +30,7 @@ Settings asks for a Helius API key and stores the key. Private balance and Mainn
 
 ### Sign AI and the derivation message
 
-Sign AI names privacy-ring deposit, transact, merge, and user-registry instructions. A payload containing `TSPP/derive/v1` is rejected before approval.
+Sign AI names privacy-ring deposit, transact, merge, and user-registry instructions. The report prompt teaches an instruction-first reading of one transaction. Decisions grades from program labels, privilege flags, and asset-path clarity, without naming product programs, so a labeled no-transfer setup with clean flags may be low. A payload containing `TSPP/derive/v1` is rejected before approval.
 
 ### Source file headers
 
@@ -44,9 +44,17 @@ Combined-account screens live under `popup/accounts/combined`. Seed generate, bu
 
 Shield, Unshield, Send, and Merge share one check for an unlocked signing account and a Helius RPC, and one step that queues the built transaction for approval. Send and Unshield share one note order: largest amount first, then id, taking notes until the amount is covered. Those screens, the private tab, the token detail, Shield, and Merge read registration through one status helper.
 
+### Note binding and merge confirm
+
+Send and Unshield send the selected note ids, and the proof spends that set. More than 40 ids is rejected before a proof is built. A merge of 52 notes or fewer still uses one approval. More than 52 notes are proved first, then one confirm screen signs those transactions. Register opens the normal approval screen and signs only after the user approves.
+
+### Build
+
+Poseidon uses `@lightprotocol/hasher.rs` slim instead of the fat inlined WASM bundle. The build copies only `hasher_wasm_simd_bg.wasm` and always loads that SIMD module. `SOL_MINT` lives in `shared/privacy/sol-mint.ts`; popup and background compare against it without importing that constant from `@heliuslabs/spr`.
+
 ### Still open
 
-Send and Unshield still do not pass the chosen notes into the proof.
+The approval screen still does not show the private change amount.
 
 ---
 

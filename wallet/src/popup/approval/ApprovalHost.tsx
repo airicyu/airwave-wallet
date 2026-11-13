@@ -3,7 +3,7 @@
  * Reject and success return to the form that started the request.
  * Leaving the approval view aborts that pending request once.
  *
- * Privacy flows mark a one-shot flag before opening this host. Reject and success read that flag to choose Shield, Unshield, Send, or Merge. A public send has no flag and returns to token send. Merge finish and cancel use the same request id as the approval.
+ * Privacy flows mark a one-shot flag before opening this host. Reject and success read that flag to choose Shield, Unshield, Send, Merge, or the private-balance tab. A public send has no flag and returns to token send. A merge of more than 52 notes confirms on its own screen and is not finished here.
  */
 import type { JSX } from "react";
 import { memo } from "react";
@@ -13,6 +13,7 @@ import { consumeUnshieldApproval } from "../privacy/unshield-draft";
 import { consumeMergeApproval } from "../privacy/merge-draft";
 import { consumeShieldApproval } from "../privacy/shield-approval";
 import { consumePrivateSendApproval } from "../privacy/private-send-draft";
+import { consumeRegisterFrom, returnToPrivateTab } from "../privacy/register-return";
 import type { UiHost } from "../../shared/protocol";
 import { walletShellSurfaceFromHref } from "../../shared/shell";
 import { usePopupContext } from "../state/PopupContext";
@@ -54,15 +55,29 @@ export const ApprovalHost = memo(function ApprovalHost({ requestId }: { requestI
             api.navigateTo("merge");
             return;
           }
+          const registerFrom = consumeRegisterFrom();
+          if (registerFrom === "shield") {
+            api.navigateTo("shield");
+            return;
+          }
+          if (registerFrom === "tab") {
+            returnToPrivateTab();
+            api.navigateTo("home-token");
+            return;
+          }
           api.navigateTo(consumeUnshieldApproval() ? "unshield" : consumePrivateSendApproval() ? "private-send" : consumeShieldApproval() ? "shield" : "token-send");
         },
         onWalletSendSuccessExit: () => {
           syncWalletSendAbortId(null);
           api.setActiveWalletSendRequestId(null);
-          const mergeId = consumeMergeApproval();
-          if (mergeId) void sendExtensionRequest("wallet.finishMergeBatch", { requestId: mergeId });
+          const registerFrom = consumeRegisterFrom();
           api.setDetailTokenId(null);
           api.setHomeAssetsForce(true);
+          if (registerFrom === "shield") {
+            api.navigateTo("shield");
+            return;
+          }
+          if (registerFrom === "tab") returnToPrivateTab();
           api.navigateTo("home-token");
         },
       }}

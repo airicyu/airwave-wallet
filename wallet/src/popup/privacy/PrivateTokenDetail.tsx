@@ -1,9 +1,11 @@
 /**
  * Private token detail: icon, action buttons, amount, mint, and the UTXO list.
  * Does not build Shield, Send, Unshield, or Merge transactions.
+ * A combined account shows the main wallet balance only and hides the action row.
  */
 import { useEffect, useState, type JSX } from "react";
-import { NATIVE_SOL_ID, shortMint, type HomeTokenRow } from "../../shared/home";
+import { isCombinedAccount } from "../../shared/accounts";
+import { NATIVE_SOL_ID, shortMint } from "../../shared/home";
 import { CopyIconButton } from "../components/CopyPkButton";
 import { TokenIcon } from "../home/HomeTokenList";
 import { usePopupContext } from "../state/PopupContext";
@@ -11,29 +13,43 @@ import { useT } from "../state/useT";
 import { clearShieldAmount, setShieldBack } from "./shield-approval";
 import { clearUnshieldDraft, setUnshieldBack } from "./unshield-draft";
 import { clearPrivateSendDraft } from "./private-send-draft";
-import { loadPrivacyStatus, privacyRowForMint, type PrivacyRow } from "./privacy-status";
+import {
+  loadPrivacyStatus,
+  privacyMainDetailRow,
+  privacyRowForMint,
+  type PrivacyRow,
+} from "./privacy-status";
+import { privacyTokenCard } from "./privacy-token-card";
 import { PrivacySkeleton } from "./PrivacySkeleton";
 import { IconMerge, IconSend, IconShield, IconUnshield } from "../components/StrokeIcon";
 import { UtxoReceipt } from "./UtxoReceipt";
 
 export function PrivateTokenDetail({ mint }: { mint: string }): JSX.Element {
   const { t } = useT();
-  const { navigateTo, homeTokenRows } = usePopupContext();
+  const { navigateTo, homeTokenRows, wallet } = usePopupContext();
   const [row, setRow] = useState<PrivacyRow | null>(null);
   const [phase, setPhase] = useState<"loading" | "ready" | "missing">("loading");
+  const active = wallet?.accounts.find((account) => account.id === wallet.activeAccountId);
+  const combined = active != null && isCombinedAccount(active);
+  const mainPubkey = combined ? active.mainPubkey : null;
 
   useEffect(() => {
     let cancelled = false;
     void loadPrivacyStatus().then((body) => {
       if (cancelled) return;
       const found = body.kind === "registered" ? privacyRowForMint(body.rows, mint) ?? null : null;
-      setRow(found);
-      setPhase(found ? "ready" : "missing");
+      if (!found) {
+        setRow(null);
+        setPhase("missing");
+        return;
+      }
+      setRow(mainPubkey ? privacyMainDetailRow(found, mainPubkey) : found);
+      setPhase("ready");
     });
     return () => {
       cancelled = true;
     };
-  }, [mint]);
+  }, [mint, mainPubkey]);
 
   if (phase === "loading") return <PrivacySkeleton variant="detail" />;
   if (!row) {
@@ -44,54 +60,45 @@ export function PrivateTokenDetail({ mint }: { mint: string }): JSX.Element {
     );
   }
 
-  const publicId = row.mint === "11111111111111111111111111111111" ? NATIVE_SOL_ID : row.mint;
-  const known = homeTokenRows.find((item) => item.id === publicId);
-  const unit = known?.symbol ?? (publicId === NATIVE_SOL_ID ? "SOL" : "");
-  const card: HomeTokenRow = known ?? {
-    id: publicId,
-    name: publicId === NATIVE_SOL_ID ? "Solana" : row.mint.slice(0, 4),
-    symbol: unit,
-    uiAmount: 0,
-    uiAmountLabel: row.amount,
-    usdLabel: "",
-    iconLetter: publicId === NATIVE_SOL_ID ? "S" : row.mint.slice(0, 1),
-    decimals: publicId === NATIVE_SOL_ID ? 9 : 0,
-  };
+  const card = privacyTokenCard(row.mint, row.amount, row.usdLabel, homeTokenRows);
+  const unit = card.symbol;
 
   return (
     <div className="token-detail">
       <div className="token-detail-hero">
         <TokenIcon row={card} />
         <h3 className="token-detail-name">{card.name || card.symbol}</h3>
-        <div className="privacy-actions">
-          <button type="button" className="token-detail-action" onClick={() => {
-            clearPrivateSendDraft();
-            navigateTo("private-send");
-          }}>
-            <IconSend />
-            {t("send.action")}
-          </button>
-          <button type="button" className="token-detail-action is-shield" onClick={() => {
-            clearShieldAmount();
-            setShieldBack("private-detail");
-            navigateTo("shield");
-          }}>
-            <IconShield />
-            {t("privacy.shield")}
-          </button>
-          <button type="button" className="token-detail-action is-unshield" onClick={() => {
-            clearUnshieldDraft();
-            setUnshieldBack("private-detail");
-            navigateTo("unshield");
-          }}>
-            <IconUnshield />
-            {t("privacy.unshield")}
-          </button>
-          <button type="button" className="token-detail-action is-merge" onClick={() => navigateTo("merge")}>
-            <IconMerge />
-            {t("privacy.merge")}
-          </button>
-        </div>
+        {!combined ? (
+          <div className="privacy-actions">
+            <button type="button" className="token-detail-action" onClick={() => {
+              clearPrivateSendDraft();
+              navigateTo("private-send");
+            }}>
+              <IconSend />
+              {t("send.action")}
+            </button>
+            <button type="button" className="token-detail-action is-shield" onClick={() => {
+              clearShieldAmount();
+              setShieldBack("private-detail");
+              navigateTo("shield");
+            }}>
+              <IconShield />
+              {t("privacy.shield")}
+            </button>
+            <button type="button" className="token-detail-action is-unshield" onClick={() => {
+              clearUnshieldDraft();
+              setUnshieldBack("private-detail");
+              navigateTo("unshield");
+            }}>
+              <IconUnshield />
+              {t("privacy.unshield")}
+            </button>
+            <button type="button" className="token-detail-action is-merge" onClick={() => navigateTo("merge")}>
+              <IconMerge />
+              {t("privacy.merge")}
+            </button>
+          </div>
+        ) : null}
       </div>
       <div className="token-detail-meta">
         <div className="token-detail-row">
@@ -100,7 +107,7 @@ export function PrivateTokenDetail({ mint }: { mint: string }): JSX.Element {
         </div>
         <div className="token-detail-row">
           <span className="label">{t("token.mint")}</span>
-          {publicId === NATIVE_SOL_ID ? (
+          {card.id === NATIVE_SOL_ID ? (
             <span>{t("token.native")}</span>
           ) : (
             <span className="token-detail-mint">
@@ -113,7 +120,7 @@ export function PrivateTokenDetail({ mint }: { mint: string }): JSX.Element {
       <hr className="privacy-rule" />
       <h4 className="privacy-utxo-title">{t("privacy.utxos")}</h4>
       <p className="privacy-utxo-count">{t("privacy.utxoCount", { count: String(row.notes.length) })}</p>
-      {row.notes.length >= 40 ? <p className="privacy-utxo-warn">{t("privacy.utxoWarn")}</p> : null}
+      {!combined && row.notes.length >= 40 ? <p className="privacy-utxo-warn">{t("privacy.utxoWarn")}</p> : null}
       <div className="privacy-notes privacy-notes-scroll">
         {row.notes.map((note) => (
           <div key={note.id} className="privacy-note">

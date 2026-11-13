@@ -4,11 +4,10 @@
  * Confirm asks the service worker to build the transfer and open approval.
  * The address book and the approval shell are separate screens. This form keeps its draft while those screens are open.
  *
- * Confirm currently sends the mint, the amount, and the recipient. It does not send the selected note ids, so the service worker chooses notes again while it builds the proof.
+ * Confirm sends the selected note ids with the amount and the recipient.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from "react";
 import { NATIVE_SOL_ID } from "../../shared/home";
-import { SOL_MINT } from "@heliuslabs/spr/transaction";
 import { parsePublicKeyBase58 } from "../../shared/accounts";
 import { sendExtensionRequest } from "../../shared/protocol";
 import { apiErrorMessage } from "../../shared/i18n";
@@ -23,7 +22,7 @@ import { UtxoReceipt } from "./UtxoReceipt";
 import { IconBook, IconX } from "../components/StrokeIcon";
 import { shortAddr } from "../lib/format";
 import { coverAmount, notesByAmountDesc, type SpendNote } from "./note-cover";
-import { loadPrivacyStatus, privacyRowForMint } from "./privacy-status";
+import { loadPrivacyStatus, privacyRowForMint, SOL_MINT } from "./privacy-status";
 
 export function PrivateSendForm(): JSX.Element {
   const draft = readPrivateSendDraft();
@@ -111,6 +110,7 @@ export function PrivateSendForm(): JSX.Element {
       mint,
       amountUi: amount.trim(),
       recipient: recipient.trim(),
+      ids: picked,
     });
     if (!res.ok) {
       buildingRef.current = false;
@@ -123,7 +123,7 @@ export function PrivateSendForm(): JSX.Element {
     setActiveWalletSendRequestId(requestId);
     syncWalletSendAbortId(requestId);
     navigateTo("send-approval");
-  }, [amount, locale, mint, navigateTo, recipient, setActiveWalletSendRequestId]);
+  }, [amount, locale, mint, navigateTo, picked, recipient, setActiveWalletSendRequestId]);
 
   useRegisterDock({
     label: t("send.confirm"),

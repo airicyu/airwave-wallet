@@ -946,6 +946,11 @@ const messages = {
   },
   "privacy.merge": { "zh-Hant": "合併 UTXO", "zh-Hans": "合并 UTXO", "en": "Merge UTXO" },
   "privacy.mergeTitle": { "zh-Hant": "合併 UTXO", "zh-Hans": "合并 UTXO", "en": "Merge UTXO" },
+  "privacy.mergeGroups": {
+    "zh-Hant": "將簽署 {count} 筆合併交易",
+    "zh-Hans": "将签署 {count} 笔合并交易",
+    "en": "This signs {count} merge transactions",
+  },
   "privacy.selectAll": { "zh-Hant": "全選", "zh-Hans": "全选", "en": "Select all" },
   "privacy.clearAll": { "zh-Hant": "清除", "zh-Hans": "清除", "en": "Clear all" },
   "privacy.utxos": { "zh-Hant": "UTXO", "zh-Hans": "UTXO", "en": "UTXOs" },
@@ -1489,6 +1494,11 @@ const messages = {
     "zh-Hant": "確定移除此錢包帳戶？",
     "zh-Hans": "确定移除此钱包账户？",
     "en": "Remove this wallet account?",
+  },
+  "accounts.removeCombinedConfirm": {
+    "zh-Hant": "確定移除此綜合錢包帳戶？",
+    "zh-Hans": "确定移除此综合钱包账户？",
+    "en": "Remove this combined wallet account?",
   },
   "accounts.removeMemberConfirm": {
     "zh-Hant": "確定移除此成員地址？",

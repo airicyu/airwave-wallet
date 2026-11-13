@@ -1,39 +1,47 @@
 /**
  * Private Balances tab: unavailable, register consent, or mint rows with UTXO expand.
- * Does not derive keys. Register is sent by the service worker without the approval screen.
+ * Combined accounts show the aggregated member panel from the design demo.
+ * A combined account is read-only here: no Register, Shield, or Unshield.
+ * refreshKey bumps when the home refresh control asks this panel to reload.
  */
 import { useCallback, useEffect, useState, type JSX } from "react";
-import { NATIVE_SOL_ID, type HomeTokenRow } from "../../shared/home";
+import { isCombinedAccount } from "../../shared/accounts";
 import { sendExtensionRequest } from "../../shared/protocol";
-import { loadPrivacyStatus } from "./privacy-status";
+import { loadPrivacyStatus, type PrivacyMember, type PrivacyRow } from "./privacy-status";
+import { privacyTokenCard } from "./privacy-token-card";
+import { markRegisterFrom } from "./register-return";
 import { IconChevronDown, IconShield, IconUnshield } from "../components/StrokeIcon";
 import { TokenIcon, TokenTrust } from "../home/HomeTokenList";
+import { shortAddr } from "../lib/format";
 import { usePopupContext } from "../state/PopupContext";
 import { useT } from "../state/useT";
 import { PrivacySkeleton } from "./PrivacySkeleton";
 import { RegisterWait } from "./RegisterWait";
 import { UtxoReceipt } from "./UtxoReceipt";
 
-const SOL_MINT = "11111111111111111111111111111111";
-
-type Note = { id: string; amount: string };
-type Row = { mint: string; amount: string; notes: Note[]; usdLabel?: string };
 type Status =
   | { kind: "loading" }
   | { kind: "unavailable" }
   | { kind: "unregistered"; canPayFee: boolean }
-  | { kind: "registered"; rows: Row[] }
+  | { kind: "registered"; rows: PrivacyRow[] }
   | { kind: "error" };
 
-export function PrivateBalancesPanel(): JSX.Element {
+export function PrivateBalancesPanel({ refreshKey = 0 }: { refreshKey?: number }): JSX.Element {
   const { t } = useT();
-  const { navigateTo, setDetailTokenId, homeTokenRows, showToast } = usePopupContext();
+  const { navigateTo, setDetailTokenId, homeTokenRows, setActiveWalletSendRequestId, wallet } = usePopupContext();
   const [status, setStatus] = useState<Status>({ kind: "loading" });
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState("");
   const [openMint, setOpenMint] = useState<string | null>(null);
+  const [openMember, setOpenMember] = useState<string | null>(null);
+  const active = wallet?.accounts.find((account) => account.id === wallet.activeAccountId);
+  const combined = active != null && isCombinedAccount(active);
+  const activeId = wallet?.activeAccountId ?? null;
 
   const load = useCallback(async () => {
+    setStatus({ kind: "loading" });
+    setOpenMint(null);
+    setOpenMember(null);
     const body = await loadPrivacyStatus();
     if (body.kind === "error") {
       setStatus({ kind: "error" });
@@ -44,13 +52,11 @@ export function PrivateBalancesPanel(): JSX.Element {
 
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, refreshKey, activeId]);
 
   if (status.kind === "loading") return <PrivacySkeleton variant="cards" />;
-  if (busy) {
-    return (
-      <RegisterWait />
-    );
+  if (busy && !combined) {
+    return <RegisterWait />;
   }
   if (status.kind === "unavailable" || status.kind === "error") {
     return (
@@ -62,80 +68,48 @@ export function PrivateBalancesPanel(): JSX.Element {
   if (status.kind === "registered") {
     return (
       <div className="privacy-registered">
-        <div className="privacy-actions">
-          <button type="button" className="token-detail-action is-shield" onClick={() => navigateTo("shield-pick")}>
-            <IconShield />
-            {t("privacy.shield")}
-          </button>
-          <button type="button" className="token-detail-action is-unshield" onClick={() => navigateTo("unshield-pick")}>
-            <IconUnshield />
-            {t("privacy.unshield")}
-          </button>
-        </div>
+        {!combined ? (
+          <div className="privacy-actions">
+            <button type="button" className="token-detail-action is-shield" onClick={() => navigateTo("shield-pick")}>
+              <IconShield />
+              {t("privacy.shield")}
+            </button>
+            <button type="button" className="token-detail-action is-unshield" onClick={() => navigateTo("unshield-pick")}>
+              <IconUnshield />
+              {t("privacy.unshield")}
+            </button>
+          </div>
+        ) : null}
         <ul className="token-list">
-        {status.rows.map((row) => {
-          const open = openMint === row.mint && row.notes.length > 0;
-          const publicId = row.mint === SOL_MINT ? NATIVE_SOL_ID : row.mint;
-          const known = homeTokenRows.find((item) => item.id === publicId);
-          const card: HomeTokenRow = known
-            ? { ...known, uiAmountLabel: row.amount, usdLabel: row.usdLabel ?? "" }
-            : {
-                id: publicId,
-                name: row.mint.slice(0, 4),
-                symbol: "",
-                uiAmount: 0,
-                uiAmountLabel: row.amount,
-                usdLabel: row.usdLabel ?? "",
-                iconLetter: row.mint.slice(0, 1),
-                decimals: 0,
-              };
-          const notes = [...row.notes].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-          return (
-            <li key={row.mint} className={`token-block${open ? " is-expanded" : ""}`}>
-              <div
-                className="token-card"
-                role="button"
-                tabIndex={0}
-                onClick={() => {
-                  setDetailTokenId(row.mint);
-                  navigateTo("private-detail");
-                }}
-              >
-                <TokenTrust row={card} />
-                <TokenIcon row={card} />
-                <div className="token-main">
-                  <div className="token-sym">{card.name || card.symbol}</div>
-                  <div className="token-qty">{card.uiAmountLabel} {card.symbol}</div>
-                </div>
-                <div className="token-usd">{card.usdLabel}</div>
-                {row.notes.length > 0 ? (
-                  <button
-                    type="button"
-                    className="row-expand-btn"
-                    aria-expanded={open}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setOpenMint(open ? null : row.mint);
-                    }}
-                  >
-                    <IconChevronDown size={16} />
-                  </button>
-                ) : null}
-              </div>
-              {open ? (
-                <div className="privacy-notes">
-                  <p className="privacy-utxo-list-label">{t("privacy.utxoList")}</p>
-                  {notes.map((note) => (
-                    <div key={note.id} className="privacy-note">
-                      <UtxoReceipt id={note.id} amount={note.amount} unit={card.symbol} />
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </li>
-          );
-        })}
-      </ul>
+          {status.rows.map((row) => (
+            <PrivateBalanceRow
+              key={row.mint}
+              row={row}
+              combined={combined}
+              open={openMint === row.mint}
+              openMemberKey={openMint === row.mint ? openMember : null}
+              onOpenDetail={() => {
+                setDetailTokenId(row.mint);
+                navigateTo("private-detail");
+              }}
+              onToggleMint={() => {
+                setOpenMint((current) => (current === row.mint ? null : row.mint));
+                setOpenMember(null);
+              }}
+              onToggleMember={(pubkey) => {
+                const key = `${row.mint}:${pubkey}`;
+                setOpenMember((current) => (current === key ? null : key));
+              }}
+            />
+          ))}
+        </ul>
+      </div>
+    );
+  }
+  if (combined) {
+    return (
+      <div className="privacy-gate">
+        <p>{t("privacy.unavailable")}</p>
       </div>
     );
   }
@@ -156,13 +130,152 @@ export function PrivateBalancesPanel(): JSX.Element {
               setFailed(res.error?.message || t("privacy.registerFailed"));
               return;
             }
-            showToast(t("privacy.registered"), "ok");
-            void load().finally(() => setBusy(false));
+            const { requestId } = res.result as { requestId: string };
+            markRegisterFrom("tab");
+            setActiveWalletSendRequestId(requestId);
+            setBusy(false);
+            navigateTo("send-approval");
           });
         }}
       >
         {t("privacy.register")}
       </button>
+    </div>
+  );
+}
+
+function PrivateBalanceRow({
+  row,
+  combined,
+  open,
+  openMemberKey,
+  onOpenDetail,
+  onToggleMint,
+  onToggleMember,
+}: {
+  row: PrivacyRow;
+  combined: boolean;
+  open: boolean;
+  openMemberKey: string | null;
+  onOpenDetail: () => void;
+  onToggleMint: () => void;
+  onToggleMember: (pubkey: string) => void;
+}): JSX.Element {
+  const { t } = useT();
+  const { homeTokenRows } = usePopupContext();
+  const card = privacyTokenCard(row.mint, row.amount, row.usdLabel, homeTokenRows);
+  const members = row.members ?? [];
+  const canExpand = combined ? members.length > 0 : row.notes.length > 0;
+  const notes = [...row.notes].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+
+  return (
+    <li className={`token-block${open ? " is-expanded" : ""}`}>
+      <div
+        className="token-card"
+        role="button"
+        tabIndex={0}
+        onClick={onOpenDetail}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onOpenDetail();
+          }
+        }}
+      >
+        <TokenTrust row={card} />
+        <TokenIcon row={card} />
+        <div className="token-main">
+          <div className="token-sym">{card.name || card.symbol}</div>
+          <div className="token-qty">
+            {card.uiAmountLabel} {card.symbol}
+          </div>
+        </div>
+        <div className="token-usd">{card.usdLabel}</div>
+        {canExpand ? (
+          <button
+            type="button"
+            className="row-expand-btn"
+            aria-expanded={open}
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleMint();
+            }}
+          >
+            <IconChevronDown size={16} />
+          </button>
+        ) : null}
+      </div>
+      {open && combined ? (
+        <div className="token-member-panel">
+          {members.map((member) => (
+            <CombinedPrivateMember
+              key={member.pubkey}
+              member={member}
+              unit={card.symbol}
+              open={openMemberKey === `${row.mint}:${member.pubkey}`}
+              onToggle={() => onToggleMember(member.pubkey)}
+            />
+          ))}
+        </div>
+      ) : null}
+      {open && !combined ? (
+        <div className="privacy-notes">
+          <p className="privacy-utxo-list-label">{t("privacy.utxoList")}</p>
+          {notes.map((note) => (
+            <div key={note.id} className="privacy-note">
+              <UtxoReceipt id={note.id} amount={note.amount} unit={card.symbol} />
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
+function CombinedPrivateMember({
+  member,
+  unit,
+  open,
+  onToggle,
+}: {
+  member: PrivacyMember;
+  unit: string;
+  open: boolean;
+  onToggle: () => void;
+}): JSX.Element {
+  const pct = Math.round(member.percent);
+  const bar = Math.min(100, Math.max(0, member.percent));
+  const canExpand = member.notes.length > 0;
+  return (
+    <div className={`token-member${open ? " is-expanded" : ""}`}>
+      <div className="token-member-head">
+        <div className="token-member-grow">
+          <div className="token-member-top">
+            <span className="token-member-addr">{shortAddr(member.pubkey)}</span>
+            <span className="token-member-pct">{`${pct}%`}</span>
+          </div>
+          <div className="token-member-amt">
+            {member.amount} {unit}
+          </div>
+          <div className="token-member-bar" aria-hidden="true">
+            <i style={{ width: `${bar}%` }} />
+          </div>
+        </div>
+        {canExpand ? (
+          <button type="button" className="row-expand-btn" aria-expanded={open} onClick={onToggle}>
+            <IconChevronDown size={16} />
+          </button>
+        ) : null}
+      </div>
+      {open ? (
+        <div className="privacy-notes">
+          {member.notes.map((note) => (
+            <div key={note.id} className="privacy-note">
+              <UtxoReceipt id={note.id} amount={note.amount} unit={unit} />
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

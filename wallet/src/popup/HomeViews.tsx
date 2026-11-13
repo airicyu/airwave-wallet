@@ -3,7 +3,7 @@
  * Does not draw the top bar, account screens, or settings.
  */
 import type { JSX } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { HomeActivityList } from "./home/HomeActivityList";
 import { HomeTokenList, TokenDetailView } from "./home/HomeTokenList";
 import { PrivateBalancesPanel } from "./privacy/PrivateBalancesPanel";
@@ -15,6 +15,7 @@ import { UnshieldPick } from "./privacy/UnshieldPick";
 import { PrivateSendForm } from "./privacy/PrivateSendForm";
 import { ShieldPick } from "./privacy/ShieldPick";
 import { clearShieldAmount, setShieldBack } from "./privacy/shield-approval";
+import { takePrivateTab } from "./privacy/register-return";
 import { CloseEmptyRecycleButton } from "./close-empty/CloseEmptyFeature";
 import { RefreshAssetsButton } from "./home/RefreshAssetsButton";
 import { ApprovalHost } from "./approval/ApprovalHost";
@@ -40,6 +41,10 @@ export function HomeViews(): JSX.Element {
   } = usePopupContext();
   const { t } = useT();
   const [assetTab, setAssetTab] = useState<"tokens" | "private">("tokens");
+  const [privateRefresh, setPrivateRefresh] = useState(0);
+  useEffect(() => {
+    if (currentView === "home-token" && takePrivateTab()) setAssetTab("private");
+  }, [currentView]);
   if (!wallet) return <></>;
   return (
     <>
@@ -83,10 +88,17 @@ export function HomeViews(): JSX.Element {
                 />
                   </>
                 ) : null}
+                {assetTab === "private" ? (
+                  <RefreshAssetsButton
+                    activeAccountId={wallet.activeAccountId}
+                    currentView={`${currentView}:private`}
+                    onRefresh={() => setPrivateRefresh((n) => n + 1)}
+                  />
+                ) : null}
                 </div>
               </div>
               {assetTab === "private" ? (
-                <PrivateBalancesPanel />
+                <PrivateBalancesPanel refreshKey={privateRefresh} />
               ) : (
               <HomeTokenList
                 wallet={wallet}

@@ -101,7 +101,7 @@ export async function handleWalletCommand(
   if (req.command === "wallet.commitCloseEmpty") return handleCommitCloseEmpty(req);
   if (req.command === "wallet.getHomeActivity") return handleGetHomeActivity(req);
   if (req.command === "wallet.privacyStatus") return handlePrivacyStatus(req);
-  if (req.command === "wallet.privacyRegister") return handlePrivacyRegister(req);
+  if (req.command === "wallet.privacyRegister") return handlePrivacyRegister(req, sender);
   if (req.command === "wallet.beginShield") return handleBeginShield(req, sender);
   if (req.command === "wallet.beginPrivateSend") return handleBeginPrivateSend(req, sender);
   if (req.command === "wallet.privacyRecipient") return handlePrivacyRecipient(req);

@@ -1,10 +1,9 @@
 /**
  * Merge UTXO page. Select all and Clear all apply only to notes that can be merged.
- * Confirm opens one approval. Groups after the first are sent after that approval.
+ * Fifty-two notes or fewer open one approval. More than 52 notes show one confirm screen for the transactions already built. Reject leaves the selection unchanged.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from "react";
 import { NATIVE_SOL_ID } from "../../shared/home";
-import { SOL_MINT } from "@heliuslabs/spr/transaction";
 import { sendExtensionRequest } from "../../shared/protocol";
 import { apiErrorMessage } from "../../shared/i18n";
 import { usePopupContext } from "../state/PopupContext";
@@ -12,7 +11,7 @@ import { useRegisterDock } from "../state/dock";
 import { useT } from "../state/useT";
 import { syncWalletSendAbortId } from "../approval/ApprovalHost";
 import { markMergeApproval } from "./merge-draft";
-import { loadPrivacyStatus, privacyRowForMint } from "./privacy-status";
+import { loadPrivacyStatus, privacyRowForMint, SOL_MINT } from "./privacy-status";
 import { PrivacySkeleton } from "./PrivacySkeleton";
 import { UtxoReceipt } from "./UtxoReceipt";
 
@@ -27,7 +26,7 @@ function sorted(notes: Note[]): Note[] {
 }
 
 export function MergeForm(): JSX.Element {
-  const { detailTokenId, homeTokenRows, setActiveWalletSendRequestId, navigateTo, setTitleOverride } = usePopupContext();
+  const { detailTokenId, homeTokenRows, setActiveWalletSendRequestId, navigateTo, setTitleOverride, setDetailTokenId, setHomeAssetsForce } = usePopupContext();
   const { t, locale } = useT();
   const [notes, setNotes] = useState<Note[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
@@ -35,6 +34,7 @@ export function MergeForm(): JSX.Element {
   const [ready, setReady] = useState(false);
   const [building, setBuilding] = useState(false);
   const buildingRef = useRef(false);
+  const [batch, setBatch] = useState<{ id: string; groups: string[][] } | null>(null);
   const mint = detailTokenId ?? "";
   const publicId = mint === SOL_MINT ? NATIVE_SOL_ID : mint;
   const row = homeTokenRows.find((item) => item.id === publicId);
@@ -72,19 +72,74 @@ export function MergeForm(): JSX.Element {
       setFormError(apiErrorMessage(locale, res.error, "error.sendBuildFailed"));
       return;
     }
-    const { requestId } = res.result as { requestId: string };
+    const result = res.result as { requestId?: string; batchId?: string; groups?: string[][] };
+    if (result.batchId && result.groups) {
+      buildingRef.current = false;
+      setBuilding(false);
+      setBatch({ id: result.batchId, groups: result.groups });
+      return;
+    }
+    const requestId = result.requestId ?? "";
     markMergeApproval(requestId);
     setActiveWalletSendRequestId(requestId);
     syncWalletSendAbortId(requestId);
     navigateTo("send-approval");
   }, [locale, mint, navigateTo, selected, setActiveWalletSendRequestId]);
 
-  useRegisterDock({
-    label: t("send.confirm"),
-    disabled: selected.length < 2,
-    busy: building,
-    onPrimary,
-  });
+  const confirmBatch = useCallback(async () => {
+    if (!batch || buildingRef.current) return;
+    buildingRef.current = true;
+    setBuilding(true);
+    const res = await sendExtensionRequest("wallet.finishMergeBatch", { requestId: batch.id });
+    buildingRef.current = false;
+    setBuilding(false);
+    if (!res.ok) {
+      setFormError(apiErrorMessage(locale, res.error, "error.sendBuildFailed"));
+      return;
+    }
+    setDetailTokenId(null);
+    setHomeAssetsForce(true);
+    navigateTo("home-token");
+  }, [batch, locale, navigateTo, setDetailTokenId, setHomeAssetsForce]);
+
+  useRegisterDock(
+    batch
+      ? {
+          label: t("send.confirm"),
+          disabled: false,
+          busy: building,
+          onPrimary: confirmBatch,
+          secondaryLabel: t("approval.reject"),
+          onSecondary: () => {
+            void sendExtensionRequest("wallet.cancelMergeBatch", { requestId: batch.id });
+            setBatch(null);
+          },
+        }
+      : {
+          label: t("send.confirm"),
+          disabled: selected.length < 2,
+          busy: building,
+          onPrimary,
+        },
+  );
+
+  if (batch) {
+    return (
+      <div className="token-send-form">
+        <p>{t("privacy.mergeGroups", { count: String(batch.groups.length) })}</p>
+        <ol className="merge-groups">
+          {batch.groups.map((group, index) => (
+            <li key={index}>
+              {t("privacy.utxoCount", { count: String(group.length) })}
+              {" "}
+              {group.map((id) => `${id.slice(0, 4)}…${id.slice(-4)}`).join(", ")}
+            </li>
+          ))}
+        </ol>
+        {formError ? <p className="form-error">{formError}</p> : null}
+      </div>
+    );
+  }
 
   if (!ready) return <PrivacySkeleton variant="form" />;
 
