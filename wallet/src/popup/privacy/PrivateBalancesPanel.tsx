@@ -70,11 +70,11 @@ export function PrivateBalancesPanel({ refreshKey = 0 }: { refreshKey?: number }
       <div className="privacy-registered">
         {!combined ? (
           <div className="privacy-actions">
-            <button type="button" className="token-detail-action is-shield" onClick={() => navigateTo("shield-pick")}>
+            <button type="button" className="token-detail-action" onClick={() => navigateTo("shield-pick")}>
               <IconShield />
               {t("privacy.shield")}
             </button>
-            <button type="button" className="token-detail-action is-unshield" onClick={() => navigateTo("unshield-pick")}>
+            <button type="button" className="token-detail-action" onClick={() => navigateTo("unshield-pick")}>
               <IconUnshield />
               {t("privacy.unshield")}
             </button>

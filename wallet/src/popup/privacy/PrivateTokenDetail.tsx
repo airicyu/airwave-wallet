@@ -77,7 +77,7 @@ export function PrivateTokenDetail({ mint }: { mint: string }): JSX.Element {
               <IconSend />
               {t("send.action")}
             </button>
-            <button type="button" className="token-detail-action is-shield" onClick={() => {
+            <button type="button" className="token-detail-action" onClick={() => {
               clearShieldAmount();
               setShieldBack("private-detail");
               navigateTo("shield");
@@ -85,7 +85,7 @@ export function PrivateTokenDetail({ mint }: { mint: string }): JSX.Element {
               <IconShield />
               {t("privacy.shield")}
             </button>
-            <button type="button" className="token-detail-action is-unshield" onClick={() => {
+            <button type="button" className="token-detail-action" onClick={() => {
               clearUnshieldDraft();
               setUnshieldBack("private-detail");
               navigateTo("unshield");
@@ -93,7 +93,7 @@ export function PrivateTokenDetail({ mint }: { mint: string }): JSX.Element {
               <IconUnshield />
               {t("privacy.unshield")}
             </button>
-            <button type="button" className="token-detail-action is-merge" onClick={() => navigateTo("merge")}>
+            <button type="button" className="token-detail-action" onClick={() => navigateTo("merge")}>
               <IconMerge />
               {t("privacy.merge")}
             </button>

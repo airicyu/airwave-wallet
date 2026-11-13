@@ -330,7 +330,7 @@ export function TokenDetailView({
               {t("send.action")}
             </button>
             {!watchOnly && !combined ? (
-              <button type="button" className="token-detail-action is-shield" onClick={onShield}>
+              <button type="button" className="token-detail-action" onClick={onShield}>
                 <IconShield />
                 {t("privacy.shield")}
               </button>

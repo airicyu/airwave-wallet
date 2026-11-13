@@ -82,7 +82,7 @@ A folder is a module boundary, not a label.
 
 **CSS and copy are the exception to “group by what changes together.”** They are catalogs you search. Do not move them back beside each feature folder.
 
-- Message keys stay in `shared/i18n/ui-messages.ts`. Prefix comments mark sections. Do not split the catalog into one file per prefix.
+- Message keys are reached through `shared/i18n/ui-messages.ts`. Section tables live in `shared/i18n/messages/` and that file spreads them. Callers outside `shared/i18n` import `ui-messages` or the folder index. Do not import a section file from outside `shared/i18n`.
 - Popup CSS lives in `popup/styles/`, imported in order from `popup/style.css`. Popout CSS lives in `popout/styles/`, imported from `popout/style.css`.
 - A CSS file sits next to a component only when those classes belong to that component alone. `approval/tx-ai.css` is that case. Shared controls stay in the catalog.
 

@@ -14,7 +14,7 @@ Back from AI settings returns to Settings. Confirm and discard use the same boxe
 
 ### Private balances
 
-The private tab has Shield and Unshield pickers. Action buttons sit two per row, each with a colored icon and a label. UTXO rows are cards with a short id, a copy control, and an amount plus its unit. Confirm shows a spinner while a proof is built. An approval screen with no request id leaves that screen. Chinese labels say 轉入私人 and 轉回公開. Register builds one transaction and opens the normal approval screen. The wallet signs it only after the user approves.
+The private tab has Shield and Unshield pickers. Action buttons sit two per row. Send, Shield, Unshield, and Merge UTXO use the same accent color on every screen. UTXO rows are cards with a short id, a copy control, and an amount plus its unit. Confirm shows a spinner while a proof is built. An approval screen with no request id leaves that screen. Chinese labels say 轉入私人 and 轉回公開. Register builds one transaction and opens the normal approval screen. The wallet signs it only after the user approves.
 
 ### Type
 
