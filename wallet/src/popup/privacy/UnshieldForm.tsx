@@ -30,6 +30,7 @@ export function UnshieldForm(): JSX.Element {
   const [selected, setSelected] = useState<string[]>(draft.selected);
   const [notes, setNotes] = useState<SpendNote[]>([]);
   const [balance, setBalance] = useState("—");
+  const [decimals, setDecimals] = useState<number | null>(null);
   const [formError, setFormError] = useState("");
   const [ready, setReady] = useState(false);
   const [building, setBuilding] = useState(false);
@@ -37,7 +38,6 @@ export function UnshieldForm(): JSX.Element {
   const mint = detailTokenId ?? "";
   const publicId = mint === SOL_MINT ? NATIVE_SOL_ID : mint;
   const row = homeTokenRows.find((item) => item.id === publicId);
-  const decimals = row?.decimals ?? 9;
   const order = useMemo(() => notesByAmountDesc(notes), [notes]);
 
   useEffect(() => {
@@ -62,13 +62,15 @@ export function UnshieldForm(): JSX.Element {
       if (!found) return;
       setNotes(found.notes);
       setBalance(found.amount);
+      if (typeof found.decimals === "number") setDecimals(found.decimals);
     });
     return () => {
       cancelled = true;
     };
   }, [mint]);
 
-  const target = amountUiToRaw(amount.trim(), decimals) ?? 0n;
+  const places = decimals ?? row?.decimals ?? 0;
+  const target = amountUiToRaw(amount.trim(), places) ?? 0n;
   const picked = auto ? coverAmount(order, target) : selected;
   const pickedSum = picked.reduce((sum, id) => sum + BigInt(order.find((item) => item.id === id)?.amountRaw ?? "0"), 0n);
   const overLimit = picked.length > 40;
@@ -112,7 +114,7 @@ export function UnshieldForm(): JSX.Element {
     <div className="token-send-form">
       <p className="token-send-balance">
         <span className="token-send-balance-label">{t("privacy.privateBalance")}</span>
-        <span>{balance}{row ? ` ${row.symbol}` : ""}</span>
+        <span className="token-send-balance-value">{balance}{row ? ` ${row.symbol}` : ""}</span>
       </p>
       <hr className="token-send-rule" />
       <div className="token-send-row">
@@ -128,9 +130,9 @@ export function UnshieldForm(): JSX.Element {
           }}
         />
         <button type="button" className="send-max-btn" onClick={() => {
-          const raw = amountUiToRaw(balance, decimals);
+          const raw = amountUiToRaw(balance, places);
           if (raw == null) return;
-          const next = formatRawToAmountUi(raw / 2n, decimals);
+          const next = formatRawToAmountUi(raw / 2n, places);
           setAmount(next);
           writeUnshieldDraft({ amount: next });
         }}>50%</button>

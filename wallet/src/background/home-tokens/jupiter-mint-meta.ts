@@ -250,8 +250,11 @@ export async function lookupJupiterUsdQuotes(
     if (!res.ok) return out;
     const json = (await res.json()) as unknown;
     for (const [mint, hit] of parseJupiterSearchArray(json)) {
-      if (hit.usdPrice == null) continue;
-      out.set(mint, { usdPrice: String(hit.usdPrice), decimals: hit.decimals });
+      if (hit.usdPrice == null && hit.decimals == null) continue;
+      out.set(mint, {
+        usdPrice: hit.usdPrice == null ? "" : String(hit.usdPrice),
+        decimals: hit.decimals,
+      });
     }
   } catch {
     return out;

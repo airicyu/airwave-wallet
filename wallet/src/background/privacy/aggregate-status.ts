@@ -13,8 +13,10 @@ import {
 } from "../../shared/accounts";
 import { accountKind, type AccountMeta, type CombinedAccountMeta, type Settings } from "../../shared/protocol";
 import { SOL_MINT } from "../../shared/privacy/sol-mint";
+import { formatRawToAmountUi } from "../../shared/send";
 import { getLoadedAccount } from "../session";
 import { shieldedKeysFor } from "./keys";
+import { decimalsByMint } from "./mint-decimals";
 import { privateUsdByMint } from "./usd";
 import { debugLogInfo } from "../debug-log";
 
@@ -37,19 +39,36 @@ export type PrivacyRowOut = {
   mint: string;
   amount: string;
   amountRaw: string;
+  /** Token decimals used to format `amount`. Absent when the mint account could not be read. */
+  decimals?: number;
   notes: PrivacyNoteOut[];
   members?: PrivacyMemberOut[];
   usdLabel?: string;
 };
 
-export function formatPrivacyAmount(mint: string, amount: bigint): string {
-  if (mint !== SOL_MINT) return amount.toString();
+export function formatPrivacyAmount(amount: bigint, decimals: number): string {
   const negative = amount < 0n;
-  const value = negative ? -amount : amount;
-  const raw = value.toString().padStart(10, "0");
-  const whole = raw.slice(0, raw.length - 9);
-  const frac = raw.slice(raw.length - 9).replace(/0+$/, "");
-  return `${negative ? "-" : ""}${whole}${frac ? `.${frac}` : ""}`;
+  const text = formatRawToAmountUi(negative ? -amount : amount, decimals);
+  return negative ? `-${text}` : text;
+}
+
+function applyAmountDecimals(rows: PrivacyRowOut[], decimals: Map<string, number>): PrivacyRowOut[] {
+  const format = (mint: string, raw: string): string => {
+    const places = decimals.get(mint);
+    if (places == null) return raw;
+    return formatPrivacyAmount(BigInt(raw), places);
+  };
+  return rows.map((row) => ({
+    ...row,
+    decimals: decimals.get(row.mint),
+    amount: format(row.mint, row.amountRaw),
+    notes: row.notes.map((note) => ({ ...note, amount: format(row.mint, note.amountRaw) })),
+    members: row.members?.map((member) => ({
+      ...member,
+      amount: format(row.mint, member.amountRaw),
+      notes: member.notes.map((note) => ({ ...note, amount: format(row.mint, note.amountRaw) })),
+    })),
+  }));
 }
 
 function samePubkey(left: string, right: string): boolean {
@@ -89,7 +108,7 @@ async function readRegisteredMember(
         const hash = utxo.hash(keys.address().nullifierPublicKey, client.treeId);
         return {
           id: bs58.encode(hash),
-          amount: formatPrivacyAmount(row.mint, utxo.amount),
+          amount: utxo.amount.toString(),
           amountRaw: utxo.amount.toString(),
           mergeable: (utxo.data.utxoData()?.length ?? 0) === 0,
         };
@@ -128,7 +147,7 @@ function mergeMemberMints(
     const members = (membersByMint.get(mint) ?? [])
       .map((slice) => ({
         pubkey: slice.pubkey,
-        amount: formatPrivacyAmount(mint, slice.amount),
+        amount: slice.amount.toString(),
         amountRaw: slice.amount.toString(),
         percent: percentOf(slice.amount, total),
         notes: [...slice.notes].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)),
@@ -142,7 +161,7 @@ function mergeMemberMints(
       });
     return {
       mint,
-      amount: formatPrivacyAmount(mint, total),
+      amount: total.toString(),
       amountRaw: total.toString(),
       notes: [],
       members,
@@ -150,11 +169,23 @@ function mergeMemberMints(
   });
 }
 
+async function presentRows(
+  rows: PrivacyRowOut[],
+  settings: Settings,
+  rpcUrl: string,
+): Promise<PrivacyRowOut[]> {
+  const decimals = await decimalsByMint(rows.map((row) => row.mint), settings, rpcUrl);
+  const formatted = applyAmountDecimals(rows, decimals);
+  const usd = await privateUsdByMint(formatted, settings);
+  return formatted.map((row) => ({ ...row, usdLabel: usd.get(row.mint) ?? "" }));
+}
+
 export async function privacyRowsForSigning(
   accountId: string,
   ownerAddress: string,
   client: SprClient,
   settings: Settings,
+  rpcUrl: string,
   canPayFee: () => Promise<boolean>,
 ): Promise<
   | { kind: "unregistered"; canPayFee: boolean }
@@ -170,23 +201,19 @@ export async function privacyRowsForSigning(
   await syncWallet({ wallet, keys, client });
   const rows: PrivacyRowOut[] = wallet.balances().map((row) => ({
     mint: row.mint,
-    amount: formatPrivacyAmount(row.mint, row.amount),
+    amount: row.amount.toString(),
     amountRaw: row.amount.toString(),
     notes: row.utxos.map((utxo) => {
       const hash = utxo.hash(keys.address().nullifierPublicKey, client.treeId);
       return {
         id: bs58.encode(hash),
-        amount: formatPrivacyAmount(row.mint, utxo.amount),
+        amount: utxo.amount.toString(),
         amountRaw: utxo.amount.toString(),
         mergeable: (utxo.data.utxoData()?.length ?? 0) === 0,
       };
     }),
   }));
-  const usd = await privateUsdByMint(rows, settings);
-  return {
-    kind: "registered",
-    rows: rows.map((row) => ({ ...row, usdLabel: usd.get(row.mint) ?? "" })),
-  };
+  return { kind: "registered", rows: await presentRows(rows, settings, rpcUrl) };
 }
 
 export async function privacyRowsForCombined(
@@ -194,6 +221,7 @@ export async function privacyRowsForCombined(
   combined: CombinedAccountMeta,
   client: SprClient,
   settings: Settings,
+  rpcUrl: string,
 ): Promise<{ kind: "unavailable" } | { kind: "registered"; rows: PrivacyRowOut[] }> {
   const perMember: { pubkey: string; byMint: Map<string, MemberMint> }[] = [];
   let sawVaultMember = false;
@@ -226,10 +254,6 @@ export async function privacyRowsForCombined(
     return { kind: "unavailable" };
   }
 
-  const rows = mergeMemberMints(perMember);
-  const usd = await privateUsdByMint(rows, settings);
-  return {
-    kind: "registered",
-    rows: rows.map((row) => ({ ...row, usdLabel: usd.get(row.mint) ?? "" })),
-  };
+  const rows = await presentRows(mergeMemberMints(perMember), settings, rpcUrl);
+  return { kind: "registered", rows };
 }

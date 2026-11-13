@@ -31,7 +31,7 @@ export async function privateUsdByMint(
     const key = row.mint === SOL_MINT ? WRAPPED_SOL_MINT : row.mint;
     const quote = quotes.get(key);
     const decimals = row.mint === SOL_MINT ? 9 : quote?.decimals;
-    if (!quote || decimals == null) continue;
+    if (!quote?.usdPrice || decimals == null) continue;
     const label = labelFor(row.amountRaw, decimals, quote.usdPrice);
     if (label) labels.set(row.mint, label);
   }

@@ -26,6 +26,7 @@ export type PrivacyRow = {
   mint: string;
   amount: string;
   amountRaw?: string;
+  decimals?: number;
   notes: PrivacyNote[];
   members?: PrivacyMember[];
   usdLabel?: string;
@@ -70,6 +71,7 @@ export function privacyMainDetailRow(row: PrivacyRow, mainPubkey: string): Priva
       mint: row.mint,
       amount: "0",
       amountRaw: "0",
+      decimals: row.decimals,
       notes: [],
       usdLabel: "",
     };
@@ -78,6 +80,7 @@ export function privacyMainDetailRow(row: PrivacyRow, mainPubkey: string): Priva
     mint: row.mint,
     amount: member.amount,
     amountRaw: member.amountRaw,
+    decimals: row.decimals,
     notes: member.notes,
     usdLabel: "",
   };

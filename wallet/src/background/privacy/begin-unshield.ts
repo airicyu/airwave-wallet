@@ -15,6 +15,7 @@ import { getHomeTokensForOwners } from "../home-tokens";
 import { walletKeysFor } from "./keys";
 import { queueWalletSend } from "./queue-send";
 import { privacyAsset, privacyFail, privacySession } from "./ready";
+import { decimalsByMint } from "./mint-decimals";
 import { buildSelectedSpend } from "./spend-notes";
 
 export async function handleBeginUnshield(
@@ -32,7 +33,8 @@ export async function handleBeginUnshield(
   const asset = privacyAsset(mint);
   const { rows } = await getHomeTokensForOwners([ready.target.address], ready.settings);
   const row = rows.find((item) => item.id === (asset === SOL_MINT ? NATIVE_SOL_ID : asset));
-  const decimals = asset === SOL_MINT ? 9 : row?.decimals;
+  const fromHome = asset === SOL_MINT ? 9 : row?.decimals;
+  const decimals = fromHome ?? (await decimalsByMint([asset], ready.settings, ready.rpcUrl)).get(asset);
   if (decimals == null) return privacyFail(req, "INVALID_PAYLOAD");
   const amount = parseAmountUiToRaw(amountUi, decimals);
   if (amount == null || amount <= 0n) return privacyFail(req, "INVALID_PAYLOAD");

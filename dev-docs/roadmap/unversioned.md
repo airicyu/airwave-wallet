@@ -8,4 +8,4 @@ Opening a version, or continuing one that is already `in progress`, moves this b
 
 ## Current
 
-(none)
+- Private token amounts use the mint's decimals. A 6-decimal balance such as 0.4 USDC is no longer shown as raw base units on the private list, the Unshield picker, or the Unshield amount. Send, Shield, Unshield, and private Send use the same smaller balance line so the label and amount stay on one line.

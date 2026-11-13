@@ -1,5 +1,9 @@
 # Changelog
 
+## Next
+
+Private token amounts use the mint's decimals, so a 6-decimal balance such as 0.4 USDC is no longer shown as raw base units. Send, Shield, Unshield, and private Send use the same smaller balance line so the label and amount stay on one line.
+
 ## 0.59.0 — 2026-11-13
 
 ### Combined account add

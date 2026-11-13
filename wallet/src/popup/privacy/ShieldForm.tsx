@@ -131,7 +131,7 @@ export function ShieldForm(): JSX.Element {
       <div className="token-send-info">
         <p className="token-send-balance">
           <span className="token-send-balance-label">{t("send.balance")}</span>
-          <span>{balance}</span>
+          <span className="token-send-balance-value">{balance}</span>
         </p>
       </div>
       <hr className="token-send-rule" />

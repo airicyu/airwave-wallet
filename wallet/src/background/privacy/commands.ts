@@ -90,8 +90,9 @@ export async function handlePrivacyStatus(req: ExtensionRequest): Promise<Extens
 
   try {
     const client = privacyClient(rpcUrl, settings.cluster);
+    const chainRpc = settings.rpcUrl.trim() || rpcUrl;
     if (isCombinedAccount(active)) {
-      const combined = await privacyRowsForCombined(accounts, active, client, settings);
+      const combined = await privacyRowsForCombined(accounts, active, client, settings, chainRpc);
       if (combined.kind === "unavailable") {
         return respond({
           kind: "airwave-ext-res",
@@ -123,12 +124,12 @@ export async function handlePrivacyStatus(req: ExtensionRequest): Promise<Extens
       void debugLogInfo("wallet.privacyStatus", `locked target=${target.accountId}`);
       return fail(req, "WALLET_LOCKED", "Wallet is locked");
     }
-    const chainRpc = settings.rpcUrl.trim() || rpcUrl;
     const body = await privacyRowsForSigning(
       target.accountId,
       target.address,
       client,
       settings,
+      chainRpc,
       () => canPayFee(chainRpc, target.address),
     );
     void debugLogInfo(

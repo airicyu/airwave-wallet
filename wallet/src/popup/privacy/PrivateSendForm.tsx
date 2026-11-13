@@ -36,7 +36,7 @@ export function PrivateSendForm(): JSX.Element {
   const [selected, setSelected] = useState<string[]>(draft.selected);
   const [notes, setNotes] = useState<SpendNote[]>([]);
   const [balance, setBalance] = useState("—");
-  const [decimals, setDecimals] = useState(9);
+  const [decimals, setDecimals] = useState<number | null>(null);
   const [registered, setRegistered] = useState<boolean | null>(null);
   const [formError, setFormError] = useState("");
   const [ready, setReady] = useState(false);
@@ -63,6 +63,7 @@ export function PrivateSendForm(): JSX.Element {
       if (!found) return;
       setNotes(found.notes);
       setBalance(found.amount);
+      if (typeof found.decimals === "number") setDecimals(found.decimals);
     });
     return () => {
       cancelled = true;
@@ -84,7 +85,8 @@ export function PrivateSendForm(): JSX.Element {
     };
   }, [recipient]);
 
-  const target = amountUiToRaw(amount.trim(), row?.decimals ?? decimals) ?? 0n;
+  const places = decimals ?? row?.decimals ?? 0;
+  const target = amountUiToRaw(amount.trim(), places) ?? 0n;
   const picked = auto ? coverAmount(order, target) : selected;
   const pickedSum = picked.reduce((sum, id) => {
     const note = order.find((item) => item.id === id);
@@ -138,7 +140,7 @@ export function PrivateSendForm(): JSX.Element {
     <div className="token-send-form private-send-form">
       <p className="token-send-balance">
         <span className="token-send-balance-label">{t("send.balance")}</span>
-        <span>{balance}{row ? ` ${row.symbol}` : ""}</span>
+        <span className="token-send-balance-value">{balance}{row ? ` ${row.symbol}` : ""}</span>
       </p>
       <hr className="token-send-rule" />
       <div className="token-send-fields">
@@ -155,9 +157,9 @@ export function PrivateSendForm(): JSX.Element {
           }}
         />
         <button type="button" className="send-max-btn" onClick={() => {
-          const raw = amountUiToRaw(balance, row?.decimals ?? decimals);
+          const raw = amountUiToRaw(balance, places);
           if (raw == null) return;
-          const next = formatRawToAmountUi(raw / 2n, row?.decimals ?? decimals);
+          const next = formatRawToAmountUi(raw / 2n, places);
           setAmount(next);
           writePrivateSendDraft({ amount: next });
         }}>50%</button>

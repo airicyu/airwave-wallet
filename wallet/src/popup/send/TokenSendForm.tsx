@@ -109,7 +109,7 @@ export function TokenSendForm({ wallet }: { wallet: State }): JSX.Element {
       <div className="token-send-info">
         <p id="send-balance" className="token-send-balance">
           <span className="token-send-balance-label">{t("send.balance")}</span>
-          <span id="send-balance-value">{balance}</span>
+          <span id="send-balance-value" className="token-send-balance-value">{balance}</span>
         </p>
       </div>
       <hr className="token-send-rule" />
