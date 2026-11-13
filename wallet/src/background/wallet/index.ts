@@ -1,5 +1,6 @@
 /**
- * Re-exports wallet command handlers from the commands folder for wallet-dispatch.
+ * Re-exports wallet command handlers from the commands folder.
+ * wallet-dispatch imports this file rather than a command module inside it.
  */
 export {
   handleChangeVaultPassword,

@@ -1,12 +1,12 @@
 {
-  "walletVersion": "0.56.0",
-  "branch": "v0.56.0",
-  "git": "f97f0d3",
+  "walletVersion": "0.58.0",
+  "branch": "v0.59.0",
+  "git": "c18754f",
   "locale": "en",
   "shells": [
     "sidepanel",
     "popup"
   ],
-  "recordedAt": "2026-11-04T21:07:54Z",
-  "notes": "Sidepanel EN goldens approve-offchain-message / approve-sign-in-short / approve-sign-in-full were recorded on v0.56.0 @ f97f0d3 while the extension version string was still 0.55.0. Shipped version string is 0.56.0. Prior home/settings/approve TX goldens retained. Popup goldens remain default toolbar size. Checks follow matrix.yaml look lines."
+  "recordedAt": "2026-11-13T06:47:33Z",
+  "notes": "Recapture of 0.59.0 UI at c18754f; extension version string is still 0.58.0. Popup goldens remain default toolbar size 422×600. home-activities popup and sidepanel were not recaptured (Activity always hits https://api.helius.xyz; old 0.56.0 refs retained). Recaptured: home-assets and settings-hub (popup + sidepanel), plus sidepanel approve-sign, approve-v1-fee, approve-cluster-mismatch, approve-offchain-message, approve-sign-in-short, and approve-sign-in-full. Checks follow matrix.yaml look lines."
 }

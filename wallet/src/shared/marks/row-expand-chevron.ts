@@ -1,4 +1,7 @@
-/** Chevron-down stroke SVG and DOM chip used for row expand (tokens, fee breakdown). */
+/**
+ * The chevron used to expand a token row or a fee breakdown.
+ * It points down while expanded. The row that owns the list decides whether the control is shown.
+ */
 
 export const ROW_EXPAND_BTN_CLASS = "row-expand-btn";
 

@@ -1,5 +1,6 @@
 /**
- * This file re-exports the public surface of the background handlers folder: dApp handlers, UI handlers, and the wallet command dispatch.
+ * Re-exports the public surface of the background handlers folder: dApp handlers, UI handlers, and wallet command dispatch.
+ * Callers outside this folder import this file rather than a module inside it.
  */
 export * from "./dapp-handlers";
 export * from "./ui-handlers";

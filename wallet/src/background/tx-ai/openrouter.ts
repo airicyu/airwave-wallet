@@ -20,11 +20,12 @@ function decisionsUrl(base: string): string {
 }
 
 const LEVEL_CRITERIA: Record<TxAiLevel, string> = {
-  low: "Ordinary transfer or common DEX swap. No authority handoff, unlimited approve, owner mismatch, or external close.",
+  low: "Every program in the report is labeled (no unknown_program). No privilege flags: authority handoff, unlimited approve, owner mismatch, system assign, or external close. The asset path is clear: ordinary transfer, common DEX, or config/key publish with no third-party token or SOL transfer.",
   watch:
     "Needs attention: unlimited approve, authority change, system assign, external close, or ambiguous privilege. Not a clear theft pattern.",
   high: "Clear loss of control: owner mismatch, ownership handed away, or the report describes a drain.",
-  unknown: "Thin or contradictory evidence. Prefer unknown over guessing low.",
+  unknown:
+    "An instruction program is unlabeled, the report contradicts flags, or the report cannot say whether assets or authorities move. Prefer unknown then. Opaque bytes on an already-named instruction are not thin evidence by themselves.",
 };
 
 type ChatResult = {
@@ -223,7 +224,7 @@ async function requestDecisionsLevelOnce(
         level: {
           type: "choice",
           instructions:
-            "Grade Solana wallet sign-risk for a non-expert. Use reportText and flags only. Prefer unknown when evidence is thin.",
+            "Grade Solana wallet sign-risk for a non-expert. Use reportText and flags only. Grade from structure: program labels, privilege flags, and whether the asset path is clear. Prefer unknown when a program is unlabeled or the asset/authority path is unclear. A labeled no-transfer setup with clean privilege flags may be low. Do not require the substance to be a transfer or DEX.",
           criteria: LEVEL_CRITERIA,
         },
       },

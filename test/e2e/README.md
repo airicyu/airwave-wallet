@@ -35,12 +35,12 @@ bun run e2e-prep -- <錢包地址>          # 預設 --reset + airdrop 2 SOL 一
 
 也可手動：`bun run e2e-validator`（長駐）再 `solana airdrop 2 <地址> --url http://127.0.0.1:8899`，但**同一則劇本只 airdrop 一次**，開跑前用 `getBalance`／Side panel Refresh 確認餘額。
 
-`04`（Helius 活動）不需 validator airdrop。
+`04`（Helius 活動）不需 validator airdrop。此則目前 blocked：Activity 固定打 `https://api.helius.xyz`，無法對本地 mock 通過。要等錢包有 Helius API origin 的 Debug 覆寫（如同 Jupiter、OpenRouter）才能再跑。
 
 ### Chrome／解鎖／Side panel
 
 - 解鎖密碼永不寫進倉庫或劇本；由執行端 out-of-band 提供。自動化填密對 `chrome-extension://` 通常無效，**Unlock 需人手**（或等同的本機操作）。
-- 解鎖後、開跑前核對設定：Cluster／Devnet RPC `http://127.0.0.1:8899`、Debug On、Mainnet blockhash／Jupiter／OpenRouter／Helius 指向 mock `8787`；**預設優先費必須是 `5000`**（尤其 scenario 07；若曾改成 25000 等會 FAIL）。
+- 解鎖後、開跑前核對設定：Cluster／Devnet RPC `http://127.0.0.1:8899`、Debug On、Mainnet blockhash／Jupiter／OpenRouter 指向 mock `8787`；Helius 欄位是 API key，不要設成 `http://127.0.0.1:8787`（該值不會當 host 用，Activity 不會打到 mock）；**預設優先費必須是 `5000`**（尤其 scenario 07；若曾改成 25000 等會 FAIL）。
 - 用**真正 Side panel**：工具列 popup 到 Home 後按 `#btn-shell-to-sidebar`（`chrome.sidePanel.open`）。不要把 `chrome-extension://…/sidepanel` 當普通分頁開，也不要開裸 popout／approval URL——否則連線／簽名殼會壞掉。
 - 首頁餘額以 Refresh 後為準；validator 剛 reset／airdrop 後舊數字可能還掛在畫面上。
 
@@ -57,7 +57,7 @@ Mock 的 `getLatestBlockhash` 固定回 `11111111111111111111111111111111`（合
 - Mainnet blockhash RPC：`http://127.0.0.1:8787`（mock；僅外掛探針）
 - 需要代幣名稱時，Jupiter API URL：`http://127.0.0.1:8787`
 - 需要簽交易 AI 時，OpenRouter base URL：`http://127.0.0.1:8787`
-- 活動劇本另把 Helius API URL 設成 `http://127.0.0.1:8787`
+- Helius 欄位是 API key。不要把 Helius API URL 設成 `http://127.0.0.1:8787`；該值不會當 host 用，Activity 不會打到 mock。
 
 `test-web` 預設仍可能打公開 Devnet。劇本要加：`http://127.0.0.1:5173/?rpc=http://127.0.0.1:8899`。Cluster 不符再加 `&otherRpc=http://127.0.0.1:8787`。
 

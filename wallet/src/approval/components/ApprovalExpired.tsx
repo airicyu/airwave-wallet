@@ -1,3 +1,8 @@
+/**
+ * The expired-approval card inside the sign shell.
+ * It shows the title, the lead, and a close button through refs the shell fills.
+ * The shell decides when a request is expired. This card does not read pending state.
+ */
 import type { JSX, Ref } from "react";
 import type { MessageKey } from "../../shared/i18n";
 

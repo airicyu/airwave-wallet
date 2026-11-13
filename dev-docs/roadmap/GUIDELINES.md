@@ -122,7 +122,7 @@ The status table in [`README.md`](README.md) is the **source of truth**. Each ve
 
 **Push.** The user pushes by hand. Shipping, editing, and committing do not include `git push`. Do not push unless the user asks.
 
-Update [`README.md`](README.md) when a version is added or its status changes. [`changelog.md`](../../changelog.md) records what shipped. It does not replace `INDEX.md`.
+Update [`README.md`](README.md) when a version is added or its status changes. [`changelog.md`](../../changelog.md) records what shipped. It does not replace `INDEX.md`. Under a version heading, give each feature its own title and one paragraph of complete sentences under that title. Put a horizontal rule between versions. Do not pack the whole version into one block.
 
 ---
 

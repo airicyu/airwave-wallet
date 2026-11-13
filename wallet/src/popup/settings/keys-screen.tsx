@@ -13,7 +13,7 @@ import { SecretKeyField } from "./SecretKeyField";
 export function KeysScreen({ settings }: { settings: PublicSettings }): JSX.Element {
   const { wallet } = usePopupContext();
   const io = useSettingsIo();
-  const { locale } = useT();
+  const { t, locale } = useT();
   const [claimedId, setClaimedId] = useState<string | null>(null);
   const release = (rowId: string): void => {
     setClaimedId((current) => (current === rowId ? null : current));
@@ -23,7 +23,7 @@ export function KeysScreen({ settings }: { settings: PublicSettings }): JSX.Elem
     <>
       <SecretKeyField
         id="helius-api-url"
-        label="Helius API URL"
+        label={t("settings.keys.helius")}
         configured={settings.heliusConfigured}
         secretName="heliusApiUrl"
         claimedId={claimedId}
@@ -36,7 +36,7 @@ export function KeysScreen({ settings }: { settings: PublicSettings }): JSX.Elem
       />
       <SecretKeyField
         id="jupiter-api-key"
-        label="Jupiter API key"
+        label={t("settings.keys.jupiter")}
         configured={settings.jupiterConfigured}
         secretName="jupiterApiKey"
         claimedId={claimedId}

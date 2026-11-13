@@ -16,6 +16,7 @@ import { pendingTimeoutHandlers } from "./send";
 import { registerIdleLockListeners } from "./idle-lock/idle-lock";
 import { registerWalletShellListeners } from "./shell";
 import * as session from "./session";
+import { debugLogFailure } from "./debug-log";
 import { ensureLocalMigrated } from "./storage";
 import { installTxAiAssess, maybeStartTxAi } from "./tx-ai/assess";
 import { handleTxAiBridge, isTxAiOffscreenSender } from "./tx-ai/bridge";
@@ -101,9 +102,14 @@ function bootServiceWorker(): void {
     const req = message as ExtensionRequest;
     if (req.tabId == null && sender.tab?.id != null) req.tabId = sender.tab.id;
     dispatch(req, sender)
-      .then(sendResponse)
+      .then((res) => {
+        if (!res.ok) void debugLogFailure(req.command, res.error?.code ?? "FAILED", res.error?.message ?? "");
+        sendResponse(res);
+      })
       .catch((e: unknown) => {
         const req = message as ExtensionRequest;
+        const messageText = e instanceof Error ? e.message : "Internal error";
+        void debugLogFailure(req.command, "INTERNAL", messageText);
         sendResponse(
           respond({
             kind: "airwave-ext-res",
@@ -111,7 +117,7 @@ function bootServiceWorker(): void {
             ok: false,
             error: {
               code: "INTERNAL",
-              message: e instanceof Error ? e.message : "Internal error",
+              message: messageText,
             },
           }),
         );

@@ -1,5 +1,6 @@
 /**
- * This file tests which active accounts may start a wallet send, and which home row supplies the balance for that send.
+ * Tests which active account may start a wallet send, and which home row supplies the balance for that send.
+ * The rules live in wallet-send-eligibility. This file does not change them.
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";

@@ -1,6 +1,6 @@
 /**
  * Popup per-account manage screen for signing, watch, read-only, and combined accounts.
- * Combined rows are a menu: open the member sheet, or remove the account. The sheet is account-combined-manage.
+ * Combined rows are a menu: open the member sheet, or remove the account after a confirm. The sheet is account-combined-manage.
  */
 import type { JSX } from "react";
 import { getExposedPublicKey, isCombinedAccount, isSigningOrWatch } from "../../shared/accounts";
@@ -55,7 +55,7 @@ export function ManageScreen({ wallet }: { wallet: State }): JSX.Element {
           onClick={async () => {
             clearError();
             if (!focusAccountId) return;
-            if (!combined && !confirm(t("accounts.removeConfirm"))) return;
+            if (!confirm(t(combined ? "accounts.removeCombinedConfirm" : "accounts.removeConfirm"))) return;
             const res = await sendExtensionRequest("wallet.deleteAccount", { accountId: focusAccountId });
             if (!res.ok) showError(apiErrorMessage(locale, res.error, "error.deleteFailed"));
             else {

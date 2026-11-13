@@ -1,5 +1,6 @@
 /**
- * This file re-exports the public surface of the background messaging folder: the response helper, origin notify, the approval popout, and the in-shell dApp notice.
+ * Re-exports the public surface of background messaging: the response helper, origin notify, the approval popout, and the in-shell dApp notice.
+ * Callers outside this folder import this file rather than a module inside it.
  */
 export * from "./ext-respond";
 export * from "./origin-notify";

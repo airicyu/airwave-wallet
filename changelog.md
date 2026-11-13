@@ -1,20 +1,128 @@
 # Changelog
 
-## 0.58.0
+## 0.59.0 — 2026-11-13
 
-Creating a combined account stages local wallets until Confirm, then adds them and returns to the create screen. A combined account's kebab opens the Manage page, which can open the member screen or remove that account with no confirmation.
+### Combined account add
+
+Adding local wallets on create or manage uses a checkbox list. A line above the list asks which wallet accounts to add. Pasting addresses uses a multi-line field, so several public keys can be pasted at once. Manage Confirm adds each new address, then returns to the manage page.
+
+### Settings screens
+
+Back from AI settings returns to Settings. Confirm and discard use the same boxed green tick and red cross, lined up with the field beside them. On a custom report or grading model, the tick and cross appear only after that model id changes, and dragging a row writes the new order immediately. Default model rows stay plain cards. An RPC URL shows the tick and cross only after the field changes. Each Settings hub row starts with an icon, and the fee, lock, and debug labels drop the extra word “settings”.
+
+### Private balances
+
+The private tab has Shield and Unshield pickers. Action buttons sit two per row. Send, Shield, Unshield, and Merge UTXO use the same accent color on every screen. UTXO rows are cards with a short id, a copy control, and an amount plus its unit. Confirm shows a spinner while a proof is built. An approval screen with no request id leaves that screen. Chinese labels say 轉入私人 and 轉回公開. Register builds one transaction and opens the normal approval screen. The wallet signs it only after the user approves.
+
+### Type
+
+Body text stays Segoe UI. UTXO receipts, wallet addresses, and balance amounts use Menlo, then Cascadia Mono, then `ui-monospace`.
+
+### Private USD totals
+
+Private Mainnet rows show a Jupiter USD total. When no price is available, that slot stays empty, including on Devnet.
+
+### Helius API key
+
+Settings asks for a Helius API key and stores the key. Private balance and Mainnet Activity call the official Helius hosts with that key.
+
+### Sign AI and the derivation message
+
+Sign AI names privacy-ring deposit, transact, merge, and user-registry instructions. The report prompt teaches an instruction-first reading of one transaction. Decisions grades from program labels, privilege flags, and asset-path clarity, without naming product programs, so a labeled no-transfer setup with clean flags may be low. A payload containing `TSPP/derive/v1` is rejected before approval.
+
+### Source file headers
+
+Every `.ts` and `.tsx` file under `wallet/src` has an English header. Files that had no header, or only one sentence, now say what the file owns in a short paragraph. A second paragraph is used only where a wrong edit would drop a batch, sign later merge groups without another approval, or ignore the notes the user selected.
+
+### Folder grouping
+
+Combined-account screens live under `popup/accounts/combined`. Seed generate, burner generate, seed import, and secret import each have their own folder under `popup/onboarding`. Home lists live in `popup/home`. The popup approval host lives in `popup/approval`. The first-run mark, the reroll button, and the legal document view live with onboarding. The password field stays shared, because unlock, import, reveal, and change-password all use it.
+
+### Shared privacy helpers
+
+Shield, Unshield, Send, and Merge share one check for an unlocked signing account and a Helius RPC, and one step that queues the built transaction for approval. Send and Unshield share one note order: largest amount first, then id, taking notes until the amount is covered. Those screens, the private tab, the token detail, Shield, and Merge read registration through one status helper.
+
+### Note binding and merge confirm
+
+Send and Unshield send the selected note ids, and the proof spends that set. More than 40 ids is rejected before a proof is built. A merge of 52 notes or fewer still uses one approval. More than 52 notes are proved first, then one confirm screen signs those transactions. Register opens the normal approval screen and signs only after the user approves.
+
+### Build
+
+Poseidon uses `@lightprotocol/hasher.rs` slim instead of the fat inlined WASM bundle. The build copies only `hasher_wasm_simd_bg.wasm` and always loads that SIMD module. `SOL_MINT` lives in `shared/privacy/sol-mint.ts`; popup and background compare against it without importing that constant from `@heliuslabs/spr`.
+
+### Still open
+
+The approval screen still does not show the private change amount.
+
+---
+
+## 0.58.0 — 2026-11-11
+
+### Combined account create
+
+Creating a combined account stages local wallets until Confirm, then adds them and returns to the create screen.
+
+### Combined account manage
+
+A combined account's kebab opens the Manage page. That page can open the member screen, or remove that account with no confirmation.
+
+---
 
 ## 0.57.0 — 2026-11-06
 
-test-web follows the wallet cluster, groups its buttons, and adds three sign-only danger samples: an Address Lookup Table create plus Assign of the fee payer, a durable nonce advance plus a 0.001 SOL transfer, and a 0.001 SOL transfer with unlimited approve, SetAuthority, and close. A failed CU probe no longer uses partial `unitsConsumed` as the limit. Sign AI names those system instructions, and a durable nonce floors the level at watch because the signature can be submitted later. Simulation failure details are 320px tall, keep the disclosure marker, and can be copied. e2e must not run or approve those three samples.
+### test-web samples
+
+test-web follows the wallet cluster and groups its buttons. It adds three sign-only danger samples: an Address Lookup Table create plus Assign of the fee payer, a durable nonce advance plus a 0.001 SOL transfer, and a 0.001 SOL transfer with unlimited approve, SetAuthority, and close.
+
+### Compute unit probe
+
+A failed CU probe no longer uses a partial `unitsConsumed` value as the limit.
+
+### Sign AI
+
+Sign AI names those system instructions. A durable nonce floors the level at watch, because the signature can be submitted later.
+
+### Simulation failure
+
+Simulation failure details are 320px tall. They keep the disclosure marker, and the text can be copied.
+
+### e2e
+
+e2e must not run or approve those three samples.
+
+---
 
 ## 0.56.0 — 2026-11-05
 
-The wallet advertises `solana:signOffchainMessage` (version 1 messages) and `solana:signIn` (feature 1.1.0). An off-chain message uses the Sign message screen and shows the UTF-8 text. Sign in shows the composed SIWS statement. Approve signs that text, or wraps it as a version 1 off-chain message when the site sets `useOffchainMessage`. The message card shows nine lines before it scrolls. test-web adds off-chain, Sign in short, and Sign in full.
+### Off-chain message
+
+The wallet advertises `solana:signOffchainMessage` for version 1 messages. An off-chain message uses the Sign message screen and shows the UTF-8 text.
+
+### Sign in
+
+The wallet advertises `solana:signIn` at feature 1.1.0. Sign in shows the composed SIWS statement. Approve signs that text, or wraps it as a version 1 off-chain message when the site sets `useOffchainMessage`.
+
+### Message card
+
+The message card shows nine lines before it scrolls.
+
+### test-web
+
+test-web adds off-chain, Sign in short, and Sign in full.
+
+---
 
 ## 0.55.0 — 2026-11-05
 
-No wallet change. e2e scenarios `01`–`07` are short English steps with a single Pass paragraph. Visual checks use `test/e2e/visual/matrix.yaml` (`look` lines) and the English PNGs under `refs/`. A miss is reported; the golden is replaced only after confirmation. There is no pixel-diff script.
+### e2e steps
+
+There is no wallet change. Scenarios `01`–`07` are short English steps with a single Pass paragraph.
+
+### Visual checks
+
+Visual checks use `test/e2e/visual/matrix.yaml` (`look` lines) and the English PNGs under `refs/`. A miss is reported, and the golden image is replaced only after confirmation. There is no pixel-diff script.
+
+---
 
 ## 0.54.0 — 2026-11-04
 

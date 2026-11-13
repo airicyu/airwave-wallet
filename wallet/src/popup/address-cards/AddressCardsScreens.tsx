@@ -15,6 +15,7 @@ import { ACCOUNT_LABEL_MAX } from "../../shared/accounts";
 import { IconPlus, IconRename, IconTrash } from "../components/StrokeIcon";
 import { shortAddr } from "../lib/format";
 import { patchSendDraft } from "../send/send-draft";
+import { consumePrivateSendPick, writePrivateSendDraft } from "../privacy/private-send-draft";
 import { usePopupContext } from "../state/PopupContext";
 import { useRegisterDock } from "../state/dock";
 import { useT } from "../state/useT";
@@ -220,39 +221,43 @@ export function AddressCardsAddScreen(): JSX.Element {
   });
 
   return (
-    <div className="address-cards-add">
-      <label className="field-label" htmlFor="address-card-name">
-        {t("addressCards.name")}
-      </label>
-      <input
-        id="address-card-name"
-        className="token-send-input"
-        value={name}
-        onChange={(e) => {
-          setName(e.target.value);
-          setError("");
-          setBlocked(false);
-        }}
-      />
-      <label className="field-label" htmlFor="address-card-address">
-        {t("addressCards.address")}
-      </label>
-      <input
-        id="address-card-address"
-        className="token-send-input mono"
-        value={address}
-        spellCheck={false}
-        autoComplete="off"
-        onChange={(e) => {
-          setAddress(e.target.value);
-          setError("");
-          setBlocked(false);
-        }}
-      />
+    <>
+      <div className="field">
+        <label htmlFor="address-card-name">{t("addressCards.name")}</label>
+        <input
+          id="address-card-name"
+          type="text"
+          maxLength={ACCOUNT_LABEL_MAX}
+          placeholder={t("common.optional")}
+          autoComplete="off"
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value);
+            setError("");
+            setBlocked(false);
+          }}
+        />
+      </div>
+      <div className="field">
+        <label htmlFor="address-card-address">{t("addressCards.address")}</label>
+        <input
+          id="address-card-address"
+          type="text"
+          spellCheck={false}
+          placeholder={t("onboarding.solanaPubkey")}
+          autoComplete="off"
+          value={address}
+          onChange={(e) => {
+            setAddress(e.target.value);
+            setError("");
+            setBlocked(false);
+          }}
+        />
+      </div>
       {error || (address.trim() && !isAddress(address.trim())) ? (
         <p className="inline-err">{error || t("addressCards.invalid")}</p>
       ) : null}
-    </div>
+    </>
   );
 }
 
@@ -291,10 +296,25 @@ export function AddressCardRenameScreen({ wallet }: { wallet: State }): JSX.Elem
 
 export function SendPickScreen({ wallet }: { wallet: State }): JSX.Element {
   const { t } = useT();
-  const { navigateTo } = usePopupContext();
+  const { navigateTo, setBackOverride } = usePopupContext();
   const [tab, setTab] = useState<"wallet" | "cards">("wallet");
+  const fromPrivate = useRef(consumePrivateSendPick());
+
+  useEffect(() => {
+    if (!fromPrivate.current) return;
+    setBackOverride(() => {
+      navigateTo("private-send");
+      return true;
+    });
+    return () => setBackOverride(null);
+  }, [navigateTo, setBackOverride]);
 
   function choose(address: string, label: string): void {
+    if (fromPrivate.current) {
+      writePrivateSendDraft({ recipient: address, label });
+      navigateTo("private-send");
+      return;
+    }
     patchSendDraft({ recipient: address, label });
     navigateTo("token-send");
   }

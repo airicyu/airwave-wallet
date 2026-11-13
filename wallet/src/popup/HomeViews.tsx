@@ -3,11 +3,22 @@
  * Does not draw the top bar, account screens, or settings.
  */
 import type { JSX } from "react";
-import { HomeActivityList } from "./components/HomeActivityList";
-import { HomeTokenList, TokenDetailView } from "./components/HomeTokenList";
+import { useEffect, useState } from "react";
+import { HomeActivityList } from "./home/HomeActivityList";
+import { HomeTokenList, TokenDetailView } from "./home/HomeTokenList";
+import { PrivateBalancesPanel } from "./privacy/PrivateBalancesPanel";
+import { PrivateTokenDetail } from "./privacy/PrivateTokenDetail";
+import { ShieldForm } from "./privacy/ShieldForm";
+import { MergeForm } from "./privacy/MergeForm";
+import { UnshieldForm } from "./privacy/UnshieldForm";
+import { UnshieldPick } from "./privacy/UnshieldPick";
+import { PrivateSendForm } from "./privacy/PrivateSendForm";
+import { ShieldPick } from "./privacy/ShieldPick";
+import { clearShieldAmount, setShieldBack } from "./privacy/shield-approval";
+import { takePrivateTab } from "./privacy/register-return";
 import { CloseEmptyRecycleButton } from "./close-empty/CloseEmptyFeature";
-import { RefreshAssetsButton } from "./components/RefreshAssetsButton";
-import { ApprovalHost } from "./components/ApprovalHost";
+import { RefreshAssetsButton } from "./home/RefreshAssetsButton";
+import { ApprovalHost } from "./approval/ApprovalHost";
 import { jsonRpcMissing } from "../shared/protocol";
 import { sendExtensionRequest } from "../shared/protocol";
 import { screenEnterKey } from "./runtime";
@@ -29,15 +40,35 @@ export function HomeViews(): JSX.Element {
     setHomeAssetsForce,
   } = usePopupContext();
   const { t } = useT();
+  const [assetTab, setAssetTab] = useState<"tokens" | "private">("tokens");
+  const [privateRefresh, setPrivateRefresh] = useState(0);
+  useEffect(() => {
+    if (currentView === "home-token" && takePrivateTab()) setAssetTab("private");
+  }, [currentView]);
   if (!wallet) return <></>;
   return (
     <>
           {currentView === "home-token" ? (
             <section id="screen-home-token" className="screen">
               <div className="section-head section-head-tokens">
-                <h3>{t("common.tokens")}</h3>
+                <div className="asset-subtabs" role="tablist">
+                  <button
+                    type="button"
+                    className={assetTab === "tokens" ? "asset-subtab active" : "asset-subtab"}
+                    onClick={() => setAssetTab("tokens")}
+                  >
+                    {t("home.tokens")}
+                  </button>
+                  <button
+                    type="button"
+                    className={assetTab === "private" ? "asset-subtab active" : "asset-subtab"}
+                    onClick={() => setAssetTab("private")}
+                  >
+                    {t("home.privateBalances")}
+                  </button>
+                </div>
                 <div className="section-head-actions">
-                {jsonRpcMissing(wallet.settings) ? null : (
+                {assetTab === "tokens" && !jsonRpcMissing(wallet.settings) ? (
                   <>
                 <CloseEmptyRecycleButton
                   wallet={wallet}
@@ -56,9 +87,19 @@ export function HomeViews(): JSX.Element {
                   onRefresh={() => setHomeAssetsForce(true)}
                 />
                   </>
-                )}
+                ) : null}
+                {assetTab === "private" ? (
+                  <RefreshAssetsButton
+                    activeAccountId={wallet.activeAccountId}
+                    currentView={`${currentView}:private`}
+                    onRefresh={() => setPrivateRefresh((n) => n + 1)}
+                  />
+                ) : null}
                 </div>
               </div>
+              {assetTab === "private" ? (
+                <PrivateBalancesPanel refreshKey={privateRefresh} />
+              ) : (
               <HomeTokenList
                 wallet={wallet}
                 currentView={currentView}
@@ -67,6 +108,13 @@ export function HomeViews(): JSX.Element {
                   navigateTo("token-detail");
                 }}
               />
+              )}
+            </section>
+          ) : null}
+
+          {currentView === "private-detail" ? (
+            <section id="screen-private-detail" className="screen">
+              {detailTokenId ? <PrivateTokenDetail mint={detailTokenId} /> : null}
             </section>
           ) : null}
 
@@ -77,10 +125,51 @@ export function HomeViews(): JSX.Element {
                   wallet={wallet}
                   tokenId={detailTokenId}
                   onSend={() => navigateTo("token-send")}
+                  onShield={() => {
+                    clearShieldAmount();
+                    setShieldBack("token-detail");
+                    navigateTo("shield");
+                  }}
                 />
               ) : (
                 <div id="token-detail-root" className="token-detail" />
               )}
+            </section>
+          ) : null}
+
+          {currentView === "merge" ? (
+            <section id="screen-merge" className="screen">
+              <MergeForm />
+            </section>
+          ) : null}
+
+          {currentView === "unshield-pick" ? (
+            <section id="screen-unshield-pick" className="screen">
+              <UnshieldPick />
+            </section>
+          ) : null}
+
+          {currentView === "unshield" ? (
+            <section id="screen-unshield" className="screen">
+              <UnshieldForm />
+            </section>
+          ) : null}
+
+          {currentView === "private-send" ? (
+            <section id="screen-private-send" className="screen">
+              <PrivateSendForm />
+            </section>
+          ) : null}
+
+          {currentView === "shield-pick" ? (
+            <section id="screen-shield-pick" className="screen">
+              <ShieldPick />
+            </section>
+          ) : null}
+
+          {currentView === "shield" ? (
+            <section id="screen-shield" className="screen">
+              <ShieldForm />
             </section>
           ) : null}
 

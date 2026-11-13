@@ -1,4 +1,7 @@
-/** In-memory send form draft so a full-screen address pick can return without dropping amount. */
+/**
+ * In-memory draft for the public send form: amount and recipient.
+ * Opening the address book and returning must not drop the amount. Leaving the send flow clears the draft.
+ */
 
 export type SendDraft = {
   amount: string;

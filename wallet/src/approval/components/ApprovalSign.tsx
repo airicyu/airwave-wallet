@@ -1,3 +1,7 @@
+/**
+ * The sign-approval layout: origin, account row, message or transaction body, and reject or approve.
+ * The shell fills the refs and wires the buttons. This component does not sign or simulate.
+ */
 import type { JSX, Ref } from "react";
 import type { MessageKey } from "../../shared/i18n";
 

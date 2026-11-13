@@ -24,6 +24,7 @@ import { isSidebarWalletOpen } from "../shell";
 import { pendingTimeoutHandlers } from "../send";
 import { signMessageEnqueueGateError } from "../session";
 import * as session from "../session";
+import { valueContainsTsppDeriveV1 } from "../../shared/privacy/tspp-derive";
 import { resolveDappSignChain } from "./dapp-sign-chain";
 import { activeKeyBytes, prepareOffchainPayload, prepareSignInPayload } from "./sign-statement-input";
 
@@ -210,6 +211,14 @@ export async function handleDappCommand(
       });
     }
     const payload = req.payload as SignMessagePayload;
+    if (valueContainsTsppDeriveV1(payload)) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "DERIVATION_REJECTED", message: "This message cannot be signed" },
+      });
+    }
     const msgBytes = Uint8Array.from(payload.message);
     const messageLooksLikeTx = messageLooksLikeTransactionMessage(msgBytes);
     const requestId = req.requestId;
@@ -255,6 +264,14 @@ export async function handleDappCommand(
         error: { code: "NO_ACCOUNT", message: "No active account" },
       });
     }
+    if (valueContainsTsppDeriveV1(req.payload)) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "DERIVATION_REJECTED", message: "This message cannot be signed" },
+      });
+    }
     const prepared =
       req.command === "dapp.signOffchainMessage"
         ? prepareOffchainPayload(req.payload, keyBytes)
@@ -265,6 +282,14 @@ export async function handleDappCommand(
         requestId: req.requestId,
         ok: false,
         error: prepared.error,
+      });
+    }
+    if (valueContainsTsppDeriveV1(prepared.payload)) {
+      return respond({
+        kind: "airwave-ext-res",
+        requestId: req.requestId,
+        ok: false,
+        error: { code: "DERIVATION_REJECTED", message: "This message cannot be signed" },
       });
     }
     return presentDappApproval(req.requestId, tabId, {

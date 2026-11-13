@@ -1,4 +1,5 @@
 /**
- * This file re-exports the public surface of the popup send folder: send form logic.
+ * Re-exports the popup send form and its amount logic.
+ * Callers outside this folder import this file rather than a module inside it.
  */
 export * from "./send-logic";

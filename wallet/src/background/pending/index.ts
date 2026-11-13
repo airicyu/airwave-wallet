@@ -1,5 +1,6 @@
 /**
- * This file re-exports the public surface of the pending folder: the pending map, timeouts, finish and reject, and sign-transaction working state.
+ * Re-exports the public surface of the pending folder: the pending map, timeouts, finish, reject, and sign-transaction working state.
+ * Callers outside this folder import this file rather than a module inside it.
  */
 export * from "./pending";
 export * from "./pending-timeout";

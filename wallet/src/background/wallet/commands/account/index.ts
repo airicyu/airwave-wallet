@@ -1,5 +1,6 @@
 /**
- * Re-exports account wallet command handlers from seed, secret-key, and record modules.
+ * Re-exports account command handlers for seed import, secret-key import, and account records.
+ * Callers outside this folder import this file rather than a module inside it.
  */
 export {
   handleAddReadOnlyAccount,

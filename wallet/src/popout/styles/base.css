@@ -13,7 +13,7 @@
   --ok: #4ecb8d;
   --warn: #e8b84a;
   --warn-bg: #3a2e14;
-  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, monospace;
+  --mono: Menlo, "Cascadia Mono", ui-monospace, "Microsoft JhengHei UI", "PingFang TC", monospace;
   --radius: 12px;
   --radius-sm: 8px;
   --card-lines: 9;

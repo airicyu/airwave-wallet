@@ -1,4 +1,8 @@
-/** Agave max per transaction. */
+/**
+ * Compute-unit ceiling for one close-empty transaction.
+ * The constant is the Agave maximum. The estimate helper adds headroom for the compute-budget instructions that the simulated message does not include yet.
+ * Packing uses these numbers. It does not simulate here.
+ */
 const MAX_COMPUTE_UNIT_LIMIT = 1_400_000;
 
 /**

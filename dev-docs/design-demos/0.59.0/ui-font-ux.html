@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Airwave — UI font</title>
+    <!--
+      Informal. Not in the 0.59.0 INDEX. Product code is unchanged.
+      Open this file in a browser. Fonts are local system faces only.
+    -->
+    <style>
+      :root {
+        --bg: #0f1419;
+        --bg-elevated: #161c24;
+        --fill: #1e2630;
+        --stroke: #2a3542;
+        --text: #e8eef4;
+        --text-muted: #9aa7b4;
+        --text-dim: #6b7785;
+        --accent: #3d9cf0;
+        --ok: #4ecb8d;
+        --warn: #e8b84a;
+        --page: "Segoe UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: #0a0e12;
+        color: var(--text);
+        font-family: "Segoe UI", "Microsoft JhengHei UI", "PingFang TC", sans-serif;
+      }
+      main {
+        display: flex;
+        gap: 28px;
+        align-items: flex-start;
+        padding: 28px;
+      }
+      h1 { font-size: 1.1rem; font-weight: 650; margin: 0 0 8px; }
+      .note { color: var(--text-muted); font-size: 0.88rem; max-width: 420px; line-height: 1.5; }
+      fieldset {
+        border: 1px solid var(--stroke);
+        border-radius: 12px;
+        margin: 16px 0 0;
+        padding: 12px 14px;
+      }
+      legend { padding: 0 6px; color: var(--text-muted); }
+      label { display: block; margin: 8px 0; cursor: pointer; }
+      label span { display: block; color: var(--text-dim); font-size: 0.78rem; margin-left: 22px; }
+      .phone {
+        width: 422px;
+        height: 600px;
+        background: var(--bg);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        overflow: hidden;
+        font-family: var(--page);
+      }
+      .bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 48px;
+        padding: 0 12px;
+        background: var(--bg-elevated);
+      }
+      .bar strong { font-size: 0.92rem; font-weight: 650; }
+      .hero { text-align: center; padding: 16px 16px 0; }
+      .mark {
+        width: 56px; height: 56px; margin: 0 auto 8px;
+        border-radius: 50%; background: #111; display: grid; place-items: center;
+        font-weight: 700;
+      }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; margin-top: 12px; }
+      .actions button {
+        flex: 1 1 calc(50% - 10px);
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 10px 12px;
+        border: 1px solid var(--stroke);
+        border-radius: 12px;
+        background: var(--fill);
+        color: var(--text);
+        font: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+      }
+      .rule { border: 0; border-top: 1px solid var(--stroke); margin: 16px 0; }
+      .meta, .note-row {
+        display: flex; justify-content: space-between; gap: 12px;
+        padding: 0 16px; font-size: 0.88rem;
+      }
+      .meta { margin-bottom: 10px; }
+      .meta .k, .section { color: var(--text-dim); }
+      .section { margin: 8px 16px; font-size: 0.82rem; font-weight: 650; }
+      .note-row { font-size: 0.75rem; margin-bottom: 8px; color: #d5dee8; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section>
+        <h1>UI font</h1>
+        <p class="note">
+          0.23.0 把正文定成 Segoe UI。產品已採用：正文維持 Segoe UI；UTXO、地址、餘額用 Menlo，然後 Cascadia Mono，然後 ui-monospace。中文仍落到正黑體或蘋方。下面可以對照，產品碼已按這個決定改過。
+        </p>
+        <fieldset>
+          <legend>選一個</legend>
+          <label>
+            <input type="radio" name="font" value='&quot;Segoe UI&quot;, &quot;Microsoft JhengHei UI&quot;, &quot;PingFang TC&quot;, sans-serif' checked />
+            現況：Segoe UI
+            <span>0.23.0 方案 B。兩邊都有，但是比例字。</span>
+          </label>
+          <label>
+            <input type="radio" name="font" value='ui-monospace, &quot;Cascadia Mono&quot;, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Microsoft JhengHei UI&quot;, &quot;PingFang TC&quot;, monospace' />
+            ui-monospace（兩邊各用系統等寬字）
+            <span>Mac：SF Mono。Windows 11：Cascadia Mono，否則 Consolas。這是不打包字型時常用的寫法。</span>
+          </label>
+          <label>
+            <input type="radio" name="font" value='&quot;Cascadia Mono&quot;, Consolas, &quot;Microsoft JhengHei UI&quot;, monospace' />
+            只看 Windows：Cascadia Mono
+            <span>Mac 沒有這個字，會落到 Consolas，而 Mac 也沒有 Consolas。</span>
+          </label>
+          <label>
+            <input type="radio" name="font" value='Menlo, Consolas, &quot;Microsoft JhengHei UI&quot;, &quot;PingFang TC&quot;, monospace' />
+            Menlo
+            <span>Mac 預裝。Windows 沒有，會落到 Consolas。比 SF Mono 舊、比較方。</span>
+          </label>
+        </fieldset>
+      </section>
+      <div class="phone" id="phone">
+        <div class="bar"><span>‹</span><strong>Private balance</strong><span>⋮</span></div>
+        <div class="hero">
+          <div class="mark">◎</div>
+          <strong>Solana</strong>
+          <div class="actions">
+            <button>↗ Send</button>
+            <button>▣ Shield</button>
+            <button>▾ Unshield</button>
+            <button>◇ Merge UTXO</button>
+          </div>
+        </div>
+        <hr class="rule" />
+        <div class="meta"><span class="k">Amount</span><span>4.87 SOL</span></div>
+        <div class="meta"><span class="k">Mint</span><span>Native</span></div>
+        <div class="section">UTXOs</div>
+        <div class="section">Number of UTXOs: 3</div>
+        <div class="note-row"><span>2hhR...59yQ</span><span>0.7 SOL</span></div>
+        <div class="note-row"><span>2ZEf...45v7</span><span>0.5 SOL</span></div>
+        <div class="note-row"><span>2WQN...UHdm</span><span>3.67 SOL</span></div>
+      </div>
+    </main>
+    <script>
+      const phone = document.getElementById("phone");
+      for (const input of document.querySelectorAll("input[name=font]")) {
+        input.addEventListener("change", () => {
+          if (input.checked) phone.style.setProperty("--page", input.value);
+        });
+      }
+    </script>
+  </body>
+</html>

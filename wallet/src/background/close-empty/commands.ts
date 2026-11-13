@@ -1,5 +1,6 @@
 /**
- * Thin command wrappers for list, plan, and commit close-empty wallet operations.
+ * Command wrappers for list, plan, and commit of close-empty.
+ * The scan, the plan, and the submit live in the neighboring modules. These handlers only check the request and call them.
  */
 import type { ExtensionRequest, ExtensionResponse } from "../../shared/protocol";
 import { jsonRpcMissing } from "../../shared/protocol";

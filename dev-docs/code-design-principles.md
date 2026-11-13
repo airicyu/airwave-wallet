@@ -35,17 +35,17 @@ A file does one thing a reader can name in a sentence. The neighboring step (the
 
 ## 4. Source-file responsibility comments
 
-For `.ts` files under `wallet/src`:
+For `.ts` and `.tsx` files under `wallet/src`:
 
-- Every `.ts` file has an English block comment at the top of what the file is responsible for. Length does not make the header optional.
+- Every `.ts` and `.tsx` file has an English block comment at the top of what the file is responsible for. Length does not make the header optional.
 - If you edit a file that has no header (including an import-only edit), add the header in the same change.
 
-Write **complete sentences** a person can read aloud. Length follows the file, not a sentence quota. A thin module is one or two sentences. A boundary file (a command, a service, a protocol adapter, the password box) may be a short paragraph: why the file exists, what it owns, and which neighboring step does the rest. Do not pad a thin file into a paragraph. Do not write a spec, a method catalog, or a changelog. At most **150 words**. If you need more, the file is doing two jobs: split it.
+Write **complete sentences** a person can read aloud. The first paragraph states the one responsibility: why the file exists, what it owns, and which neighboring step does the rest. Four or five sentences is enough for a boundary file (a command, a service, a protocol adapter, the password box). A thin module may be shorter. Do not use a bullet list, a headline fragment, a colon list, or "X vs Y" for that paragraph. Do not make it a spec, a method catalog, or a changelog.
 
-Do not use headline fragments, colon lists, or "X vs Y" as the whole comment.
+A second paragraph may follow. It is not more responsibility. It records a fact a reader cannot see from the names, and that would cause a wrong change if missed. Do not restate the function flow. If that paragraph needs a second job, split the file. Do not paper over a second responsibility with `related logic`, `etc.`, or `and so on`. At most **150 words** for the whole header.
 
-- If the comment needs a second different responsibility, split the file. Do not lengthen the comment.
-- Do not paper over a second responsibility with `related logic`, `etc.`, or `and so on`.
+A comment on a function is for a decision the name does not carry, usually none or one in a file. Do not repeat the header there. Comments are maintained with the code. Do not add one that will only restate the next edit.
+
 - `index.ts` says, in the same prose, that it re-exports this folder's public surface (it may name subfolders).
 - A pure data table only says which table it is.
 
@@ -82,7 +82,7 @@ A folder is a module boundary, not a label.
 
 **CSS and copy are the exception to “group by what changes together.”** They are catalogs you search. Do not move them back beside each feature folder.
 
-- Message keys stay in `shared/i18n/ui-messages.ts`. Prefix comments mark sections. Do not split the catalog into one file per prefix.
+- Message keys are reached through `shared/i18n/ui-messages.ts`. Section tables live in `shared/i18n/messages/` and that file spreads them. Callers outside `shared/i18n` import `ui-messages` or the folder index. Do not import a section file from outside `shared/i18n`.
 - Popup CSS lives in `popup/styles/`, imported in order from `popup/style.css`. Popout CSS lives in `popout/styles/`, imported from `popout/style.css`.
 - A CSS file sits next to a component only when those classes belong to that component alone. `approval/tx-ai.css` is that case. Shared controls stay in the catalog.
 

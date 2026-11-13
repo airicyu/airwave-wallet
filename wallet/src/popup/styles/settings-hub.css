@@ -1,3 +1,13 @@
+.fee-edit-line {
+  display: flex;
+  gap: 8px;
+}
+
+.fee-edit-line input {
+  flex: 1;
+  min-width: 0;
+}
+
 .settings-hub-list {
   list-style: none;
   margin: 0;
@@ -34,4 +44,24 @@
 
 .settings-hub-row:hover {
   background: rgba(255, 255, 255, 0.03);
+}
+
+.hub-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.hub-ico {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--fill);
+  border: 1px solid var(--stroke);
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }

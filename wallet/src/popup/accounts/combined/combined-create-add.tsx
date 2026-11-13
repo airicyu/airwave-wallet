@@ -1,0 +1,106 @@
+/**
+ * Add-member choice, multi-address paste, and local pick for a combined draft.
+ * Local rows stay staged until Confirm appends them and returns to create.
+ * Does not call wallet.addCombinedSub. The draft is created on the create page.
+ */
+import { useState } from "react";
+import type { JSX } from "react";
+import { isSigningOrWatch, parsePublicKeyBase58 } from "../../../shared/accounts";
+import { shortAddr } from "../../lib/format";
+import { usePopupContext } from "../../state/PopupContext";
+import { useRegisterDock } from "../../state/dock";
+import { useT } from "../../state/useT";
+import type { State } from "../../types";
+import { appendCombinedMembers, keysFromPaste, useCombinedDraft } from "./combined-logic";
+
+export function CombinedCreateAddChoice(): JSX.Element {
+  const { navigateTo } = usePopupContext();
+  const { t } = useT();
+  return (
+    <div className="manage-actions">
+      <button type="button" className="manage-action-row neutral" onClick={() => navigateTo("add-combined-paste")}>
+        <span>{t("common.address")}</span>
+      </button>
+      <button type="button" className="manage-action-row neutral" onClick={() => navigateTo("add-combined-local")}>
+        <span>{t("common.localAccounts")}</span>
+      </button>
+    </div>
+  );
+}
+
+export function CombinedCreatePasteScreen(): JSX.Element {
+  const { navigateTo } = usePopupContext();
+  const { t } = useT();
+  const draft = useCombinedDraft();
+  const [value, setValue] = useState("");
+  const adding = keysFromPaste(value, draft.members);
+  useRegisterDock({
+    label: t("common.confirm"),
+    disabled: adding.length === 0,
+    onPrimary: () => {
+      appendCombinedMembers(value);
+      navigateTo("add-combined");
+    },
+  });
+  return (
+    <div className="field">
+      <label htmlFor="combined-create-paste">{t("common.address")}</label>
+      <textarea
+        id="combined-create-paste"
+        className="mono combined-paste"
+        rows={6}
+        value={value}
+        spellCheck={false}
+        placeholder={t("onboarding.pasteMulti")}
+        autoComplete="off"
+        onChange={(e) => setValue(e.target.value)}
+      />
+    </div>
+  );
+}
+
+export function CombinedCreateLocalScreen({ wallet }: { wallet: State }): JSX.Element {
+  const { navigateTo } = usePopupContext();
+  const { t } = useT();
+  const draft = useCombinedDraft();
+  const [picked, setPicked] = useState<string[]>([]);
+  const locals = wallet.accounts.filter(isSigningOrWatch);
+  useRegisterDock({
+    label: t("common.confirm"),
+    disabled: picked.length === 0,
+    onPrimary: () => {
+      appendCombinedMembers(picked.join("\n"));
+      navigateTo("add-combined");
+    },
+  });
+  return (
+    <>
+      <p className="combined-pick-hint">{t("accounts.pickLocalToAdd")}</p>
+      <div className="combined-pick-list">
+        {locals.map((a) => {
+          const pk = parsePublicKeyBase58(a.publicKeyBase58) ?? a.publicKeyBase58;
+          const inSet = draft.members.includes(pk);
+          const on = picked.includes(pk);
+          return (
+            <label key={a.id} className={`combined-pick-row${on ? " on" : ""}`}>
+              <input
+                type="checkbox"
+                checked={on}
+                disabled={inSet}
+                onChange={() => {
+                  if (inSet) return;
+                  setPicked((prev) => (prev.includes(pk) ? prev.filter((item) => item !== pk) : [...prev, pk]));
+                }}
+              />
+              <span className="pick-name">
+                {a.label}
+                {inSet ? ` · ${t("accounts.alreadyIn")}` : ""}
+              </span>
+              <span className="pick-addr">{shortAddr(pk)}</span>
+            </label>
+          );
+        })}
+      </div>
+    </>
+  );
+}

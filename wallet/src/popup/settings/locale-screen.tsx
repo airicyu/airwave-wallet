@@ -1,3 +1,7 @@
+/**
+ * Lets the user pick the interface language. The choice is stored with the other settings.
+ * Message catalogs stay in shared/i18n. This screen only writes the locale key.
+ */
 import type { JSX } from "react";
 import type { PublicSettings, UiLocale } from "../../shared/protocol";
 import { LOCALE_ENDONYM, UI_LOCALES } from "../../shared/i18n";

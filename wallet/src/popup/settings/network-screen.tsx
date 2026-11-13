@@ -1,3 +1,7 @@
+/**
+ * Lets the user pick the cluster. A saved Devnet or Mainnet choice stays until they change it.
+ * RPC URLs for each cluster are edited on the RPC screen, not here.
+ */
 import type { JSX } from "react";
 import type { PublicSettings } from "../../shared/protocol";
 import { useT } from "../state/useT";

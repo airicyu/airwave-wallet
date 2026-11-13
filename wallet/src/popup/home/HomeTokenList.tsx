@@ -1,0 +1,362 @@
+/**
+ * Home Tokens list: load rows, combined member expand, and token detail hero.
+ * Does not begin a send or own wallet vault state.
+ */
+import type { JSX } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { isCombinedAccount } from "../../shared/accounts";
+import { sendExtensionRequest } from "../../shared/protocol";
+import {
+  friendlyErrorMessage,
+  shouldUseRpcTransientToast,
+} from "../../shared/i18n";
+import { jsonRpcMissing } from "../../shared/protocol";
+import { accountKind } from "../../shared/protocol";
+import { canWalletSendFromActiveAccount, homeTokenRowForSendBalance } from "../../shared/send";
+import { MainnetRpcStop } from "./MainnetRpcStop";
+import {
+  formatOrganicScoreLabel,
+  NATIVE_SOL_ID,
+  shortMint,
+  sortCombinedTokenMembers,
+  type HomeTokenRow,
+} from "../../shared/home";
+import { CopyIconButton } from "../components/CopyPkButton";
+import { IconChevronDown, IconSend, IconShield } from "../components/StrokeIcon";
+import { shortAddr } from "../lib/format";
+import { usePopupContext } from "../state/PopupContext";
+import { t as translate } from "../../shared/i18n";
+import { useT } from "../state/useT";
+import type { State, View } from "../types";
+
+let homeTokensGen = 0;
+
+type Props = {
+  wallet: State;
+  currentView: View;
+  onOpenDetail: (tokenId: string) => void;
+};
+
+export function HomeTokenList({ wallet, currentView, onOpenDetail }: Props): JSX.Element {
+  const {
+    homeTokenRows,
+    setHomeTokenRows,
+    expandedTokenRowIds,
+    setExpandedTokenRowIds,
+    homeAssetsForce,
+    setHomeAssetsForce,
+    bumpClosableScan,
+    showToast,
+    flowStack,
+  } = usePopupContext();
+  const flowPausedRef = useRef(flowStack.length > 0);
+  flowPausedRef.current = flowStack.length > 0;
+  const { locale, t } = useT();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const homeTokenRowsLenRef = useRef(homeTokenRows.length);
+  homeTokenRowsLenRef.current = homeTokenRows.length;
+
+  const active = wallet.accounts.find((a) => a.id === wallet.activeAccountId);
+  const activeIsCombined = active != null && isCombinedAccount(active);
+
+  const reportAssetsIssue = useCallback(
+    (raw: string | null | undefined) => {
+      if (!raw?.trim()) {
+        setError(null);
+        return;
+      }
+      const friendly = friendlyErrorMessage(raw, locale, "error.code.HOLDINGS_LOAD_FAILED");
+      if (shouldUseRpcTransientToast(raw)) {
+        showToast(friendly, "warn");
+        setError(null);
+        return;
+      }
+      setError(friendly);
+    },
+    [locale, showToast],
+  );
+
+  const load = useCallback(
+    async (force = false) => {
+      if (flowPausedRef.current) return;
+      if (currentView !== "home-token" || !wallet.activeAccountId) return;
+      if (jsonRpcMissing(wallet.settings)) return;
+      setLoading((prev) => prev || homeTokenRowsLenRef.current === 0);
+      const gen = ++homeTokensGen;
+      try {
+        const res = await sendExtensionRequest("wallet.getHomeTokens", force ? { force: true } : {});
+        if (gen !== homeTokensGen) return;
+        if (!res.ok) {
+          reportAssetsIssue(res.error?.message ?? translate(locale, "error.code.HOLDINGS_LOAD_FAILED"));
+          return;
+        }
+        const payload = res.result as { rows?: HomeTokenRow[]; error?: string };
+        const next = payload.rows ?? [];
+        setHomeTokenRows(next);
+        reportAssetsIssue(payload.error ?? null);
+        if (force) {
+          await sendExtensionRequest("wallet.listClosableTokenAccounts", { force: true });
+          bumpClosableScan();
+        }
+      } catch (e) {
+        if (gen !== homeTokensGen) return;
+        reportAssetsIssue(e instanceof Error ? e.message : translate(locale, "error.code.HOLDINGS_LOAD_FAILED"));
+      } finally {
+        if (gen === homeTokensGen) setLoading(false);
+      }
+    },
+    [currentView, wallet.activeAccountId, wallet.settings, setHomeTokenRows, bumpClosableScan, reportAssetsIssue],
+  );
+
+  useEffect(() => {
+    void load(false);
+  }, [load, wallet.activeAccountId, wallet.settings.rpcUrl, wallet.settings.defaultCuPrice]);
+
+  useEffect(() => {
+    if (!homeAssetsForce) return;
+    setHomeAssetsForce(false);
+    void load(true);
+  }, [homeAssetsForce, load, setHomeAssetsForce]);
+
+  if (jsonRpcMissing(wallet.settings)) {
+    return <MainnetRpcStop />;
+  }
+
+  if (loading && homeTokenRows.length === 0) {
+    return (
+      <>
+        <ul id="home-tokens" className="token-list">
+          <li className="muted">{t("common.loadingEllipsis")}</li>
+        </ul>
+        <p id="home-assets-error" className="error" hidden />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <ul id="home-tokens" className="token-list">
+        {homeTokenRows.map((row) => {
+          const canExpand = activeIsCombined && row.members != null && row.members.length >= 1;
+          const isExpanded = canExpand && expandedTokenRowIds.has(row.id);
+          return (
+            <TokenRow
+              key={row.id}
+              row={row}
+              canExpand={canExpand}
+              isExpanded={isExpanded}
+              onOpenDetail={onOpenDetail}
+              onToggleExpand={() =>
+                setExpandedTokenRowIds((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(row.id)) next.delete(row.id);
+                  else next.add(row.id);
+                  return next;
+                })
+              }
+            />
+          );
+        })}
+      </ul>
+      <p id="home-assets-error" className="error" hidden={!error}>
+        {error ?? ""}
+      </p>
+    </>
+  );
+}
+
+function TokenRow({
+  row,
+  canExpand,
+  isExpanded,
+  onOpenDetail,
+  onToggleExpand,
+}: {
+  row: HomeTokenRow;
+  canExpand: boolean;
+  isExpanded: boolean;
+  onOpenDetail: (id: string) => void;
+  onToggleExpand: () => void;
+}): JSX.Element {
+  const { t } = useT();
+  const expandLabel = isExpanded ? t("token.collapseMembers") : t("token.expandMembers");
+  return (
+    <li className={`token-block${isExpanded ? " is-expanded" : ""}`}>
+      <div
+        className="token-card"
+        tabIndex={0}
+        role="button"
+        onClick={() => onOpenDetail(row.id)}
+        onKeyDown={(ev) => {
+          if (ev.key === "Enter" || ev.key === " ") {
+            ev.preventDefault();
+            onOpenDetail(row.id);
+          }
+        }}
+      >
+        <TokenTrust row={row} />
+        <TokenIcon row={row} />
+        <div className="token-main">
+          <div className="token-name-row">
+            <div className="token-sym">{row.name || row.symbol}</div>
+          </div>
+          <div className="token-qty">
+            {row.uiAmountLabel} {row.symbol}
+          </div>
+        </div>
+        <div className="token-usd">{row.usdLabel}</div>
+        {canExpand ? (
+          <button
+            type="button"
+            className="row-expand-btn"
+            aria-expanded={isExpanded}
+            title={expandLabel}
+            aria-label={expandLabel}
+            onClick={(ev) => {
+              ev.stopPropagation();
+              onToggleExpand();
+            }}
+          >
+            <IconChevronDown size={16} />
+          </button>
+        ) : null}
+      </div>
+      {canExpand && isExpanded && row.members ? (
+        <div className="token-member-panel">
+          {sortCombinedTokenMembers(row.members).map((m) => {
+            const pct = Math.round(m.percent);
+            const bar = Math.min(100, Math.max(0, m.percent));
+            return (
+              <div key={m.pubkey} className="token-member">
+                <div className="token-member-top">
+                  <span className="token-member-addr">{shortAddr(m.pubkey)}</span>
+                  <span className="token-member-pct">{`${pct}%`}</span>
+                </div>
+                <div className="token-member-amt">
+                  {m.uiAmountLabel} {row.symbol}
+                </div>
+                <div className="token-member-bar" aria-hidden="true">
+                  <i style={{ width: `${bar}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
+export function TokenTrust({ row }: { row: HomeTokenRow }): JSX.Element {
+  const { t } = useT();
+  const native = row.id === NATIVE_SOL_ID;
+  const verified = native || row.isVerified === true;
+  if (!verified) {
+    return (
+      <span className="token-trust token-trust--empty" title={t("token.notVerified")} aria-label={t("token.notVerified")} />
+    );
+  }
+  const score = native ? undefined : formatOrganicScoreLabel(row.organicScore);
+  return (
+    <span className="token-trust token-trust--verified" title={t("token.verified")} aria-label={t("token.verified")}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" fill="currentColor" />
+        <path
+          d="M8.5 12.2l2.3 2.3 4.7-5"
+          stroke="#0f1419"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      {score ? <span className="token-trust-score">{score}</span> : null}
+    </span>
+  );
+}
+
+export function TokenIcon({ row }: { row: HomeTokenRow }): JSX.Element {
+  const [failed, setFailed] = useState(false);
+  if (row.iconUrl && !failed) {
+    return (
+      <div className="token-icon" aria-hidden="true">
+        <img src={row.iconUrl} alt="" onError={() => setFailed(true)} />
+      </div>
+    );
+  }
+  return (
+    <div className="token-icon" aria-hidden="true">
+      {row.iconLetter}
+    </div>
+  );
+}
+
+export function TokenDetailView({
+  wallet,
+  tokenId,
+  onSend,
+  onShield,
+}: {
+  wallet: State;
+  tokenId: string;
+  onSend: () => void;
+  onShield: () => void;
+}): JSX.Element {
+  const { homeTokenRows } = usePopupContext();
+  const { t } = useT();
+  const row = homeTokenRows.find((r) => r.id === tokenId);
+  if (!row) {
+    return (
+      <div id="token-detail-root" className="token-detail">
+        <p className="muted">{t("error.tokenNotFound")}</p>
+      </div>
+    );
+  }
+  const active = wallet.accounts.find((a) => a.id === wallet.activeAccountId);
+  const canSend = canWalletSendFromActiveAccount(wallet.accounts, active, wallet.unlocked);
+  const watchOnly = active != null && accountKind(active) === "readOnly";
+  const combined = active != null && isCombinedAccount(active);
+  const balanceRow = active ? homeTokenRowForSendBalance(row, active) : row;
+
+  return (
+    <div id="token-detail-root" className="token-detail">
+      <div className="token-detail-hero">
+        <TokenIcon row={row} />
+        <h3 className="token-detail-name">{row.name || row.symbol}</h3>
+        {canSend ? (
+          <div className="privacy-actions">
+            <button type="button" className="token-detail-action" onClick={onSend}>
+              <IconSend />
+              {t("send.action")}
+            </button>
+            {!watchOnly && !combined ? (
+              <button type="button" className="token-detail-action" onClick={onShield}>
+                <IconShield />
+                {t("privacy.shield")}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+      <div className="token-detail-meta">
+        <div className="token-detail-row">
+          <span className="label">{t("send.amount")}</span>
+          <span>
+            {balanceRow.uiAmountLabel} {row.symbol}
+          </span>
+        </div>
+        <div className="token-detail-row">
+          <span className="label">{t("token.mint")}</span>
+          {row.id === NATIVE_SOL_ID ? (
+            <span>{t("token.native")}</span>
+          ) : (
+            <span className="token-detail-mint">
+              <span>{shortMint(row.id)}</span>
+              <CopyIconButton text={row.id} />
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

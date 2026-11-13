@@ -1,4 +1,7 @@
-/** Signature fee: 5000 lamports × numRequiredSignatures (this build: 1 per tx). */
+/**
+ * Signature fee for a close-empty transaction: 5000 lamports times the number of required signatures.
+ * This build uses one signature per transaction. The plan uses this fee when it decides how many closes fit.
+ */
 export function signatureFeeLamports(numSigners: number): bigint {
   return 5000n * BigInt(numSigners);
 }

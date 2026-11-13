@@ -2,7 +2,7 @@
  * chrome.storage key constants and Settings/AccountMeta types with RPC and settings normalization helpers.
  * Does not read or write storage records (see background storage-io).
  */
-import { DEFAULT_JUPITER_API_URL, DEFAULT_OPENROUTER_API_URL, resolveHeliusApiTarget } from "../rpc";
+import { DEFAULT_JUPITER_API_URL, DEFAULT_OPENROUTER_API_URL, heliusApiKeyFromStored } from "../rpc";
 import { DEFAULT_DECISIONS_MODEL, DEFAULT_REPORT_MODEL, type TxAiModelMode } from "../tx-ai";
 export const STORAGE = {
   settings: "airwave.settings.v1",
@@ -192,7 +192,7 @@ export function toPublicSettings(settings: Settings): PublicSettings {
   return {
     ...rest,
     jupiterConfigured: jupiterApiKey.trim().length > 0,
-    heliusConfigured: resolveHeliusApiTarget(heliusApiUrl) != null,
+    heliusConfigured: heliusApiKeyFromStored(heliusApiUrl) != null,
     openRouterConfigured: openRouterApiKey.trim().length > 0,
   };
 }

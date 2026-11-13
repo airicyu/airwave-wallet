@@ -15,7 +15,9 @@ shots:
   - id: home-activities
     shells: [sidepanel, popup]
     prep: none
-    settings: { cluster: Mainnet, helius: mock }
+    # Helius is an API key, not a host. Do not set it to the mock URL.
+    # Activity always uses https://api.helius.xyz until a Debug origin override exists.
+    settings: { cluster: Mainnet }
     enter: home
     look:
       - Activities tab is selected

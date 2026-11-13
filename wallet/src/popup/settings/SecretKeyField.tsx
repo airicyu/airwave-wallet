@@ -165,7 +165,7 @@ export function SecretKeyField({
           <>
             <button
               type="button"
-              className={`icon-btn ghost-inline keys-confirm-btn${pressed === "commit" ? " is-pressed" : ""}`}
+              className={`icon-btn ghost-inline confirm-tick keys-confirm-btn${pressed === "commit" ? " is-pressed" : ""}`}
               title={t("common.confirm")}
               aria-label={t("common.confirm")}
               onMouseDown={(e) => {
@@ -188,7 +188,7 @@ export function SecretKeyField({
             </button>
             <button
               type="button"
-              className={`icon-btn ghost-inline keys-discard-btn${pressed === "discard" ? " is-pressed" : ""}`}
+              className={`icon-btn ghost-inline discard-cross keys-discard-btn${pressed === "discard" ? " is-pressed" : ""}`}
               title={t("common.discard")}
               aria-label={t("common.discard")}
               onMouseDown={(e) => {

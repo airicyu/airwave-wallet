@@ -1,5 +1,6 @@
 /**
- * Re-exports all wallet extension command handlers for the wallet package entry.
+ * Re-exports every wallet command handler for the wallet package entry.
+ * wallet-dispatch imports this file rather than each command module.
  */
 export {
   handleAddReadOnlyAccount,
