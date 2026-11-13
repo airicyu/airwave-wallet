@@ -1,5 +1,9 @@
 # Activities (Helius mock)
 
+**Blocked.** This scenario cannot pass against the local mock, because Activity always uses `https://api.helius.xyz`.
+It becomes runnable again only after the wallet has a Debug override for the Helius API origin, the same kind of override Jupiter and OpenRouter already have.
+The steps and Pass below are kept for later restore.
+
 No validator airdrop. Mock on `:8787`.
 
 **Settings:** Cluster Mainnet, no Mainnet custom RPC, Helius API URL `http://127.0.0.1:8787`.

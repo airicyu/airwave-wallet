@@ -38,7 +38,7 @@ Runtime reads [`test/e2e/fixtures/`](../../../test/e2e/fixtures/) (optional over
    - If the sidebar button is missing, you are not on Home in the action popup yet ??finish onboard/unlock first. Do not fall back to a tabbed extension page.
 4. `bun run e2e-mock`, then confirm `http://127.0.0.1:8787/health` is `ok: true`.
 5. `bun run test-web` (bind `127.0.0.1` if the default Vite listen is IPv6-only/`localhost`).
-6. Apply the wallet settings in the README (**agent sets these after vault exists** ??cluster, Devnet RPC, Debug, Mainnet blockhash RPC / Jupiter / OpenRouter / Helius bases as needed). Do not set a custom RPC on Mainnet. Password/onboard is out-of-band (operator).
+6. Apply the wallet settings in the README (**agent sets these after vault exists** — cluster, Devnet RPC, Debug, Mainnet blockhash RPC / Jupiter / OpenRouter at the mock as needed). The Helius field is an API key; do not set it to `http://127.0.0.1:8787`. Do not set a custom RPC on Mainnet. Password/onboard is out-of-band (operator).
 7. Confirm **default priority fee is `5000`** before scenarios that assert fee UI (especially `07`). If it is something else (e.g. `25000`), set it back first.
 8. For **every** scenario that needs the ledger: run **one** prep, not a manual double airdrop:
    - Preferred: `bun run e2e-prep -- <address>` (kills/restarts validator with `--reset`, airdrops **once**, prints balance, leaves validator running).
