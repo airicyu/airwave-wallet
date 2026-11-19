@@ -23,10 +23,10 @@ import {
 test("model normalize: presets, custom ids, and illegal fallback", () => {
   assert.equal(normalizeDecisionsModel("typesafe/jev-1.13"), "typesafe/jev-1.13");
   assert.equal(normalizeDecisionsModel("nace-ai/drex-v1.5"), "nace-ai/drex-v1.5");
-  assert.equal(normalizeDecisionsModel("bad id"), "liquid/d1");
+  assert.equal(normalizeDecisionsModel("bad id"), "liquid/d1.2");
   assert.equal(normalizeReportModel("not-a-model"), "not-a-model");
   assert.equal(normalizeReportModel("custom/vendor-model"), "custom/vendor-model");
-  assert.equal(normalizeReportModel("bad id"), "inclusionai/ling-3.0-flash");
+  assert.equal(normalizeReportModel("bad id"), "~deepseek/deepseek-flash-latest");
   assert.equal(isLegalOpenRouterModelId("  trim-me  "), true);
   assert.equal(isLegalOpenRouterModelId(""), false);
   assert.equal(isLegalOpenRouterModelId("has space"), false);
@@ -34,9 +34,9 @@ test("model normalize: presets, custom ids, and illegal fallback", () => {
 
 test("model chains: default, custom, normalize", () => {
   assert.deepEqual(effectiveReportModelChain({ openRouterReportModelMode: "default" }), [
+    "~deepseek/deepseek-flash-latest",
     "inclusionai/ling-3.0-flash",
     "nvidia/nemotron-3.5-lightning",
-    "~deepseek/deepseek-flash-latest",
   ]);
   assert.deepEqual(
     effectiveReportModelChain({
@@ -46,7 +46,7 @@ test("model chains: default, custom, normalize", () => {
     ["a/x", "b/y"],
   );
   assert.deepEqual(effectiveDecisionsModelChain({ openRouterDecisionsModelMode: "default" }), [
-    "liquid/d1",
+    "liquid/d1.2",
     "nace-ai/drex-v1.5",
   ]);
   assert.equal(normalizeModelChain([" z ", "", "a", "a", "b", "c", "d", "e", "f", "g"]).length, 5);

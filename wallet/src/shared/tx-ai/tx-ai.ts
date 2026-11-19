@@ -24,12 +24,12 @@ export type TxAiAssessState =
 export type TxAiModelMode = "default" | "custom";
 
 export const DEFAULT_REPORT_MODEL_CHAIN = [
+  "~deepseek/deepseek-flash-latest",
   "inclusionai/ling-3.0-flash",
   "nvidia/nemotron-3.5-lightning",
-  "~deepseek/deepseek-flash-latest",
 ] as const;
 
-export const DEFAULT_DECISIONS_MODEL_CHAIN = ["liquid/d1", "nace-ai/drex-v1.5"] as const;
+export const DEFAULT_DECISIONS_MODEL_CHAIN = ["liquid/d1.2", "nace-ai/drex-v1.5"] as const;
 
 /** 0.39 migrate reference; never write to storage. */
 export const LEGACY_039_DEFAULT_REPORT_MODEL = "apodex/apodex-1.1-mini:free";

@@ -17,11 +17,11 @@ export type DecisionsSample = {
 
 /** Align with 0.30.0 Settings `openRouterDecisionsModel` allowlist. */
 export const DECISIONS_MODELS = [
-  { id: "liquid/d1", label: "LiquidAI d1（預設）" },
+  { id: "liquid/d1.2", label: "LiquidAI d1.2（預設）" },
   { id: "nace-ai/drex-v1.5", label: "Nace.AI Drex v1.5" },
 ] as const;
 
-export const DEFAULT_DECISIONS_MODEL = "liquid/d1";
+export const DEFAULT_DECISIONS_MODEL = "liquid/d1.2";
 
 const LEVEL_CRITERIA: Record<TxAiLevel, string> = {
   low: "Ordinary transfer or common DEX swap; no authority handoff, unlimited approve, owner mismatch, or external close; user retains control of funds/accounts.",

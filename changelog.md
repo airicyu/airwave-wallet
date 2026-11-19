@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.59.2 — 2026-11-19
+
+### Decisions model
+
+The default transaction-AI decisions model is `liquid/d1.2`. `liquid/d1` remains only the 0.39 migrate reference and is not called.
+
+### Report model
+
+The default report chain is `~deepseek/deepseek-flash-latest`, then `inclusionai/ling-3.0-flash`, then `nvidia/nemotron-3.5-lightning`.
+
+### Sign-risk page
+
+The sign-risk page uses the same dark panels as the connect page. Its default prompt includes the wallet's newer reading rules for one transaction, including Shielded Pool and User Registry.
+
 ## 0.59.1 — 2026-11-13
 
 ### Private amount decimals

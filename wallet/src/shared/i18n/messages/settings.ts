@@ -211,9 +211,9 @@ export const settingsMessages = {
     "en": "Grading model",
   },
   "settings.openRouter.decisionsModel.d1": {
-    "zh-Hant": "LiquidAI d1",
-    "zh-Hans": "LiquidAI d1",
-    "en": "LiquidAI d1",
+    "zh-Hant": "LiquidAI d1.2",
+    "zh-Hans": "LiquidAI d1.2",
+    "en": "LiquidAI d1.2",
   },
   "settings.openRouter.decisionsModel.drex": {
     "zh-Hant": "Nace.AI Drex v1.5",
