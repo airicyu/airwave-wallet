@@ -17,6 +17,7 @@ import {
 } from "../../shared/home";
 import {
   fetchParsedTokenAccountsForOwner,
+  fetchScaledUiMultipliersByMint,
   type ParsedOwnerTokenAccount,
 } from "../../shared/home";
 import { isRpcRateLimitError, withRateLimitRetry } from "../../shared/rpc";
@@ -120,7 +121,9 @@ async function fetchSingleOwnerRowsWithParsed(
   if (signal.aborted) throw new DOMException("Aborted", "AbortError");
   const parsed = await fetchParsedTokenAccountsForOwner(settings.rpcUrl, owner, signal);
   if (signal.aborted) throw new DOMException("Aborted", "AbortError");
-  const rows = buildHomeTokenRowsFromOwnerParsed(lamports, parsed);
+  const token2022Mints = [...new Set(parsed.filter((p) => p.program === "token-2022").map((p) => p.mint))];
+  const scaledUiByMint = await fetchScaledUiMultipliersByMint(settings.rpcUrl, token2022Mints, signal);
+  const rows = buildHomeTokenRowsFromOwnerParsed(lamports, parsed, scaledUiByMint);
   return { rows, parsed };
 }
 

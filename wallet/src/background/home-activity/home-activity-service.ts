@@ -5,7 +5,9 @@
 import { address, isAddress, type Signature } from "@solana/kit";
 import {
   activityDetailWithSymbols,
+  fetchScaledUiMultipliersByMint,
   homeActivityLimit,
+  mintsFromEnhancedPayload,
   rowFromSignature,
   rowsFromEnhanced,
   type HomeActivityRow,
@@ -86,7 +88,10 @@ async function fetchEnhanced(
   if (before) url.searchParams.set("before", before);
   const json = await fetchJson(url.toString());
   if (!Array.isArray(json)) throw new Error("activity shape");
-  return attachIcons(rowsFromEnhanced(json, owner, "mainnet"), settings);
+  const mints = mintsFromEnhancedPayload(json);
+  const scaledUiByMint = await fetchScaledUiMultipliersByMint(settings.rpcUrl, mints);
+  const rows = rowsFromEnhanced(json, owner, "mainnet", scaledUiByMint);
+  return attachIcons(rows, settings);
 }
 
 async function fetchSignatures(

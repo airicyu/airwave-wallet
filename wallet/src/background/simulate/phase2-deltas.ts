@@ -221,6 +221,8 @@ function buildDeltas(
       mint,
       symbol: shortPk(mint),
       amount: formatAmount(abs, decimals),
+      tokenDecimals: decimals,
+      amountRaw: abs.toString(),
       sign: diff > 0n ? "plus" : "minus",
     });
   }

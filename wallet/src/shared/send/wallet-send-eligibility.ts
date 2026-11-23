@@ -31,5 +31,6 @@ export function homeTokenRowForSendBalance(row: HomeTokenRow, active: AccountMet
     uiAmount: member.uiAmount,
     uiAmountLabel: member.uiAmountLabel,
     members: undefined,
+    balanceRaw: undefined,
   };
 }

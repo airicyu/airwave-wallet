@@ -19,6 +19,10 @@ export type SimulateTxDelta = {
   sign: "plus" | "minus";
   kind: "native" | "spl";
   mint?: string;
+  /** SPL mint decimals for display scaling; omitted for native SOL. */
+  tokenDecimals?: number;
+  /** Absolute raw token delta (smallest units); used for Scaled UI Amount display. */
+  amountRaw?: string;
   display?: SimulateTxDeltaDisplay;
 };
 

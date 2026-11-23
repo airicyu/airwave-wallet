@@ -5,6 +5,8 @@
 import { address } from "@solana/kit";
 import type { ParsedOwnerTokenAccount } from "./parsed-token-accounts";
 import { fetchParsedTokenAccountsForOwner } from "./parsed-token-accounts";
+import { fetchScaledUiMultipliersByMint } from "./scaled-ui-mint-multipliers";
+import { tokenAmountFieldsFromRaw } from "./token-amount-display";
 import { withRateLimitRetry } from "../rpc";
 import { solanaRpcForUrl } from "../rpc";
 
@@ -49,6 +51,10 @@ export type HomeTokenRow = {
   tokenProgram?: TokenProgramKind;
   /** Combined expand rows; omitted on the single-account path. */
   members?: HomeTokenMemberShare[];
+  /** On-chain smallest units for SPL rows (string). Used for send limits, not for display parsing. */
+  balanceRaw?: string;
+  /** Token-2022 Scaled UI Amount multiplier when the mint has `scaledUiAmountConfig`. */
+  scaledUiMultiplier?: number;
 };
 
 export function shortMint(mint: string): string {
@@ -127,6 +133,7 @@ export function buildHomeTokenRows(
   lamports: number,
   parsedAccounts: ParsedTokenAccountEntry[],
   usdByMint?: Map<string, number>,
+  scaledUiByMint?: Map<string, number>,
 ): HomeTokenRow[] {
   const solAmount = lamports / 1e9;
   const solUsd = usdByMint?.get(NATIVE_SOL_ID);
@@ -183,26 +190,31 @@ export function buildHomeTokenRows(
 
   for (const [mint, { decimals, raw, symbol: sym, iconUrl, tokenProgram }] of byMint) {
     if (raw === 0n) continue;
-    const ui =
-      decimals > 0 ? Number(raw) / 10 ** decimals : Number(raw);
+    const scaledUiMultiplier = scaledUiByMint?.get(mint);
+    const { uiAmount, uiAmountLabel } = tokenAmountFieldsFromRaw(raw, decimals, scaledUiMultiplier);
+    if (uiAmount === 0) continue;
     const isWrappedSol = mint === WRAPPED_SOL_MINT;
     const symbol = isWrappedSol ? "wSOL" : (sym ?? shortMint(mint));
     const name = isWrappedSol ? "Wrapped SOL" : symbol;
     const mintUsd = usdByMint?.get(mint);
+    const qtyUsd =
+      mintUsd != null && Number.isFinite(mintUsd) && Number.isFinite(uiAmount)
+        ? mintUsd * uiAmount
+        : undefined;
     rows.push({
       id: mint,
       name,
       symbol,
-      uiAmount: ui,
-      uiAmountLabel: ui.toLocaleString(undefined, {
-        maximumFractionDigits: Math.min(decimals, 9),
-      }),
-      usdLabel: mintUsd != null ? formatUsdLabel(mintUsd) : "",
-      usdTotal: mintUsd != null && Number.isFinite(mintUsd) ? mintUsd : undefined,
+      uiAmount,
+      uiAmountLabel,
+      usdLabel: qtyUsd != null ? formatUsdLabel(qtyUsd) : "",
+      usdTotal: qtyUsd,
       iconLetter: iconLetterForSymbol(symbol),
       iconUrl: isWrappedSol ? NATIVE_SOL_ICON_URL : iconUrl,
       decimals,
       tokenProgram,
+      balanceRaw: raw.toString(),
+      ...(scaledUiMultiplier != null ? { scaledUiMultiplier } : {}),
     });
   }
 
@@ -213,6 +225,7 @@ export function buildHomeTokenRows(
 export function buildHomeTokenRowsFromOwnerParsed(
   lamports: number,
   parsed: ParsedOwnerTokenAccount[],
+  scaledUiByMint?: Map<string, number>,
 ): HomeTokenRow[] {
   const solAmount = lamports / 1e9;
   const rows: HomeTokenRow[] = [
@@ -251,8 +264,9 @@ export function buildHomeTokenRowsFromOwnerParsed(
   }
 
   for (const [mint, { decimals, raw, tokenProgram }] of byMint) {
-    const ui = decimals > 0 ? Number(raw) / 10 ** decimals : Number(raw);
-    if (ui === 0) continue;
+    const scaledUiMultiplier = scaledUiByMint?.get(mint);
+    const { uiAmount, uiAmountLabel } = tokenAmountFieldsFromRaw(raw, decimals, scaledUiMultiplier);
+    if (uiAmount === 0) continue;
     const isWrappedSol = mint === WRAPPED_SOL_MINT;
     const symbol = isWrappedSol ? "wSOL" : shortMint(mint);
     const name = isWrappedSol ? "Wrapped SOL" : symbol;
@@ -260,19 +274,27 @@ export function buildHomeTokenRowsFromOwnerParsed(
       id: mint,
       name,
       symbol,
-      uiAmount: ui,
-      uiAmountLabel: ui.toLocaleString(undefined, {
-        maximumFractionDigits: Math.min(decimals, 9),
-      }),
+      uiAmount,
+      uiAmountLabel,
       usdLabel: "",
       iconLetter: iconLetterForSymbol(symbol),
       iconUrl: isWrappedSol ? NATIVE_SOL_ICON_URL : undefined,
       decimals,
       tokenProgram,
+      balanceRaw: raw.toString(),
+      ...(scaledUiMultiplier != null ? { scaledUiMultiplier } : {}),
     });
   }
 
   return sortHomeTokenRows(rows);
+}
+
+function token2022MintsFromParsed(parsed: ParsedOwnerTokenAccount[]): string[] {
+  const mints: string[] = [];
+  for (const row of parsed) {
+    if (row.program === "token-2022" && row.mint) mints.push(row.mint);
+  }
+  return mints;
 }
 
 function throwIfAborted(signal?: AbortSignal): void {
@@ -321,5 +343,10 @@ export async function fetchRpcHomeTokenRows(
     fetchParsedTokenAccountsForOwner(rpcUrl, ownerPublicKeyBase58, signal),
     signal,
   );
-  return buildHomeTokenRowsFromOwnerParsed(lamports, parsed);
+  throwIfAborted(signal);
+  const scaledUiByMint = await withAbort(
+    fetchScaledUiMultipliersByMint(rpcUrl, token2022MintsFromParsed(parsed), signal),
+    signal,
+  );
+  return buildHomeTokenRowsFromOwnerParsed(lamports, parsed, scaledUiByMint);
 }

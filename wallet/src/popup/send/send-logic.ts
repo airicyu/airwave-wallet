@@ -5,7 +5,11 @@
 import { parsePublicKeyBase58 } from "../../shared/accounts";
 import { sendExtensionRequest } from "../../shared/protocol";
 import { apiErrorMessage, type UiLocale } from "../../shared/i18n";
-import { amountUiToRaw, formatRawToAmountUi, solReserveLamports } from "../../shared/send";
+import {
+  formatSendAmountUiFromRaw,
+  solReserveLamports,
+  tokenBalanceRawFromRow,
+} from "../../shared/send";
 import { NATIVE_SOL_ID, type HomeTokenRow } from "../../shared/home";
 import { homeTokenRowForSendBalance } from "../../shared/send";
 import type { State } from "../types";
@@ -23,7 +27,7 @@ export function findTokenRowById(rows: HomeTokenRow[], tokenId: string): HomeTok
 }
 
 export function tokenBalanceRaw(row: HomeTokenRow): bigint | null {
-  return amountUiToRaw(row.uiAmountLabel.replace(/,/g, ""), row.decimals);
+  return tokenBalanceRawFromRow(row);
 }
 
 export function sendFormValid(args: {
@@ -55,7 +59,7 @@ export function halfSendAmount(row: HomeTokenRow): string | null {
   if (raw == null) return null;
   const half = raw / 2n;
   if (half === 0n) return null;
-  return formatRawToAmountUi(half, row.decimals);
+  return formatSendAmountUiFromRaw(half, row);
 }
 
 export function maxSendAmount(row: HomeTokenRow, state: State): string | null {
@@ -64,9 +68,9 @@ export function maxSendAmount(row: HomeTokenRow, state: State): string | null {
   if (row.id === NATIVE_SOL_ID) {
     const reserve = solReserveLamports(BigInt(state.settings.defaultPriorityFeeLamports));
     if (raw <= reserve) return null;
-    return formatRawToAmountUi(raw - reserve, row.decimals);
+    return formatSendAmountUiFromRaw(raw - reserve, row);
   }
-  return formatRawToAmountUi(raw, row.decimals);
+  return formatSendAmountUiFromRaw(raw, row);
 }
 
 export async function beginTokenSend(args: {

@@ -71,7 +71,7 @@ async function phase2(
 ): Promise<SimulatePendingTxResult> {
   const base = await runPhase2Simulation(ctx, txBytes, signer, cluster);
   const withFees = fees(base, txBytes, cuLimit, priorityFee, cuEditable, cuWriteError);
-  return enrichSimulateDeltas(withFees, cluster, jupiterApiKey, jupiterApiUrl);
+  return enrichSimulateDeltas(withFees, cluster, jupiterApiKey, jupiterApiUrl, ctx.rpcUrl);
 }
 
 export async function simulateV1Sign(args: {

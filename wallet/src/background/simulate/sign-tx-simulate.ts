@@ -165,7 +165,7 @@ async function runPhase2WithFees(
   }
   const base = await runPhase2Simulation(ctx, txBytes, signer, cluster);
   const withFees = attachFees(base, txBytes, cuLimit, cuPrice, cuEditable, cuWriteError);
-  return enrichSimulateDeltas(withFees, cluster, jupiterApiKey, jupiterApiUrl);
+  return enrichSimulateDeltas(withFees, cluster, jupiterApiKey, jupiterApiUrl, ctx.rpcUrl);
 }
 
 export async function simulateSignTransaction(

@@ -77,6 +77,7 @@ This directory is the version contract for **airwave-wallet**. An agent with no 
 | [0.59.0](./0.59.0/INDEX.md) | shipped | Private balance on the Helius Default Ring |
 | [0.59.1](./0.59.1/INDEX.md) | shipped | Private amounts use mint decimals. Balance lines are one smaller row |
 | [0.59.2](./0.59.2/INDEX.md) | shipped | Default decisions model `liquid/d1.2`. Report chain starts with DeepSeek flash latest |
+| [0.60.0](./0.60.0/INDEX.md) | shipped | Token-2022 Scaled UI Amount: Jupiter-aligned display on Home, Activity, Send, and sign sim deltas; chain amounts stay raw |
 
 **Version numbers:** a **patch** on `x.y.z` (for example **0.3.1**) is only a bugfix for that minor. It does not schedule a new feature. A new feature is the next **minor** (0.3.0 → 0.4.0 → 0.5.0).
 

@@ -3,6 +3,7 @@
  * Does not perform HTTP fetches or update popup React state.
  */
 import { t, type UiLocale } from "../i18n";
+import { formatScaledUiAmountLabel } from "./scaled-ui-amount";
 
 export type HomeActivityKind = "send" | "receive" | "swap" | "tx";
 
@@ -119,6 +120,22 @@ function formatUnits(amount: bigint, decimals: number): string {
   return neg ? `-${body}` : body;
 }
 
+function formatUnitsForMint(
+  amount: bigint,
+  decimals: number,
+  mint: string,
+  scaledUiByMint?: Map<string, number>,
+): string {
+  const mult = scaledUiByMint?.get(mint);
+  if (mult != null && Number.isFinite(mult) && mult > 0 && mult !== 1) {
+    const neg = amount < 0n;
+    const v = neg ? -amount : amount;
+    const label = formatScaledUiAmountLabel(v, decimals, mult);
+    return neg ? `-${label}` : label;
+  }
+  return formatUnits(amount, decimals);
+}
+
 function asLamports(raw: unknown): bigint | null {
   if (typeof raw === "string" && /^-?\d+$/.test(raw)) {
     try {
@@ -138,16 +155,16 @@ function displayUiNumber(raw: unknown): string | null {
   return s || "0";
 }
 
-function tokenLabel(raw: unknown): string | null {
+function tokenLabel(raw: unknown, scaledUiByMint?: Map<string, number>): string | null {
   const rec = asRecord(raw);
   if (!rec) return null;
-  const mint = asString(rec.mint);
+  const mint = asString(rec.mint) || SOL_MINT;
   const rawAmt = asRecord(rec.rawTokenAmount);
   if (rawAmt) {
     const units = asLamports(rawAmt.tokenAmount);
     const decimals = rawAmt.decimals;
     if (units != null && typeof decimals === "number" && Number.isInteger(decimals)) {
-      return `${formatUnits(units, decimals)} ${symbolForMint(mint || SOL_MINT)}`;
+      return `${formatUnitsForMint(units, decimals, mint, scaledUiByMint)} ${symbolForMint(mint)}`;
     }
   }
   const ui = displayUiNumber(rec.tokenAmount);
@@ -167,7 +184,11 @@ function uniqueMints(mints: string[]): string[] {
   return out;
 }
 
-function legsForOwner(tx: Record<string, unknown>, owner: string): Leg[] {
+function legsForOwner(
+  tx: Record<string, unknown>,
+  owner: string,
+  scaledUiByMint?: Map<string, number>,
+): Leg[] {
   const tokenLegs: Leg[] = [];
   const nativeLegs: Leg[] = [];
   const tokens = Array.isArray(tx.tokenTransfers) ? tx.tokenTransfers : [];
@@ -176,7 +197,7 @@ function legsForOwner(tx: Record<string, unknown>, owner: string): Leg[] {
     if (!rec) continue;
     const from = asString(rec.fromUserAccount);
     const to = asString(rec.toUserAccount);
-    const label = tokenLabel(rec);
+    const label = tokenLabel(rec, scaledUiByMint);
     if (!label) continue;
     const mint = asString(rec.mint) || SOL_MINT;
     if (from === owner) tokenLegs.push({ outgoing: true, label, counterparty: to, mint });
@@ -221,14 +242,18 @@ function detailFromLeg(kind: HomeActivityKind, legs: Leg[], signature: string): 
   return shortAddr(signature);
 }
 
-function amountText(raw: unknown, native: boolean): string | null {
+function amountText(
+  raw: unknown,
+  native: boolean,
+  scaledUiByMint?: Map<string, number>,
+): string | null {
   if (native) {
     const rec = asRecord(raw);
     const lamports = asLamports(rec?.amount ?? raw);
     if (lamports == null) return null;
     return `${formatUnits(lamports, 9)} SOL`;
   }
-  return tokenLabel(raw);
+  return tokenLabel(raw, scaledUiByMint);
 }
 
 type SwapSide = { text: string; mint: string };
@@ -237,13 +262,14 @@ function firstSwapSide(
   items: unknown,
   owner: string,
   native: boolean,
+  scaledUiByMint?: Map<string, number>,
 ): SwapSide | null {
   const list = Array.isArray(items) ? items : items != null ? [items] : [];
   const matched: SwapSide[] = [];
   const any: SwapSide[] = [];
   for (const item of list) {
     const rec = asRecord(item);
-    const text = amountText(native ? rec : item, native);
+    const text = amountText(native ? rec : item, native, scaledUiByMint);
     if (!text) continue;
     const mint = native ? SOL_MINT : asString(rec?.mint) || SOL_MINT;
     const side = { text, mint };
@@ -254,20 +280,24 @@ function firstSwapSide(
   return matched[0] ?? any[0] ?? null;
 }
 
-function swapSides(tx: Record<string, unknown>, owner: string): { inn: SwapSide | null; out: SwapSide | null; legs: Leg[] } {
+function swapSides(
+  tx: Record<string, unknown>,
+  owner: string,
+  scaledUiByMint?: Map<string, number>,
+): { inn: SwapSide | null; out: SwapSide | null; legs: Leg[] } {
   const events = asRecord(tx.events);
   const swap = asRecord(events?.swap);
   let inn: SwapSide | null = null;
   let out: SwapSide | null = null;
   if (swap) {
     inn =
-      firstSwapSide(swap.tokenInputs, owner, false) ??
-      firstSwapSide(swap.nativeInput, owner, true);
+      firstSwapSide(swap.tokenInputs, owner, false, scaledUiByMint) ??
+      firstSwapSide(swap.nativeInput, owner, true, scaledUiByMint);
     out =
-      firstSwapSide(swap.tokenOutputs, owner, false) ??
-      firstSwapSide(swap.nativeOutput, owner, true);
+      firstSwapSide(swap.tokenOutputs, owner, false, scaledUiByMint) ??
+      firstSwapSide(swap.nativeOutput, owner, true, scaledUiByMint);
   }
-  const legs = legsForOwner(tx, owner);
+  const legs = legsForOwner(tx, owner, scaledUiByMint);
   if (!inn || !out) {
     const spent = legs.find((l) => l.outgoing);
     const got = legs.find((l) => !l.outgoing);
@@ -294,6 +324,7 @@ export function rowFromEnhanced(
   raw: unknown,
   owner: string,
   cluster: "mainnet" | "devnet",
+  scaledUiByMint?: Map<string, number>,
 ): HomeActivityRow | null {
   const tx = asRecord(raw);
   if (!tx) return null;
@@ -306,16 +337,16 @@ export function rowFromEnhanced(
   let mints: string[] = [];
   if (type === "SWAP") {
     kind = "swap";
-    const sides = swapSides(tx, owner);
+    const sides = swapSides(tx, owner, scaledUiByMint);
     detail = sides.inn && sides.out ? `${sides.inn.text} → ${sides.out.text}` : shortAddr(signature);
     mints = mintsForKind(kind, sides.legs, sides.inn, sides.out);
   } else if (type === "TRANSFER") {
-    const legs = legsForOwner(tx, owner);
+    const legs = legsForOwner(tx, owner, scaledUiByMint);
     kind = classifyTransfer(legs);
     detail = detailFromLeg(kind, legs, signature);
     mints = mintsForKind(kind, legs, null, null);
   } else {
-    const legs = legsForOwner(tx, owner);
+    const legs = legsForOwner(tx, owner, scaledUiByMint);
     mints = mintsForKind("tx", legs, null, null);
   }
   const timestamp = tx.timestamp;
@@ -331,15 +362,45 @@ export function rowFromEnhanced(
   };
 }
 
+/** Mint pubkeys referenced in one Helius enhanced-activity payload (for Scaled UI multiplier fetch). */
+export function mintsFromEnhancedPayload(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const set = new Set<string>();
+  const addMint = (mint: string): void => {
+    if (mint && mint !== SOL_MINT) set.add(mint);
+  };
+  for (const item of raw) {
+    const tx = asRecord(item);
+    if (!tx) continue;
+    const tokens = Array.isArray(tx.tokenTransfers) ? tx.tokenTransfers : [];
+    for (const tItem of tokens) {
+      const rec = asRecord(tItem);
+      if (rec) addMint(asString(rec.mint));
+    }
+    const swap = asRecord(asRecord(tx.events)?.swap);
+    if (swap) {
+      for (const key of ["tokenInputs", "tokenOutputs"] as const) {
+        const list = Array.isArray(swap[key]) ? swap[key] : swap[key] != null ? [swap[key]] : [];
+        for (const sItem of list) {
+          const rec = asRecord(sItem);
+          if (rec) addMint(asString(rec.mint));
+        }
+      }
+    }
+  }
+  return [...set];
+}
+
 export function rowsFromEnhanced(
   raw: unknown,
   owner: string,
   cluster: "mainnet" | "devnet",
+  scaledUiByMint?: Map<string, number>,
 ): HomeActivityRow[] {
   if (!Array.isArray(raw)) return [];
   const out: HomeActivityRow[] = [];
   for (const item of raw) {
-    const row = rowFromEnhanced(item, owner, cluster);
+    const row = rowFromEnhanced(item, owner, cluster, scaledUiByMint);
     if (!row) continue;
     out.push(row);
     if (out.length >= ACTIVITY_LIMIT) break;

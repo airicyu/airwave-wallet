@@ -12,8 +12,12 @@ import {
   shortMint,
   WRAPPED_SOL_MINT,
 } from "../../shared/home";
-import { formatOrganicScoreLabel } from "../../shared/home";
-import { sanitizeSymbol } from "../../shared/home";
+import {
+  fetchScaledUiMultipliersByMint,
+  formatOrganicScoreLabel,
+  formatScaledUiAmountLabel,
+  sanitizeSymbol,
+} from "../../shared/home";
 import type { SimulatePendingTxResult, SimulateTxDelta } from "../../shared/tx";
 import type { Cluster } from "../../shared/protocol";
 
@@ -94,6 +98,30 @@ async function fetchMintMeta(
   return mintDisplayCache;
 }
 
+async function applyScaledUiToDeltas(
+  deltas: SimulateTxDelta[],
+  rpcUrl: string,
+): Promise<SimulateTxDelta[]> {
+  if (!rpcUrl.trim()) return deltas;
+  const mints = deltas
+    .filter((d) => d.kind === "spl" && d.mint && d.amountRaw && d.tokenDecimals != null)
+    .map((d) => d.mint as string);
+  if (mints.length === 0) return deltas;
+  const mults = await fetchScaledUiMultipliersByMint(rpcUrl, mints);
+  if (mults.size === 0) return deltas;
+  return deltas.map((d) => {
+    if (d.kind !== "spl" || !d.mint || !d.amountRaw || d.tokenDecimals == null) return d;
+    const mult = mults.get(d.mint);
+    if (mult == null) return d;
+    try {
+      const raw = BigInt(d.amountRaw);
+      return { ...d, amount: formatScaledUiAmountLabel(raw, d.tokenDecimals, mult) };
+    } catch {
+      return d;
+    }
+  });
+}
+
 function enrichDelta(
   delta: SimulateTxDelta,
   metaByMint: Map<string, MintDisplayMeta>,
@@ -113,15 +141,20 @@ export async function enrichSimulateDeltas(
   cluster: Cluster,
   jupiterApiKey: string,
   jupiterApiUrl: string,
+  rpcUrl: string,
 ): Promise<SimulatePendingTxResult> {
-  if (result.outcome !== "ok" || !result.deltas || result.deltas.length === 0) {
+  if (!result.deltas || result.deltas.length === 0) {
     return result;
+  }
+  const scaledDeltas = await applyScaledUiToDeltas(result.deltas, rpcUrl);
+  if (result.outcome !== "ok") {
+    return { ...result, deltas: scaledDeltas };
   }
   resetCacheIfKeyChanged(jupiterApiKey, jupiterApiUrl);
 
   let metaByMint = new Map<string, MintDisplayMeta>();
   if (cluster === "mainnet") {
-    const mints = result.deltas
+    const mints = scaledDeltas
       .filter((d) => d.kind === "spl" && d.mint)
       .map((d) => d.mint as string);
     if (mints.length > 0) {
@@ -129,6 +162,6 @@ export async function enrichSimulateDeltas(
     }
   }
 
-  const deltas = result.deltas.map((d) => enrichDelta(d, metaByMint));
+  const deltas = scaledDeltas.map((d) => enrichDelta(d, metaByMint));
   return { ...result, deltas };
 }

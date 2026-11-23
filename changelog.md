@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.60.0 — 2026-11-23
+
+### Token-2022 Scaled UI Amount
+
+Home, Home Activity, and in-wallet Send show Token-2022 Scaled UI Amount balances aligned with Jupiter-style scaled units (for example xStocks after a split). Jupiter USD totals use the scaled quantity. On-chain transfers still use raw smallest units; the send form converts scaled input to raw.
+
+### Sign simulation
+
+Sign-approval SPL balance deltas use the same scaled display after simulation.
+
 ## 0.59.2 — 2026-11-19
 
 ### Decisions model

@@ -35,7 +35,7 @@ import {
   type HomeTokenRow,
   type TokenProgramKind,
 } from "../../shared/home";
-import { parseAmountUiToRaw, solReserveLamports } from "../../shared/send";
+import { parseSendAmountUiToRaw, solReserveLamports } from "../../shared/send";
 import type { Settings } from "../../shared/protocol";
 import { solanaRpcForUrl } from "../../shared/rpc";
 import { encodeWireTransaction } from "../../shared/tx";
@@ -106,7 +106,7 @@ export async function buildWalletSendTransaction(
   if (row.decimals == null || !Number.isInteger(row.decimals)) {
     return { code: "INVALID_PAYLOAD" };
   }
-  const amountRaw = parseAmountUiToRaw(amountUi, row.decimals);
+  const amountRaw = parseSendAmountUiToRaw(amountUi, row);
   if (amountRaw == null) return { code: "INVALID_PAYLOAD" };
 
   const rpc = solanaRpcForUrl(settings.rpcUrl);
